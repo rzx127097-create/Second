@@ -3,9 +3,37 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from math import hypot
 
+from problem2.environment.action_masks import ActionMask, vehicle_action_mask
+
+from .planning import RendezvousCandidate
 from .rendezvous import RendezvousPoint
+
+
+@dataclass(frozen=True)
+class CandidateActionSlots:
+    """Fixed-width slots and the exact candidate mapping used for sampling."""
+
+    candidates: tuple[RendezvousCandidate, ...]
+    mapping: tuple[str | None, ...]
+    mask: ActionMask
+
+
+def build_candidate_action_slots(
+    candidates: Iterable[RendezvousCandidate], *, max_slots: int
+) -> CandidateActionSlots:
+    if max_slots < 0:
+        raise ValueError("max_slots must be non-negative")
+    selected = tuple(candidate for candidate in candidates if candidate.feasible)[:max_slots]
+    mapping = tuple(candidate.mapping_key for candidate in selected) + (None,) * (max_slots - len(selected))
+    mask = vehicle_action_mask(
+        candidate_slots=[{"valid": True} for _ in selected]
+        + [{"valid": False}] * (max_slots - len(selected)),
+        max_slots=max_slots,
+    )
+    return CandidateActionSlots(selected, mapping, mask)
 
 
 def candidate_slots(
@@ -43,3 +71,5 @@ def candidate_slots(
     result = [point for _, point in selected]
     return result if limit is None else result[:limit]
 
+
+__all__ = ["CandidateActionSlots", "build_candidate_action_slots", "candidate_slots"]

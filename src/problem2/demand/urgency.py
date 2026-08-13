@@ -31,3 +31,15 @@ def urgency_score(
 def compute_urgency(*args, **kwargs) -> float:
     return urgency_score(*args, **kwargs)
 
+
+def request_urgency(*, remaining_work_s: float, response_time_s: float, epsilon: float = 1e-12) -> float:
+    """Compare expected response/service time with remaining work time."""
+
+    if remaining_work_s < 0 or response_time_s < 0:
+        raise ValueError("remaining_work_s and response_time_s must be non-negative")
+    if remaining_work_s <= epsilon:
+        return inf
+    return (response_time_s + epsilon) / remaining_work_s
+
+
+__all__ = ["urgency_score", "compute_urgency", "request_urgency"]
