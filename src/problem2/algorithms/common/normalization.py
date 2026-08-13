@@ -62,6 +62,14 @@ class RunningNormalizer:
             result = np.clip(result, -self.clip, self.clip)
         return result.astype(np.float32)
 
+    def denormalize(self, values: Any) -> np.ndarray:
+        """Restore normalized values to the running statistic's source scale."""
+        array = np.asarray(values, dtype=np.float64)
+        if self.mean is None:
+            return array.astype(np.float32)
+        result = array * np.sqrt(self.variance + self.epsilon) + self.mean
+        return result.astype(np.float32)
+
     def state_dict(self) -> dict[str, Any]:
         return {"mean": self.mean, "m2": self.m2, "count": self.count, "epsilon": self.epsilon, "clip": self.clip}
 

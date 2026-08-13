@@ -14,22 +14,29 @@ def ppo_policy_loss(new_log_prob: Any, old_log_prob: Any, advantages: Any, clip_
     return -torch.minimum(unclipped, clipped).mean()
 
 
-def value_loss(new_value: Any, old_value: Any, returns: Any, clip_epsilon: float = 0.2, huber_delta: float = 1.0, clip: bool = True) -> Any:
+def value_loss(new_value: Any, old_value: Any, returns: Any, clip_epsilon: float = 0.2, huber_delta: float | None = 1.0, clip: bool = True) -> Any:
     """Value clipping followed by Huber regression, as used by SR-MAPPO."""
     import torch
     if clip:
         clipped_value = old_value + torch.clamp(new_value - old_value, -clip_epsilon, clip_epsilon)
-        errors = torch.minimum((new_value - returns).abs(), (clipped_value - returns).abs())
-        # Select the prediction with smaller absolute error before Huber penalty.
-        prediction = torch.where((new_value - returns).abs() <= (clipped_value - returns).abs(), new_value, clipped_value)
+        # PPO's value objective is pessimistic: retain the larger of the
+        # unclipped and clipped per-sample Huber losses.
+        prediction = (new_value, clipped_value)
     else:
-        prediction = new_value
-        errors = (prediction - returns).abs()
-    del errors
-    residual = prediction - returns
-    quadratic = torch.minimum(residual.abs(), torch.as_tensor(huber_delta, device=residual.device))
-    linear = residual.abs() - quadratic
-    return (0.5 * quadratic.square() + huber_delta * linear).mean()
+        prediction = (new_value,)
+
+    losses = []
+    for candidate in prediction:
+        residual = candidate - returns
+        if huber_delta is None:
+            losses.append(0.5 * residual.square())
+            continue
+        absolute = residual.abs()
+        threshold = torch.as_tensor(huber_delta, dtype=residual.dtype, device=residual.device)
+        quadratic = torch.minimum(absolute, threshold)
+        linear = absolute - quadratic
+        losses.append(0.5 * quadratic.square() + huber_delta * linear)
+    return torch.stack(losses, dim=0).amax(dim=0).mean()
 
 
 def entropy_bonus(entropies: Any) -> Any:

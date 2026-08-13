@@ -5,6 +5,13 @@ discount_gamma: 0.99
 gae_lambda: 0.95
 clip_epsilon: 0.2
 rollout_horizon: 128
+ppo_epochs: 10
+hidden_dim: 128
+learning_rate: 0.0003
+value_loss_coef: 0.5
+entropy_coef: 0.01
+max_grad_norm: 0.5
+normalization_clip: 10.0
 stability_components:
   observation_normalization: true
   return_normalization: true

@@ -31,3 +31,19 @@ def compute_gae(
         running = delta + gamma * gae_lambda * nonterminal * running
         advantage[index] = running
     return advantage.astype(np.float32), (advantage + values).astype(np.float32)
+
+
+def normalize_advantages(advantages: np.ndarray, valid_mask: np.ndarray | None = None, epsilon: float = 1e-8) -> np.ndarray:
+    """Normalize only the declared actor-valid samples and preserve padding."""
+    values = np.asarray(advantages, dtype=np.float32)
+    mask = np.ones(values.shape, dtype=bool) if valid_mask is None else np.asarray(valid_mask, dtype=bool)
+    if values.shape != mask.shape:
+        raise ValueError("advantages and valid_mask must have equal shapes")
+    if not mask.any():
+        return values.copy()
+    selected = values[mask]
+    mean = float(selected.mean())
+    std = float(selected.std())
+    result = values.copy()
+    result[mask] = (selected - mean) / max(std, float(epsilon))
+    return result

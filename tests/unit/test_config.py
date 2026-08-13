@@ -10,6 +10,8 @@ def test_config_bundle_loads_and_has_stable_identity() -> None:
     bundle = load_config_bundle(ROOT / "configs")
     assert bundle.environment["primary_vehicle_count"] == 1
     assert bundle.algorithm["name"] == "SR-MAPPO"
+    assert bundle.algorithm["ppo_epochs"] >= 1
+    assert bundle.algorithm["max_grad_norm"] > 0
     assert bundle.parameters["status"] == "provisional"
     first = config_identity(bundle)
     second = config_identity(load_config_bundle(ROOT / "configs"))
