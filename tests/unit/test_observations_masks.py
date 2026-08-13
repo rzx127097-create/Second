@@ -115,9 +115,27 @@ def test_uav_mask_records_fallback_hold_when_no_progress_move_exists() -> None:
     assert "fallback_hold" in mask.events
 
 
+def test_uav_must_approach_mask_disables_spray_until_rendezvous() -> None:
+    mask = uav_action_mask(
+        (0, 0),
+        shape=(1, 3),
+        onboard_l=1.0,
+        spray_flow_l_s=0.1,
+        rendezvous_target=(0, 2),
+        must_approach=True,
+    )
+    assert mask.tolist() == [0, 0, 0, 1, 0, 0]
+
+
 def test_vehicle_mask_keeps_hold_when_locked_and_has_fixed_slots() -> None:
     mask = vehicle_action_mask(locked=True, candidate_slots=[{"request_id": "req-1"}], max_slots=2)
     assert mask.actions == ("hold", "slot-0", "slot-1")
     assert mask.tolist() == [1, 0, 0]
     assert mask.fallback_hold is False
 
+
+def test_vehicle_mask_accepts_generator_candidates_without_losing_slots() -> None:
+    candidates = ({"request_id": f"req-{i}"} for i in range(2))
+    mask = vehicle_action_mask(candidate_slots=candidates, max_slots=None)
+    assert mask.actions == ("hold", "slot-0", "slot-1")
+    assert mask.tolist() == [1, 1, 1]

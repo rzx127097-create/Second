@@ -106,6 +106,10 @@ def uav_action_mask(
     events: tuple[str, ...] = ()
     fallback = False
     if must_approach and rendezvous_target is not None:
+        # Once a service commitment is active, the UAV must first shorten the
+        # rendezvous distance; spraying while en route violates that protocol.
+        if current_distance and current_distance > 0:
+            mask[actions.index("spray")] = 0
         improving = [idx for action, idx in ((name, i) for i, name in enumerate(actions)) if action in _DELTAS and mask[idx]]
         if current_distance == 0 or not improving:
             # A hold at the rendezvous point or when all improving moves are
@@ -135,11 +139,12 @@ def vehicle_action_mask(
     two-action ``hold/next_request_slot`` interface.
     """
 
+    candidates = list(candidate_slots or ())
     if candidate_slots is None and max_slots is None:
         actions = VEHICLE_ACTIONS
         return ActionMask(np.array([1, 0 if locked else 1], dtype=np.int8), actions)
-    slot_count = max(0, int(max_slots if max_slots is not None else len(list(candidate_slots or ()))))
-    candidates = list(candidate_slots or ())[:slot_count]
+    slot_count = max(0, int(max_slots if max_slots is not None else len(candidates)))
+    candidates = candidates[:slot_count]
     actions = ("hold",) + tuple(f"slot-{index}" for index in range(slot_count))
     mask = np.zeros(1 + slot_count, dtype=np.int8)
     mask[0] = 1
