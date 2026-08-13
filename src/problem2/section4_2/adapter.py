@@ -48,10 +48,10 @@ class HeterogeneousDecisionAdapter:
             raise ValueError("uav_grid_shape must contain two positive dimensions")
         self.resources = resources
         self._initial_uav_onboard = {
-            identifier: float(resources.uav(identifier).onboard_l) for identifier in uav_slots
+            identifier: float(state.onboard_l) for identifier, state in resources.uavs.items()
         }
         self._initial_vehicle_inventory = {
-            identifier: float(resources.vehicle(identifier).inventory_l) for identifier in vehicle_slots
+            identifier: float(state.inventory_l) for identifier, state in resources.vehicles.items()
         }
         self.road_graph = road_graph
         self.uav_slots = tuple(uav_slots)
@@ -202,7 +202,14 @@ class HeterogeneousDecisionAdapter:
             routes = self._candidate_routes.get(vehicle_id)
             if routes:
                 slot_count = max(int(slot.split("-", 1)[1]) for slot in routes) + 1
-                candidates = [routes.get(f"slot-{index}") for index in range(slot_count)]
+                current_node = self.executors[vehicle_id].current_node
+                candidates = [
+                    route
+                    if route is not None and route[0] == current_node
+                    else None
+                    for index in range(slot_count)
+                    for route in (routes.get(f"slot-{index}"),)
+                ]
                 masks[vehicle_id] = vehicle_action_mask(
                     locked=(
                         vehicle_id == self._locked_vehicle_id

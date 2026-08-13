@@ -26,6 +26,16 @@ def resources() -> PesticideResources:
     )
 
 
+def resources_with_unassigned_uav() -> PesticideResources:
+    return PesticideResources(
+        uavs={
+            "uav-1": UAVState("uav-1", 0.2, 1.0, 0.01),
+            "uav-2": UAVState("uav-2", 0.4, 1.0, 0.01),
+        },
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 0.5, 0.5, 0.02, 0.3)},
+    )
+
+
 def test_road_vehicle_executor_carries_residual_distance_and_stays_on_graph() -> None:
     executor = RoadVehicleExecutor(graph(), current_node="a", speed_mps=2.0)
     executor.set_route(["a", "b", "c"])
@@ -87,6 +97,10 @@ def test_adapter_maps_vehicle_slot_to_route_and_advances_on_road() -> None:
     movement = next(event for event in continued.events if event["event_type"] == "movement_applied")
     assert movement["travelled_distance_m"] == pytest.approx(2.0)
 
+    completed = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+    assert completed.vehicle_nodes["vehicle-1"] == "c"
+    assert completed.action_masks["vehicle-1"].valid_actions == ("hold",)
+
 
 def test_adapter_reset_restores_pesticide_state_deterministically() -> None:
     adapter = HeterogeneousDecisionAdapter(
@@ -100,6 +114,18 @@ def test_adapter_reset_restores_pesticide_state_deterministically() -> None:
     assert adapter.resources.uav("uav-1").onboard_l == pytest.approx(0.2)
     assert adapter.resources.vehicle("vehicle-1").inventory_l == pytest.approx(0.5)
     adapter.resources.assert_conservation()
+
+
+def test_adapter_reset_restores_resources_outside_active_role_slots() -> None:
+    all_resources = resources_with_unassigned_uav()
+    adapter = HeterogeneousDecisionAdapter(
+        all_resources, graph(), uav_slots=("uav-1",), vehicle_slots=("vehicle-1",),
+    )
+    adapter.reset(seed=1)
+    all_resources.spray("uav-2", 0.1)
+    adapter.reset(seed=1)
+    assert all_resources.uav("uav-2").onboard_l == pytest.approx(0.4)
+    all_resources.assert_conservation()
 
 
 def test_adapter_records_actual_spray_and_lock_blocks_spray() -> None:
@@ -160,3 +186,17 @@ def test_consistency_auditor_rejects_one_vehicle_with_multiple_requests() -> Non
     )
     assert result.ok is False
     assert "vehicle_serves_multiple_requests" in result.violations
+
+
+def test_consistency_auditor_rejects_request_mapping_disagreement() -> None:
+    result = ConsistencyAuditor().check(
+        vehicle_positions={"vehicle-1": "a"},
+        road_graph=graph(),
+        service_assignments={"request-1": "uav-1"},
+        vehicle_assignments={"vehicle-1": "request-2"},
+        sampled_actions={"vehicle-1": "hold"},
+        action_masks={"vehicle-1": ActionMask(np.array([1], dtype=np.int8), ("hold",))},
+        resources=resources(),
+    )
+    assert result.ok is False
+    assert "service_assignment_mismatch:request-2" in result.violations
