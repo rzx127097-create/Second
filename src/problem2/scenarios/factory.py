@@ -74,7 +74,6 @@ class ScenarioBundle:
     episode_id: str
     normalization_version: str = NORMALIZATION_VERSION
     parameter_status: str = "provisional"
-    parameter_status: str = "provisional"
     step_count: int = 0
     _slot_mapping: SlotMapping | None = field(default=None, init=False, repr=False)
 
@@ -86,12 +85,6 @@ class ScenarioBundle:
         self.adapter.reset(seed=self.seed)
         self._install_candidate_routes()
         return self._snapshot(events=())
-
-    def assert_formal_ready(self) -> None:
-        if self.parameter_status != "verified":
-            raise ValueError(
-                f"scenario parameters are {self.parameter_status}; formal evidence requires verified parameters"
-            )
 
     def assert_formal_ready(self) -> None:
         """Guard formal evidence generation until engineering values are verified."""
