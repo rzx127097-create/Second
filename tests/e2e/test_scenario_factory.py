@@ -46,3 +46,31 @@ def test_synthetic_scenario_is_deterministic_and_completes_a_legal_step() -> Non
         "field_updated",
     ]
     first.resources.assert_conservation()
+
+
+def test_provisional_scenario_blocks_formal_use_and_reset_restores_spray_state() -> None:
+    bundle = build_synthetic_scenario("s1", seed=3, config_dir=CONFIG_DIR)
+    initial = bundle.reset()
+    spray_actions = {
+        agent_id: ("spray" if agent_id.startswith("uav-") and "spray" in mask.valid_actions else mask.valid_actions[0])
+        for agent_id, mask in initial.action_masks.items()
+    }
+    stepped = bundle.step(spray_actions)
+    assert any(event["event_type"] == "spray_applied" for event in stepped.events)
+    assert bundle.resources.total_pesticide_l < float(initial.critic_state["resource_totals"][-1])
+    bundle.resources.assert_conservation()
+    reset = bundle.reset()
+    assert reset.critic_state["resource_totals"][-1] == initial.critic_state["resource_totals"][-1]
+    try:
+        bundle.assert_formal_ready()
+    except ValueError as exc:
+        assert "provisional" in str(exc)
+    else:
+        raise AssertionError("provisional scenario must not be accepted as formal evidence")
+
+
+def test_snapshot_exposes_candidate_mapping_from_adapter() -> None:
+    bundle = build_synthetic_scenario("s1", seed=5, config_dir=CONFIG_DIR)
+    snapshot = bundle.reset()
+    assert snapshot.candidate_mapping
+    assert bundle.adapter.state.candidate_mapping == snapshot.candidate_mapping

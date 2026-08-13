@@ -22,6 +22,8 @@ class DecisionState:
     events: list[dict[str, object]]
     vehicle_nodes: dict[str, str]
     uav_positions: dict[str, tuple[int, int]]
+    candidate_mapping: dict[str, dict[str, tuple[str, ...]]]
+    candidate_mapping: dict[str, tuple[tuple[str, tuple[str, ...]], ...]]
 
 
 class HeterogeneousDecisionAdapter:
@@ -95,6 +97,8 @@ class HeterogeneousDecisionAdapter:
             events=[],
             vehicle_nodes={vehicle_id: executor.current_node for vehicle_id, executor in self.executors.items()},
             uav_positions=dict(self.uav_positions),
+            candidate_mapping={vehicle_id: dict(routes) for vehicle_id, routes in self._candidate_routes.items()},
+            candidate_mapping=self._candidate_mapping_snapshot(),
         )
         return self._state
 
@@ -236,4 +240,14 @@ class HeterogeneousDecisionAdapter:
             events=events,
             vehicle_nodes={vehicle_id: executor.current_node for vehicle_id, executor in self.executors.items()},
             uav_positions=dict(self.uav_positions),
+            candidate_mapping={vehicle_id: dict(routes) for vehicle_id, routes in self._candidate_routes.items()},
+            candidate_mapping=self._candidate_mapping_snapshot(),
         )
+
+    def _candidate_mapping_snapshot(self) -> dict[str, tuple[tuple[str, tuple[str, ...]], ...]]:
+        """Return a stable, read-only-friendly view of vehicle slot routes."""
+
+        return {
+            vehicle_id: tuple(sorted(routes.items()))
+            for vehicle_id, routes in self._candidate_routes.items()
+        }
