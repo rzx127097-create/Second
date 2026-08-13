@@ -35,7 +35,8 @@ modified.
 
 ## Commit
 
-Commit `1c0b069` (`feat: add unified problem2 scenario factory`).
+Commit message: `feat: add unified problem2 scenario factory` (final hash is
+reported in the task handoff).
 
 ## Questions / concerns
 
