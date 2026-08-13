@@ -5,28 +5,33 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from math import hypot
+from typing import TYPE_CHECKING
 
-from problem2.environment.action_masks import ActionMask, vehicle_action_mask
-
-from .planning import RendezvousCandidate
 from .rendezvous import RendezvousPoint
+
+if TYPE_CHECKING:
+    from problem2.environment.action_masks import ActionMask
 
 
 @dataclass(frozen=True)
 class CandidateActionSlots:
     """Fixed-width slots and the exact candidate mapping used for sampling."""
 
-    candidates: tuple[RendezvousCandidate, ...]
+    candidates: tuple[object, ...]
     mapping: tuple[str | None, ...]
-    mask: ActionMask
+    mask: "ActionMask"
 
 
 def build_candidate_action_slots(
-    candidates: Iterable[RendezvousCandidate], *, max_slots: int
+    candidates: Iterable[object], *, max_slots: int
 ) -> CandidateActionSlots:
+    # Imported lazily to keep the legacy point-filter module independent from
+    # the action-mask/environment layer during package initialization.
+    from problem2.environment.action_masks import ActionMask, vehicle_action_mask
+
     if max_slots < 0:
         raise ValueError("max_slots must be non-negative")
-    selected = tuple(candidate for candidate in candidates if candidate.feasible)[:max_slots]
+    selected = tuple(candidate for candidate in candidates if getattr(candidate, "feasible", False))[:max_slots]
     mapping = tuple(candidate.mapping_key for candidate in selected) + (None,) * (max_slots - len(selected))
     mask = vehicle_action_mask(
         candidate_slots=[{"valid": True} for _ in selected]
