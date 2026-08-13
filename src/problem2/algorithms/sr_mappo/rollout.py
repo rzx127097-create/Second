@@ -92,14 +92,17 @@ class RolloutBatch:
         from ..common.gae import compute_gae
         # Time-limit truncation retains the continuation value; only an actual
         # terminal state cuts the bootstrap in the team GAE recursion.
-        bootstrap_dones = self.terminated if len(self.terminated) == len(self.rewards) else self.dones
+        terminated = self.terminated if len(self.terminated) == len(self.rewards) else self.dones
+        truncated = self.truncated if len(self.truncated) == len(self.rewards) else [False] * len(self.rewards)
+        trace_dones = np.logical_or(np.asarray(terminated, dtype=bool), np.asarray(truncated, dtype=bool)).astype(float)
         self.advantages, self.returns = compute_gae(
             np.asarray(self.rewards),
             np.asarray(self.values),
-            np.asarray(bootstrap_dones, dtype=float),
+            trace_dones,
             gamma,
             gae_lambda,
             last_value,
+            bootstrap_dones=np.asarray(terminated, dtype=float),
         )
 
     def normalize_advantages(self) -> None:

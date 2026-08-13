@@ -75,6 +75,25 @@ def test_truncation_bootstraps_but_true_termination_cuts_gae() -> None:
     np.testing.assert_allclose(terminal.advantages, np.array([0.5], dtype=np.float32))
 
 
+def test_internal_truncation_does_not_carry_gae_into_next_episode() -> None:
+    batch = RolloutBatch()
+    for step, truncated in ((0, True), (1, False)):
+        batch.add(
+            observations={"uav": [0.0], "vehicle": [0.0]},
+            state=[float(step)],
+            actions={"uav": 0, "vehicle": 0},
+            masks={"uav": [True], "vehicle": [True]},
+            log_probs={"uav": 0.0, "vehicle": 0.0},
+            reward=1.0,
+            value=0.0,
+            done=truncated,
+            terminated=False,
+            truncated=truncated,
+        )
+    batch.finish(gamma=0.9, gae_lambda=0.8, last_value=0.0)
+    np.testing.assert_allclose(batch.advantages, np.array([1.0, 1.0], dtype=np.float32))
+
+
 def test_advantage_normalization_uses_only_declared_valid_samples() -> None:
     from problem2.algorithms.common.gae import normalize_advantages
 
@@ -196,6 +215,60 @@ def test_trainer_updates_multiple_uavs_with_per_agent_valid_mask() -> None:
     metrics = trainer.update(batch)
     assert metrics["uav_valid_samples"] == 3.0
     assert metrics["vehicle_valid_samples"] == 0.0
+
+
+def test_trainer_broadcasts_default_validity_for_multiple_uavs() -> None:
+    torch = pytest.importorskip("torch")
+    from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
+    from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
+
+    algorithm = SRMAPPOAlgorithm(2, 2, 3, 2, 2, hidden_dim=8)
+    trainer = SRMAPPOTrainer(algorithm)
+    batch = RolloutBatch()
+    batch.add(
+        observations={"uav": [[1.0, 0.0], [0.0, 1.0]], "vehicle": [[0.0, 1.0]]},
+        state=[1.0, 0.0, 0.0],
+        actions={"uav": [0, 1], "vehicle": [0]},
+        masks={"uav": [[True, True], [True, True]], "vehicle": [[True, False]]},
+        log_probs={"uav": [-0.69, -0.69], "vehicle": [0.0]},
+        reward=1.0,
+        value=0.0,
+        done=True,
+    )
+    batch.finish(0.99, 0.95)
+    metrics = trainer.update(batch)
+    assert metrics["uav_valid_samples"] == 2.0
+
+
+def test_learning_rate_decay_switch_is_taken_from_algorithm_components() -> None:
+    torch = pytest.importorskip("torch")
+    from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
+    from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
+
+    algorithm = SRMAPPOAlgorithm(
+        2, 2, 3, 2, 2, hidden_dim=8,
+        stability_components={"learning_rate_decay": False},
+    )
+    trainer = SRMAPPOTrainer(algorithm)
+    before = trainer.learning_rates()
+    trainer.step_scheduler(0.8)
+    assert trainer.lr_decay is False
+    assert trainer.learning_rates() == pytest.approx(before)
+
+
+def test_collect_transition_exposes_exact_policy_inputs_and_normalization_versions() -> None:
+    torch = pytest.importorskip("torch")
+    from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
+
+    algorithm = SRMAPPOAlgorithm(2, 2, 3, 2, 2, hidden_dim=8)
+    result = algorithm.collect_transition(
+        {"uav": [[1.0, 0.0]], "vehicle": [[0.0, 1.0]]},
+        {"uav": [[True, True]], "vehicle": [[True, True]]},
+        [0.0, 0.0, 0.0],
+    )
+    assert "policy_observations" in result
+    assert result["policy_observations"]["uav"] is not None
+    assert result["normalization_versions"]["uav"] == algorithm.obs_normalizer.count
 
 
 def test_checkpoint_restores_rng_state(tmp_path) -> None:

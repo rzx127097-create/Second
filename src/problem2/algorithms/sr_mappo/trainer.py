@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 
 class LinearDecayScheduler:
     """Progress-driven linear decay without PyTorch epoch-step ambiguity."""
@@ -33,13 +35,14 @@ class SRMAPPOTrainer:
         learning_rate: float = 3e-4,
         value_coef: float = 0.5,
         entropy_coef: float = 0.01,
-        lr_decay: bool = True,
+        lr_decay: bool | None = None,
         max_grad_norm: float | None = 0.5,
     ) -> None:
         self.algorithm = algorithm
         self.value_coef = float(value_coef)
         self.entropy_coef = float(entropy_coef)
-        self.lr_decay = bool(lr_decay)
+        component_decay = bool(getattr(algorithm, "stability_components", {}).get("learning_rate_decay", True))
+        self.lr_decay = component_decay if lr_decay is None else bool(lr_decay)
         self.learning_rate = float(learning_rate)
         self.max_grad_norm = None if max_grad_norm is None else float(max_grad_norm)
         try:
@@ -146,6 +149,12 @@ class SRMAPPOTrainer:
             actions = actions.reshape(-1)
             old_log_probs = old_log_probs.reshape(-1)
             valid_mask = valid_mask.reshape(-1)
+            if valid_mask.numel() != observations.shape[0]:
+                source_array = np.asarray(observations_source)
+                if source_array.ndim == 3 and valid_mask.numel() == source_array.shape[0]:
+                    valid_mask = valid_mask.repeat_interleave(source_array.shape[1])
+                else:
+                    raise ValueError(f"valid actor sample count is incompatible with observations for role {role}")
             role_advantages = advantages
             if valid_mask.numel() != advantages.numel():
                 if valid_mask.numel() % advantages.numel() != 0:

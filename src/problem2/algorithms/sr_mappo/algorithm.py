@@ -121,8 +121,13 @@ class SRMAPPOAlgorithm:
             return {
                 "actions": actions,
                 "normalized_observations": {"uav": uav_normalized, "vehicle": vehicle_normalized},
+                "policy_observations": {"uav": uav_normalized, "vehicle": vehicle_normalized},
                 "log_probs": {"uav": self._single_float_or_list(uav_log_prob), "vehicle": self._single_float_or_list(vehicle_log_prob)},
                 "entropies": {"uav": self._single_float_or_list(uav_entropy), "vehicle": self._single_float_or_list(vehicle_entropy)},
+                "normalization_versions": {
+                    "uav": self.obs_normalizer.count,
+                    "vehicle": self.vehicle_obs_normalizer.count,
+                },
             }
 
     def evaluate(self, observations: dict[str, Any], masks: dict[str, Any]) -> dict[str, int]:
@@ -167,6 +172,10 @@ class SRMAPPOAlgorithm:
         details["candidate_mapping"] = candidate_mapping
         details["valid_actor_sample"] = valid_actor_sample or {"uav": True, "vehicle": True}
         details["reward_components"] = reward_components or {}
+        details["normalization_versions"] = details.get("normalization_versions", {
+            "uav": self.obs_normalizer.count,
+            "vehicle": self.vehicle_obs_normalizer.count,
+        })
         return details
 
     def normalize_returns(self, returns: Any, *, update: bool = False) -> np.ndarray:
