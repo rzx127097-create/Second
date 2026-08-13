@@ -35,8 +35,8 @@ modified.
 
 ## Commit
 
-Commit message: `feat: add unified problem2 scenario factory` (final hash is
-reported in the task handoff).
+Feature commit: `0ae208c` (`feat: add unified problem2 scenario factory`).
+The report-only follow-up commit is `a8dd225`.
 
 ## Questions / concerns
 
