@@ -50,6 +50,8 @@ class ConsistencyAuditor:
         for request_id in vehicle_requests:
             if request_id not in service_request_ids:
                 violations.append(f"service_assignment_mismatch:{request_id}")
+        for request_id in sorted(service_request_ids - set(vehicle_requests)):
+            violations.append(f"service_assignment_mismatch:{request_id}")
         uav_requests: dict[str, int] = {}
         for uav_id in service_assignments.values():
             key = str(uav_id)

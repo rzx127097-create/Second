@@ -200,3 +200,17 @@ def test_consistency_auditor_rejects_request_mapping_disagreement() -> None:
     )
     assert result.ok is False
     assert "service_assignment_mismatch:request-2" in result.violations
+
+
+def test_consistency_auditor_rejects_service_request_without_vehicle() -> None:
+    result = ConsistencyAuditor().check(
+        vehicle_positions={"vehicle-1": "a"},
+        road_graph=graph(),
+        service_assignments={"request-1": "uav-1", "request-2": "uav-2"},
+        vehicle_assignments={"vehicle-1": "request-1"},
+        sampled_actions={"vehicle-1": "hold"},
+        action_masks={"vehicle-1": ActionMask(np.array([1], dtype=np.int8), ("hold",))},
+        resources=resources(),
+    )
+    assert result.ok is False
+    assert "service_assignment_mismatch:request-2" in result.violations
