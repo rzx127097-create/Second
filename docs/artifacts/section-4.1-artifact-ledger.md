@@ -21,12 +21,12 @@
 
 | File | SHA-256 |
 |---|---|
-| `scripts/figures/generate_section_4_1_figures.py` | `697E9D35133306A51A8C79EFEC69880E8488D559DAB914982789E7BC6BBE9BD4` |
-| `scripts/documents/build_section_4_1_docx.py` | `2C8FECAE3C25DE7F3A5F805F98596E8E3ABBF52FA8F896D58D22E94A6D1969D7` |
-| `docs/thesis/section-4.1.md` | `38F7EA3617719FA83BE96BE4185C74F649C24AAD91414D2997C78481AA2C0EF9` |
-| `artifacts/figures/chapter4/fig4-1_air_ground_system.pdf` | `5410CD36F68655122BFB9248A342114BF9E3F705365A5FEF232C06F3460F1F25` |
-| `artifacts/figures/chapter4/fig4-2_service_process.pdf` | `039022B18C63F3BCD36D4B3EB93CE8AB166D6663FDCCCB2A5130B7A242DD0343` |
-| `artifacts/documents/4.1问题描述与空地协同保障机制设计.docx` | `ECB3B6A0FF1345D49C0B6978E150998F34430136A453DC889EE0B6E2F15D36F1` |
+| `scripts/figures/generate_section_4_1_figures.py` | `7CD235796238BD96C83B16A169F8D3024D85F6F31B363A863A32CAF656F78616` |
+| `scripts/documents/build_section_4_1_docx.py` | `FA91E57F99777F5A0B5E02F39E72D04766CF0598A3288E10B06B8569D270F0A4` |
+| `docs/thesis/section-4.1.md` | `522C8D4D4E6496B6EFD62780B45E9A98DE640BA40BEC582A80060643C73BB713` |
+| `artifacts/figures/chapter4/fig4-1_air_ground_system.pdf` | `175E44206063470CF9873F5C852877F34D13E25BE8AD2AEFE7B7B2F993C3FA62` |
+| `artifacts/figures/chapter4/fig4-2_service_process.pdf` | `FDE28F084CA4B9D280F15DB94121FD885365B2BA32C2DB7EE76D2D106CF1DDA8` |
+| `artifacts/documents/4.1问题描述与空地协同保障机制设计.docx` | `63A8E5591F9847757403CC9C28C16EC43C1F26ED38C69CAFB0305D66050DFD5E` |
 
 The user-facing DOCX copy has the same SHA-256 as the repository copy.
 
@@ -35,5 +35,5 @@ The user-facing DOCX copy has the same SHA-256 as the repository copy.
 - Python source preflight: 18 PASS, 2 reviewed warnings, 0 FAIL. The 154.9 mm width matches the thesis text block rather than a journal column; the math-script warning is resolved by the rendered PDF text audit.
 - PDF text audit: Figure 4-1 and Figure 4-2 both have a minimum text size of 5.04 pt and pass the 5 pt floor.
 - Raster exports: PNG and TIFF are 600 dpi.
-- DOCX structure: 90 `m:oMath` objects, 8 `m:oMathPara` display equations, 2 inline embedded images, 1 `Heading1`, and 5 `Heading2` paragraphs. Numbering uses `(4.1)`-style tags throughout.
-- Figure PNGs were visually inspected at original resolution. Microsoft Word exported the final DOCX to an 8-page A4 PDF; all eight rendered pages were inspected at full resolution. Equations (4.1)-(4.8), including the multiline constraints in Equation (4.6), are complete, and neither figure overflows the text block. DOCX ZIP/OOXML integrity, 90 editable math objects, eight display equations, captions, inline image anchoring and the byte-identical delivery copy were also verified structurally.
+- DOCX structure: 90 `m:oMath` objects, 8 `m:oMathPara` display equations, 2 inline embedded images, 1 `Heading1`, and 5 `Heading2` paragraphs. Numbering uses `(4.1)`-style tags throughout. Semantic role/type labels are upright; mathematical indices remain italic; position variables are bold.
+- Figure PNGs were visually inspected at original resolution. Microsoft Word exported the final DOCX to an 8-page A4 PDF; all eight rendered pages were inspected at full resolution. Equations (4.1)-(4.8), including the two-line waiting-time relation in Equation (4.4), the frozen service allocation in Equation (4.5), and the multiline constraints in Equation (4.6), are complete, and neither figure overflows the text block. DOCX ZIP/OOXML integrity, 90 editable math objects, eight display equations, captions, inline image anchoring and the byte-identical delivery copy were also verified structurally.

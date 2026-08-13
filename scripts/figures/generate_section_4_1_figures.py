@@ -195,7 +195,7 @@ def figure_air_ground_system() -> None:
     draw_uav(ax, 0.43, 0.27, 0.88)
     ax.text(0.16, 0.412, "$i=1$", fontsize=7.2, ha="center", color=COLORS["navy"])
     ax.text(0.36, 0.582, "$i=2$", fontsize=7.2, ha="center", color=COLORS["navy"])
-    ax.text(0.43, 0.208, "$i=N_u$", fontsize=8.2, ha="center", color=COLORS["navy"])
+    ax.text(0.43, 0.208, r"$i=N_{\mathrm{u}}$", fontsize=8.2, ha="center", color=COLORS["navy"])
 
     # Road graph is visually distinct from the field grid.
     road_pts = np.array([[0.04, 0.10], [0.20, 0.12], [0.31, 0.09], [0.46, 0.12], [0.56, 0.20],
@@ -203,7 +203,7 @@ def figure_air_ground_system() -> None:
     ax.plot(road_pts[:, 0], road_pts[:, 1], color="white", lw=7.5, solid_capstyle="round", zorder=4)
     ax.plot(road_pts[:, 0], road_pts[:, 1], color=COLORS["road"], lw=5.0, solid_capstyle="round", zorder=5)
     ax.plot(road_pts[:, 0], road_pts[:, 1], color=COLORS["white"], lw=0.6, linestyle=(0, (5, 4)), zorder=6)
-    ax.text(0.145, 0.052, r"道路网络 $\mathcal{G}^{r}$", fontsize=7.2, ha="center", color=COLORS["muted"])
+    ax.text(0.145, 0.052, r"道路网络 $\mathcal{G}^{\mathrm{r}}$", fontsize=7.2, ha="center", color=COLORS["muted"])
 
     draw_vehicle(ax, 0.29, 0.10, 0.90)
     ax.text(0.29, 0.155, "移动药液补给车", fontsize=6.2, ha="center", color=COLORS["orange"])
@@ -328,7 +328,7 @@ def figure_service_process() -> None:
                 facecolor=COLORS["red_light"], edgecolor=COLORS["red"], fontsize=6.2, fontweight="bold")
     rounded_box(
         ax, (0.465, 0.17), 0.20, 0.095,
-        r"冻结 $q^{\mathrm{alloc}}$ 并逐步转移" + "\n" + r"$\delta q_{i,v,t}$",
+        r"冻结 $q_{i,v}^{\mathrm{alloc}}$ 并逐步转移" + "\n" + r"$\delta q_{i,v,t}$",
         facecolor="#F7F0DD", edgecolor=COLORS["yellow"], fontsize=7.2,
     )
     rounded_box(ax, (0.715, 0.17), 0.22, 0.095, "更新双方库存并解锁\n恢复施药 / 重新调度",
