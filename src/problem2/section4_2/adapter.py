@@ -22,7 +22,6 @@ class DecisionState:
     events: list[dict[str, object]]
     vehicle_nodes: dict[str, str]
     uav_positions: dict[str, tuple[int, int]]
-    candidate_mapping: dict[str, dict[str, tuple[str, ...]]]
     candidate_mapping: dict[str, tuple[tuple[str, tuple[str, ...]], ...]]
 
 
