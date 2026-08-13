@@ -97,7 +97,6 @@ class HeterogeneousDecisionAdapter:
             events=[],
             vehicle_nodes={vehicle_id: executor.current_node for vehicle_id, executor in self.executors.items()},
             uav_positions=dict(self.uav_positions),
-            candidate_mapping={vehicle_id: dict(routes) for vehicle_id, routes in self._candidate_routes.items()},
             candidate_mapping=self._candidate_mapping_snapshot(),
         )
         return self._state
@@ -240,7 +239,6 @@ class HeterogeneousDecisionAdapter:
             events=events,
             vehicle_nodes={vehicle_id: executor.current_node for vehicle_id, executor in self.executors.items()},
             uav_positions=dict(self.uav_positions),
-            candidate_mapping={vehicle_id: dict(routes) for vehicle_id, routes in self._candidate_routes.items()},
             candidate_mapping=self._candidate_mapping_snapshot(),
         )
 
