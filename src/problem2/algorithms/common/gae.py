@@ -13,6 +13,7 @@ def compute_gae(
     gae_lambda: float = 0.95,
     last_value: float | None = None,
     bootstrap_dones: np.ndarray | None = None,
+    next_values: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute reverse-time GAE; ``dones`` cuts bootstrap at episode boundaries."""
 
@@ -20,13 +21,18 @@ def compute_gae(
     values = np.asarray(values, dtype=np.float64)
     dones = np.asarray(dones, dtype=np.float64)
     bootstrap = dones if bootstrap_dones is None else np.asarray(bootstrap_dones, dtype=np.float64)
+    explicit_next = None if next_values is None else np.asarray(next_values, dtype=np.float64)
     if not (rewards.shape == values.shape == dones.shape == bootstrap.shape):
         raise ValueError("rewards, values, dones and bootstrap_dones must have equal shapes")
+    if explicit_next is not None and explicit_next.shape != rewards.shape:
+        raise ValueError("next_values must have equal shape to rewards")
     next_value = float(0.0 if last_value is None else last_value)
     advantage = np.zeros_like(rewards, dtype=np.float64)
     running = 0.0
     for index in range(len(rewards) - 1, -1, -1):
-        if index < len(rewards) - 1:
+        if explicit_next is not None and np.isfinite(explicit_next[index]):
+            next_value = explicit_next[index]
+        elif index < len(rewards) - 1:
             next_value = values[index + 1]
         nonterminal_bootstrap = 1.0 - bootstrap[index]
         nonterminal_trace = 1.0 - dones[index]

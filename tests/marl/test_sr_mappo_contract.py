@@ -94,6 +94,39 @@ def test_internal_truncation_does_not_carry_gae_into_next_episode() -> None:
     np.testing.assert_allclose(batch.advantages, np.array([1.0, 1.0], dtype=np.float32))
 
 
+def test_truncation_uses_explicit_terminal_observation_value_after_auto_reset() -> None:
+    batch = RolloutBatch()
+    batch.add(
+        observations={"uav": [0.0], "vehicle": [0.0]},
+        state=[0.0],
+        actions={"uav": 0, "vehicle": 0},
+        masks={"uav": [True], "vehicle": [True]},
+        log_probs={"uav": 0.0, "vehicle": 0.0},
+        reward=1.0,
+        value=0.0,
+        done=True,
+        terminated=False,
+        truncated=True,
+        next_value=2.0,
+    )
+    # The second row belongs to a reset episode and must not be used to
+    # bootstrap the first truncated transition.
+    batch.add(
+        observations={"uav": [1.0], "vehicle": [1.0]},
+        state=[1.0],
+        actions={"uav": 0, "vehicle": 0},
+        masks={"uav": [True], "vehicle": [True]},
+        log_probs={"uav": 0.0, "vehicle": 0.0},
+        reward=1.0,
+        value=10.0,
+        done=True,
+        terminated=True,
+        next_value=0.0,
+    )
+    batch.finish(gamma=0.9, gae_lambda=0.8)
+    np.testing.assert_allclose(batch.advantages, np.array([2.8, -9.0], dtype=np.float32))
+
+
 def test_advantage_normalization_uses_only_declared_valid_samples() -> None:
     from problem2.algorithms.common.gae import normalize_advantages
 

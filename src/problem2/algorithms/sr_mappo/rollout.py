@@ -28,6 +28,7 @@ class RolloutBatch:
     truncated: list[bool] = field(default_factory=list)
     rewards: list[float] = field(default_factory=list)
     values: list[float] = field(default_factory=list)
+    next_values: list[float | None] = field(default_factory=list)
     dones: list[bool] = field(default_factory=list)
     advantages: np.ndarray | None = None
     returns: np.ndarray | None = None
@@ -53,6 +54,7 @@ class RolloutBatch:
         episode_id: str | int | None = None,
         terminated: bool | None = None,
         truncated: bool | None = None,
+        next_value: float | None = None,
     ) -> None:
         """Append one joint transition without reconstructing masks later.
 
@@ -86,6 +88,7 @@ class RolloutBatch:
         self.truncated.append(bool(False if truncated is None else truncated))
         self.rewards.append(float(reward))
         self.values.append(float(value))
+        self.next_values.append(None if next_value is None else float(next_value))
         self.dones.append(bool(done))
 
     def finish(self, gamma: float, gae_lambda: float, last_value: float = 0.0) -> None:
@@ -103,6 +106,10 @@ class RolloutBatch:
             gae_lambda,
             last_value,
             bootstrap_dones=np.asarray(terminated, dtype=float),
+            next_values=np.asarray(
+                [value if value is not None else np.nan for value in self.next_values],
+                dtype=float,
+            ) if len(self.next_values) == len(self.rewards) else None,
         )
 
     def normalize_advantages(self) -> None:
