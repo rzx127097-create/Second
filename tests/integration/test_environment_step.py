@@ -5,7 +5,9 @@ import pytest
 
 from problem2.domain.resources import PesticideResources
 from problem2.domain.state import UAVState, VehicleState
+from problem2.domain.requests import RequestManager, RequestStatus
 from problem2.environment.air_ground_env import AirGroundEnv, EnvironmentConfig
+from problem2.environment.service_state_machine import ServicePhase, ServiceStateMachine
 
 
 def make_env() -> AirGroundEnv:
@@ -106,3 +108,32 @@ def test_locked_uav_cannot_move_or_spray_and_max_horizon_truncates() -> None:
     assert env.uav_positions["uav-1"] == position_before
     assert truncated
     assert info["termination_reason"] == "max_steps"
+
+
+def test_partial_service_reopens_request_and_releases_service_lock() -> None:
+    resources = PesticideResources(
+        uavs={
+            "uav-1": UAVState(
+                uav_id="uav-1", onboard_l=0.10, capacity_l=0.50, spray_flow_l_s=0.01
+            )
+        },
+        vehicles={
+            "vehicle-1": VehicleState(
+                vehicle_id="vehicle-1", inventory_l=0.50, capacity_l=0.50,
+                transfer_rate_l_s=1.0, service_cap_l=0.15
+            )
+        },
+    )
+    manager = RequestManager()
+    request = manager.create_request("uav-1", requested_l=0.40, step=0)
+    service = ServiceStateMachine()
+    assert service.reserve(manager, "vehicle-1", step=1, setup_s=0.0) is request
+    service.tick(manager, resources, "vehicle-1", dt_s=1.0, step=2)
+    transferred = service.tick(manager, resources, "vehicle-1", dt_s=1.0, step=3)
+
+    assert transferred == pytest.approx(0.15)
+    assert manager.get(request.request_id).status is RequestStatus.OPEN
+    assert manager.get(request.request_id).remaining_l == pytest.approx(0.25)
+    assert service.phase is ServicePhase.IDLE
+    assert service.request_id is None
+    assert service.locked_uav_id is None

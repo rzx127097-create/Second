@@ -23,7 +23,9 @@ class ServiceStateMachine:
 
     @property
     def locked_uav_id(self) -> str | None:
-        return self.request_id
+        return self._locked_uav_id
+
+    _locked_uav_id: str | None = None
 
     def reserve(
         self,
@@ -38,6 +40,7 @@ class ServiceStateMachine:
         if request is None:
             return None
         self.request_id = request.request_id
+        self._locked_uav_id = request.uav_id
         self.setup_remaining_s = max(0.0, setup_s)
         self.phase = ServicePhase.PREPARING
         return request
@@ -68,8 +71,27 @@ class ServiceStateMachine:
         )
         result = resources.transfer(request.uav_id, vehicle_id, amount)
         manager.apply_transfer(self.request_id, result.amount_l, step)
-        if manager.get(self.request_id).status is RequestStatus.COMPLETED or result.amount_l <= 1e-12:
-            self.phase = ServicePhase.IDLE
-            self.request_id = None
-            self.setup_remaining_s = 0.0
+        current = manager.get(self.request_id)
+        if current.status is RequestStatus.COMPLETED:
+            self._release()
+        elif current.status is RequestStatus.PARTIALLY_SATISFIED:
+            # A single transfer is a bounded service batch.  Partial service
+            # must release the lock and make the remaining request explicitly
+            # open again; otherwise the next tick would try to transfer a
+            # SERVING-only request a second time.
+            vehicle_inventory = resources.vehicle(vehicle_id).inventory_l
+            if vehicle_inventory <= 1e-12:
+                manager.mark_unsatisfied(self.request_id, "vehicle_inventory_exhausted", step)
+            else:
+                manager.reopen(self.request_id, step)
+            self._release()
+        elif result.amount_l <= 1e-12:
+            manager.mark_unsatisfied(self.request_id, "no_transfer_capacity", step)
+            self._release()
         return result.amount_l
+
+    def _release(self) -> None:
+        self.phase = ServicePhase.IDLE
+        self.request_id = None
+        self._locked_uav_id = None
+        self.setup_remaining_s = 0.0
