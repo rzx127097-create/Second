@@ -1,0 +1,51 @@
+status: provisional
+note: "Demo values are placeholders for interface tests only; do not use as formal experimental evidence."
+parameters:
+  uav_onboard_pesticide:
+    symbol: q_i_max
+    value: 1.0
+    unit: L
+    min: 0.1
+    max: 5.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+  uav_spray_flow:
+    symbol: rho_i_spr
+    value: 0.01
+    unit: L/s
+    min: 0.001
+    max: 0.1
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+  vehicle_inventory:
+    symbol: Q_v_0
+    value: 5.0
+    unit: L
+    min: 0.5
+    max: 20.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+  vehicle_transfer_rate:
+    symbol: rho_svc
+    value: 0.02
+    unit: L/s
+    min: 0.005
+    max: 0.2
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+  service_setup_time:
+    symbol: T_setup
+    value: 10.0
+    unit: s
+    min: 1.0
+    max: 120.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+  rendezvous_radius:
+    symbol: R_rv
+    value: 5.0
+    unit: m
+    min: 1.0
+    max: 30.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"

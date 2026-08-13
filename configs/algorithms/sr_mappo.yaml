@@ -1,0 +1,15 @@
+status: provisional
+name: SR-MAPPO
+actor_roles: [uav, vehicle]
+discount_gamma: 0.99
+gae_lambda: 0.95
+clip_epsilon: 0.2
+rollout_horizon: 128
+stability_components:
+  observation_normalization: true
+  return_normalization: true
+  orthogonal_initialization: true
+  layer_normalization: true
+  value_clipping: true
+  huber_value_loss: true
+  learning_rate_decay: true
