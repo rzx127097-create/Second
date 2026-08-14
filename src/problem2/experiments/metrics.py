@@ -43,6 +43,7 @@ class EpisodeRecord:
     policy_name: str = ""
     split: str = ""
     scenario_id: str = ""
+    success_threshold: float = 0.85
 
     @property
     def reduction_rate(self) -> float:
@@ -50,7 +51,7 @@ class EpisodeRecord:
 
     @property
     def success(self) -> bool:
-        return success(self.initial_pest_total, self.final_pest_total)
+        return self.reduction_rate >= float(self.success_threshold)
 
     @property
     def event_count(self) -> int:
@@ -79,6 +80,9 @@ class EpisodeRecord:
             "pesticide_remaining_l": self.pesticide_remaining_l,
             "pesticide_sprayed_l": self.pesticide_sprayed_l,
             "event_count": self.event_count,
+            "event_schema_version": 1,
+            "events": list(self.events),
+            "success_threshold": self.success_threshold,
             "uav_agent_ids": list(self.agent_ids.get("uav", [])),
             "vehicle_agent_ids": list(self.agent_ids.get("vehicle", [])),
             **self.losses,
@@ -98,7 +102,7 @@ def episode_record_from_bundle(
     agent_ids: dict[str, list[str]],
     policy_name: str = "",
     split: str = "",
-    scenario_id: str = "",
+        scenario_id: str = "",
 ) -> EpisodeRecord:
     """Materialize metrics solely from the final bundle and emitted events.
 
@@ -129,7 +133,8 @@ def episode_record_from_bundle(
         agent_ids={role: list(ids) for role, ids in agent_ids.items()},
         policy_name=str(policy_name),
         split=str(split),
-        scenario_id=str(scenario_id or bundle.scale_id),
+        scenario_id=str(scenario_id or getattr(bundle, "scenario_id", bundle.scale_id)),
+        success_threshold=float(getattr(bundle, "success_reduction_threshold", 0.85)),
     )
 
 

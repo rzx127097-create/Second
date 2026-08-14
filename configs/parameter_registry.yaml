@@ -49,3 +49,11 @@ parameters:
     max: 30.0
     source_type: assumption
     source_id: "pending-equipment-or-field-source"
+  vehicle_speed:
+    symbol: v_v
+    value: 1.0
+    unit: m/s
+    min: 0.2
+    max: 10.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"

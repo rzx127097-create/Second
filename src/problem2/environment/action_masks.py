@@ -30,6 +30,7 @@ class ActionMask:
             raise ValueError("mask and action dimensions must match")
         if not values.any():
             raise ValueError("an action mask must retain at least one action")
+        values.setflags(write=False)
         object.__setattr__(self, "mask", values)
 
     def __len__(self) -> int:
@@ -53,6 +54,8 @@ class ActionMask:
 
 
 def _candidate_is_valid(candidate: Any, *, inventory_l: float | None = None) -> bool:
+    if candidate is None:
+        return False
     if isinstance(candidate, dict):
         if candidate.get("valid", True) is False or candidate.get("reachable", True) is False:
             return False

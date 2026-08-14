@@ -22,17 +22,22 @@ def _emit(payload: dict[str, Any]) -> None:
 
 
 def _is_provisional(config: Any) -> bool:
-    return config.parameters.get("status") != "verified" or config.experiments.get("status") != "verified"
+    return any(section.get("status") != "verified" for section in (config.parameters, config.scales, config.environment, config.algorithm, config.experiments))
 
 
-def _jobs(config: Any) -> list[dict[str, object]]:
+def _jobs(config: Any, *, execution_profile: str = "formal") -> list[dict[str, object]]:
     digest = config_identity(config)
     commit = capture_git_commit(str(ROOT))
     jobs: list[dict[str, object]] = []
     for scale in config.experiments["scales"]:
         for seed in config.experiments["training_seeds"]:
             for method in config.experiments["methods"]:
-                identity = make_job_identity(method, scale, seed, digest, config_hash=digest, git_commit=commit)
+                identity = make_job_identity(
+                    method, scale, seed, digest, config_hash=digest, git_commit=commit,
+                    execution_profile=execution_profile,
+                    target_updates=1 if execution_profile == "smoke" else int(config.algorithm.get("updates", 0)),
+                    rollout_horizon=3 if execution_profile == "smoke" else int(config.algorithm.get("rollout_horizon", 0)),
+                )
                 jobs.append({**identity.to_dict(), "job_id": identity.job_id})
     return jobs
 
@@ -48,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config = load_config_bundle(args.config_dir)
         provisional = _is_provisional(config)
-        jobs = _jobs(config)
+        jobs = _jobs(config, execution_profile="smoke" if args.smoke else "formal")
         if args.dry_run:
             _emit({"status": "dry_run", "provisional": provisional, "job_count": len(jobs), "jobs": jobs})
             return 0

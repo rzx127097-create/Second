@@ -18,6 +18,7 @@ class ConfigBundle:
     environment: dict[str, Any]
     algorithm: dict[str, Any]
     experiments: dict[str, Any]
+    scenarios: dict[str, Any]
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -30,12 +31,14 @@ def _load(path: Path) -> dict[str, Any]:
 
 def load_config_bundle(config_dir: str | Path) -> ConfigBundle:
     root = Path(config_dir)
+    scenario_doc = _load(root / "scenarios.yaml")
     bundle = ConfigBundle(
         parameters=_load(root / "parameter_registry.yaml"),
         scales=_load(root / "scales.yaml"),
         environment=_load(root / "environment.yaml"),
         algorithm=_load(root / "algorithms" / "sr_mappo.yaml"),
         experiments=_load(root / "experiments" / "formal_matrix.yaml"),
+        scenarios=dict(scenario_doc.get("scenarios", {})),
     )
     _validate(bundle)
     return bundle
@@ -51,6 +54,32 @@ def _validate(bundle: ConfigBundle) -> None:
     required_splits = {"train", "validation", "sealed_test"}
     if set(bundle.experiments.get("splits", [])) != required_splits:
         raise ValueError("formal matrix must declare train, validation and sealed_test")
+    scenarios = bundle.scenarios
+    if not isinstance(scenarios, dict) or not scenarios:
+        raise ValueError("scenario registry must contain named scenarios")
+    split_ids = {split: set() for split in required_splits}
+    for scenario_id, record in scenarios.items():
+        if not isinstance(record, dict) or record.get("split") not in required_splits:
+            raise ValueError(f"scenario {scenario_id!r} must declare a valid split")
+        if record.get("scale") not in {item.get("id") for item in bundle.scales.get("scales", [])}:
+            raise ValueError(f"scenario {scenario_id!r} references an unknown scale")
+        if type(record.get("seed_offset")) is not int:
+            raise ValueError(f"scenario {scenario_id!r} seed_offset must be an integer")
+        split_ids[str(record["split"])].add(str(scenario_id))
+    if any(not values for values in split_ids.values()):
+        raise ValueError("each train/validation/sealed_test split needs at least one scenario")
+    for split, key in (("train", "train_scenarios"), ("validation", "validation_scenarios"), ("sealed_test", "sealed_test_scenarios")):
+        declared = tuple(str(value) for value in bundle.experiments.get(key, ()))
+        if set(declared) != split_ids[split] or len(declared) != len(set(declared)):
+            raise ValueError(f"{key} must exactly match the frozen scenario registry")
+    methods = tuple(bundle.experiments.get("methods", ()))
+    canonical = ("sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar", "mappo_mobile", "sr_mappo_two_stage")
+    if methods != canonical:
+        forbidden = {"happo", "ag-sr-mappo", "AG-SR-MAPPO"}
+        if any(str(method) in forbidden for method in methods):
+            raise ValueError("HAPPO and AG-SR-MAPPO are forbidden method names")
+        prefix = "no sr_mappo_mobile jobs; " if "sr_mappo_mobile" not in methods else ""
+        raise ValueError(f"{prefix}formal matrix methods must equal canonical registry: {canonical}")
 
 
 def _canonical(bundle: ConfigBundle) -> bytes:
@@ -60,6 +89,7 @@ def _canonical(bundle: ConfigBundle) -> bytes:
         "environment": bundle.environment,
         "algorithm": bundle.algorithm,
         "experiments": bundle.experiments,
+        "scenarios": bundle.scenarios,
     }
     return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 

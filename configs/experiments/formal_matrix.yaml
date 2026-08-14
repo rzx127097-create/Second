@@ -2,7 +2,7 @@ status: provisional
 splits: [train, validation, sealed_test]
 methods: [sr_mappo_mobile, sr_mappo_fixed, sr_mappo_astar, mappo_mobile, sr_mappo_two_stage]
 training_seeds: [0, 1, 2, 3, 4]
-train_scenarios: [train_001, train_002, train_003]
+train_scenarios: [train_001, train_002, train_003, train_004, train_005, train_006]
 validation_scenarios: [val_001, val_002]
 sealed_test_scenarios: [test_001, test_002, test_003]
 scales: [s1, s2, s3, s4, s5, s6]

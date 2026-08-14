@@ -68,6 +68,18 @@ class RequestManager:
         request.reserved_vehicle_id = vehicle_id
         return request
 
+    def reserve_request(self, request_id: str, vehicle_id: str, current_step: int) -> ReplenishmentRequest | None:
+        """Reserve the exact candidate selected by a vehicle policy."""
+        busy = [r for r in self._requests.values() if r.reserved_vehicle_id == vehicle_id and r.status in {RequestStatus.RESERVED, RequestStatus.SERVING}]
+        if busy:
+            raise ValueError("vehicle already has an active request")
+        request = self._requests.get(str(request_id))
+        if request is None or request.status is not RequestStatus.OPEN:
+            return None
+        request.status = RequestStatus.RESERVED
+        request.reserved_vehicle_id = vehicle_id
+        return request
+
     def start_service(self, request_id: str, step: int) -> None:
         request = self.get(request_id)
         if request.status is not RequestStatus.RESERVED:

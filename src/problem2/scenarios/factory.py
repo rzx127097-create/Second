@@ -72,10 +72,22 @@ class ScenarioBundle:
     pest_density: np.ndarray
     candidate_mapping: dict[str, Any]
     episode_id: str
+    scenario_id: str
+    success_reduction_threshold: float = 0.85
+    physical_extent_m: tuple[float, float] = (1.0, 1.0)
+    cell_size_m: tuple[float, float] = (1.0, 1.0)
     normalization_version: str = NORMALIZATION_VERSION
     parameter_status: str = "provisional"
     step_count: int = 0
     _slot_mapping: SlotMapping | None = field(default=None, init=False, repr=False)
+
+    @property
+    def request_manager(self):
+        return self.adapter.request_manager
+
+    @property
+    def service(self):
+        return self.adapter.service
 
     def reset(self) -> DecisionSnapshot:
         """Restore all physical state and return the initial decision."""
@@ -126,13 +138,17 @@ class ScenarioBundle:
                 if event.get("event_type") == "movement_applied"
             ),
         )
-        terminated = self.step_count >= self.max_steps
+        reduction = max(0.0, 1.0 - current_mean / max(float(np.mean(self.initial_density)), 1e-12))
+        terminated = reduction >= self.success_reduction_threshold
+        truncated = self.step_count >= self.max_steps and not terminated
         info = {
             "scale_id": self.scale_id,
             "seed": self.seed,
             "step": self.step_count,
             "pesticide_total_l": self.resources.total_pesticide_l,
             "pest_mean": current_mean,
+            "reduction_rate": reduction,
+            "termination_reason": "success" if terminated else ("max_steps" if truncated else None),
         }
         self.resources.assert_conservation()
         snapshot = self._snapshot(events=tuple(state.events))
@@ -141,7 +157,7 @@ class ScenarioBundle:
             reward=reward.total,
             reward_components=dict(reward.components),
             terminated=terminated,
-            truncated=False,
+            truncated=truncated,
             info=info,
         )
 
@@ -199,6 +215,7 @@ class ScenarioBundle:
             ],
             dtype=float,
         )
+        self.candidate_mapping = self.adapter.state.candidate_mapping
         return DecisionSnapshot(
             role_observations=observations,
             critic_state=critic,
@@ -225,6 +242,7 @@ def build_synthetic_scenario(
     seed: int,
     *,
     config_dir: str | Path,
+    scenario_id: str | None = None,
 ) -> ScenarioBundle:
     """Build one deterministic rectangular provisional scenario.
 
@@ -233,6 +251,14 @@ def build_synthetic_scenario(
     """
 
     config = load_config_bundle(config_dir)
+    scenario_registry = config.scenarios
+    requested_id = str(scenario_id or scale_id)
+    if requested_id in scenario_registry:
+        scenario_record = dict(scenario_registry[requested_id])
+        scale_id = str(scenario_record["scale"])
+        seed = int(seed) + int(scenario_record.get("seed_offset", 0))
+    else:
+        scenario_record = {"split": "smoke"}
     scale = _scale_record(config_dir, scale_id)
     rows, cols = (int(scale["grid"][0]), int(scale["grid"][1]))
     uav_count = int(scale["uav_count"])
@@ -257,15 +283,29 @@ def build_synthetic_scenario(
     }
     resources = PesticideResources(uavs=uavs, vehicles=vehicles)
     cells = [(row, col) for row in range(rows) for col in range(cols)]
-    road_graph = RoadGraph.from_grid(cells, cell_size_m=1.0)
+    extent = tuple(float(value) for value in config.scales.get("physical_extent_m", [cols, rows]))
+    cell_size_m = (extent[1] / rows, extent[0] / cols)
+    road_graph = RoadGraph.from_grid(cells, cell_size_m=cell_size_m)
+    # Scenario registry seeds also freeze a small, deterministic road-condition
+    # variant.  Connectivity and metric units remain unchanged, while sealed
+    # scenarios no longer differ only by an identifier label.
+    road_factor = 1.0 + 0.005 * (int(seed) % 7)
+    for node, neighbours in road_graph.adjacency.items():
+        for neighbour in list(neighbours):
+            neighbours[neighbour] *= road_factor
+    environment = config.environment
+    parameter_values = {key: value.get("value") for key, value in parameters.items() if isinstance(value, dict)}
     adapter = HeterogeneousDecisionAdapter(
         resources,
         road_graph,
         uav_slots=tuple(uavs),
         vehicle_slots=tuple(vehicles),
-        vehicle_speed_mps=1.0,
+        vehicle_speed_mps=float(parameter_values.get("vehicle_speed", 1.0)),
         decision_dt_s=float(config.scales.get("decision_dt_s", 1.0)),
         uav_grid_shape=(rows, cols),
+        request_threshold_ratio=float(environment.get("request_threshold_ratio", 0.20)),
+        service_setup_s=float(parameter_values.get("service_setup_time", 10.0)),
+        rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),
     )
     bundle = ScenarioBundle(
         scale_id=scale_id,
@@ -278,7 +318,11 @@ def build_synthetic_scenario(
         initial_density=density,
         pest_density=density.copy(),
         candidate_mapping={},
-        episode_id=f"{scale_id}-seed-{int(seed)}",
+        episode_id=f"{requested_id}-seed-{int(seed)}",
+        scenario_id=requested_id,
+        success_reduction_threshold=float(environment.get("termination", {}).get("success_reduction_threshold", 0.85)),
+        physical_extent_m=extent,
+        cell_size_m=cell_size_m,
         parameter_status=str(config.parameters.get("status", "provisional")),
     )
     bundle.reset()

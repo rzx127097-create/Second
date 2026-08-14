@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from math import isfinite
 from pathlib import Path
 from typing import Any, Callable
 
@@ -12,6 +13,17 @@ from problem2.algorithms.common.checkpoint import save_checkpoint
 from problem2.algorithms.sr_mappo.rollout import RolloutBatch
 
 from .metrics import EpisodeRecord, episode_record_from_bundle
+
+
+def _training_hyperparameters(config: dict[str, Any] | None = None) -> dict[str, float | int]:
+    """Normalize the YAML training contract at one boundary."""
+    source = dict(config or {})
+    return {
+        "discount_gamma": float(source.get("discount_gamma", 0.99)),
+        "gae_lambda": float(source.get("gae_lambda", 0.95)),
+        "clip_epsilon": float(source.get("clip_epsilon", 0.2)),
+        "ppo_epochs": int(source.get("ppo_epochs", 1)),
+    }
 
 
 def _role_inputs(snapshot: Any) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[str, list[str]], dict[str, list[object]]]:
@@ -70,6 +82,7 @@ def run_training_episode(
     *,
     horizon: int,
     episode_id: str,
+    algorithm_config: dict[str, Any] | None = None,
 ) -> EpisodeRecord:
     """Collect exactly one real joint trajectory from ``ScenarioBundle``.
 
@@ -136,7 +149,8 @@ def run_training_episode(
         if done:
             break
 
-    batch.finish(gamma=0.99, gae_lambda=0.95, last_value=0.0)
+    hyper = _training_hyperparameters(algorithm_config)
+    batch.finish(gamma=float(hyper["discount_gamma"]), gae_lambda=float(hyper["gae_lambda"]), last_value=0.0)
     record = episode_record_from_bundle(
         bundle,
         episode_id=episode_id,
@@ -162,6 +176,7 @@ def train_policy(
     checkpoint_path: Path | None,
     start_update: int = 0,
     total_updates: int | None = None,
+    algorithm_config: dict[str, Any] | None = None,
 ) -> list[EpisodeRecord]:
     """Collect, optimize, and atomically checkpoint true ScenarioBundle rollouts."""
 
@@ -170,6 +185,7 @@ def train_policy(
     if total_updates is not None and int(total_updates) < int(start_update) + int(updates):
         raise ValueError("total_updates must cover start_update plus updates")
     records: list[EpisodeRecord] = []
+    hyper = _training_hyperparameters(algorithm_config)
     algorithm.train(True)
     for offset in range(int(updates)):
         bundle = bundle_factory()
@@ -180,12 +196,18 @@ def train_policy(
             trainer,
             horizon=rollout_horizon,
             episode_id=str(bundle.episode_id),
+            algorithm_config=algorithm_config,
         )
         losses = trainer.update_with_epochs(
             record.rollout,
-            epochs=1,
+            epochs=int(hyper["ppo_epochs"]),
+            clip_epsilon=float(hyper["clip_epsilon"]),
             progress=None if total_updates is None else update / int(total_updates),
         )
+        if any(not isfinite(float(value)) for value in losses.values()):
+            raise ValueError(f"non-finite PPO loss at update {update}")
+        if any(not isfinite(float(value)) for value in record.rollout.rewards):
+            raise ValueError(f"non-finite rollout reward at update {update}")
         record.losses = {name: float(value) for name, value in losses.items()}
         record.rollout = None
         records.append(record)
@@ -194,4 +216,4 @@ def train_policy(
     return records
 
 
-__all__ = ["run_training_episode", "train_policy"]
+__all__ = ["run_training_episode", "train_policy", "_training_hyperparameters"]

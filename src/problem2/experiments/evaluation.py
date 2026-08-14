@@ -48,7 +48,7 @@ def evaluate_policy(
     for scenario_id in scenarios:
         scenario_key = str(scenario_id)
         bundle = scenario_factory(scenario_key) if not isinstance(scenario_factory, Mapping) else scenario_factory[scenario_key]
-        if str(getattr(bundle, "scale_id", scenario_key)) != scenario_key:
+        if str(getattr(bundle, "scenario_id", getattr(bundle, "scale_id", scenario_key))) != scenario_key:
             raise ValueError(f"scenario factory returned mismatched scenario: {scenario_key}")
         if split != "smoke":
             bundle.assert_formal_ready()

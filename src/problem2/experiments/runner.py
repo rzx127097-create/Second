@@ -41,6 +41,9 @@ class JobRecord:
             training_seed=int(payload["training_seed"]),
             config_hash=str(payload["config_hash"]),
             git_commit=str(payload["git_commit"]),
+            execution_profile=str(payload.get("execution_profile", "formal")),
+            target_updates=int(payload.get("target_updates", 0)),
+            rollout_horizon=int(payload.get("rollout_horizon", 0)),
         )
         if str(payload["job_id"]) != identity.job_id:
             raise ValueError("job record identity hash mismatch")
@@ -154,10 +157,10 @@ def evaluate_job(policy: Any, scenario_factory: Any, *, scenarios: Any, split: s
     return evaluate_policy(policy, scenario_factory, scenarios=scenarios, split=split, deterministic=deterministic)
 
 
-def traceable_episode_rows(records: list[Any], record: JobRecord, *, split: str) -> list[dict[str, Any]]:
+def traceable_episode_rows(records: list[Any], record: JobRecord, *, split: str, index_offset: int = 0) -> list[dict[str, Any]]:
     """Enrich physical episode metrics at the experiment boundary, not in the model."""
     rows: list[dict[str, Any]] = []
-    for index, episode in enumerate(records):
+    for index, episode in enumerate(records, start=int(index_offset)):
         row = dict(episode.to_row())
         transferred_l = sum(
             float(event.get("amount_l", 0.0))
@@ -167,6 +170,7 @@ def traceable_episode_rows(records: list[Any], record: JobRecord, *, split: str)
         rows.append({
             **row,
             "run_id": f"{record.job_id}:{index}",
+            "update": int(index) + 1,
             "method": record.identity.method,
             "scale": record.identity.scale,
             "training_seed": record.identity.training_seed,

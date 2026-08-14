@@ -36,7 +36,7 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:
 
 
 def _is_provisional(config: Any) -> bool:
-    return config.parameters.get("status") != "verified" or config.experiments.get("status") != "verified"
+    return any(section.get("status") != "verified" for section in (config.parameters, config.scales, config.environment, config.algorithm, config.experiments))
 
 
 def _checkpoint_record(path: Path) -> JobRecord:
@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         if job.identity.config_hash != config_identity(config):
             raise ValueError("checkpoint job config hash does not match the requested configuration")
         physical_scale = job.identity.scale
-        snapshot = build_synthetic_scenario(physical_scale, job.identity.training_seed, config_dir=config_dir).reset()
+        snapshot = build_synthetic_scenario(physical_scale, job.identity.training_seed, config_dir=config_dir, scenario_id=args.scenario).reset()
 
         def algorithm_factory() -> SRMAPPOAlgorithm:
             algorithm = SRMAPPOAlgorithm(
@@ -96,10 +96,7 @@ def main(argv: list[str] | None = None) -> int:
         algorithm, _ = load_evaluation_checkpoint(checkpoint, algorithm_factory)
 
         def scenario_factory(scenario_id: str):
-            bundle = build_synthetic_scenario(physical_scale, job.identity.training_seed, config_dir=config_dir)
-            bundle.scale_id = scenario_id
-            bundle.episode_id = f"{scenario_id}-seed-{job.identity.training_seed}"
-            return bundle
+            return build_synthetic_scenario(physical_scale, job.identity.training_seed, config_dir=config_dir, scenario_id=scenario_id)
 
         inner_split = args.split if args.split == "sealed_test" else ("smoke" if args.smoke else args.split)
         records = evaluate_policy(

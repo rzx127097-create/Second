@@ -1,0 +1,46 @@
+status: provisional
+scenarios:
+  train_001:
+    split: train
+    scale: s1
+    seed_offset: 1001
+  train_002:
+    split: train
+    scale: s2
+    seed_offset: 1002
+  train_003:
+    split: train
+    scale: s3
+    seed_offset: 1003
+  train_004:
+    split: train
+    scale: s4
+    seed_offset: 1004
+  train_005:
+    split: train
+    scale: s5
+    seed_offset: 1005
+  train_006:
+    split: train
+    scale: s6
+    seed_offset: 1006
+  val_001:
+    split: validation
+    scale: s1
+    seed_offset: 2001
+  val_002:
+    split: validation
+    scale: s3
+    seed_offset: 2002
+  test_001:
+    split: sealed_test
+    scale: s1
+    seed_offset: 3001
+  test_002:
+    split: sealed_test
+    scale: s4
+    seed_offset: 3002
+  test_003:
+    split: sealed_test
+    scale: s6
+    seed_offset: 3003

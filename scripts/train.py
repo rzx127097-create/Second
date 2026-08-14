@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 from pathlib import Path
 import sys
 from typing import Any
@@ -29,20 +30,55 @@ def _emit(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
 
 
+def _seed_everything(seed: int) -> None:
+    random.seed(int(seed))
+    import numpy as np
+    np.random.seed(int(seed))
+    try:
+        import torch
+    except ImportError:
+        return
+    torch.manual_seed(int(seed))
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(int(seed))
+
+
 def _is_provisional(bundle: Any) -> bool:
-    return bundle.parameters.get("status") != "verified" or bundle.experiments.get("status") != "verified"
+    return any(section.get("status") != "verified" for section in (bundle.parameters, bundle.scales, bundle.environment, bundle.algorithm, bundle.experiments))
 
 
-def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:
+def _merge_jsonl_rows(path: Path, rows: list[dict[str, Any]], *, expected_job_id: str) -> Path:
+    """Append rows atomically while preserving one immutable job identity."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing: list[dict[str, Any]] = []
+    if path.exists():
+        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                raise ValueError(f"blank raw JSONL line at {line_number}")
+            value = json.loads(line)
+            if not isinstance(value, dict):
+                raise ValueError("raw JSONL rows must be objects")
+            existing.append(value)
+    combined = existing + [dict(row) for row in rows]
+    run_ids = [str(row.get("run_id", "")) for row in combined]
+    if any(not run_id.startswith(f"{expected_job_id}:") for run_id in run_ids):
+        raise ValueError("raw row does not belong to the expected job identity")
+    if len(set(run_ids)) != len(run_ids):
+        raise ValueError("duplicate run_id in raw JSONL")
+    updates = [int(row.get("update", index + 1)) for index, row in enumerate(combined)]
+    if updates != sorted(updates) or any(right <= left for left, right in zip(updates, updates[1:])):
+        raise ValueError("raw update sequence must be strictly increasing")
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+    temporary.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in combined), encoding="utf-8")
     os.replace(temporary, path)
     return path
 
 
-def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int, learning_rate: float):
+def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int, algorithm_config: dict[str, Any]):
+    if not isinstance(algorithm_config, dict):
+        algorithm_config = {"learning_rate": float(algorithm_config)}
     def factory() -> SRMAPPOAlgorithm:
+        _seed_everything(seed)
         snapshot = build_synthetic_scenario(scale, seed, config_dir=config_dir).reset()
         algorithm = SRMAPPOAlgorithm(
             uav_obs_dim=len(snapshot.role_observations["uav-1"]["vector"]),
@@ -52,8 +88,16 @@ def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int,
             vehicle_action_dim=len(snapshot.action_masks["vehicle-1"]),
             hidden_dim=hidden_dim,
             device="cpu",
+            stability_components=algorithm_config.get("stability_components"),
         )
-        SRMAPPOTrainer(algorithm, learning_rate=learning_rate)
+        algorithm.training_seed = int(seed)
+        SRMAPPOTrainer(
+            algorithm,
+            learning_rate=float(algorithm_config["learning_rate"]),
+            value_coef=float(algorithm_config.get("value_loss_coef", 0.5)),
+            entropy_coef=float(algorithm_config.get("entropy_coef", 0.01)),
+            max_grad_norm=float(algorithm_config.get("max_grad_norm", 0.5)),
+        )
         return algorithm
 
     return factory
@@ -73,15 +117,22 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config_dir = Path(args.config_dir)
         config = load_config_bundle(config_dir)
+        _seed_everything(args.seed)
         if _is_provisional(config) and not args.smoke:
             _emit({"status": "rejected", "error": "formal training is blocked because parameter or matrix status is provisional"})
             return 2
         if args.updates < 1:
             raise ValueError("updates must be positive")
         output_root = Path(args.output_root).resolve()
+        algorithm_config = config.algorithm
+        hidden_dim = 16 if args.smoke else int(algorithm_config["hidden_dim"])
+        horizon = 3 if args.smoke else int(algorithm_config["rollout_horizon"])
         identity = make_job_identity(
             "sr_mappo_mobile", args.scale, args.seed, config_identity(config),
             config_hash=config_identity(config), git_commit=capture_git_commit(str(ROOT)),
+            execution_profile="smoke" if args.smoke else "formal",
+            target_updates=args.updates,
+            rollout_horizon=horizon,
         )
         checkpoint_path = output_root / "checkpoints" / f"{identity.job_id}.pt"
         record_path = output_root / "jobs" / f"{identity.job_id}.json"
@@ -89,10 +140,14 @@ def main(argv: list[str] | None = None) -> int:
         record = load_job_record(record_path) if record_path.exists() else JobRecord(identity=identity, checkpoint_path=checkpoint_path)
         if record.identity != identity:
             raise ValueError("persisted job identity does not match requested immutable identity")
-        algorithm_config = config.algorithm
-        hidden_dim = 16 if args.smoke else int(algorithm_config["hidden_dim"])
-        horizon = 3 if args.smoke else int(algorithm_config["rollout_horizon"])
-        algorithm_factory = _algorithm_factory(config_dir, args.scale, args.seed, hidden_dim, float(algorithm_config["learning_rate"]))
+        algorithm_factory = _algorithm_factory(config_dir, args.scale, args.seed, hidden_dim, algorithm_config)
+        scenario_ids = [
+            scenario_id for scenario_id in config.experiments.get("train_scenarios", [])
+            if str(config.scenarios.get(scenario_id, {}).get("scale")) == str(args.scale)
+        ]
+        if not scenario_ids:
+            raise ValueError(f"no train scenarios registered for scale {args.scale}")
+        scenario_cursor = {"index": 0}
 
         def worker(job: JobRecord) -> dict[str, Any]:
             start_update = 0
@@ -101,18 +156,30 @@ def main(argv: list[str] | None = None) -> int:
                 start_update = int(metadata["step"])
             else:
                 algorithm = algorithm_factory()
+            existing_count = 0
+            if raw_path.exists():
+                existing_count = len([line for line in raw_path.read_text(encoding="utf-8").splitlines() if line.strip()])
+            scenario_cursor["index"] = existing_count
+            remaining_updates = int(args.updates) - int(start_update)
+            if remaining_updates <= 0:
+                return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": existing_count, "resume": "target_already_reached"}
+            def make_bundle():
+                scenario_id = scenario_ids[scenario_cursor["index"] % len(scenario_ids)]
+                scenario_cursor["index"] += 1
+                return build_synthetic_scenario(args.scale, args.seed, config_dir=config_dir, scenario_id=scenario_id)
             records = train_policy(
-                lambda: build_synthetic_scenario(args.scale, args.seed, config_dir=config_dir),
+                make_bundle,
                 algorithm,
                 algorithm._trainer,
-                updates=args.updates,
+                updates=remaining_updates,
                 rollout_horizon=horizon,
                 checkpoint_path=checkpoint_path,
                 start_update=start_update,
-                total_updates=start_update + args.updates,
+                total_updates=args.updates,
+                algorithm_config=algorithm_config,
             )
-            rows = traceable_episode_rows(records, job, split="train")
-            _write_jsonl(raw_path, rows)
+            rows = traceable_episode_rows(records, job, split="train", index_offset=existing_count)
+            _merge_jsonl_rows(raw_path, rows, expected_job_id=job.job_id)
             return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": len(rows)}
 
         completed = JobRunner(

@@ -59,12 +59,25 @@ selected job uses canonical key `sr_mappo_mobile` and writes:
   integer `step` and algorithm/optimizer state.
 - `runs\smoke\raw\<job-id>.jsonl`: event-complete training episode rows.
 
+The immutable scenario registry is `configs/scenarios.yaml`. A row records the
+registered `scenario_id` rather than relabelling the physical scale; train,
+validation and sealed-test IDs are disjoint and each has its own seed-derived
+density and road-condition variant. Service events include request creation,
+reservation, waiting, pesticide-disabled time, transfer and release when the
+onboard-resource threshold is reached.
+
 Resume the same identity after an interruption by rerunning the training
 command with the same config, scale, seed, and output root. The runner loads the
 existing checkpoint and continues from its recorded step; it never changes the
 job identity. Failed jobs may be retried up to `--max-attempts`. The e2e test
 uses a deterministic failure injection in the worker to exercise this persisted
 retry path; that injected failure is a recovery check, not a scientific result.
+
+The job identity also includes the execution profile (`smoke` or `formal`),
+target update budget and rollout horizon, so those choices cannot share a
+checkpoint or raw log accidentally. Raw rows are appended atomically on
+resume; duplicate `run_id` values and non-monotone update sequences are
+rejected.
 Matrix output
 `partial` means accepted selected jobs completed while unselected jobs remain;
 `failed` means at least one selected job did not complete. Inspect the persisted

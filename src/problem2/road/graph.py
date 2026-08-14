@@ -46,17 +46,22 @@ class RoadGraph:
 
     @classmethod
     def from_grid(
-        cls, cells: Iterable[tuple[int, int]], cell_size_m: float = 1.0
+        cls, cells: Iterable[tuple[int, int]], cell_size_m: float | tuple[float, float] = 1.0
     ) -> "RoadGraph":
-        if cell_size_m <= 0:
+        if isinstance(cell_size_m, tuple):
+            row_size, col_size = (float(cell_size_m[0]), float(cell_size_m[1]))
+        else:
+            row_size = col_size = float(cell_size_m)
+        if row_size <= 0 or col_size <= 0:
             raise ValueError("cell_size_m must be positive")
         occupied = {tuple(cell) for cell in cells}
-        nodes = {str(cell): (float(cell[1]) * cell_size_m, float(cell[0]) * cell_size_m) for cell in occupied}
+        nodes = {str(cell): (float(cell[1]) * col_size, float(cell[0]) * row_size) for cell in occupied}
         edges = []
         for row, col in occupied:
             for neighbour in ((row, col + 1), (row + 1, col)):
                 if neighbour in occupied:
-                    edges.append((str((row, col)), str(neighbour), cell_size_m))
+                    edge_size = col_size if neighbour[0] == row else row_size
+                    edges.append((str((row, col)), str(neighbour), edge_size))
         return cls.from_edges(nodes, edges)
 
     def neighbors(self, node_id: str) -> tuple[tuple[str, float], ...]:
@@ -85,4 +90,3 @@ class RoadGraph:
                     seen.add(neighbour)
                     stack.append(neighbour)
         return seen
-

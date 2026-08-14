@@ -89,6 +89,7 @@ def paired_differences(records: Iterable[Mapping[str, Any]], reference: str = "s
     for row in records:
         by_key[(str(row["scale"]), str(row["scenario_id"]), int(row["training_seed"]))][str(row["method"])] = row
     result: list[dict[str, Any]] = []
+    grouped_diffs: dict[tuple[str, str], list[float]] = defaultdict(list)
     for (scale, scenario, training_seed), methods in sorted(by_key.items()):
         ref = methods.get(reference)
         for method, row in sorted(methods.items()):
@@ -98,6 +99,20 @@ def paired_differences(records: Iterable[Mapping[str, Any]], reference: str = "s
             if ref is None:
                 entry.update({"reduction_difference": None, "pairing_available": False, "pairing_reason": "reference method missing"})
             else:
-                entry.update({"reduction_difference": float(row["reduction_rate"]) - float(ref["reduction_rate"]), "pairing_available": True, "pairing_reason": "paired shared scenario"})
+                difference = float(row["reduction_rate"]) - float(ref["reduction_rate"])
+                grouped_diffs[(method, scale)].append(difference)
+                entry.update({"reduction_difference": difference, "pairing_available": True, "pairing_reason": "paired shared scenario"})
             result.append(entry)
+    intervals = {
+        key: _bootstrap_ci(values, seed=17)
+        for key, values in grouped_diffs.items()
+    }
+    for entry in result:
+        values = intervals.get((entry["method"], entry["scale"]))
+        if values is None:
+            entry.update({"paired_difference_mean": None, "paired_difference_ci_low": None, "paired_difference_ci_high": None, "paired_ci_n": 0, "paired_interval_reason": "reference method missing"})
+        else:
+            low, high, reason, n = values
+            diffs = grouped_diffs[(entry["method"], entry["scale"])]
+            entry.update({"paired_difference_mean": sum(diffs) / len(diffs), "paired_difference_ci_low": low, "paired_difference_ci_high": high, "paired_ci_n": n, "paired_interval_reason": reason})
     return result

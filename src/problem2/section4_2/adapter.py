@@ -1,16 +1,17 @@
-"""Role-slot and event-order adapter for the heterogeneous decision step."""
+"""Role-slot adapter with road-constrained replenishment service events."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from collections.abc import Iterable, Mapping
 
-import numpy as np
-
+from problem2.domain.requests import RequestManager, RequestStatus
 from problem2.domain.resources import PesticideResources
 from problem2.environment.action_masks import ActionMask, uav_action_mask, vehicle_action_mask
 from problem2.environment.movement import legal_uav_position
+from problem2.environment.service_state_machine import ServicePhase, ServiceStateMachine
 from problem2.road.graph import RoadGraph
+from problem2.road.shortest_path import shortest_path
 
 from .road_executor import RoadVehicleExecutor
 
@@ -26,6 +27,8 @@ class DecisionState:
 
 
 class HeterogeneousDecisionAdapter:
+    """Single physical transition authority for UAVs, road vehicles and service."""
+
     def __init__(
         self,
         resources: PesticideResources,
@@ -36,6 +39,10 @@ class HeterogeneousDecisionAdapter:
         vehicle_speed_mps: float = 1.0,
         decision_dt_s: float = 1.0,
         uav_grid_shape: tuple[int, int] = (1, 1),
+        request_threshold_ratio: float = 0.0,
+        service_setup_s: float = 10.0,
+        rendezvous_radius_m: float = 5.0,
+        max_candidate_slots: int = 4,
     ) -> None:
         if not vehicle_slots:
             raise ValueError("at least one vehicle slot is required")
@@ -43,28 +50,37 @@ class HeterogeneousDecisionAdapter:
             raise ValueError("unknown UAV slot")
         if any(identifier not in resources.vehicles for identifier in vehicle_slots):
             raise ValueError("unknown vehicle slot")
-        if decision_dt_s <= 0:
-            raise ValueError("decision_dt_s must be positive")
+        if decision_dt_s <= 0 or vehicle_speed_mps <= 0:
+            raise ValueError("decision and vehicle speeds must be positive")
         if len(uav_grid_shape) != 2 or any(int(size) <= 0 for size in uav_grid_shape):
             raise ValueError("uav_grid_shape must contain two positive dimensions")
+        if not 0.0 <= request_threshold_ratio <= 1.0:
+            raise ValueError("request_threshold_ratio must lie in [0, 1]")
+        if service_setup_s < 0 or rendezvous_radius_m < 0 or max_candidate_slots < 1:
+            raise ValueError("invalid service configuration")
         self.resources = resources
-        self._initial_uav_onboard = {
-            identifier: float(state.onboard_l) for identifier, state in resources.uavs.items()
-        }
-        self._initial_vehicle_inventory = {
-            identifier: float(state.inventory_l) for identifier, state in resources.vehicles.items()
-        }
+        self._initial_uav_onboard = {key: float(value.onboard_l) for key, value in resources.uavs.items()}
+        self._initial_vehicle_inventory = {key: float(value.inventory_l) for key, value in resources.vehicles.items()}
         self.road_graph = road_graph
         self.uav_slots = tuple(uav_slots)
         self.vehicle_slots = tuple(vehicle_slots)
-        self.vehicle_speed_mps = vehicle_speed_mps
-        self.decision_dt_s = decision_dt_s
+        self.vehicle_speed_mps = float(vehicle_speed_mps)
+        self.decision_dt_s = float(decision_dt_s)
         self.uav_grid_shape = (int(uav_grid_shape[0]), int(uav_grid_shape[1]))
+        self.request_threshold_ratio = float(request_threshold_ratio)
+        self.service_setup_s = float(service_setup_s)
+        self.rendezvous_radius_m = float(rendezvous_radius_m)
+        self.max_candidate_slots = int(max_candidate_slots)
         self.executors: dict[str, RoadVehicleExecutor] = {}
         self.uav_positions: dict[str, tuple[int, int]] = {}
         self._candidate_routes: dict[str, dict[str, tuple[str, ...]]] = {}
+        self._candidate_request_ids: dict[str, dict[str, str]] = {}
         self._locked_uav_id: str | None = None
         self._locked_vehicle_id: str | None = None
+        self._service_target_node: str | None = None
+        self._decision_step = 0
+        self.request_manager = RequestManager()
+        self.service = ServiceStateMachine()
         self._state: DecisionState | None = None
 
     @property
@@ -74,37 +90,32 @@ class HeterogeneousDecisionAdapter:
         return self._state
 
     def reset(self, *, seed: int | None = None) -> DecisionState:
-        del seed  # adapter state is deterministic; scenario randomness belongs to the environment
+        del seed
         for identifier, amount in self._initial_uav_onboard.items():
             self.resources.uav(identifier).onboard_l = amount
         for identifier, amount in self._initial_vehicle_inventory.items():
             self.resources.vehicle(identifier).inventory_l = amount
         self.resources._initial_total_l = self.resources.total_pesticide_l
         self.resources._cumulative_sprayed_l = 0.0
+        self.request_manager = RequestManager()
+        self.service = ServiceStateMachine()
+        self._decision_step = 0
+        self._locked_uav_id = None
+        self._locked_vehicle_id = None
+        self._service_target_node = None
         start = sorted(self.road_graph.nodes)[0]
         self.executors = {
             vehicle_id: RoadVehicleExecutor(self.road_graph, current_node=start, speed_mps=self.vehicle_speed_mps)
             for vehicle_id in self.vehicle_slots
         }
         self.uav_positions = {uav_id: (0, 0) for uav_id in self.uav_slots}
-        self._locked_uav_id = None
-        self._locked_vehicle_id = None
-        masks = self._masks()
-        self._state = DecisionState(
-            role_slots={"uav": self.uav_slots, "vehicle": self.vehicle_slots},
-            action_masks=masks,
-            events=[],
-            vehicle_nodes={vehicle_id: executor.current_node for vehicle_id, executor in self.executors.items()},
-            uav_positions=dict(self.uav_positions),
-            candidate_mapping=self._candidate_mapping_snapshot(),
-        )
-        return self._state
+        self._candidate_routes = {}
+        self._candidate_request_ids = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
+        self._refresh_request_candidates()
+        self._refresh_state(events=[])
+        return self.state
 
-    def set_candidate_routes(
-        self, vehicle_id: str, routes_by_slot: Mapping[str, Iterable[str]]
-    ) -> None:
-        """Register validated high-level slot-to-route mappings for one vehicle."""
-
+    def set_candidate_routes(self, vehicle_id: str, routes_by_slot: Mapping[str, Iterable[str]]) -> None:
         if vehicle_id not in self.executors:
             raise KeyError(vehicle_id)
         routes: dict[str, tuple[str, ...]] = {}
@@ -115,21 +126,13 @@ class HeterogeneousDecisionAdapter:
             values = tuple(str(node) for node in route)
             if not values:
                 raise ValueError("candidate route cannot be empty")
-            # Validate against the current node without mutating the active route.
-            probe = RoadVehicleExecutor(
-                self.road_graph,
-                current_node=self.executors[vehicle_id].current_node,
-                speed_mps=self.vehicle_speed_mps,
-            )
+            probe = RoadVehicleExecutor(self.road_graph, current_node=self.executors[vehicle_id].current_node, speed_mps=self.vehicle_speed_mps)
             probe.set_route(values)
             routes[slot_name] = values
         self._candidate_routes[vehicle_id] = routes
-        if self._state is not None:
-            self._refresh_state(events=self._state.events)
+        self._refresh_state(events=self.state.events if self._state is not None else [])
 
     def set_service_lock(self, uav_id: str, vehicle_id: str) -> None:
-        """Lock one UAV and vehicle to the current service relation."""
-
         if uav_id not in self.uav_slots or vehicle_id not in self.vehicle_slots:
             raise KeyError("service lock references an unknown role slot")
         self._locked_uav_id = uav_id
@@ -146,105 +149,134 @@ class HeterogeneousDecisionAdapter:
     def step(self, actions: Mapping[str, str]) -> DecisionState:
         if self._state is None:
             raise RuntimeError("reset must be called before step")
+        self._decision_step += 1
         events: list[dict[str, object]] = []
         masks = self._state.action_masks
+        expected = set(self.uav_slots) | set(self.vehicle_slots)
+        if set(actions) != expected:
+            raise ValueError("actions must contain exactly one action for every role slot")
         for agent_id, action in actions.items():
             mask = masks.get(agent_id)
             if mask is None or action not in mask.actions or not mask.mask[mask.actions.index(action)]:
                 raise ValueError(f"action is not legal for {agent_id}: {action}")
-        events.append({"event_type": "actions_validated"})
+        events.append({"event_type": "actions_validated", "step": self._decision_step})
+
         for uav_id in self.uav_slots:
-            action = actions.get(uav_id, "hold")
+            action = actions[uav_id]
             position = self.uav_positions[uav_id]
             if action in {"up", "down", "left", "right"}:
-                self.uav_positions[uav_id] = legal_uav_position(
-                    position, action, self.uav_grid_shape,
-                    locked=uav_id == self._locked_uav_id,
-                )
+                self.uav_positions[uav_id] = legal_uav_position(position, action, self.uav_grid_shape, locked=uav_id == self._locked_uav_id)
             elif action == "spray" and uav_id != self._locked_uav_id:
                 sprayed = self.resources.spray_step(uav_id, self.decision_dt_s)
-                events.append({
-                    "event_type": "spray_applied",
-                    "uav_id": uav_id,
-                    "amount_l": sprayed.amount_l,
-                    "pesticide_limited": sprayed.pesticide_limited,
-                })
+                events.append({"event_type": "spray_applied", "uav_id": uav_id, "amount_l": sprayed.amount_l, "pesticide_limited": sprayed.pesticide_limited, "step": self._decision_step})
+
+        for uav_id in self.uav_slots:
+            state = self.resources.uav(uav_id)
+            if self.request_threshold_ratio > 0 and state.onboard_l <= state.capacity_l * self.request_threshold_ratio + 1e-12:
+                before = len(self.request_manager)
+                request = self.request_manager.create_request(uav_id, state.capacity_l - state.onboard_l, self._decision_step)
+                if len(self.request_manager) > before:
+                    events.append({"event_type": "request_created", "request_id": request.request_id, "uav_id": uav_id, "amount_l": request.requested_l, "step": self._decision_step})
         for vehicle_id, executor in self.executors.items():
-            action = actions.get(vehicle_id, "hold")
+            action = actions[vehicle_id]
             if vehicle_id != self._locked_vehicle_id and action.startswith("slot-"):
                 route = self._candidate_routes.get(vehicle_id, {}).get(action)
+                request_id = self._candidate_request_ids.get(vehicle_id, {}).get(action)
                 if route is not None:
                     executor.set_route(route)
+                if request_id is not None and self.service.phase is ServicePhase.IDLE:
+                    reserved = self.service.reserve_specific(self.request_manager, request_id, vehicle_id, self._decision_step, self.service_setup_s)
+                    if reserved is not None and reserved.request_id == request_id:
+                        self._service_target_node = route[-1] if route else None
+                        self._locked_uav_id = reserved.uav_id
+                        self._locked_vehicle_id = vehicle_id
+                        events.append({"event_type": "request_reserved", "request_id": reserved.request_id, "uav_id": reserved.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
             advance = executor.advance(dt_s=self.decision_dt_s)
-            events.append({
-                "event_type": "movement_applied",
-                "vehicle_id": vehicle_id,
-                "travelled_distance_m": advance.travelled_distance_m,
-                "remaining_edge_distance_m": advance.remaining_edge_distance_m,
-                "route_complete": advance.route_complete,
-            })
-        if not any(event["event_type"] == "movement_applied" for event in events):
-            events.append({"event_type": "movement_applied"})
-        events.append({"event_type": "field_updated"})
+            events.append({"event_type": "movement_applied", "vehicle_id": vehicle_id, "travelled_distance_m": advance.travelled_distance_m, "remaining_edge_distance_m": advance.remaining_edge_distance_m, "route_complete": advance.route_complete, "step": self._decision_step})
+
+        active_request_id = self.service.request_id
+        if active_request_id is not None:
+            request = self.request_manager.get(active_request_id)
+            vehicle_id = self._locked_vehicle_id
+            at_target = bool(vehicle_id and self._service_target_node and self.executors[vehicle_id].current_node == self._service_target_node)
+            if not at_target:
+                events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "rendezvous_travel", "step": self._decision_step})
+                events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
+            else:
+                previous_phase = self.service.phase
+                transferred = self.service.tick(self.request_manager, self.resources, vehicle_id, self.decision_dt_s, self._decision_step)
+                if previous_phase is ServicePhase.PREPARING:
+                    events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "service_setup", "step": self._decision_step})
+                events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
+                if transferred > 0:
+                    events.append({"event_type": "pesticide_transfer", "amount_l": transferred, "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
+                if self.service.phase is ServicePhase.IDLE:
+                    events.append({"event_type": "service_released", "request_id": request.request_id, "step": self._decision_step})
+                    self._locked_uav_id = None
+                    self._locked_vehicle_id = None
+                    self._service_target_node = None
+        self._refresh_request_candidates()
+        events.append({"event_type": "field_updated", "step": self._decision_step})
         self._refresh_state(events=events)
-        return self._state
+        return self.state
 
     def _masks(self) -> dict[str, ActionMask]:
         masks: dict[str, ActionMask] = {}
         for uav_id in self.uav_slots:
             state = self.resources.uav(uav_id)
-            masks[uav_id] = uav_action_mask(
-                self.uav_positions.get(uav_id, (0, 0)),
-                self.uav_grid_shape,
-                onboard_l=state.onboard_l,
-                spray_flow_l_s=state.spray_flow_l_s,
-                locked=uav_id == self._locked_uav_id,
-            )
+            masks[uav_id] = uav_action_mask(self.uav_positions.get(uav_id, (0, 0)), self.uav_grid_shape, onboard_l=state.onboard_l, spray_flow_l_s=state.spray_flow_l_s, locked=uav_id == self._locked_uav_id)
         for vehicle_id in self.vehicle_slots:
-            routes = self._candidate_routes.get(vehicle_id)
-            if routes:
-                slot_count = max(int(slot.split("-", 1)[1]) for slot in routes) + 1
-                current_node = self.executors[vehicle_id].current_node
-                candidates = [
-                    route
-                    if route is not None and route[0] == current_node
-                    else None
-                    for index in range(slot_count)
-                    for route in (routes.get(f"slot-{index}"),)
-                ]
-                masks[vehicle_id] = vehicle_action_mask(
-                    locked=(
-                        vehicle_id == self._locked_vehicle_id
-                        or self.executors[vehicle_id].route_index < len(self.executors[vehicle_id].route) - 1
-                    ),
-                    candidate_slots=[{"valid": route is not None} for route in candidates],
-                    max_slots=slot_count,
-                    inventory_l=self.resources.vehicle(vehicle_id).inventory_l,
-                    service_cap_l=self.resources.vehicle(vehicle_id).service_cap_l,
-                )
-            else:
-                masks[vehicle_id] = vehicle_action_mask(
-                    locked=(
-                        vehicle_id == self._locked_vehicle_id
-                        or self.executors[vehicle_id].route_index < len(self.executors[vehicle_id].route) - 1
-                    )
-                )
+            routes = self._candidate_routes.get(vehicle_id, {})
+            current_node = self.executors[vehicle_id].current_node
+            candidates = [
+                route if route is not None and route[0] == current_node else None
+                for index in range(self.max_candidate_slots)
+                for route in (routes.get(f"slot-{index}"),)
+            ]
+            masks[vehicle_id] = vehicle_action_mask(locked=(vehicle_id == self._locked_vehicle_id or self.executors[vehicle_id].route_index < len(self.executors[vehicle_id].route) - 1), candidate_slots=candidates, max_slots=self.max_candidate_slots, inventory_l=self.resources.vehicle(vehicle_id).inventory_l, service_cap_l=self.resources.vehicle(vehicle_id).service_cap_l)
         return masks
 
     def _refresh_state(self, *, events: list[dict[str, object]]) -> None:
-        self._state = DecisionState(
-            role_slots={"uav": self.uav_slots, "vehicle": self.vehicle_slots},
-            action_masks=self._masks(),
-            events=events,
-            vehicle_nodes={vehicle_id: executor.current_node for vehicle_id, executor in self.executors.items()},
-            uav_positions=dict(self.uav_positions),
-            candidate_mapping=self._candidate_mapping_snapshot(),
-        )
+        self._state = DecisionState(role_slots={"uav": self.uav_slots, "vehicle": self.vehicle_slots}, action_masks=self._masks(), events=list(events), vehicle_nodes={key: executor.current_node for key, executor in self.executors.items()}, uav_positions=dict(self.uav_positions), candidate_mapping=self._candidate_mapping_snapshot())
 
     def _candidate_mapping_snapshot(self) -> dict[str, tuple[tuple[str, tuple[str, ...]], ...]]:
-        """Return a stable, read-only-friendly view of vehicle slot routes."""
+        return {vehicle_id: tuple(sorted(routes.items())) for vehicle_id, routes in self._candidate_routes.items()}
 
-        return {
-            vehicle_id: tuple(sorted(routes.items()))
-            for vehicle_id, routes in self._candidate_routes.items()
-        }
+    def _refresh_request_candidates(self) -> None:
+        if not self.executors:
+            return
+        self._candidate_request_ids = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
+        open_requests = sorted(
+            (request for request in self.request_manager._requests.values() if request.status is RequestStatus.OPEN),
+            key=lambda item: (item.created_step, item.request_id),
+        )
+        for vehicle_id, executor in self.executors.items():
+            if not open_requests and self._candidate_routes.get(vehicle_id):
+                continue
+            if executor.route_index < len(executor.route) - 1:
+                # Never overwrite a route while the executor is carrying
+                # residual edge distance; policies receive a locked mask.
+                continue
+            routes: dict[str, tuple[str, ...]] = {}
+            slot_index = 0
+            for request in open_requests:
+                if slot_index >= self.max_candidate_slots:
+                    continue
+                target = str(self.uav_positions[request.uav_id])
+                try:
+                    path, _distance = shortest_path(self.road_graph, executor.current_node, target)
+                except (KeyError, ValueError):
+                    continue
+                slot = f"slot-{slot_index}"
+                routes[slot] = tuple(path)
+                self._candidate_request_ids[vehicle_id][slot] = request.request_id
+                slot_index += 1
+            if not routes:
+                for index, (node, _distance) in enumerate(self.road_graph.neighbors(executor.current_node)):
+                    if index >= self.max_candidate_slots:
+                        break
+                    routes[f"slot-{index}"] = (executor.current_node, node)
+            self._candidate_routes[vehicle_id] = routes
+
+
+__all__ = ["DecisionState", "HeterogeneousDecisionAdapter"]

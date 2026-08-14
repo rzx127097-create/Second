@@ -45,6 +45,25 @@ class ServiceStateMachine:
         self.phase = ServicePhase.PREPARING
         return request
 
+    def reserve_specific(
+        self,
+        manager: RequestManager,
+        request_id: str,
+        vehicle_id: str,
+        step: int,
+        setup_s: float,
+    ) -> ReplenishmentRequest | None:
+        if self.phase is not ServicePhase.IDLE:
+            return None
+        request = manager.reserve_request(request_id, vehicle_id, step)
+        if request is None:
+            return None
+        self.request_id = request.request_id
+        self._locked_uav_id = request.uav_id
+        self.setup_remaining_s = max(0.0, setup_s)
+        self.phase = ServicePhase.PREPARING
+        return request
+
     def tick(
         self,
         manager: RequestManager,
@@ -68,6 +87,7 @@ class ServiceStateMachine:
         amount = min(
             request.remaining_l,
             resources.uav(request.uav_id).capacity_l - resources.uav(request.uav_id).onboard_l,
+            resources.vehicle(vehicle_id).transfer_rate_l_s * dt_s,
         )
         result = resources.transfer(request.uav_id, vehicle_id, amount)
         manager.apply_transfer(self.request_id, result.amount_l, step)

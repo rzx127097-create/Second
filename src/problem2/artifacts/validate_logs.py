@@ -12,6 +12,11 @@ REQUIRED_FIELDS = {
     "run_id", "method", "scale", "training_seed", "scenario_id", "config_hash", "git_commit",
     "split", "reduction_rate", "success", "transferred_l",
 }
+NUMERIC_FIELDS = {
+    "total_reward", "reward_control", "reward_service", "reward_coordination", "reward_invalid",
+    "wait_s", "pesticide_disabled_s", "vehicle_distance_m", "pesticide_initial_l",
+    "pesticide_remaining_l", "pesticide_sprayed_l", "success_threshold", "steps", "event_count",
+}
 
 
 def _parse_success(value: Any) -> bool:
@@ -89,6 +94,37 @@ def validate_episode_records(records: Iterable[Mapping[str, Any]], *, strict: bo
             raise ValueError("reduction_rate must lie in [0, 1]")
         if transferred < 0:
             raise ValueError("transferred_l must be non-negative")
+        for field in NUMERIC_FIELDS:
+            if field not in row or row[field] is None:
+                continue
+            try:
+                value = float(row[field])
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"{field} must be numeric") from exc
+            if not math.isfinite(value):
+                raise ValueError(f"{field} must be finite")
+            if field in {"steps", "event_count", "wait_s", "pesticide_disabled_s", "vehicle_distance_m", "pesticide_initial_l", "pesticide_remaining_l", "pesticide_sprayed_l"} and value < 0:
+                raise ValueError(f"{field} must be non-negative")
+            if field == "success_threshold" and not 0.0 <= value <= 1.0:
+                raise ValueError("success_threshold must lie in [0, 1]")
+        if all(field in row for field in ("pesticide_initial_l", "pesticide_remaining_l", "pesticide_sprayed_l")):
+            initial = float(row["pesticide_initial_l"])
+            remaining = float(row["pesticide_remaining_l"])
+            sprayed = float(row["pesticide_sprayed_l"])
+            if abs(initial - remaining - sprayed) > 1e-7:
+                raise ValueError("pesticide ledger does not conserve volume")
+        if "events" in row:
+            events = row["events"]
+            if not isinstance(events, list):
+                raise ValueError("events must be a list")
+            for event in events:
+                if not isinstance(event, Mapping) or not str(event.get("event_type", "")):
+                    raise ValueError("each event must have an event_type")
+                for field in ("amount_l", "duration_s", "travelled_distance_m"):
+                    if field in event:
+                        value = float(event[field])
+                        if not math.isfinite(value) or value < 0:
+                            raise ValueError(f"event {field} must be finite and non-negative")
         row["success"] = _parse_success(row["success"])
         status = _parse_provisional(row, strict=strict)
         if status is not None:

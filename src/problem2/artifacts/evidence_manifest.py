@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping
@@ -30,7 +31,9 @@ def write_evidence_manifest(path: Path, input_path: Path, output_paths: Mapping[
         "self": {"path": str(path), "sha256": None, "sha256_note": "self-hash omitted because serialization changes its own bytes"},
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(temporary, path)
     return manifest
 
 

@@ -16,6 +16,7 @@ def _payload(algorithm: Any, step: int) -> dict[str, Any]:
         "algorithm": algorithm.state_dict(),
         "trainer": trainer.state_dict() if trainer is not None else None,
         "format": 2,
+        "training_seed": getattr(algorithm, "training_seed", None),
     }
     try:
         import numpy as np
