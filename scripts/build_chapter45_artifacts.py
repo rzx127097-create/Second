@@ -36,13 +36,13 @@ def main(argv: list[str] | None = None) -> int:
             unlock_path=args.sealed_unlock,
         )
     except Exception as exc:  # noqa: BLE001 - preserve CLI diagnostic boundary
-        print(json.dumps({"status": "failed", "error": f"{type(exc).__name__}: {exc}"}, ensure_ascii=False))
+        print(json.dumps({"status": "failed", "error": f"{type(exc).__name__}: {exc}"}, ensure_ascii=True))
         return 1
     print(json.dumps({
         "status": "completed",
         "paths": {name: str(path) for name, path in bundle.paths.items()},
         "allow_partial": bool(args.allow_partial),
-    }, ensure_ascii=False, sort_keys=True))
+    }, ensure_ascii=True, sort_keys=True))
     return 0
 
 

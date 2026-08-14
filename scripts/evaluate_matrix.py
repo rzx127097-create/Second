@@ -20,7 +20,7 @@ from problem2.experiments.freeze import verify_sealed_evidence
 
 
 def _emit(payload: dict[str, Any]) -> None:
-    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    print(json.dumps(payload, ensure_ascii=True, sort_keys=True))
 
 
 def _is_provisional(orchestrator: Chapter45Orchestrator) -> bool:

@@ -9,6 +9,8 @@ The current checked-in configuration is **provisional**. The implementation and
 its deterministic invariants are at maturity M2. Smoke runs verify the software
 path; they are not formal thesis results, deployment evidence, or superiority
 claims. See `docs/verification/section-4-5-runbook.md` for the complete workflow.
+The latest parameter, road-source, scenario, and resource-activation decision
+is recorded in `docs/verification/formal-readiness-report.md`.
 
 ## Environment
 

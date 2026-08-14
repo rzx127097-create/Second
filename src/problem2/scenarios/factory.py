@@ -26,6 +26,7 @@ from problem2.environment.observations import (
 )
 from problem2.environment.rewards import compute_reward
 from problem2.road.graph import RoadGraph
+from problem2.road.graphml import load_graphml
 from problem2.section4_2.adapter import HeterogeneousDecisionAdapter
 from problem2.scenarios.interventions import ScenarioIntervention, baseline_intervention
 
@@ -285,10 +286,22 @@ def build_synthetic_scenario(
     rows, cols = (int(scale["grid"][0]), int(scale["grid"][1]))
     uav_count = int(scale["uav_count"])
     parameters = config.parameters.get("parameters", {})
-    capacity = float(parameters["uav_onboard_pesticide"]["value"])
+    rated_capacity = float(parameters["uav_onboard_pesticide"]["value"])
+    usable_fraction = float(parameters.get("uav_usable_fraction", {}).get("value", 1.0))
+    if not 0.0 < usable_fraction <= 1.0:
+        raise ValueError("uav_usable_fraction must lie in (0, 1]")
+    capacity = rated_capacity * usable_fraction
     spray_flow = float(parameters["uav_spray_flow"]["value"])
     vehicle_inventory = float(parameters["vehicle_inventory"]["value"])
+    vehicle_service_capacity = float(parameters["vehicle_service_capacity"]["value"])
+    if vehicle_service_capacity <= 0 or vehicle_service_capacity > vehicle_inventory:
+        raise ValueError("vehicle_service_capacity must be positive and no greater than vehicle_inventory")
     transfer_rate = float(parameters["vehicle_transfer_rate"]["value"])
+    decision_dt_s = float(
+        parameters.get("decision_dt", {}).get(
+            "value", config.scales.get("decision_dt_s", 1.0)
+        )
+    )
     rng = np.random.default_rng(int(seed))
     hotspot_separation = intervention.adaptations.get("hotspot_road_separation")
     cells = _road_cells((rows, cols), hotspot_separation)
@@ -303,7 +316,6 @@ def build_synthetic_scenario(
     parameter_overrides = intervention.parameters
     initial_ratio = float(parameter_overrides.get("uav_initial_pesticide_ratio", 1.0))
     if intervention.pesticide_mode == "unlimited":
-        decision_dt_s = float(config.scales.get("decision_dt_s", 1.0))
         capacity = max(capacity, spray_flow * int(scale["max_steps"]) * decision_dt_s * 1.01)
 
     uavs = {
@@ -317,13 +329,34 @@ def build_synthetic_scenario(
     }
     vehicles = {
         "vehicle-1": VehicleState(
-            "vehicle-1", vehicle_inventory, vehicle_inventory, transfer_rate, vehicle_inventory
+            "vehicle-1", vehicle_inventory, vehicle_inventory, transfer_rate, vehicle_service_capacity
         )
     }
     resources = PesticideResources(uavs=uavs, vehicles=vehicles)
     extent = tuple(float(value) for value in config.scales.get("physical_extent_m", [cols, rows]))
-    cell_size_m = (extent[1] / rows, extent[0] / cols)
-    road_graph = RoadGraph.from_grid(cells, cell_size_m=cell_size_m)
+    cell_size_m = (extent[0] / rows, extent[1] / cols)
+    environment = config.environment
+    road_config = environment.get("road", {})
+    if isinstance(road_config, dict) and str(road_config.get("source")) == "frozen_gis":
+        origin = road_config.get("origin_lonlat")
+        if not isinstance(origin, (list, tuple)) or len(origin) != 2:
+            raise ValueError("frozen_gis road source requires origin_lonlat")
+        road_graph, road_metadata = load_graphml(
+            road_config.get("graphml_path"),
+            coordinate_mode=str(road_config.get("coordinate_mode", "lonlat")),
+            origin_lonlat=(float(origin[0]), float(origin[1])),
+            directed_policy=str(road_config.get("directed_policy", "undirected")),
+            bbox_lonlat=tuple(road_config["bbox_lonlat"]) if road_config.get("bbox_lonlat") else None,
+        )
+        min_x = min(float(xy[0]) for xy in road_graph.nodes.values())
+        min_y = min(float(xy[1]) for xy in road_graph.nodes.values())
+        max_x = max(float(xy[0]) for xy in road_graph.nodes.values())
+        max_y = max(float(xy[1]) for xy in road_graph.nodes.values())
+        if min_x < -1e-6 or min_y < -1e-6 or max_x > extent[1] + 1e-6 or max_y > extent[0] + 1e-6:
+            raise ValueError("frozen_gis road graph exceeds the declared physical extent; set a metric crop/bbox")
+    else:
+        road_graph = RoadGraph.from_grid(cells, cell_size_m=cell_size_m)
+        road_metadata = {}
     # Scenario registry seeds also freeze a small, deterministic road-condition
     # variant.  Connectivity and metric units remain unchanged, while sealed
     # scenarios no longer differ only by an identifier label.
@@ -334,7 +367,6 @@ def build_synthetic_scenario(
     blockage = float(intervention.adaptations.get("road_blockage", 0.0))
     if blockage > 0:
         _apply_connected_road_blockage(road_graph, blockage, int(seed))
-    environment = config.environment
     parameter_values = {key: value.get("value") for key, value in parameters.items() if isinstance(value, dict)}
     for key in ("vehicle_speed", "service_setup_time", "rendezvous_radius"):
         if key in parameter_overrides:
@@ -360,10 +392,10 @@ def build_synthetic_scenario(
         uav_slots=tuple(uavs),
         vehicle_slots=tuple(vehicles),
         vehicle_speed_mps=float(parameter_values.get("vehicle_speed", 1.0)),
-        decision_dt_s=float(config.scales.get("decision_dt_s", 1.0)),
+        decision_dt_s=decision_dt_s,
         uav_grid_shape=(rows, cols),
         uav_cell_size_m=cell_size_m,
-        uav_speed_mps=max(cell_size_m) / float(config.scales.get("decision_dt_s", 1.0)),
+        uav_speed_mps=float(parameter_values.get("uav_speed", max(cell_size_m) / decision_dt_s)),
         request_threshold_ratio=float(environment.get("request_threshold_ratio", 0.20)),
         service_setup_s=float(parameter_values.get("service_setup_time", 10.0)),
         rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),
@@ -396,6 +428,9 @@ def build_synthetic_scenario(
         support_mode=intervention.support_mode,
         ablation_flags=tuple(sorted(ablations)),
         include_air_ground_observation="remove_air_ground_observation" not in ablations,
+        scenario_source_kind=config.scenario_source_kind or "synthetic_smoke",
+        dynamics_kind=config.scenario_dynamics_kind or "smoke_local_removal",
+        source_metadata_hash=config.source_metadata_hash or str(road_metadata.get("source_sha256", "")),
     )
     bundle.reset()
     return bundle

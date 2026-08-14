@@ -61,7 +61,8 @@ def test_parameter_audit_rejects_out_of_range_and_inconsistent_units() -> None:
             "parameters": {name: record for name in (
                 "uav_onboard_pesticide", "uav_usable_fraction", "uav_spray_flow",
                 "uav_speed", "vehicle_inventory", "vehicle_transfer_rate",
-                "service_setup_time", "rendezvous_radius", "vehicle_speed", "decision_dt",
+                "vehicle_service_capacity", "service_setup_time", "rendezvous_radius",
+                "vehicle_speed", "decision_dt",
             )},
         }
     )
@@ -82,14 +83,14 @@ def test_repository_registry_is_explicitly_provisional_until_sources_are_added()
     assert report.ready is False
     assert report.status == "provisional"
     assert report.missing_parameters == ()
-    assert len([issue for issue in report.issues if issue.code == "unverified_source"]) == 10
+    assert len([issue for issue in report.issues if issue.code == "unverified_source"]) == 11
 
 
 def test_verified_parameter_fixture_has_no_blocking_issues() -> None:
     names = (
         "uav_onboard_pesticide", "uav_usable_fraction", "uav_spray_flow", "uav_speed",
         "vehicle_inventory", "vehicle_transfer_rate", "service_setup_time",
-        "rendezvous_radius", "vehicle_speed", "decision_dt",
+        "vehicle_service_capacity", "rendezvous_radius", "vehicle_speed", "decision_dt",
     )
     registry = {"status": "verified", "parameters": {name: _record() for name in names}}
     registry["parameters"]["uav_usable_fraction"] = _record(

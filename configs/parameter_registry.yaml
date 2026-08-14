@@ -85,6 +85,20 @@ parameters:
     conversion: null
     status: provisional
     scope: main
+  vehicle_service_capacity:
+    symbol: q_svc_max
+    meaning: "maximum pesticide volume transferred in one service batch"
+    value: 5.0
+    unit: L
+    min: 0.1
+    max: 20.0
+    source_type: assumption
+    source_id: "pending-vehicle-service-specification"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
   service_setup_time:
     symbol: T_setup
     meaning: "fixed preparation time before pesticide transfer"

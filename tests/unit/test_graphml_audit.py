@@ -24,9 +24,20 @@ GRAPHML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def test_graphml_loader_projects_coordinates_and_records_source_metadata(tmp_path: Path) -> None:
+def test_graphml_loader_collects_components_without_restarting_bfs_for_each_node(tmp_path: Path, monkeypatch) -> None:
     source = tmp_path / "roads.graphml"
     source.write_text(GRAPHML, encoding="utf-8")
+
+    from problem2.road.graph import RoadGraph
+
+    calls = {"count": 0}
+    original = RoadGraph.component
+
+    def counted(self, node_id):
+        calls["count"] += 1
+        return original(self, node_id)
+
+    monkeypatch.setattr(RoadGraph, "component", counted)
 
     graph, metadata = load_graphml(source, origin_lonlat=(0.0, 0.0))
 
@@ -41,6 +52,7 @@ def test_graphml_loader_projects_coordinates_and_records_source_metadata(tmp_pat
     assert metadata["component_sizes"] == [3]
     assert metadata["source_sha256"] == hashlib.sha256(source.read_bytes()).hexdigest()
     assert len(metadata["adjacency_checksum"]) == 64
+    assert calls["count"] == 1
 
 
 def test_graphml_loader_requires_explicit_origin_for_lonlat(tmp_path: Path) -> None:

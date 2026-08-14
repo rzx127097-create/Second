@@ -38,7 +38,7 @@ from problem2.baselines import make_policy
 
 
 def _emit(payload: dict[str, Any]) -> None:
-    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    print(json.dumps(payload, ensure_ascii=True, sort_keys=True))
 
 
 def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:

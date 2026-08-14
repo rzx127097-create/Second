@@ -1,0 +1,65 @@
+{
+  "details": {},
+  "evidence_paths": [],
+  "issues": [
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.uav_onboard_pesticide"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.uav_spray_flow"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.uav_usable_fraction"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.uav_speed"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.vehicle_inventory"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.vehicle_transfer_rate"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.vehicle_service_capacity"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.service_setup_time"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.rendezvous_radius"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.vehicle_speed"
+    },
+    {
+      "code": "unverified_source",
+      "message": "parameter is an assumption or has a placeholder source",
+      "path": "parameters.decision_dt"
+    }
+  ],
+  "missing_parameters": [],
+  "name": "parameters",
+  "ready": false,
+  "status": "provisional"
+}

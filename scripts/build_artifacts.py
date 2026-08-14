@@ -22,9 +22,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         bundle = build_artifacts(args.input, args.output, manifest=manifest)
     except Exception as exc:
-        print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        print(json.dumps({"error": str(exc)}, ensure_ascii=True), file=sys.stderr)
         return 1
-    print(json.dumps({"paths": {name: str(path) for name, path in bundle.paths.items()}}, ensure_ascii=False))
+    print(json.dumps({"paths": {name: str(path) for name, path in bundle.paths.items()}}, ensure_ascii=True))
     return 0
 
 

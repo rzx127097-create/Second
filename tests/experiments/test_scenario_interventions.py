@@ -41,6 +41,14 @@ def test_parameter_intervention_is_typed_bounded_and_recorded() -> None:
     assert all(state.onboard_l == 0.5 * state.capacity_l for state in bundle.resources.uavs.values())
 
 
+def test_vehicle_service_capacity_is_explicitly_separate_from_inventory() -> None:
+    bundle = build_synthetic_scenario("s1", 5, config_dir=CONFIG_DIR)
+    assert bundle.resources.vehicle("vehicle-1").service_cap_l == 5.0
+    assert bundle.resources.vehicle("vehicle-1").service_cap_l <= (
+        bundle.resources.vehicle("vehicle-1").capacity_l
+    )
+
+
 def test_unlimited_diagnostic_removes_onboard_bottleneck_without_breaking_conservation() -> None:
     intervention = ScenarioIntervention(condition_id="unlimited", pesticide_mode="unlimited")
     bundle = build_synthetic_scenario("s1", 7, config_dir=CONFIG_DIR, intervention=intervention)
@@ -275,8 +283,17 @@ def test_remove_joint_demand_rendezvous_uses_fifo_instead_of_urgency_order() -> 
         ),
     )
 
-    full_snapshot = _request_step(full)
-    removed_snapshot = _request_step(removed)
+    # Keep both requests active while leaving different finite endurance.
+    # Exhausting both UAVs makes both urgency scores ``inf`` and therefore
+    # cannot distinguish joint prioritisation from FIFO ordering.
+    for bundle in (full, removed):
+        bundle.adapter.request_threshold_ratio = 0.9
+        bundle.reset()
+        bundle.resources.spray("uav-1", 0.3)
+        bundle.resources.spray("uav-2", 0.7)
+
+    full_snapshot = _legal_step(full)
+    removed_snapshot = _legal_step(removed)
     full_first = dict(full_snapshot.candidate_mapping["vehicle-1"])["slot-0"]
     removed_first = dict(removed_snapshot.candidate_mapping["vehicle-1"])["slot-0"]
 

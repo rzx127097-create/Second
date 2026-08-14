@@ -47,6 +47,19 @@ def _adjacency_checksum(graph: RoadGraph) -> str:
     return sha256("\n".join(lines).encode("utf-8")).hexdigest()
 
 
+def _component_sizes(graph: RoadGraph) -> list[int]:
+    """Return connected-component sizes with one traversal per component."""
+
+    remaining = set(graph.nodes)
+    sizes: list[int] = []
+    while remaining:
+        start = min(remaining)
+        component = graph.component(start)
+        sizes.append(len(component))
+        remaining.difference_update(component)
+    return sorted(sizes, reverse=True)
+
+
 def load_graphml(
     path: str | Path,
     *,
@@ -121,15 +134,7 @@ def load_graphml(
     if not edges:
         raise ValueError("GraphML source contains no usable edges after filtering")
     graph = RoadGraph.from_edges(nodes, edges)
-    components = sorted((len(graph.component(node)) for node in graph.nodes), reverse=True)
-    unique_components: list[int] = []
-    seen: set[frozenset[str]] = set()
-    for node in sorted(graph.nodes):
-        component = frozenset(graph.component(node))
-        if component not in seen:
-            seen.add(component)
-            unique_components.append(len(component))
-    unique_components.sort(reverse=True)
+    component_sizes = _component_sizes(graph)
     all_lonlat = list(raw_points.values())
     metadata: dict[str, Any] = {
         "source_path": str(source),
@@ -146,7 +151,7 @@ def load_graphml(
         ] if coordinate_mode == "lonlat" else None,
         "node_count": len(graph.nodes),
         "edge_count": len(edges),
-        "component_sizes": unique_components,
+        "component_sizes": component_sizes,
         "adjacency_checksum": _adjacency_checksum(graph),
     }
     return graph, metadata

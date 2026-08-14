@@ -1,0 +1,29 @@
+{
+  "issues": [],
+  "metadata": {
+    "adjacency_checksum": "355a8a004cc2944801aec07a32a88658b47a35007a81627d04e54dfb996d3864",
+    "bbox_lonlat": [
+      72.9348403,
+      26.2068436,
+      73.1354043,
+      26.3866936
+    ],
+    "component_sizes": [
+      39213
+    ],
+    "coordinate_mode": "lonlat",
+    "directed_policy": "undirected",
+    "edge_count": 102961,
+    "node_count": 39213,
+    "origin_lonlat": [
+      73.0351433,
+      26.2967719
+    ],
+    "source_crs": "EPSG:4326",
+    "source_path": "D:\\Pycharm\\Locust_rl\\data\\jodhpur_drive.graphml",
+    "source_sha256": "b3af36efbfc87fff30bd61d204283dc40c5b8c83a80ba0ee09f3da5ef52a9462"
+  },
+  "name": "road_source",
+  "ready": true,
+  "status": "observed"
+}

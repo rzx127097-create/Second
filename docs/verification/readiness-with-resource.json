@@ -1,0 +1,224 @@
+{
+  "blockers": [
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "parameters: parameter is an assumption or has a placeholder source",
+    "scenarios: scenario, scale and matrix registries must all be verified",
+    "scenarios: source_kind, dynamics_kind and a SHA-256 source_metadata_hash are required",
+    "road_source: road source is not declared as frozen_gis",
+    "algorithm: SR-MAPPO algorithm configuration is provisional",
+    "protocol: Chapter 4.5 protocol and formal matrix must be verified",
+    "protocol: a positive practical equivalence margin is required",
+    "protocol: the practical equivalence basis is required"
+  ],
+  "details": {
+    "config_dir": "C:\\Users\\RZX\\Desktop\\论文\\毕业论文\\Second\\.worktrees\\problem2-code-framework\\configs",
+    "road_metadata": {},
+    "scenario": {
+      "cell_size_m": {
+        "s1": [
+          30.0,
+          25.0
+        ],
+        "s2": [
+          20.0,
+          20.0
+        ],
+        "s3": [
+          15.0,
+          16.666666666666668
+        ],
+        "s4": [
+          12.0,
+          14.285714285714286
+        ],
+        "s5": [
+          10.0,
+          12.5
+        ],
+        "s6": [
+          10.0,
+          10.0
+        ]
+      },
+      "scale_coverage": {
+        "sealed_test": {
+          "s1": 3,
+          "s2": 3,
+          "s3": 3,
+          "s4": 3,
+          "s5": 3,
+          "s6": 3
+        },
+        "train": {
+          "s1": 3,
+          "s2": 3,
+          "s3": 3,
+          "s4": 3,
+          "s5": 3,
+          "s6": 3
+        },
+        "validation": {
+          "s1": 2,
+          "s2": 2,
+          "s3": 2,
+          "s4": 2,
+          "s5": 2,
+          "s6": 2
+        }
+      },
+      "scale_ids": [
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5",
+        "s6"
+      ],
+      "seed_offset_count": 48,
+      "split_counts": {
+        "sealed_test": 18,
+        "train": 18,
+        "validation": 12
+      }
+    }
+  },
+  "formal_ready": false,
+  "gates": [
+    {
+      "issues": [
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.uav_onboard_pesticide"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.uav_spray_flow"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.uav_usable_fraction"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.uav_speed"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.vehicle_inventory"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.vehicle_transfer_rate"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.vehicle_service_capacity"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.service_setup_time"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.rendezvous_radius"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.vehicle_speed"
+        },
+        {
+          "code": "unverified_source",
+          "message": "parameter is an assumption or has a placeholder source",
+          "path": "parameters.decision_dt"
+        }
+      ],
+      "name": "parameters",
+      "ready": false,
+      "status": "provisional"
+    },
+    {
+      "issues": [
+        {
+          "code": "registry_provisional",
+          "message": "scenario, scale and matrix registries must all be verified",
+          "path": "status"
+        },
+        {
+          "code": "missing_source_metadata",
+          "message": "source_kind, dynamics_kind and a SHA-256 source_metadata_hash are required",
+          "path": "scenarios"
+        }
+      ],
+      "name": "scenarios",
+      "ready": false,
+      "status": "provisional"
+    },
+    {
+      "issues": [
+        {
+          "code": "road_not_frozen",
+          "message": "road source is not declared as frozen_gis"
+        }
+      ],
+      "name": "road_source",
+      "ready": false,
+      "status": "provisional"
+    },
+    {
+      "issues": [
+        {
+          "code": "registry_provisional",
+          "message": "SR-MAPPO algorithm configuration is provisional"
+        }
+      ],
+      "name": "algorithm",
+      "ready": false,
+      "status": "provisional"
+    },
+    {
+      "issues": [
+        {
+          "code": "registry_provisional",
+          "message": "Chapter 4.5 protocol and formal matrix must be verified"
+        },
+        {
+          "code": "missing_equivalence_margin",
+          "message": "a positive practical equivalence margin is required"
+        },
+        {
+          "code": "missing_equivalence_basis",
+          "message": "the practical equivalence basis is required"
+        }
+      ],
+      "name": "protocol",
+      "ready": false,
+      "status": "provisional"
+    },
+    {
+      "issues": [],
+      "name": "resource_activation",
+      "ready": true,
+      "status": "observed"
+    }
+  ],
+  "highest_gate": "M2"
+}

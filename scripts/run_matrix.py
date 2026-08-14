@@ -14,26 +14,16 @@ if str(ROOT / "src") not in sys.path:
 
 from problem2.experiments.orchestrator import Chapter45Orchestrator
 from problem2.experiments.process import run_utf8_json_child
+from problem2.experiments.readiness import audit_repository_readiness
 
 
 def _emit(payload: dict[str, Any]) -> None:
-    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    # Keep the machine-readable pipe independent of the Windows console code page.
+    print(json.dumps(payload, ensure_ascii=True, sort_keys=True))
 
 
-def _is_provisional(orchestrator: Chapter45Orchestrator) -> bool:
-    config = orchestrator.config
-    sections = (
-        config.parameters,
-        config.scales,
-        config.environment,
-        config.algorithm,
-        config.experiments,
-    )
-    return (
-        any(section.get("status") != "verified" for section in sections)
-        or config.scenario_status != "verified"
-        or orchestrator.spec.status != "verified"
-    )
+def _is_provisional(orchestrator: Chapter45Orchestrator, resource_report: dict[str, object] | None = None) -> bool:
+    return not audit_repository_readiness(orchestrator.config_dir, resource_report=resource_report).formal_ready
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,6 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-jobs", type=int, default=1)
+    parser.add_argument("--resource-report", type=Path)
     args = parser.parse_args(argv)
     try:
         orchestrator = Chapter45Orchestrator(
@@ -56,7 +47,11 @@ def main(argv: list[str] | None = None) -> int:
             args.output_root,
             protocol_path=args.protocol,
         )
-        provisional = _is_provisional(orchestrator)
+        resource_report = None
+        if args.resource_report is not None:
+            resource_report = json.loads(args.resource_report.read_text(encoding="utf-8"))
+        readiness = audit_repository_readiness(orchestrator.config_dir, resource_report=resource_report)
+        provisional = (not readiness.formal_ready) if resource_report is not None else _is_provisional(orchestrator)
         jobs = orchestrator.plan(
             args.family,
             execution_profile="smoke" if args.smoke else "formal",
@@ -66,6 +61,7 @@ def main(argv: list[str] | None = None) -> int:
                 "status": "dry_run",
                 "family": args.family,
                 "provisional": provisional,
+                "readiness": readiness.to_dict(),
                 "protocol_hash": orchestrator.protocol_hash,
                 "job_count": len(jobs),
                 "jobs": [job.to_dict() for job in jobs],
@@ -74,7 +70,8 @@ def main(argv: list[str] | None = None) -> int:
         if provisional and not args.smoke:
             _emit({
                 "status": "rejected",
-                "error": "formal matrix execution is blocked because configuration or protocol status is provisional",
+                "error": "formal matrix execution is blocked by the readiness gate; configuration or protocol status is provisional or unverified",
+                "readiness": readiness.to_dict(),
             })
             return 2
         if args.max_jobs < 1:
@@ -118,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
             "family": args.family,
             "smoke": bool(args.smoke),
             "protocol_hash": orchestrator.protocol_hash,
+            "readiness": readiness.to_dict(),
             "selected_count": len(selected),
             "total_count": len(jobs),
             "jobs": outputs,
