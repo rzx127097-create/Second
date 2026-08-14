@@ -3,57 +3,141 @@ note: "Demo values are placeholders for interface tests only; do not use as form
 parameters:
   uav_onboard_pesticide:
     symbol: q_i_max
+    meaning: "rated onboard pesticide capacity of one UAV"
     value: 1.0
     unit: L
     min: 0.1
     max: 5.0
     source_type: assumption
     source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
   uav_spray_flow:
     symbol: rho_i_spr
+    meaning: "UAV spray liquid flow rate"
     value: 0.01
     unit: L/s
     min: 0.001
     max: 0.1
     source_type: assumption
     source_id: "pending-equipment-or-field-source"
-  vehicle_inventory:
-    symbol: Q_v_0
-    value: 5.0
-    unit: L
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  uav_usable_fraction:
+    symbol: eta_i_use
+    meaning: "usable fraction of rated onboard pesticide capacity"
+    value: 0.8
+    unit: "1"
     min: 0.5
-    max: 20.0
+    max: 1.0
     source_type: assumption
     source_id: "pending-equipment-or-field-source"
-  vehicle_transfer_rate:
-    symbol: rho_svc
-    value: 0.02
-    unit: L/s
-    min: 0.005
-    max: 0.2
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-  service_setup_time:
-    symbol: T_setup
-    value: 10.0
-    unit: s
-    min: 1.0
-    max: 120.0
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-  rendezvous_radius:
-    symbol: R_rv
-    value: 5.0
-    unit: m
-    min: 1.0
-    max: 30.0
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-  vehicle_speed:
-    symbol: v_v
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  uav_speed:
+    symbol: v_i
+    meaning: "UAV ground speed used for endurance and rendezvous estimates"
     value: 1.0
     unit: m/s
     min: 0.2
     max: 10.0
     source_type: assumption
     source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  vehicle_inventory:
+    symbol: Q_v_0
+    meaning: "initial pesticide inventory carried by one support vehicle"
+    value: 5.0
+    unit: L
+    min: 0.5
+    max: 20.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  vehicle_transfer_rate:
+    symbol: rho_svc
+    meaning: "vehicle-to-UAV pesticide transfer rate"
+    value: 0.02
+    unit: L/s
+    min: 0.005
+    max: 0.2
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  service_setup_time:
+    symbol: T_setup
+    meaning: "fixed preparation time before pesticide transfer"
+    value: 10.0
+    unit: s
+    min: 1.0
+    max: 120.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  rendezvous_radius:
+    symbol: R_rv
+    meaning: "maximum UAV-vehicle separation accepted for service"
+    value: 5.0
+    unit: m
+    min: 1.0
+    max: 30.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  vehicle_speed:
+    symbol: v_v
+    meaning: "support-vehicle road speed"
+    value: 1.0
+    unit: m/s
+    min: 0.2
+    max: 10.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
+  decision_dt:
+    symbol: Delta_t
+    meaning: "environment decision interval"
+    value: 1.0
+    unit: s
+    min: 0.1
+    max: 10.0
+    source_type: assumption
+    source_id: "pending-equipment-or-field-source"
+    source_value: null
+    source_unit: null
+    conversion: null
+    status: provisional
+    scope: main
