@@ -10,5 +10,12 @@ communication:
   mode: synchronous_reliable
   delay_steps: 0
 road:
-  source: OSM_or_synthetic
+  source: synthetic_smoke
+  source_status: provisional
+  graphml_path: null
+  coordinate_mode: lonlat
+  origin_lonlat: null
+  bbox_lonlat: null
+  directed_policy: undirected
+  cache_metadata_path: null
   vehicle_must_stay_on_graph: true
