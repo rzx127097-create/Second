@@ -75,15 +75,18 @@ class ServiceStateMachine:
         """Advance one service phase and return actual transferred volume."""
         if self.phase is ServicePhase.IDLE:
             return 0.0
+        assert self.request_id is not None
+        request = manager.get(self.request_id)
+        if request.reserved_vehicle_id != vehicle_id:
+            raise ValueError(
+                f"request {request.request_id} is reserved for {request.reserved_vehicle_id}, not {vehicle_id}"
+            )
         if self.phase is ServicePhase.PREPARING:
             self.setup_remaining_s = max(0.0, self.setup_remaining_s - dt_s)
             if self.setup_remaining_s <= 1e-12:
-                assert self.request_id is not None
                 manager.start_service(self.request_id, step)
                 self.phase = ServicePhase.TRANSFERRING
             return 0.0
-        assert self.request_id is not None
-        request = manager.get(self.request_id)
         amount = min(
             request.remaining_l,
             resources.uav(request.uav_id).capacity_l - resources.uav(request.uav_id).onboard_l,

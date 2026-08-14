@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from problem2.algorithms.common.checkpoint import load_checkpoint
+from problem2.algorithms.common.checkpoint import load_checkpoint, save_checkpoint
 from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
 from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
 from problem2.config import config_identity, load_config_bundle
@@ -44,7 +44,41 @@ def _seed_everything(seed: int) -> None:
 
 
 def _is_provisional(bundle: Any) -> bool:
-    return any(section.get("status") != "verified" for section in (bundle.parameters, bundle.scales, bundle.environment, bundle.algorithm, bundle.experiments))
+    return any(section.get("status") != "verified" for section in (bundle.parameters, bundle.scales, bundle.environment, bundle.algorithm, bundle.experiments)) or bundle.scenario_status != "verified"
+
+
+def _write_jsonl_rows(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def _synchronize_raw_with_checkpoint(path: Path, *, checkpoint_step: int, expected_job_id: str) -> list[dict[str, Any]]:
+    """Make raw evidence agree with the last committed checkpoint update."""
+    if checkpoint_step < 0:
+        raise ValueError("checkpoint step must be non-negative")
+    rows: list[dict[str, Any]] = []
+    if path.exists():
+        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                raise ValueError(f"blank raw JSONL line at {line_number}")
+            value = json.loads(line)
+            if not isinstance(value, dict):
+                raise ValueError("raw JSONL rows must be objects")
+            rows.append(value)
+    run_ids = [str(row.get("run_id", "")) for row in rows]
+    if any(not run_id.startswith(f"{expected_job_id}:") for run_id in run_ids):
+        raise ValueError("raw row does not belong to the expected job identity")
+    updates = [int(row.get("update", 0)) for row in rows]
+    if updates != list(range(1, len(rows) + 1)):
+        raise ValueError("raw update sequence must be contiguous from one")
+    if len(rows) < int(checkpoint_step):
+        raise ValueError("checkpoint step exceeds raw evidence")
+    if len(rows) > int(checkpoint_step):
+        rows = rows[: int(checkpoint_step)]
+        _write_jsonl_rows(path, rows)
+    return rows
 
 
 def _merge_jsonl_rows(path: Path, rows: list[dict[str, Any]], *, expected_job_id: str) -> Path:
@@ -119,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         config = load_config_bundle(config_dir)
         _seed_everything(args.seed)
         if _is_provisional(config) and not args.smoke:
-            _emit({"status": "rejected", "error": "formal training is blocked because parameter or matrix status is provisional"})
+            _emit({"status": "rejected", "error": "formal training is blocked because a configuration status is provisional"})
             return 2
         if args.updates < 1:
             raise ValueError("updates must be positive")
@@ -156,10 +190,13 @@ def main(argv: list[str] | None = None) -> int:
                 start_update = int(metadata["step"])
             else:
                 algorithm = algorithm_factory()
-            existing_count = 0
-            if raw_path.exists():
-                existing_count = len([line for line in raw_path.read_text(encoding="utf-8").splitlines() if line.strip()])
-            scenario_cursor["index"] = existing_count
+            if start_update > int(args.updates):
+                raise ValueError("checkpoint step exceeds requested target updates")
+            existing_rows = _synchronize_raw_with_checkpoint(
+                raw_path, checkpoint_step=start_update, expected_job_id=job.job_id,
+            )
+            existing_count = len(existing_rows)
+            scenario_cursor["index"] = start_update
             remaining_updates = int(args.updates) - int(start_update)
             if remaining_updates <= 0:
                 return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": existing_count, "resume": "target_already_reached"}
@@ -173,14 +210,16 @@ def main(argv: list[str] | None = None) -> int:
                 algorithm._trainer,
                 updates=remaining_updates,
                 rollout_horizon=horizon,
-                checkpoint_path=checkpoint_path,
+                checkpoint_path=None,
                 start_update=start_update,
                 total_updates=args.updates,
                 algorithm_config=algorithm_config,
             )
-            rows = traceable_episode_rows(records, job, split="train", index_offset=existing_count)
+            rows = traceable_episode_rows(records, job, split="train", index_offset=start_update)
             _merge_jsonl_rows(raw_path, rows, expected_job_id=job.job_id)
-            return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": len(rows)}
+            final_step = start_update + len(records)
+            save_checkpoint(checkpoint_path, algorithm, step=final_step)
+            return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": existing_count + len(rows)}
 
         completed = JobRunner(
             worker,

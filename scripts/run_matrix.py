@@ -22,7 +22,7 @@ def _emit(payload: dict[str, Any]) -> None:
 
 
 def _is_provisional(config: Any) -> bool:
-    return any(section.get("status") != "verified" for section in (config.parameters, config.scales, config.environment, config.algorithm, config.experiments))
+    return any(section.get("status") != "verified" for section in (config.parameters, config.scales, config.environment, config.algorithm, config.experiments)) or config.scenario_status != "verified"
 
 
 def _jobs(config: Any, *, execution_profile: str = "formal") -> list[dict[str, object]]:
@@ -58,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
             _emit({"status": "dry_run", "provisional": provisional, "job_count": len(jobs), "jobs": jobs})
             return 0
         if provisional and not args.smoke:
-            _emit({"status": "rejected", "error": "formal matrix execution is blocked because parameter or matrix status is provisional"})
+            _emit({"status": "rejected", "error": "formal matrix execution is blocked because a configuration status is provisional"})
             return 2
         if not args.smoke:
             raise ValueError("matrix execution requires explicit --smoke until a formal executor is configured")

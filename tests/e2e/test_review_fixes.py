@@ -128,6 +128,53 @@ def test_resume_jsonl_merge_preserves_existing_rows_and_rejects_duplicate_run_id
         _merge_jsonl_rows(path, new, expected_job_id="job")
 
 
+def test_raw_evidence_is_trimmed_to_checkpoint_step_after_interrupted_commit(tmp_path):
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from scripts.train import _synchronize_raw_with_checkpoint
+
+    path = tmp_path / "episodes.jsonl"
+    path.write_text(
+        "".join(json.dumps({"run_id": f"job:{i}", "update": i + 1}) + "\n" for i in range(2)),
+        encoding="utf-8",
+    )
+    rows = _synchronize_raw_with_checkpoint(path, checkpoint_step=1, expected_job_id="job")
+    assert len(rows) == 1
+    assert json.loads(path.read_text(encoding="utf-8").splitlines()[0])["update"] == 1
+
+
+def test_checkpoint_ahead_of_raw_evidence_is_rejected(tmp_path):
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from scripts.train import _synchronize_raw_with_checkpoint
+
+    path = tmp_path / "episodes.jsonl"
+    path.write_text(json.dumps({"run_id": "job:0", "update": 1}) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="checkpoint step exceeds raw evidence"):
+        _synchronize_raw_with_checkpoint(path, checkpoint_step=2, expected_job_id="job")
+
+
+def test_service_completion_event_receives_completion_bonus() -> None:
+    from problem2.environment.rewards import RewardWeights, compute_reward
+
+    result = compute_reward(
+        previous_density=1.0,
+        current_density=1.0,
+        transferred_l=0.4,
+        weights=RewardWeights(service_per_l=1.0, completion_bonus=2.0),
+        events=[{"event_type": "request_completed", "request_id": "req-1"}],
+    )
+    assert result.service == pytest.approx(2.4)
+    partial = compute_reward(
+        previous_density=1.0,
+        current_density=1.0,
+        transferred_l=0.4,
+        weights=RewardWeights(service_per_l=1.0, completion_bonus=2.0),
+        events=[{"event_type": "service_released", "request_id": "req-1"}],
+    )
+    assert partial.service == pytest.approx(0.4)
+
+
 def test_artifact_outputs_are_atomic_and_leave_no_temporary_files(tmp_path):
     from problem2.artifacts import build_artifacts
 

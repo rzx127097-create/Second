@@ -36,7 +36,7 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:
 
 
 def _is_provisional(config: Any) -> bool:
-    return any(section.get("status") != "verified" for section in (config.parameters, config.scales, config.environment, config.algorithm, config.experiments))
+    return any(section.get("status") != "verified" for section in (config.parameters, config.scales, config.environment, config.algorithm, config.experiments)) or config.scenario_status != "verified"
 
 
 def _checkpoint_record(path: Path) -> JobRecord:
@@ -68,9 +68,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.scenario not in scenarios:
             raise ValueError(f"scenario {args.scenario!r} does not belong to split {args.split!r}")
         if args.split == "sealed_test" and _is_provisional(config):
-            raise ValueError("sealed_test is blocked because parameter or matrix status is provisional")
+            raise ValueError("sealed_test is blocked because a configuration status is provisional")
         if _is_provisional(config) and not args.smoke:
-            raise ValueError("formal evaluation is blocked because parameter or matrix status is provisional")
+            raise ValueError("formal evaluation is blocked because a configuration status is provisional")
         checkpoint = Path(args.checkpoint).resolve()
         if not checkpoint.is_file():
             raise FileNotFoundError(f"checkpoint does not exist: {checkpoint}")

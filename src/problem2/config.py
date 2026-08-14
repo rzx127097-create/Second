@@ -19,6 +19,7 @@ class ConfigBundle:
     algorithm: dict[str, Any]
     experiments: dict[str, Any]
     scenarios: dict[str, Any]
+    scenario_status: str
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -39,6 +40,7 @@ def load_config_bundle(config_dir: str | Path) -> ConfigBundle:
         algorithm=_load(root / "algorithms" / "sr_mappo.yaml"),
         experiments=_load(root / "experiments" / "formal_matrix.yaml"),
         scenarios=dict(scenario_doc.get("scenarios", {})),
+        scenario_status=str(scenario_doc.get("status", "")),
     )
     _validate(bundle)
     return bundle
@@ -51,6 +53,8 @@ def _validate(bundle: ConfigBundle) -> None:
         raise ValueError("the primary experiment must use one vehicle")
     if bundle.parameters.get("status") not in {"provisional", "verified"}:
         raise ValueError("parameter registry status must be provisional or verified")
+    if bundle.scenario_status not in {"provisional", "verified"}:
+        raise ValueError("scenario registry status must be provisional or verified")
     required_splits = {"train", "validation", "sealed_test"}
     if set(bundle.experiments.get("splits", [])) != required_splits:
         raise ValueError("formal matrix must declare train, validation and sealed_test")
@@ -90,6 +94,7 @@ def _canonical(bundle: ConfigBundle) -> bytes:
         "algorithm": bundle.algorithm,
         "experiments": bundle.experiments,
         "scenarios": bundle.scenarios,
+        "scenario_status": bundle.scenario_status,
     }
     return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 

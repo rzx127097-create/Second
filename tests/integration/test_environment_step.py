@@ -137,3 +137,19 @@ def test_partial_service_reopens_request_and_releases_service_lock() -> None:
     assert service.phase is ServicePhase.IDLE
     assert service.request_id is None
     assert service.locked_uav_id is None
+
+
+def test_service_rejects_a_vehicle_that_did_not_reserve_the_request() -> None:
+    resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.10, 0.50, 0.01)},
+        vehicles={
+            "vehicle-1": VehicleState("vehicle-1", 0.50, 0.50, 1.0, 0.50),
+            "vehicle-2": VehicleState("vehicle-2", 0.50, 0.50, 1.0, 0.50),
+        },
+    )
+    manager = RequestManager()
+    request = manager.create_request("uav-1", requested_l=0.20, step=0)
+    service = ServiceStateMachine()
+    assert service.reserve(manager, "vehicle-1", step=1, setup_s=0.0) is request
+    with pytest.raises(ValueError, match="reserved for vehicle-1"):
+        service.tick(manager, resources, "vehicle-2", dt_s=1.0, step=2)

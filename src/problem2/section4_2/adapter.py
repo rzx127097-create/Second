@@ -212,6 +212,8 @@ class HeterogeneousDecisionAdapter:
                     events.append({"event_type": "pesticide_transfer", "amount_l": transferred, "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
                 if self.service.phase is ServicePhase.IDLE:
                     events.append({"event_type": "service_released", "request_id": request.request_id, "step": self._decision_step})
+                    if request.status is RequestStatus.COMPLETED:
+                        events.append({"event_type": "request_completed", "request_id": request.request_id, "step": self._decision_step})
                     self._locked_uav_id = None
                     self._locked_vehicle_id = None
                     self._service_target_node = None
