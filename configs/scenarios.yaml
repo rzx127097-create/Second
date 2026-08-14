@@ -1,4 +1,7 @@
 status: provisional
+source_kind: synthetic_smoke
+dynamics_kind: smoke_local_removal
+source_metadata_hash: null
 scenarios:
   train_001: {split: train, scale: s1, seed_offset: 1001}
   train_s1_002: {split: train, scale: s1, seed_offset: 1102}
