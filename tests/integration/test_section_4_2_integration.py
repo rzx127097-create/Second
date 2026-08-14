@@ -128,6 +128,37 @@ def test_adapter_reset_restores_resources_outside_active_role_slots() -> None:
     all_resources.assert_conservation()
 
 
+def test_adapter_builds_vehicle_slots_from_section_4_3_rendezvous_candidates() -> None:
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.8, 1.0, 0.01)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 0.5, 0.5, 1.0, 0.5)},
+    )
+    adapter = HeterogeneousDecisionAdapter(
+        candidate_resources,
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=2.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 7),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        request_threshold_ratio=0.9,
+        service_setup_s=0.0,
+        rendezvous_radius_m=4.0,
+        max_candidate_slots=3,
+    )
+    adapter.reset(seed=13)
+
+    state = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    request = adapter.request_manager.active_requests()[0]
+    assert state.action_masks["vehicle-1"].valid_actions == ("hold", "slot-0")
+    assert state.candidate_mapping["vehicle-1"] == (
+        ("slot-0", f"{request.request_id}:rv-a"),
+    )
+
+
 def test_adapter_records_actual_spray_and_lock_blocks_spray() -> None:
     adapter = HeterogeneousDecisionAdapter(
         resources(), graph(), uav_slots=("uav-1",), vehicle_slots=("vehicle-1",),

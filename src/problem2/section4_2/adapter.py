@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections.abc import Iterable, Mapping
+from math import hypot
 
+from problem2.demand.candidate_slots import build_candidate_action_slots
+from problem2.demand.endurance import remaining_work_time_s
+from problem2.demand.planning import RendezvousCandidate, generate_rendezvous_candidates
+from problem2.demand.rendezvous import RendezvousPoint
 from problem2.domain.requests import RequestManager, RequestStatus
 from problem2.domain.resources import PesticideResources
 from problem2.environment.action_masks import ActionMask, uav_action_mask, vehicle_action_mask
@@ -23,7 +28,7 @@ class DecisionState:
     events: list[dict[str, object]]
     vehicle_nodes: dict[str, str]
     uav_positions: dict[str, tuple[int, int]]
-    candidate_mapping: dict[str, tuple[tuple[str, tuple[str, ...]], ...]]
+    candidate_mapping: dict[str, tuple[tuple[str, str], ...]]
 
 
 class HeterogeneousDecisionAdapter:
@@ -39,6 +44,8 @@ class HeterogeneousDecisionAdapter:
         vehicle_speed_mps: float = 1.0,
         decision_dt_s: float = 1.0,
         uav_grid_shape: tuple[int, int] = (1, 1),
+        uav_cell_size_m: tuple[float, float] = (1.0, 1.0),
+        uav_speed_mps: float = 1.0,
         request_threshold_ratio: float = 0.0,
         service_setup_s: float = 10.0,
         rendezvous_radius_m: float = 5.0,
@@ -50,10 +57,12 @@ class HeterogeneousDecisionAdapter:
             raise ValueError("unknown UAV slot")
         if any(identifier not in resources.vehicles for identifier in vehicle_slots):
             raise ValueError("unknown vehicle slot")
-        if decision_dt_s <= 0 or vehicle_speed_mps <= 0:
+        if decision_dt_s <= 0 or vehicle_speed_mps <= 0 or uav_speed_mps <= 0:
             raise ValueError("decision and vehicle speeds must be positive")
         if len(uav_grid_shape) != 2 or any(int(size) <= 0 for size in uav_grid_shape):
             raise ValueError("uav_grid_shape must contain two positive dimensions")
+        if len(uav_cell_size_m) != 2 or any(float(size) <= 0 for size in uav_cell_size_m):
+            raise ValueError("uav_cell_size_m must contain two positive dimensions")
         if not 0.0 <= request_threshold_ratio <= 1.0:
             raise ValueError("request_threshold_ratio must lie in [0, 1]")
         if service_setup_s < 0 or rendezvous_radius_m < 0 or max_candidate_slots < 1:
@@ -67,6 +76,8 @@ class HeterogeneousDecisionAdapter:
         self.vehicle_speed_mps = float(vehicle_speed_mps)
         self.decision_dt_s = float(decision_dt_s)
         self.uav_grid_shape = (int(uav_grid_shape[0]), int(uav_grid_shape[1]))
+        self.uav_cell_size_m = (float(uav_cell_size_m[0]), float(uav_cell_size_m[1]))
+        self.uav_speed_mps = float(uav_speed_mps)
         self.request_threshold_ratio = float(request_threshold_ratio)
         self.service_setup_s = float(service_setup_s)
         self.rendezvous_radius_m = float(rendezvous_radius_m)
@@ -75,6 +86,9 @@ class HeterogeneousDecisionAdapter:
         self.uav_positions: dict[str, tuple[int, int]] = {}
         self._candidate_routes: dict[str, dict[str, tuple[str, ...]]] = {}
         self._candidate_request_ids: dict[str, dict[str, str]] = {}
+        self._candidate_mapping_keys: dict[str, dict[str, str]] = {}
+        self._candidate_records: dict[str, dict[str, RendezvousCandidate]] = {}
+        self._candidate_target_cells: dict[str, dict[str, tuple[int, int]]] = {}
         self._locked_uav_id: str | None = None
         self._locked_vehicle_id: str | None = None
         self._service_target_node: str | None = None
@@ -111,6 +125,9 @@ class HeterogeneousDecisionAdapter:
         self.uav_positions = {uav_id: (0, 0) for uav_id in self.uav_slots}
         self._candidate_routes = {}
         self._candidate_request_ids = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
+        self._candidate_mapping_keys = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
+        self._candidate_records = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
+        self._candidate_target_cells = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
         self._refresh_request_candidates()
         self._refresh_state(events=[])
         return self.state
@@ -130,6 +147,13 @@ class HeterogeneousDecisionAdapter:
             probe.set_route(values)
             routes[slot_name] = values
         self._candidate_routes[vehicle_id] = routes
+        self._candidate_mapping_keys[vehicle_id] = {
+            slot: f"manual:{slot}:{route[-1]}" for slot, route in routes.items()
+        }
+        self._candidate_target_cells[vehicle_id] = {
+            slot: self._road_node_to_uav_cell(route[-1]) for slot, route in routes.items()
+        }
+        self._candidate_records[vehicle_id] = {}
         self._refresh_state(events=self.state.events if self._state is not None else [])
 
     def set_service_lock(self, uav_id: str, vehicle_id: str) -> None:
@@ -231,7 +255,8 @@ class HeterogeneousDecisionAdapter:
             routes = self._candidate_routes.get(vehicle_id, {})
             current_node = self.executors[vehicle_id].current_node
             candidates = [
-                route if route is not None and route[0] == current_node else None
+                self._candidate_records.get(vehicle_id, {}).get(f"slot-{index}")
+                or (route if route is not None and route[0] == current_node else None)
                 for index in range(self.max_candidate_slots)
                 for route in (routes.get(f"slot-{index}"),)
             ]
@@ -241,15 +266,45 @@ class HeterogeneousDecisionAdapter:
     def _refresh_state(self, *, events: list[dict[str, object]]) -> None:
         self._state = DecisionState(role_slots={"uav": self.uav_slots, "vehicle": self.vehicle_slots}, action_masks=self._masks(), events=list(events), vehicle_nodes={key: executor.current_node for key, executor in self.executors.items()}, uav_positions=dict(self.uav_positions), candidate_mapping=self._candidate_mapping_snapshot())
 
-    def _candidate_mapping_snapshot(self) -> dict[str, tuple[tuple[str, tuple[str, ...]], ...]]:
-        return {vehicle_id: tuple(sorted(routes.items())) for vehicle_id, routes in self._candidate_routes.items()}
+    def _candidate_mapping_snapshot(self) -> dict[str, tuple[tuple[str, str], ...]]:
+        return {
+            vehicle_id: tuple(sorted(self._candidate_mapping_keys.get(vehicle_id, {}).items()))
+            for vehicle_id in self.vehicle_slots
+        }
+
+    def _uav_metric_position(self, uav_id: str) -> tuple[float, float]:
+        row, col = self.uav_positions[uav_id]
+        row_size_m, col_size_m = self.uav_cell_size_m
+        return float(col) * col_size_m, float(row) * row_size_m
+
+    def _road_node_to_uav_cell(self, node_id: str) -> tuple[int, int]:
+        x_m, y_m = self.road_graph.nodes[node_id]
+        row_size_m, col_size_m = self.uav_cell_size_m
+        row = min(max(int(round(y_m / row_size_m)), 0), self.uav_grid_shape[0] - 1)
+        col = min(max(int(round(x_m / col_size_m)), 0), self.uav_grid_shape[1] - 1)
+        return row, col
+
+    def _rendezvous_points(self, uav_id: str) -> tuple[RendezvousPoint, ...]:
+        uav_x, uav_y = self._uav_metric_position(uav_id)
+        points = []
+        for node_id, position in sorted(self.road_graph.nodes.items()):
+            distance_m = hypot(position[0] - uav_x, position[1] - uav_y)
+            if distance_m <= self.rendezvous_radius_m + 1e-12:
+                points.append(
+                    RendezvousPoint(
+                        point_id=f"rv-{node_id}",
+                        road_node_id=node_id,
+                        position=position,
+                        distance_m=distance_m,
+                    )
+                )
+        return tuple(points)
 
     def _refresh_request_candidates(self) -> None:
         if not self.executors:
             return
-        self._candidate_request_ids = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
         open_requests = sorted(
-            (request for request in self.request_manager._requests.values() if request.status is RequestStatus.OPEN),
+            (request for request in self.request_manager.active_requests() if request.status is RequestStatus.OPEN),
             key=lambda item: (item.created_step, item.request_id),
         )
         for vehicle_id, executor in self.executors.items():
@@ -259,25 +314,86 @@ class HeterogeneousDecisionAdapter:
                 # Never overwrite a route while the executor is carrying
                 # residual edge distance; policies receive a locked mask.
                 continue
+            if self.service.phase is not ServicePhase.IDLE:
+                continue
+            self._candidate_request_ids[vehicle_id] = {}
+            self._candidate_mapping_keys[vehicle_id] = {}
+            self._candidate_records[vehicle_id] = {}
+            self._candidate_target_cells[vehicle_id] = {}
             routes: dict[str, tuple[str, ...]] = {}
-            slot_index = 0
+            selected: list[tuple[RendezvousCandidate, int]] = []
+            vehicle = self.resources.vehicle(vehicle_id)
             for request in open_requests:
-                if slot_index >= self.max_candidate_slots:
+                points = self._rendezvous_points(request.uav_id)
+                if not points:
                     continue
-                target = str(self.uav_positions[request.uav_id])
-                try:
-                    path, _distance = shortest_path(self.road_graph, executor.current_node, target)
-                except (KeyError, ValueError):
+                uav = self.resources.uav(request.uav_id)
+                candidates = generate_rendezvous_candidates(
+                    points,
+                    graph=self.road_graph,
+                    vehicle_node=executor.current_node,
+                    vehicle_speed_mps=self.vehicle_speed_mps,
+                    uav_speed_mps=self.uav_speed_mps,
+                    remaining_work_s=remaining_work_time_s(
+                        onboard_l=uav.onboard_l,
+                        spray_flow_l_s=uav.spray_flow_l_s,
+                    ),
+                    requested_l=request.remaining_l,
+                    vehicle_inventory_l=vehicle.inventory_l,
+                    service_cap_l=vehicle.service_cap_l,
+                    service_setup_s=self.service_setup_s,
+                    transfer_rate_l_s=vehicle.transfer_rate_l_s,
+                    rendezvous_radius_m=self.rendezvous_radius_m,
+                    request_id=request.request_id,
+                    uav_id=request.uav_id,
+                )
+                feasible = [candidate for candidate in candidates if candidate.feasible]
+                if not feasible:
                     continue
+                best = min(
+                    feasible,
+                    key=lambda candidate: (
+                        candidate.joint_arrival_eta_s,
+                        candidate.road_distance_m,
+                        candidate.point_id,
+                        candidate.road_node_id,
+                    ),
+                )
+                selected.append((best, request.created_step))
+            selected.sort(
+                key=lambda item: (
+                    -item[0].urgency,
+                    item[1],
+                    item[0].joint_arrival_eta_s,
+                    item[0].mapping_key,
+                )
+            )
+            slots = build_candidate_action_slots(
+                (candidate for candidate, _ in selected),
+                max_slots=self.max_candidate_slots,
+            )
+            for slot_index, candidate in enumerate(slots.candidates):
                 slot = f"slot-{slot_index}"
+                path, _distance = shortest_path(
+                    self.road_graph,
+                    executor.current_node,
+                    candidate.road_node_id,
+                )
                 routes[slot] = tuple(path)
-                self._candidate_request_ids[vehicle_id][slot] = request.request_id
-                slot_index += 1
-            if not routes:
+                self._candidate_request_ids[vehicle_id][slot] = candidate.request_id
+                self._candidate_mapping_keys[vehicle_id][slot] = candidate.mapping_key
+                self._candidate_records[vehicle_id][slot] = candidate
+                self._candidate_target_cells[vehicle_id][slot] = self._road_node_to_uav_cell(
+                    candidate.road_node_id
+                )
+            if not routes and not open_requests:
                 for index, (node, _distance) in enumerate(self.road_graph.neighbors(executor.current_node)):
                     if index >= self.max_candidate_slots:
                         break
-                    routes[f"slot-{index}"] = (executor.current_node, node)
+                    slot = f"slot-{index}"
+                    routes[slot] = (executor.current_node, node)
+                    self._candidate_mapping_keys[vehicle_id][slot] = f"reposition:{node}"
+                    self._candidate_target_cells[vehicle_id][slot] = self._road_node_to_uav_cell(node)
             self._candidate_routes[vehicle_id] = routes
 
 

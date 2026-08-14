@@ -312,6 +312,8 @@ def build_synthetic_scenario(
         vehicle_speed_mps=float(parameter_values.get("vehicle_speed", 1.0)),
         decision_dt_s=float(config.scales.get("decision_dt_s", 1.0)),
         uav_grid_shape=(rows, cols),
+        uav_cell_size_m=cell_size_m,
+        uav_speed_mps=max(cell_size_m) / float(config.scales.get("decision_dt_s", 1.0)),
         request_threshold_ratio=float(environment.get("request_threshold_ratio", 0.20)),
         service_setup_s=float(parameter_values.get("service_setup_time", 10.0)),
         rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),
