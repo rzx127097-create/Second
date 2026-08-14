@@ -38,3 +38,12 @@ SHA: `0bc6b5f3d9e3f589a560b15011e9c15eb2dae4c7`.
 
 - The no-checkpoint adapters are smoke-only deterministic policies, not trained model claims.
 - Formal checkpoints still require dimensions compatible with the first evaluation snapshot; malformed payloads are rejected by the shared checkpoint loader.
+
+## Review Fixes (2026-08-14)
+
+- RED: the added regression tests initially failed four cases: role-first smoke actions were copied across UAVs; A* and fixed-support checkpoint paths did not invoke `_load_algorithm`; fixed support allowed a learned vehicle slot; and two-stage metadata lacked an explicit training protocol.
+- GREEN: `pytest -q tests/e2e/test_baseline_protocol.py` -> `7 passed`; `pytest -q` -> `118 passed`; `python -m compileall -q src scripts` and `git diff --check` -> success.
+- A* now loads the checkpoint algorithm, preserves learned UAV actions, and overrides only the vehicle with a currently valid candidate slot or hold. Fixed support loads learned UAV actions but forces every vehicle to legal hold while retaining `support_node` and `vehicle_id`.
+- Checkpoint factories receive the declared stability-component map; `mappo_mobile` disables only observation/return normalization. Two-stage adapters expose `initialization` and `training_protocol` metadata and remain smoke-only without checkpoints.
+- Policy purity is tested by comparing pesticide totals, UAV onboard amounts, vehicle inventories, and adapter vehicle nodes before/after `policy.act`; only `ScenarioBundle.step` performs transitions and conservation checks.
+- Review-fix commit SHA: `aaa07c0dd7b3b090b8bc5a2f6cdf44f30733ef04`.
