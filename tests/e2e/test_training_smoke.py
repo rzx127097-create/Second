@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from math import isfinite
 
+import numpy as np
 import pytest
 
 from problem2.algorithms.common.checkpoint import load_checkpoint
@@ -34,6 +35,17 @@ def _restored_algorithm() -> SRMAPPOAlgorithm:
     algorithm = _algorithm_factory()
     SRMAPPOTrainer(algorithm, learning_rate=1e-3)
     return algorithm
+
+
+def _request_bundle():
+    bundle = _bundle()
+    bundle.adapter._initial_uav_onboard["uav-1"] = 0.15
+    bundle.adapter.service_setup_s = 0.0
+    bundle.adapter.rendezvous_radius_m = 30.0
+    bundle.adapter.vehicle_speed_mps = 100.0
+    bundle.resources.vehicle("vehicle-1").transfer_rate_l_s = 1.0
+    bundle.resources.vehicle("vehicle-1").service_cap_l = 1.0
+    return bundle
 
 
 def test_cpu_training_smoke_collects_real_episode_and_resumes_checkpoint(tmp_path) -> None:
@@ -88,3 +100,41 @@ def test_cpu_training_smoke_collects_real_episode_and_resumes_checkpoint(tmp_pat
     )
     _, resumed_metadata = load_checkpoint(checkpoint, _restored_algorithm)
     assert resumed_metadata == {"step": 2, "format": 2}
+
+
+def test_rollout_connects_requests_candidates_and_global_state_to_sr_mappo() -> None:
+    pytest.importorskip("torch")
+    from problem2.experiments.rollout_runner import run_training_episode
+
+    bundle = _request_bundle()
+    initial = bundle.reset()
+    algorithm = SRMAPPOAlgorithm(
+        uav_obs_dim=len(initial.role_observations["uav-1"]["vector"]),
+        vehicle_obs_dim=len(initial.role_observations["vehicle-1"]["vector"]),
+        state_dim=len(initial.critic_state["vector"]),
+        uav_action_dim=len(initial.action_masks["uav-1"]),
+        vehicle_action_dim=len(initial.action_masks["vehicle-1"]),
+        hidden_dim=16,
+        device="cpu",
+    )
+    trainer = SRMAPPOTrainer(algorithm, learning_rate=1e-3)
+
+    record = run_training_episode(
+        bundle,
+        algorithm,
+        trainer,
+        horizon=3,
+        episode_id="request-integration",
+    )
+
+    batch = record.rollout
+    assert batch is not None
+    assert batch.advantages is not None and len(batch.advantages) == len(batch)
+    assert any(np.asarray(state["requests"])[:, 3].sum() > 0 for state in batch.states)
+    assert any(
+        mapping["vehicle-1"]
+        and str(mapping["vehicle-1"][0][1]).startswith("req-")
+        and ":rv-" in str(mapping["vehicle-1"][0][1])
+        for mapping in batch.candidate_mappings
+    )
+    assert all(len(batch.masks["vehicle"][step][0]) == bundle.adapter.max_candidate_slots + 1 for step in range(len(batch)))

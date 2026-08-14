@@ -29,6 +29,7 @@ class RendezvousCandidate:
     urgency: float
     feasible: bool
     reason: str | None
+    pesticide_disabled_expected: bool = False
 
     @property
     def mapping_key(self) -> str:
@@ -79,6 +80,7 @@ def generate_rendezvous_candidates(
     request_id: str,
     uav_id: str,
     vehicle_release_s: float = 0.0,
+    allow_late_service: bool = False,
 ) -> list[RendezvousCandidate]:
     if remaining_work_s < 0 or rendezvous_radius_m < 0 or vehicle_release_s < 0:
         raise ValueError("time and rendezvous radius must be non-negative")
@@ -123,7 +125,8 @@ def generate_rendezvous_candidates(
             reason = "vehicle_inventory_empty"
         elif requested_l > 0 and service_cap_l <= 0:
             reason = "service_capacity_empty"
-        elif joint_arrival_eta_s + service_duration_s > remaining_work_s + 1e-12:
+        pesticide_disabled_expected = joint_arrival_eta_s + service_duration_s > remaining_work_s + 1e-12
+        if reason is None and pesticide_disabled_expected and not allow_late_service:
             reason = "late_service"
         result.append(RendezvousCandidate(
             request_id=request_id,
@@ -140,6 +143,7 @@ def generate_rendezvous_candidates(
             urgency=float(candidate_urgency),
             feasible=reason is None,
             reason=reason,
+            pesticide_disabled_expected=pesticide_disabled_expected,
         ))
     result.sort(key=lambda item: (-item.urgency, item.joint_arrival_eta_s, item.point_id, item.road_node_id))
     return result

@@ -85,6 +85,27 @@ def test_candidate_generation_uses_road_eta_and_rejects_unreachable_or_late_poin
     assert late[0].reason == "late_service"
     assert feasible_candidates(late) == []
 
+    deferred = generate_rendezvous_candidates(
+        points[:1],
+        graph=road_graph(),
+        vehicle_node="a",
+        vehicle_speed_mps=1.0,
+        uav_speed_mps=1.0,
+        remaining_work_s=2.0,
+        requested_l=0.2,
+        vehicle_inventory_l=1.0,
+        service_cap_l=0.5,
+        service_setup_s=1.0,
+        transfer_rate_l_s=0.1,
+        rendezvous_radius_m=2.0,
+        request_id="req-1",
+        uav_id="uav-1",
+        allow_late_service=True,
+    )
+    assert deferred[0].feasible is True
+    assert deferred[0].reason is None
+    assert deferred[0].pesticide_disabled_expected is True
+
 
 def test_candidate_action_slots_preserve_mapping_and_disable_padding() -> None:
     candidate = RendezvousCandidate(

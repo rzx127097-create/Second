@@ -215,6 +215,8 @@ def build_vehicle_observation(
     step: int = 0,
     max_steps: int = 1,
     max_request_slots: int | None = None,
+    candidate_features: Iterable[Mapping[str, Any]] | None = None,
+    max_candidate_slots: int | None = None,
     **_: Any,
 ) -> dict[str, Any]:
     """Build a fixed-slot vehicle observation from current requests."""
@@ -260,12 +262,40 @@ def build_vehicle_observation(
         )
     norm_position = own_position
     phase = _phase_code(service_phase)
+    candidate_rows = list(candidate_features or ())
+    candidate_count = max(
+        0,
+        int(max_candidate_slots if max_candidate_slots is not None else len(candidate_rows)),
+    )
+    by_slot = {str(row.get("slot")): row for row in candidate_rows}
+    candidate_matrix = np.zeros((candidate_count, 10), dtype=float)
+    candidate_mask = np.zeros(candidate_count, dtype=np.int8)
+    candidate_mapping: list[str | None] = [None] * candidate_count
+    for index in range(candidate_count):
+        row = by_slot.get(f"slot-{index}")
+        if row is None:
+            continue
+        candidate_mask[index] = 1
+        candidate_mapping[index] = str(row.get("mapping_key", "")) or None
+        candidate_matrix[index] = (
+            float(row.get("remaining_l", 0.0)),
+            float(row.get("urgency", 0.0)),
+            float(row.get("road_distance_m", 0.0)),
+            float(row.get("uav_distance_m", 0.0)),
+            float(row.get("uav_eta_s", 0.0)),
+            float(row.get("vehicle_ready_eta_s", 0.0)),
+            float(row.get("joint_arrival_eta_s", 0.0)),
+            float(row.get("uav_wait_s", 0.0)),
+            float(row.get("vehicle_wait_s", 0.0)),
+            float(bool(row.get("pesticide_disabled_expected", False))),
+        )
     vector = _as_array(
         (
             norm_position,
             (vehicle.inventory_l / max(vehicle.capacity_l, 1e-12), vehicle.transfer_rate_l_s, vehicle.service_cap_l, phase),
             (1.0 if active_request_id else 0.0, step / max(1, max_steps)),
             request_features,
+            candidate_matrix,
         )
     )
     return {
@@ -279,6 +309,9 @@ def build_vehicle_observation(
         "request_slots": request_slots,
         "request_slot_mask": request_mask,
         "slot_mapping": slot_ids,
+        "candidate_features": candidate_matrix,
+        "candidate_slot_mask": candidate_mask,
+        "candidate_slot_mapping": tuple(candidate_mapping),
         "vector": vector,
     }
 
@@ -353,6 +386,7 @@ def build_observations(*args: Any, **kwargs: Any) -> dict[str, dict[str, Any]]:
     mapping = kwargs.pop("mapping", None) or stable_slot_mapping(resources.uavs, resources.vehicles, kwargs.get("requests", ()))
     locked_uav_id = kwargs.pop("service_locked_uav_id", None)
     legacy_service_locked = bool(kwargs.pop("service_locked", False))
+    candidate_features_by_vehicle = kwargs.pop("candidate_features_by_vehicle", {})
     result: dict[str, dict[str, Any]] = {}
     for uav_id in mapping.uav_ids:
         result[uav_id] = build_uav_observation(
@@ -363,7 +397,13 @@ def build_observations(*args: Any, **kwargs: Any) -> dict[str, dict[str, Any]]:
             **kwargs,
         )
     for vehicle_id in mapping.vehicle_ids:
-        result[vehicle_id] = build_vehicle_observation(vehicle_id, resources, mapping=mapping, **kwargs)
+        result[vehicle_id] = build_vehicle_observation(
+            vehicle_id,
+            resources,
+            mapping=mapping,
+            candidate_features=candidate_features_by_vehicle.get(vehicle_id, ()),
+            **kwargs,
+        )
     return result
 
 

@@ -95,7 +95,6 @@ class ScenarioBundle:
         self.pest_density = self.initial_density.copy()
         self.step_count = 0
         self.adapter.reset(seed=self.seed)
-        self._install_candidate_routes()
         return self._snapshot(events=())
 
     def assert_formal_ready(self) -> None:
@@ -161,22 +160,9 @@ class ScenarioBundle:
             info=info,
         )
 
-    def _install_candidate_routes(self) -> None:
-        start = self.adapter.executors[next(iter(self.adapter.vehicle_slots))].current_node
-        neighbours = [node for node, _ in self.road_graph.neighbors(start)]
-        routes: dict[str, tuple[str, ...]] = {}
-        for index, node in enumerate(neighbours[:4]):
-            routes[f"slot-{index}"] = (start, node)
-        self.candidate_mapping = {
-            vehicle_id: tuple(sorted(routes.items()))
-            for vehicle_id in self.adapter.vehicle_slots
-        }
-        for vehicle_id in self.adapter.vehicle_slots:
-            self.adapter.set_candidate_routes(vehicle_id, routes)
-
     def _snapshot(self, *, events: tuple[dict[str, object], ...]) -> DecisionSnapshot:
         vehicle_positions = {
-            vehicle_id: self.road_graph.nodes[node]
+            vehicle_id: self.adapter.road_node_to_uav_cell(node)
             for vehicle_id, node in self.adapter.state.vehicle_nodes.items()
         }
         positions = {
@@ -201,6 +187,8 @@ class ScenarioBundle:
             service_phase=self.service.phase,
             active_request_id=self.service.request_id,
             max_request_slots=self.adapter.max_candidate_slots,
+            candidate_features_by_vehicle=self.adapter.state.candidate_features,
+            max_candidate_slots=self.adapter.max_candidate_slots,
             step=self.step_count,
             max_steps=self.max_steps,
         )

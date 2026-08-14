@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections.abc import Iterable, Mapping
-from math import hypot
+from math import hypot, isfinite
 
 from problem2.demand.candidate_slots import build_candidate_action_slots
 from problem2.demand.endurance import remaining_work_time_s
@@ -29,6 +29,7 @@ class DecisionState:
     vehicle_nodes: dict[str, str]
     uav_positions: dict[str, tuple[int, int]]
     candidate_mapping: dict[str, tuple[tuple[str, str], ...]]
+    candidate_features: dict[str, tuple[dict[str, object], ...]]
 
 
 class HeterogeneousDecisionAdapter:
@@ -157,7 +158,7 @@ class HeterogeneousDecisionAdapter:
             slot: f"manual:{slot}:{route[-1]}" for slot, route in routes.items()
         }
         self._candidate_target_cells[vehicle_id] = {
-            slot: self._road_node_to_uav_cell(route[-1]) for slot, route in routes.items()
+            slot: self.road_node_to_uav_cell(route[-1]) for slot, route in routes.items()
         }
         self._candidate_records[vehicle_id] = {}
         self._refresh_state(events=self.state.events if self._state is not None else [])
@@ -307,7 +308,15 @@ class HeterogeneousDecisionAdapter:
         return masks
 
     def _refresh_state(self, *, events: list[dict[str, object]]) -> None:
-        self._state = DecisionState(role_slots={"uav": self.uav_slots, "vehicle": self.vehicle_slots}, action_masks=self._masks(), events=list(events), vehicle_nodes={key: executor.current_node for key, executor in self.executors.items()}, uav_positions=dict(self.uav_positions), candidate_mapping=self._candidate_mapping_snapshot())
+        self._state = DecisionState(
+            role_slots={"uav": self.uav_slots, "vehicle": self.vehicle_slots},
+            action_masks=self._masks(),
+            events=list(events),
+            vehicle_nodes={key: executor.current_node for key, executor in self.executors.items()},
+            uav_positions=dict(self.uav_positions),
+            candidate_mapping=self._candidate_mapping_snapshot(),
+            candidate_features=self._candidate_features_snapshot(),
+        )
 
     def _candidate_mapping_snapshot(self) -> dict[str, tuple[tuple[str, str], ...]]:
         return {
@@ -315,12 +324,44 @@ class HeterogeneousDecisionAdapter:
             for vehicle_id in self.vehicle_slots
         }
 
+    def _candidate_features_snapshot(self) -> dict[str, tuple[dict[str, object], ...]]:
+        result: dict[str, tuple[dict[str, object], ...]] = {}
+        for vehicle_id in self.vehicle_slots:
+            rows = []
+            for slot, candidate in sorted(self._candidate_records.get(vehicle_id, {}).items()):
+                request = self.request_manager.get(candidate.request_id)
+                urgency = float(candidate.urgency)
+                if not isfinite(urgency):
+                    urgency = 1_000_000.0
+                rows.append(
+                    {
+                        "slot": slot,
+                        "mapping_key": candidate.mapping_key,
+                        "request_id": candidate.request_id,
+                        "uav_id": candidate.uav_id,
+                        "road_node_id": candidate.road_node_id,
+                        "remaining_l": float(request.remaining_l),
+                        "urgency": min(max(urgency, 0.0), 1_000_000.0),
+                        "road_distance_m": float(candidate.road_distance_m),
+                        "uav_distance_m": float(candidate.uav_distance_m),
+                        "uav_eta_s": float(candidate.uav_eta_s),
+                        "vehicle_ready_eta_s": float(candidate.vehicle_ready_eta_s),
+                        "joint_arrival_eta_s": float(candidate.joint_arrival_eta_s),
+                        "uav_wait_s": float(candidate.uav_wait_s),
+                        "vehicle_wait_s": float(candidate.vehicle_wait_s),
+                        "pesticide_disabled_expected": bool(candidate.pesticide_disabled_expected),
+                    }
+                )
+            result[vehicle_id] = tuple(rows)
+        return result
+
     def _uav_metric_position(self, uav_id: str) -> tuple[float, float]:
         row, col = self.uav_positions[uav_id]
         row_size_m, col_size_m = self.uav_cell_size_m
         return float(col) * col_size_m, float(row) * row_size_m
 
-    def _road_node_to_uav_cell(self, node_id: str) -> tuple[int, int]:
+    def road_node_to_uav_cell(self, node_id: str) -> tuple[int, int]:
+        """Map one metric road node to the shared UAV grid coordinate frame."""
         x_m, y_m = self.road_graph.nodes[node_id]
         row_size_m, col_size_m = self.uav_cell_size_m
         row = min(max(int(round(y_m / row_size_m)), 0), self.uav_grid_shape[0] - 1)
@@ -409,6 +450,7 @@ class HeterogeneousDecisionAdapter:
                     rendezvous_radius_m=self.rendezvous_radius_m,
                     request_id=request.request_id,
                     uav_id=request.uav_id,
+                    allow_late_service=True,
                 )
                 feasible = [candidate for candidate in candidates if candidate.feasible]
                 if not feasible:
@@ -446,17 +488,9 @@ class HeterogeneousDecisionAdapter:
                 self._candidate_request_ids[vehicle_id][slot] = candidate.request_id
                 self._candidate_mapping_keys[vehicle_id][slot] = candidate.mapping_key
                 self._candidate_records[vehicle_id][slot] = candidate
-                self._candidate_target_cells[vehicle_id][slot] = self._road_node_to_uav_cell(
+                self._candidate_target_cells[vehicle_id][slot] = self.road_node_to_uav_cell(
                     candidate.road_node_id
                 )
-            if not routes and not open_requests:
-                for index, (node, _distance) in enumerate(self.road_graph.neighbors(executor.current_node)):
-                    if index >= self.max_candidate_slots:
-                        break
-                    slot = f"slot-{index}"
-                    routes[slot] = (executor.current_node, node)
-                    self._candidate_mapping_keys[vehicle_id][slot] = f"reposition:{node}"
-                    self._candidate_target_cells[vehicle_id][slot] = self._road_node_to_uav_cell(node)
             self._candidate_routes[vehicle_id] = routes
 
 

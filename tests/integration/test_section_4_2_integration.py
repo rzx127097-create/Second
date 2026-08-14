@@ -180,6 +180,12 @@ def test_adapter_builds_vehicle_slots_from_section_4_3_rendezvous_candidates() -
     assert state.candidate_mapping["vehicle-1"] == (
         ("slot-0", f"{request.request_id}:rv-a"),
     )
+    candidate = state.candidate_features["vehicle-1"][0]
+    assert candidate["slot"] == "slot-0"
+    assert candidate["mapping_key"] == f"{request.request_id}:rv-a"
+    assert candidate["request_id"] == request.request_id
+    assert candidate["road_distance_m"] == pytest.approx(0.0)
+    assert candidate["joint_arrival_eta_s"] == pytest.approx(0.0)
 
 
 def test_reservation_does_not_hard_lock_uav_before_joint_arrival() -> None:

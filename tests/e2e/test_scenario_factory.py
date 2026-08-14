@@ -97,3 +97,21 @@ def test_request_and_service_state_reach_all_section_4_4_inputs() -> None:
     assert snapshot.critic_state["requests"].shape[0] == bundle.adapter.max_candidate_slots
     assert snapshot.critic_state["requests"][0, 0] == request.remaining_l
     assert snapshot.critic_state["service"][0] == 0.0
+    candidate_mapping = snapshot.candidate_mapping["vehicle-1"]
+    assert candidate_mapping
+    assert vehicle["candidate_slot_mapping"][0] == candidate_mapping[0][1]
+    assert vehicle["candidate_slot_mask"][0] == 1
+    assert np.isfinite(vehicle["candidate_features"]).all()
+
+
+def test_snapshot_uses_grid_coordinates_for_both_actor_roles_and_critic() -> None:
+    bundle = build_synthetic_scenario("s1", seed=29, config_dir=CONFIG_DIR)
+    bundle.reset()
+    node = str((0, 1))
+    bundle.adapter.executors["vehicle-1"].current_node = node
+    bundle.adapter._refresh_state(events=[])
+
+    snapshot = bundle._snapshot(events=())
+
+    assert snapshot.role_observations["vehicle-1"]["position"] == (0.0, 1.0)
+    np.testing.assert_allclose(snapshot.critic_state["vehicles"][0, :2], [0.0, 1.0])

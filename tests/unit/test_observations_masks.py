@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from problem2.domain.resources import PesticideResources
 from problem2.domain.state import UAVState, VehicleState
@@ -69,6 +70,40 @@ def test_vehicle_observation_uses_fixed_vehicle_and_request_slots() -> None:
     assert observation["request_slots"].shape == (2,)
     assert observation["request_slot_mask"].tolist() == [1, 1]
     assert observation["slot_mapping"] == ("req-1", "req-2")
+
+
+def test_vehicle_observation_aligns_candidate_features_with_action_slots() -> None:
+    resources = _resources()
+    mapping = stable_slot_mapping(resources.uavs, resources.vehicles, max_request_slots=2)
+    observation = build_vehicle_observation(
+        "vehicle-1",
+        resources,
+        mapping=mapping,
+        max_candidate_slots=2,
+        candidate_features=[
+            {
+                "slot": "slot-0",
+                "mapping_key": "req-2:rv-b",
+                "remaining_l": 0.4,
+                "urgency": 0.75,
+                "road_distance_m": 3.0,
+                "uav_distance_m": 1.0,
+                "uav_eta_s": 1.0,
+                "vehicle_ready_eta_s": 1.5,
+                "joint_arrival_eta_s": 1.5,
+                "uav_wait_s": 0.5,
+                "vehicle_wait_s": 0.0,
+                "pesticide_disabled_expected": False,
+            }
+        ],
+    )
+
+    assert observation["candidate_slot_mapping"] == ("req-2:rv-b", None)
+    assert observation["candidate_slot_mask"].tolist() == [1, 0]
+    assert observation["candidate_features"].shape == (2, 10)
+    assert observation["candidate_features"][0, 1] == pytest.approx(0.75)
+    assert observation["candidate_features"][0, 4] == pytest.approx(1.0)
+    assert observation["candidate_features"][0, 6] == pytest.approx(1.5)
 
 
 def test_observation_builder_marks_only_the_served_uav_as_locked() -> None:
