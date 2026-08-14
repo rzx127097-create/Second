@@ -129,7 +129,12 @@ class FixedSupportPolicy(_SnapshotPolicy):
             )
         for vehicle_id, observation in snapshot.role_observations.items():
             if str(observation.get("role")) == "vehicle":
-                proposed[vehicle_id] = "hold"
+                mask = snapshot.action_masks[vehicle_id]
+                routes = snapshot.candidate_mapping.get(vehicle_id, ())
+                proposed[vehicle_id] = next(
+                    (str(slot) for slot, _ in routes if str(slot) in mask.valid_actions),
+                    "hold",
+                )
         return actions_to_environment(snapshot, proposed)
 
 

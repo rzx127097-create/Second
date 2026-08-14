@@ -94,3 +94,17 @@ execution:
   max_attempts: 2
   fail_on_nonfinite: true
   sealed_test_unlock_required: true
+
+family_scopes:
+  mechanism:
+    scales: [s1, s3, s6]
+    training_seeds: [0, 1, 2, 3, 4]
+  sensitivity:
+    scales: [s3, s6]
+    training_seeds: [0, 1, 2, 3, 4]
+  adaptation:
+    scales: [s3, s6]
+    training_seeds: [0, 1, 2, 3, 4]
+  ablation:
+    scales: [s3, s6]
+    training_seeds: [0, 1, 2, 3, 4]

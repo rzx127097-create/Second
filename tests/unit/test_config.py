@@ -44,6 +44,25 @@ def test_formal_matrix_separates_training_validation_and_sealed_test() -> None:
     assert not (set(matrix["train_scenarios"]) & set(matrix["sealed_test_scenarios"]))
 
 
+def test_every_scale_has_independent_train_validation_and_sealed_scenarios() -> None:
+    """A six-scale result cannot be paired when a scale has no registered test scene."""
+    bundle = load_config_bundle(ROOT / "configs")
+    counts = {
+        (scale, split): 0
+        for scale in (record["id"] for record in bundle.scales["scales"])
+        for split in ("train", "validation", "sealed_test")
+    }
+    offsets = set()
+    for record in bundle.scenarios.values():
+        counts[(record["scale"], record["split"])] += 1
+        assert record["seed_offset"] not in offsets
+        offsets.add(record["seed_offset"])
+    for scale in {record["id"] for record in bundle.scales["scales"]}:
+        assert counts[(scale, "train")] >= 3
+        assert counts[(scale, "validation")] >= 2
+        assert counts[(scale, "sealed_test")] >= 3
+
+
 def test_vehicle_action_names_match_configured_candidate_slots(tmp_path) -> None:
     import shutil
 

@@ -163,19 +163,19 @@ def test_matrix_dry_run_is_json_and_does_not_create_execution_outputs(tmp_path: 
     assert list(tmp_path.iterdir()) == []
 
 
-def test_matrix_smoke_reports_each_method_instead_of_silently_skipping_methods(tmp_path: Path) -> None:
+def test_matrix_smoke_executes_each_registered_method(tmp_path: Path) -> None:
     result = _cli(
         "run_matrix.py", "--config-dir", "configs", "--output-root", str(tmp_path),
         "--smoke", "--max-jobs", "5",
     )
 
-    assert result.returncode != 0
+    assert result.returncode == 0, result.stderr
     payload = _json_output(result)
-    assert payload["status"] == "failed"
+    assert payload["status"] == "partial"
     outputs = payload["jobs"]
     methods = {item["method"] for item in outputs}
     assert methods == {"sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar", "mappo_mobile", "sr_mappo_two_stage"}
-    assert all(item["status"] in {"completed", "rejected"} for item in outputs)
+    assert all(item["status"] == "completed" for item in outputs)
 
 
 def test_matrix_default_max_jobs_reports_partial_execution(tmp_path: Path) -> None:

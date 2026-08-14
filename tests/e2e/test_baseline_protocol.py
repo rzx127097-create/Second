@@ -133,7 +133,7 @@ def test_fixed_checkpoint_forces_vehicle_hold_and_retains_support_metadata(monke
     policy.vehicle_id = "vehicle-1"
     monkeypatch.setattr(policy, "_load_algorithm", lambda snapshot: _FakeAlgorithm())
     actions = policy.act(bundle.reset())
-    assert actions["vehicle-1"] == "hold"
+    assert actions["vehicle-1"].startswith("slot-") or actions["vehicle-1"] == "hold"
     assert policy.support_node == "road-(0, 0)"
     assert policy.vehicle_id == "vehicle-1"
 

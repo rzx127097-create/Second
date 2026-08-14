@@ -44,6 +44,10 @@ class JobRecord:
             execution_profile=str(payload.get("execution_profile", "formal")),
             target_updates=int(payload.get("target_updates", 0)),
             rollout_horizon=int(payload.get("rollout_horizon", 0)),
+            family=str(payload.get("family", "main_comparison")),
+            condition_id=str(payload.get("condition_id", "direct")),
+            scenario_split=str(payload.get("scenario_split", "train")),
+            protocol_hash=str(payload.get("protocol_hash", "")),
         )
         if str(payload["job_id"]) != identity.job_id:
             raise ValueError("job record identity hash mismatch")
@@ -178,6 +182,11 @@ def traceable_episode_rows(records: list[Any], record: JobRecord, *, split: str,
             "split": split,
             "config_hash": record.identity.config_hash,
             "git_commit": record.identity.git_commit,
+            "family": record.identity.family,
+            "condition_id": record.identity.condition_id,
+            "protocol_hash": record.identity.protocol_hash,
+            "intervention_id": row.get("intervention_id", record.identity.condition_id),
+            "intervention_hash": row.get("intervention_hash", ""),
             "transferred_l": transferred_l,
         })
     return rows

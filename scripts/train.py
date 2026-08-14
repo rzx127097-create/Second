@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import json
 import os
 import random
@@ -21,10 +22,12 @@ from problem2.config import config_identity, load_config_bundle
 from problem2.experiments.evaluation import load_evaluation_checkpoint
 from problem2.experiments.job_identity import capture_git_commit, make_job_identity
 from problem2.experiments.methods import PRIMARY_METHODS, method_profile
+from problem2.experiments.specification import load_experiment_spec, protocol_identity
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.rollout_runner import train_policy
 from problem2.experiments.runner import JobRecord, JobRunner, traceable_episode_rows
 from problem2.scenarios.factory import build_synthetic_scenario
+from problem2.scenarios.interventions import ScenarioIntervention
 
 
 def _emit(payload: dict[str, Any]) -> None:
@@ -109,12 +112,27 @@ def _merge_jsonl_rows(path: Path, rows: list[dict[str, Any]], *, expected_job_id
     return path
 
 
-def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int, algorithm_config: dict[str, Any], profile: Any):
+def _algorithm_factory(
+    config_dir: Path,
+    scale: str,
+    seed: int,
+    hidden_dim: int,
+    algorithm_config: dict[str, Any] | float,
+    profile: Any | None = None,
+    intervention: ScenarioIntervention | None = None,
+    device: str = "cpu",
+):
     if not isinstance(algorithm_config, dict):
-        algorithm_config = {"learning_rate": float(algorithm_config)}
+        loaded = dict(load_config_bundle(config_dir).algorithm)
+        loaded["learning_rate"] = float(algorithm_config)
+        algorithm_config = loaded
+    profile = profile or method_profile("sr_mappo_mobile", algorithm_config)
+    intervention = intervention or ScenarioIntervention("direct")
     def factory() -> SRMAPPOAlgorithm:
         _seed_everything(seed)
-        snapshot = build_synthetic_scenario(scale, seed, config_dir=config_dir).reset()
+        snapshot = build_synthetic_scenario(
+            scale, seed, config_dir=config_dir, intervention=intervention,
+        ).reset()
         algorithm = SRMAPPOAlgorithm(
             uav_obs_dim=len(snapshot.role_observations["uav-1"]["vector"]),
             vehicle_obs_dim=len(snapshot.role_observations["vehicle-1"]["vector"]),
@@ -122,7 +140,7 @@ def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int,
             uav_action_dim=len(snapshot.action_masks["uav-1"]),
             vehicle_action_dim=len(snapshot.action_masks["vehicle-1"]),
             hidden_dim=hidden_dim,
-            device="cpu",
+            device=device,
             stability_components=profile.stability_components,
         )
         algorithm.training_seed = int(seed)
@@ -138,17 +156,57 @@ def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int,
     return factory
 
 
+def _resolve_intervention(
+    *,
+    config: Any,
+    protocol_path: Path,
+    family: str,
+    condition_id: str | None,
+    profile: Any,
+) -> tuple[ScenarioIntervention, str]:
+    if condition_id is None:
+        return ScenarioIntervention("direct", support_mode=profile.environment_mode), "direct"
+    spec = load_experiment_spec(protocol_path, config)
+    matches = [condition for condition in spec.expand(family) if condition.condition_id == condition_id]
+    if len(matches) != 1:
+        raise ValueError(f"condition_id {condition_id!r} is not unique in family {family!r}")
+    condition = matches[0]
+    if condition.method != profile.name and not (
+        family == "ablation"
+        and (
+            (condition.kind == "same_source_mappo" and profile.name == "mappo_mobile")
+            or (condition.kind == "two_stage_training" and profile.name == "sr_mappo_two_stage")
+            or (condition.kind not in {"same_source_mappo", "two_stage_training"} and profile.name == "sr_mappo_mobile")
+        )
+    ):
+        raise ValueError("condition method does not match the requested training method")
+    if family == "main_comparison":
+        intervention = ScenarioIntervention(condition_id, support_mode=profile.environment_mode)
+    else:
+        intervention = ScenarioIntervention.from_condition(condition)
+        if profile.environment_mode == "fixed" and intervention.support_mode == "mobile":
+            intervention = replace(intervention, support_mode="fixed")
+    return intervention, condition_id
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--algorithm", default="SR-MAPPO", choices=["SR-MAPPO"])
     parser.add_argument("--method", default="sr_mappo_mobile", choices=list(PRIMARY_METHODS))
     parser.add_argument("--config-dir", required=True)
+    parser.add_argument("--protocol")
+    parser.add_argument(
+        "--family", default="main_comparison",
+        choices=["main_comparison", "mechanism", "sensitivity", "adaptation", "ablation"],
+    )
+    parser.add_argument("--condition-id")
     parser.add_argument("--scale", required=True)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--updates", type=int, required=True)
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-attempts", type=int, default=2)
+    parser.add_argument("--device", choices=["cpu", "cuda", "auto"], default="auto")
     args = parser.parse_args(argv)
     try:
         config_dir = Path(args.config_dir)
@@ -162,6 +220,22 @@ def main(argv: list[str] | None = None) -> int:
         output_root = Path(args.output_root).resolve()
         algorithm_config = config.algorithm
         profile = method_profile(args.method, algorithm_config)
+        protocol_path = Path(args.protocol or (config_dir / "experiments" / "chapter4_5.yaml"))
+        intervention, condition_id = _resolve_intervention(
+            config=config,
+            protocol_path=protocol_path,
+            family=args.family,
+            condition_id=args.condition_id,
+            profile=profile,
+        )
+        device = "cpu" if args.smoke or args.device == "cpu" else args.device
+        if device == "auto":
+            try:
+                import torch
+            except ImportError:
+                device = "cpu"
+            else:
+                device = "cuda" if torch.cuda.is_available() else "cpu"
         hidden_dim = 16 if args.smoke else int(algorithm_config["hidden_dim"])
         horizon = 3 if args.smoke else int(algorithm_config["rollout_horizon"])
         identity = make_job_identity(
@@ -170,6 +244,10 @@ def main(argv: list[str] | None = None) -> int:
             execution_profile="smoke" if args.smoke else "formal",
             target_updates=args.updates,
             rollout_horizon=horizon,
+            family=args.family,
+            condition_id=condition_id,
+            scenario_split="train",
+            protocol_hash=protocol_identity(protocol_path),
         )
         checkpoint_path = output_root / "checkpoints" / f"{identity.job_id}.pt"
         record_path = output_root / "jobs" / f"{identity.job_id}.json"
@@ -177,7 +255,16 @@ def main(argv: list[str] | None = None) -> int:
         record = load_job_record(record_path) if record_path.exists() else JobRecord(identity=identity, checkpoint_path=checkpoint_path)
         if record.identity != identity:
             raise ValueError("persisted job identity does not match requested immutable identity")
-        algorithm_factory = _algorithm_factory(config_dir, args.scale, args.seed, hidden_dim, algorithm_config, profile)
+        algorithm_factory = _algorithm_factory(
+            config_dir,
+            args.scale,
+            args.seed,
+            hidden_dim,
+            algorithm_config,
+            profile,
+            intervention,
+            device,
+        )
         scenario_ids = [
             scenario_id for scenario_id in config.experiments.get("train_scenarios", [])
             if str(config.scenarios.get(scenario_id, {}).get("scale")) == str(args.scale)
@@ -206,7 +293,13 @@ def main(argv: list[str] | None = None) -> int:
             def make_bundle():
                 scenario_id = scenario_ids[scenario_cursor["index"] % len(scenario_ids)]
                 scenario_cursor["index"] += 1
-                return build_synthetic_scenario(args.scale, args.seed, config_dir=config_dir, scenario_id=scenario_id)
+                return build_synthetic_scenario(
+                    args.scale,
+                    args.seed,
+                    config_dir=config_dir,
+                    scenario_id=scenario_id,
+                    intervention=intervention,
+                )
             records = train_policy(
                 make_bundle,
                 algorithm,
@@ -231,7 +324,15 @@ def main(argv: list[str] | None = None) -> int:
             record_path=record_path,
             checkpoint_validator=lambda path: load_evaluation_checkpoint(path, algorithm_factory),
         ).run(record)
-        payload = {**completed.to_dict(), "job_file": str(record_path), "raw_path": str(raw_path), "smoke": bool(args.smoke)}
+        payload = {
+            **completed.to_dict(),
+            "job_file": str(record_path),
+            "raw_path": str(raw_path),
+            "smoke": bool(args.smoke),
+            "device": device,
+            "intervention": intervention.to_dict(),
+            "intervention_hash": intervention.identity_hash,
+        }
         _emit(payload)
         return 0 if completed.status == "completed" else 1
     except Exception as exc:  # noqa: BLE001 - CLI boundary must preserve diagnostics as JSON

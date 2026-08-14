@@ -59,6 +59,7 @@ def test_protocol_rejects_duplicate_condition_ids(tmp_path: Path) -> None:
     duplicate = source.replace(
         "  adaptation:\n",
         "  adaptation:\n    - id: finite_no_support\n      kind: road_blockage\n      levels: [0.1]\n",
+        1,
     )
     path = tmp_path / "duplicate.yaml"
     path.write_text(duplicate, encoding="utf-8")

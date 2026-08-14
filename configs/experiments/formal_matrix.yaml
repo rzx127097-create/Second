@@ -2,7 +2,55 @@ status: provisional
 splits: [train, validation, sealed_test]
 methods: [sr_mappo_mobile, sr_mappo_fixed, sr_mappo_astar, mappo_mobile, sr_mappo_two_stage]
 training_seeds: [0, 1, 2, 3, 4]
-train_scenarios: [train_001, train_002, train_003, train_004, train_005, train_006]
-validation_scenarios: [val_001, val_002]
-sealed_test_scenarios: [test_001, test_002, test_003]
+train_scenarios:
+  - train_001
+  - train_s1_002
+  - train_s1_003
+  - train_002
+  - train_s2_002
+  - train_s2_003
+  - train_003
+  - train_s3_002
+  - train_s3_003
+  - train_004
+  - train_s4_002
+  - train_s4_003
+  - train_005
+  - train_s5_002
+  - train_s5_003
+  - train_006
+  - train_s6_002
+  - train_s6_003
+validation_scenarios:
+  - val_001
+  - val_s1_002
+  - val_s2_001
+  - val_s2_002
+  - val_002
+  - val_s3_002
+  - val_s4_001
+  - val_s4_002
+  - val_s5_001
+  - val_s5_002
+  - val_s6_001
+  - val_s6_002
+sealed_test_scenarios:
+  - test_001
+  - test_s1_002
+  - test_s1_003
+  - test_s2_001
+  - test_s2_002
+  - test_s2_003
+  - test_s3_001
+  - test_s3_002
+  - test_s3_003
+  - test_002
+  - test_s4_002
+  - test_s4_003
+  - test_s5_001
+  - test_s5_002
+  - test_s5_003
+  - test_003
+  - test_s6_002
+  - test_s6_003
 scales: [s1, s2, s3, s4, s5, s6]

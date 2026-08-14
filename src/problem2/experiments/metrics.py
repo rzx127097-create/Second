@@ -45,6 +45,9 @@ class EpisodeRecord:
     scenario_id: str = ""
     success_threshold: float = 0.85
     training_phase: str = ""
+    intervention_id: str = "baseline"
+    intervention_hash: str = ""
+    support_mode: str = "mobile"
 
     @property
     def reduction_rate(self) -> float:
@@ -65,6 +68,9 @@ class EpisodeRecord:
             "split": self.split,
             "policy_name": self.policy_name,
             "training_phase": self.training_phase,
+            "intervention_id": self.intervention_id,
+            "intervention_hash": self.intervention_hash,
+            "support_mode": self.support_mode,
             "scale_id": self.scale_id,
             "parameter_status": self.parameter_status,
             "steps": self.steps,
@@ -137,6 +143,9 @@ def episode_record_from_bundle(
         split=str(split),
         scenario_id=str(scenario_id or getattr(bundle, "scenario_id", bundle.scale_id)),
         success_threshold=float(getattr(bundle, "success_reduction_threshold", 0.85)),
+        intervention_id=str(getattr(bundle, "intervention_id", "baseline")),
+        intervention_hash=str(getattr(bundle, "intervention_hash", "")),
+        support_mode=str(getattr(bundle, "support_mode", "mobile")),
     )
 
 

@@ -1,46 +1,52 @@
 status: provisional
 scenarios:
-  train_001:
-    split: train
-    scale: s1
-    seed_offset: 1001
-  train_002:
-    split: train
-    scale: s2
-    seed_offset: 1002
-  train_003:
-    split: train
-    scale: s3
-    seed_offset: 1003
-  train_004:
-    split: train
-    scale: s4
-    seed_offset: 1004
-  train_005:
-    split: train
-    scale: s5
-    seed_offset: 1005
-  train_006:
-    split: train
-    scale: s6
-    seed_offset: 1006
-  val_001:
-    split: validation
-    scale: s1
-    seed_offset: 2001
-  val_002:
-    split: validation
-    scale: s3
-    seed_offset: 2002
-  test_001:
-    split: sealed_test
-    scale: s1
-    seed_offset: 3001
-  test_002:
-    split: sealed_test
-    scale: s4
-    seed_offset: 3002
-  test_003:
-    split: sealed_test
-    scale: s6
-    seed_offset: 3003
+  train_001: {split: train, scale: s1, seed_offset: 1001}
+  train_s1_002: {split: train, scale: s1, seed_offset: 1102}
+  train_s1_003: {split: train, scale: s1, seed_offset: 1103}
+  train_002: {split: train, scale: s2, seed_offset: 1002}
+  train_s2_002: {split: train, scale: s2, seed_offset: 1202}
+  train_s2_003: {split: train, scale: s2, seed_offset: 1203}
+  train_003: {split: train, scale: s3, seed_offset: 1003}
+  train_s3_002: {split: train, scale: s3, seed_offset: 1302}
+  train_s3_003: {split: train, scale: s3, seed_offset: 1303}
+  train_004: {split: train, scale: s4, seed_offset: 1004}
+  train_s4_002: {split: train, scale: s4, seed_offset: 1402}
+  train_s4_003: {split: train, scale: s4, seed_offset: 1403}
+  train_005: {split: train, scale: s5, seed_offset: 1005}
+  train_s5_002: {split: train, scale: s5, seed_offset: 1502}
+  train_s5_003: {split: train, scale: s5, seed_offset: 1503}
+  train_006: {split: train, scale: s6, seed_offset: 1006}
+  train_s6_002: {split: train, scale: s6, seed_offset: 1602}
+  train_s6_003: {split: train, scale: s6, seed_offset: 1603}
+
+  val_001: {split: validation, scale: s1, seed_offset: 2001}
+  val_s1_002: {split: validation, scale: s1, seed_offset: 2102}
+  val_s2_001: {split: validation, scale: s2, seed_offset: 2201}
+  val_s2_002: {split: validation, scale: s2, seed_offset: 2202}
+  val_002: {split: validation, scale: s3, seed_offset: 2002}
+  val_s3_002: {split: validation, scale: s3, seed_offset: 2302}
+  val_s4_001: {split: validation, scale: s4, seed_offset: 2401}
+  val_s4_002: {split: validation, scale: s4, seed_offset: 2402}
+  val_s5_001: {split: validation, scale: s5, seed_offset: 2501}
+  val_s5_002: {split: validation, scale: s5, seed_offset: 2502}
+  val_s6_001: {split: validation, scale: s6, seed_offset: 2601}
+  val_s6_002: {split: validation, scale: s6, seed_offset: 2602}
+
+  test_001: {split: sealed_test, scale: s1, seed_offset: 3001}
+  test_s1_002: {split: sealed_test, scale: s1, seed_offset: 3102}
+  test_s1_003: {split: sealed_test, scale: s1, seed_offset: 3103}
+  test_s2_001: {split: sealed_test, scale: s2, seed_offset: 3201}
+  test_s2_002: {split: sealed_test, scale: s2, seed_offset: 3202}
+  test_s2_003: {split: sealed_test, scale: s2, seed_offset: 3203}
+  test_s3_001: {split: sealed_test, scale: s3, seed_offset: 3301}
+  test_s3_002: {split: sealed_test, scale: s3, seed_offset: 3302}
+  test_s3_003: {split: sealed_test, scale: s3, seed_offset: 3303}
+  test_002: {split: sealed_test, scale: s4, seed_offset: 3002}
+  test_s4_002: {split: sealed_test, scale: s4, seed_offset: 3402}
+  test_s4_003: {split: sealed_test, scale: s4, seed_offset: 3403}
+  test_s5_001: {split: sealed_test, scale: s5, seed_offset: 3501}
+  test_s5_002: {split: sealed_test, scale: s5, seed_offset: 3502}
+  test_s5_003: {split: sealed_test, scale: s5, seed_offset: 3503}
+  test_003: {split: sealed_test, scale: s6, seed_offset: 3003}
+  test_s6_002: {split: sealed_test, scale: s6, seed_offset: 3602}
+  test_s6_003: {split: sealed_test, scale: s6, seed_offset: 3603}

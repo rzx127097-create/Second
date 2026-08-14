@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import hashlib
 from typing import Any, Mapping
 
 import yaml
@@ -52,6 +53,7 @@ class Chapter45Spec:
     declared_families: Mapping[str, tuple[Mapping[str, Any], ...]]
     statistics: Mapping[str, Any]
     execution: Mapping[str, Any]
+    family_scopes: Mapping[str, Mapping[str, tuple[object, ...]]]
 
     @property
     def families(self) -> tuple[str, ...]:
@@ -193,6 +195,22 @@ def load_experiment_spec(path: str | Path, config: ConfigBundle) -> Chapter45Spe
     execution = _mapping(root.get("execution"), "execution")
     if int(execution.get("max_gpu_workers", 0)) != 1:
         raise ValueError("the current hardware contract permits one GPU worker")
+    scope_root = _mapping(root.get("family_scopes"), "family_scopes")
+    if set(scope_root) != required:
+        raise ValueError(f"family_scopes must exactly equal {sorted(required)}")
+    family_scopes: dict[str, Mapping[str, tuple[object, ...]]] = {}
+    for family in sorted(required):
+        scope = _mapping(scope_root[family], f"family_scopes.{family}")
+        scoped_scales = tuple(str(value) for value in scope.get("scales", ()))
+        scoped_seeds = tuple(int(value) for value in scope.get("training_seeds", ()))
+        if not scoped_scales or not set(scoped_scales) <= set(scales):
+            raise ValueError(f"{family} scope references an unknown or empty scale set")
+        if not scoped_seeds or not set(scoped_seeds) <= set(seeds):
+            raise ValueError(f"{family} scope references an unknown or empty seed set")
+        family_scopes[family] = {
+            "scales": scoped_scales,
+            "training_seeds": scoped_seeds,
+        }
 
     return Chapter45Spec(
         schema_version=1,
@@ -203,7 +221,12 @@ def load_experiment_spec(path: str | Path, config: ConfigBundle) -> Chapter45Spe
         declared_families=declared,
         statistics=dict(statistics),
         execution=dict(execution),
+        family_scopes=family_scopes,
     )
 
 
-__all__ = ["Chapter45Spec", "ExperimentCondition", "load_experiment_spec"]
+def protocol_identity(path: str | Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+__all__ = ["Chapter45Spec", "ExperimentCondition", "load_experiment_spec", "protocol_identity"]

@@ -17,10 +17,14 @@ from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
 from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
 from problem2.config import config_identity, load_config_bundle
 from problem2.experiments.evaluation import evaluate_policy, load_evaluation_checkpoint
+from problem2.experiments.methods import method_profile
+from problem2.experiments.orchestrator import resolve_condition_intervention
 from problem2.experiments.policy_protocol import AlgorithmPolicyAdapter
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.runner import JobRecord, traceable_episode_rows
 from problem2.scenarios.factory import build_synthetic_scenario
+from problem2.experiments.specification import load_experiment_spec, protocol_identity
+from problem2.baselines import make_policy
 
 
 def _emit(payload: dict[str, Any]) -> None:
@@ -56,6 +60,7 @@ def _checkpoint_record(path: Path) -> JobRecord:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-dir", required=True)
+    parser.add_argument("--protocol")
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--split", choices=["train", "validation", "sealed_test"], required=True)
     parser.add_argument("--scenario", required=True)
@@ -64,6 +69,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config_dir = Path(args.config_dir)
         config = load_config_bundle(config_dir)
+        protocol_path = Path(args.protocol or (config_dir / "experiments" / "chapter4_5.yaml"))
+        spec = load_experiment_spec(protocol_path, config)
         scenarios = [str(value) for value in config.experiments[f"{args.split}_scenarios"]]
         if args.scenario not in scenarios:
             raise ValueError(f"scenario {args.scenario!r} does not belong to split {args.split!r}")
@@ -77,8 +84,27 @@ def main(argv: list[str] | None = None) -> int:
         job = _checkpoint_record(checkpoint)
         if job.identity.config_hash != config_identity(config):
             raise ValueError("checkpoint job config hash does not match the requested configuration")
+        if job.identity.protocol_hash and job.identity.protocol_hash != protocol_identity(protocol_path):
+            raise ValueError("checkpoint job protocol hash does not match the requested protocol")
         physical_scale = job.identity.scale
-        snapshot = build_synthetic_scenario(physical_scale, job.identity.training_seed, config_dir=config_dir, scenario_id=args.scenario).reset()
+        scenario_scale = str(config.scenarios[args.scenario]["scale"])
+        if scenario_scale != physical_scale:
+            raise ValueError("evaluation scenario scale does not match checkpoint scale")
+        profile = method_profile(job.identity.method, config.algorithm)
+        intervention = resolve_condition_intervention(
+            spec,
+            config.algorithm,
+            family=job.identity.family,
+            condition_id=job.identity.condition_id,
+            method=job.identity.method,
+        )
+        snapshot = build_synthetic_scenario(
+            physical_scale,
+            job.identity.training_seed,
+            config_dir=config_dir,
+            scenario_id=args.scenario,
+            intervention=intervention,
+        ).reset()
 
         def algorithm_factory() -> SRMAPPOAlgorithm:
             algorithm = SRMAPPOAlgorithm(
@@ -89,18 +115,38 @@ def main(argv: list[str] | None = None) -> int:
                 vehicle_action_dim=len(snapshot.action_masks["vehicle-1"]),
                 hidden_dim=16 if args.smoke else int(config.algorithm["hidden_dim"]),
                 device="cpu",
+                stability_components=profile.stability_components,
             )
-            SRMAPPOTrainer(algorithm, learning_rate=float(config.algorithm["learning_rate"]))
+            SRMAPPOTrainer(
+                algorithm,
+                learning_rate=float(config.algorithm["learning_rate"]),
+                value_coef=float(config.algorithm.get("value_loss_coef", 0.5)),
+                entropy_coef=float(config.algorithm.get("entropy_coef", 0.01)),
+                max_grad_norm=float(config.algorithm.get("max_grad_norm", 0.5)),
+            )
             return algorithm
 
         algorithm, _ = load_evaluation_checkpoint(checkpoint, algorithm_factory)
 
         def scenario_factory(scenario_id: str):
-            return build_synthetic_scenario(physical_scale, job.identity.training_seed, config_dir=config_dir, scenario_id=scenario_id)
+            return build_synthetic_scenario(
+                physical_scale,
+                job.identity.training_seed,
+                config_dir=config_dir,
+                scenario_id=scenario_id,
+                intervention=intervention,
+            )
 
         inner_split = args.split if args.split == "sealed_test" else ("smoke" if args.smoke else args.split)
+        if job.identity.method in {"sr_mappo_fixed", "sr_mappo_astar"}:
+            policy = make_policy(job.identity.method, checkpoint=checkpoint)
+            policy._algorithm = algorithm
+            policy.smoke_only = False
+            policy.formal_ready = True
+        else:
+            policy = AlgorithmPolicyAdapter(algorithm, name=job.identity.method)
         records = evaluate_policy(
-            AlgorithmPolicyAdapter(algorithm, name="SR-MAPPO"), scenario_factory,
+            policy, scenario_factory,
             scenarios=[args.scenario], split=inner_split, deterministic=True,
         )
         rows = traceable_episode_rows(records, job, split=args.split)

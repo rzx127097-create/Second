@@ -19,6 +19,10 @@ class JobIdentity:
     execution_profile: str = "formal"
     target_updates: int = 0
     rollout_horizon: int = 0
+    family: str = "main_comparison"
+    condition_id: str = "direct"
+    scenario_split: str = "train"
+    protocol_hash: str = ""
 
     @property
     def job_id(self) -> str:
@@ -37,6 +41,10 @@ class JobIdentity:
             "execution_profile": self.execution_profile,
             "target_updates": self.target_updates,
             "rollout_horizon": self.rollout_horizon,
+            "family": self.family,
+            "condition_id": self.condition_id,
+            "scenario_split": self.scenario_split,
+            "protocol_hash": self.protocol_hash,
         }
 
     def __str__(self) -> str:
@@ -54,6 +62,10 @@ def make_job_identity(
     execution_profile: str = "formal",
     target_updates: int = 0,
     rollout_horizon: int = 0,
+    family: str = "main_comparison",
+    condition_id: str = "direct",
+    scenario_split: str = "train",
+    protocol_hash: str = "",
 ) -> JobIdentity:
     payload = json.dumps(config, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     digest = str(config_hash) if config_hash is not None else hashlib.sha256(payload).hexdigest()
@@ -63,7 +75,17 @@ def make_job_identity(
         raise ValueError("execution_profile must be formal or smoke")
     if int(target_updates) < 0 or int(rollout_horizon) < 0:
         raise ValueError("target_updates and rollout_horizon must be non-negative")
-    return JobIdentity(str(method), str(scale), int(training_seed), digest, str(git_commit), execution_profile, int(target_updates), int(rollout_horizon))
+    if scenario_split not in {"train", "validation", "sealed_test"}:
+        raise ValueError("scenario_split must be train, validation or sealed_test")
+    if protocol_hash and (len(protocol_hash) != 64 or any(character not in "0123456789abcdef" for character in protocol_hash.lower())):
+        raise ValueError("protocol_hash must be an empty value or SHA-256 hexadecimal digest")
+    if not str(family).strip() or not str(condition_id).strip():
+        raise ValueError("family and condition_id must be non-empty")
+    return JobIdentity(
+        str(method), str(scale), int(training_seed), digest, str(git_commit),
+        execution_profile, int(target_updates), int(rollout_horizon),
+        str(family), str(condition_id), str(scenario_split), str(protocol_hash),
+    )
 
 
 def capture_git_commit(cwd: str | None = None) -> str:
