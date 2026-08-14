@@ -107,7 +107,7 @@ def test_episode_rows_include_event_ledger():
     )
     row = record.to_row()
     assert isinstance(row["events"], list)
-    assert row["event_schema_version"] == 1
+    assert row["event_schema_version"] == 2
 
 
 def test_resume_jsonl_merge_preserves_existing_rows_and_rejects_duplicate_run_id(tmp_path):

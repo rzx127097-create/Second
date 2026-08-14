@@ -6,6 +6,7 @@ from collections.abc import Sequence
 import inspect
 import pickle
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Callable, Mapping
 
 import numpy as np
@@ -31,10 +32,13 @@ def evaluate_policy(
     scenarios: Sequence[str],
     split: str,
     deterministic: bool,
+    measure_decision_time: bool | None = None,
 ) -> list[EpisodeRecord]:
     """Evaluate a policy on exact, resettable ScenarioBundle scenarios."""
     if split not in {"smoke", "train", "validation", "sealed_test"}:
         raise ValueError("unknown evaluation split")
+    if measure_decision_time is None:
+        measure_decision_time = split != "smoke"
     if split == "sealed_test":
         if not deterministic:
             raise ValueError("sealed_test requires deterministic=True")
@@ -61,6 +65,7 @@ def evaluate_policy(
         total_reward = 0.0
         components: dict[str, float] = {}
         events: list[dict[str, object]] = []
+        decision_times_s: list[float] = []
         agent_ids = {"uav": [], "vehicle": []}
         try:
             while True:
@@ -69,8 +74,11 @@ def evaluate_policy(
                     parameter.kind is inspect.Parameter.VAR_KEYWORD
                     for parameter in parameters.values()
                 )
+                decision_started = perf_counter() if measure_decision_time else 0.0
                 proposed = policy.act(snapshot, deterministic=deterministic) if accepts_deterministic else policy.act(snapshot)
                 environment_actions = actions_to_environment(snapshot, proposed)
+                if measure_decision_time:
+                    decision_times_s.append(perf_counter() - decision_started)
                 for agent_id, observation in snapshot.role_observations.items():
                     role = str(observation.get("role"))
                     if role in agent_ids and agent_id not in agent_ids[role]:
@@ -99,6 +107,7 @@ def evaluate_policy(
             policy_name=str(getattr(policy, "name", policy.__class__.__name__)),
             split=split,
             scenario_id=scenario_key,
+            decision_times_s=decision_times_s,
         ))
     return records
 

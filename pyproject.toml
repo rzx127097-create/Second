@@ -17,5 +17,5 @@ rl = ["torch>=2.0"]
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]

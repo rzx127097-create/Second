@@ -16,6 +16,23 @@ NUMERIC_FIELDS = {
     "total_reward", "reward_control", "reward_service", "reward_coordination", "reward_invalid",
     "wait_s", "pesticide_disabled_s", "vehicle_distance_m", "pesticide_initial_l",
     "pesticide_remaining_l", "pesticide_sprayed_l", "success_threshold", "steps", "event_count",
+    "request_count", "request_completed_count", "request_completion_rate", "requested_l",
+    "request_wait_mean_s", "request_wait_p90_s", "effective_spray_s", "service_s",
+    "rendezvous_road_distance_m", "uav_rendezvous_distance_m", "vehicle_idle_s",
+    "vehicle_inventory_initial_l", "vehicle_inventory_final_l", "vehicle_inventory_utilization",
+    "decision_time_mean_ms",
+}
+NON_NEGATIVE_FIELDS = NUMERIC_FIELDS - {
+    "total_reward", "reward_control", "reward_service", "reward_coordination", "reward_invalid",
+    "success_threshold", "request_completion_rate", "vehicle_inventory_utilization",
+}
+V2_REQUIRED_FIELDS = {
+    "request_count", "request_completed_count", "request_completion_rate", "requested_l",
+    "request_wait_mean_s", "request_wait_p90_s", "wait_s", "pesticide_disabled_s",
+    "effective_spray_s", "service_s", "rendezvous_road_distance_m",
+    "uav_rendezvous_distance_m", "vehicle_distance_m", "vehicle_idle_s",
+    "vehicle_inventory_initial_l", "vehicle_inventory_final_l",
+    "vehicle_inventory_utilization", "decision_time_mean_ms", "termination_reason",
 }
 
 
@@ -66,6 +83,15 @@ def validate_episode_records(records: Iterable[Mapping[str, Any]], *, strict: bo
             missing.discard("split")
         if missing:
             raise ValueError(f"missing episode fields: {sorted(missing)}")
+        if "event_schema_version" in row:
+            version = row["event_schema_version"]
+            if type(version) is not int or version != 2:
+                raise ValueError("event_schema_version must be exactly integer 2")
+            missing_v2 = V2_REQUIRED_FIELDS - row.keys()
+            if missing_v2:
+                raise ValueError(f"missing event schema v2 fields: {sorted(missing_v2)}")
+            if not isinstance(row["termination_reason"], str) or not row["termination_reason"].strip():
+                raise ValueError("termination_reason must be a non-empty string")
         run_id = str(row["run_id"])
         if not run_id:
             raise ValueError("run_id must be non-empty")
@@ -103,10 +129,12 @@ def validate_episode_records(records: Iterable[Mapping[str, Any]], *, strict: bo
                 raise ValueError(f"{field} must be numeric") from exc
             if not math.isfinite(value):
                 raise ValueError(f"{field} must be finite")
-            if field in {"steps", "event_count", "wait_s", "pesticide_disabled_s", "vehicle_distance_m", "pesticide_initial_l", "pesticide_remaining_l", "pesticide_sprayed_l"} and value < 0:
+            if field in NON_NEGATIVE_FIELDS and value < 0:
                 raise ValueError(f"{field} must be non-negative")
             if field == "success_threshold" and not 0.0 <= value <= 1.0:
                 raise ValueError("success_threshold must lie in [0, 1]")
+            if field in {"request_completion_rate", "vehicle_inventory_utilization"} and not 0.0 <= value <= 1.0:
+                raise ValueError(f"{field} must lie in [0, 1]")
         if all(field in row for field in ("pesticide_initial_l", "pesticide_remaining_l", "pesticide_sprayed_l")):
             initial = float(row["pesticide_initial_l"])
             remaining = float(row["pesticide_remaining_l"])

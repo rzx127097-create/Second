@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from math import isfinite
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Callable
 
 import numpy as np
@@ -109,6 +110,7 @@ def run_training_episode(
     all_events: list[dict[str, object]] = []
     components: defaultdict[str, float] = defaultdict(float)
     total_reward = 0.0
+    decision_times_s: list[float] = []
 
     training_phase = method_profile.vehicle_phase(
         update_index=int(update_index), total_updates=int(total_updates),
@@ -116,6 +118,7 @@ def run_training_episode(
     for step_index in range(int(horizon)):
         observations, masks, role_ids, action_masks = _role_inputs(snapshot)
         state = snapshot.critic_state
+        decision_started = perf_counter()
         transition = algorithm.collect_transition(
             observations,
             masks,
@@ -137,6 +140,7 @@ def run_training_episode(
             total_updates=int(total_updates),
         )
         environment_actions = _environment_actions(transition["actions"], role_ids, action_masks)
+        decision_times_s.append(perf_counter() - decision_started)
         stepped = bundle.step(environment_actions)
         total_reward += float(stepped.reward)
         for name, value in stepped.reward_components.items():
@@ -182,6 +186,7 @@ def run_training_episode(
         pesticide_initial_l=pesticide_initial_l,
         events=all_events,
         agent_ids=role_ids,
+        decision_times_s=decision_times_s,
     )
     record.rollout = batch
     record.policy_name = str(method_profile.name)

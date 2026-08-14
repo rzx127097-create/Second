@@ -214,10 +214,25 @@ class HeterogeneousDecisionAdapter:
             action = actions[uav_id]
             position = self.uav_positions[uav_id]
             if action in {"up", "down", "left", "right"}:
-                self.uav_positions[uav_id] = legal_uav_position(position, action, self.uav_grid_shape, locked=uav_id == self._locked_uav_id)
+                new_position = legal_uav_position(
+                    position, action, self.uav_grid_shape, locked=uav_id == self._locked_uav_id,
+                )
+                self.uav_positions[uav_id] = new_position
+                row_size_m, col_size_m = self.uav_cell_size_m
+                if uav_id == self._committed_uav_id:
+                    events.append({
+                        "event_type": "uav_movement_applied",
+                        "uav_id": uav_id,
+                        "distance_m": hypot(
+                            (new_position[0] - position[0]) * row_size_m,
+                            (new_position[1] - position[1]) * col_size_m,
+                        ),
+                        "rendezvous_committed": True,
+                        "step": self._decision_step,
+                    })
             elif action == "spray" and uav_id != self._locked_uav_id:
                 sprayed = self.resources.spray_step(uav_id, self.decision_dt_s)
-                events.append({"event_type": "spray_applied", "uav_id": uav_id, "amount_l": sprayed.amount_l, "pesticide_limited": sprayed.pesticide_limited, "step": self._decision_step})
+                events.append({"event_type": "spray_applied", "uav_id": uav_id, "amount_l": sprayed.amount_l, "duration_s": self.decision_dt_s, "pesticide_limited": sprayed.pesticide_limited, "step": self._decision_step})
 
         for uav_id in self.uav_slots:
             state = self.resources.uav(uav_id)
@@ -250,7 +265,13 @@ class HeterogeneousDecisionAdapter:
                         self._service_target_uav_cell = self._candidate_target_cells.get(vehicle_id, {}).get(action)
                         self._committed_uav_id = reserved.uav_id
                         self._committed_vehicle_id = vehicle_id
-                        events.append({"event_type": "request_reserved", "request_id": reserved.request_id, "uav_id": reserved.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
+                        candidate = self._candidate_records.get(vehicle_id, {}).get(action)
+                        road_distance_m = (
+                            float(candidate.road_distance_m)
+                            if candidate is not None
+                            else sum(self.road_graph.edge_weight(left, right) for left, right in zip(route or (), (route or ())[1:]))
+                        )
+                        events.append({"event_type": "request_reserved", "request_id": reserved.request_id, "uav_id": reserved.uav_id, "vehicle_id": vehicle_id, "rendezvous_road_distance_m": road_distance_m, "step": self._decision_step})
             advance = executor.advance(dt_s=self.decision_dt_s)
             events.append({"event_type": "movement_applied", "vehicle_id": vehicle_id, "travelled_distance_m": advance.travelled_distance_m, "remaining_edge_distance_m": advance.remaining_edge_distance_m, "route_complete": advance.route_complete, "step": self._decision_step})
 
@@ -274,16 +295,17 @@ class HeterogeneousDecisionAdapter:
                     events.append({"event_type": "service_started", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
                 else:
                     if vehicle_arrived and not uav_arrived:
-                        events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "vehicle_waiting_for_uav", "step": self._decision_step})
+                        events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "vehicle_waiting_for_uav", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
                     elif uav_arrived and not vehicle_arrived:
-                        events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "uav_waiting_for_vehicle", "step": self._decision_step})
+                        events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "uav_waiting_for_vehicle", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
                     if self.resources.uav(request.uav_id).onboard_l <= 1e-12:
                         events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
             elif self.service.phase in {ServicePhase.PREPARING, ServicePhase.TRANSFERRING}:
                 previous_phase = self.service.phase
+                events.append({"event_type": "service_active", "duration_s": self.decision_dt_s, "phase": previous_phase.value, "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
                 transferred = self.service.tick(self.request_manager, self.resources, vehicle_id, self.decision_dt_s, self._decision_step)
                 if previous_phase is ServicePhase.PREPARING:
-                    events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "service_setup", "step": self._decision_step})
+                    events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "service_setup", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
                 events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
                 if transferred > 0:
                     events.append({"event_type": "pesticide_transfer", "amount_l": transferred, "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
@@ -297,6 +319,21 @@ class HeterogeneousDecisionAdapter:
                     self._committed_vehicle_id = None
                     self._service_target_node = None
                     self._service_target_uav_cell = None
+        productive_uavs = {
+            str(event.get("uav_id")) for event in events
+            if event.get("event_type") == "spray_applied" and float(event.get("amount_l", 0.0)) > 0.0
+        }
+        disabled_uavs = {
+            str(event.get("uav_id")) for event in events
+            if event.get("event_type") == "pesticide_disabled"
+        }
+        for uav_id in self.uav_slots:
+            if (
+                self.resources.uav(uav_id).onboard_l <= 1e-12
+                and uav_id not in productive_uavs
+                and uav_id not in disabled_uavs
+            ):
+                events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": uav_id, "step": self._decision_step})
         self._refresh_request_candidates()
         events.append({"event_type": "field_updated", "step": self._decision_step})
         self._refresh_state(events=events)
@@ -552,7 +589,7 @@ class HeterogeneousDecisionAdapter:
             request.request_id, transferred.amount_l, self._decision_step,
         )
         events.extend([
-            {"event_type": "request_reserved", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "mode": "teleport_diagnostic", "step": self._decision_step},
+            {"event_type": "request_reserved", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "rendezvous_road_distance_m": 0.0, "mode": "teleport_diagnostic", "step": self._decision_step},
             {"event_type": "service_started", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "mode": "teleport_diagnostic", "step": self._decision_step},
             {"event_type": "pesticide_transfer", "amount_l": transferred.amount_l, "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "mode": "teleport_diagnostic", "step": self._decision_step},
         ])

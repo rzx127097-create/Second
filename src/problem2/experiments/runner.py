@@ -154,11 +154,22 @@ class JobRunner:
         return record
 
 
-def evaluate_job(policy: Any, scenario_factory: Any, *, scenarios: Any, split: str, deterministic: bool = True) -> list[Any]:
+def evaluate_job(
+    policy: Any,
+    scenario_factory: Any,
+    *,
+    scenarios: Any,
+    split: str,
+    deterministic: bool = True,
+    measure_decision_time: bool = False,
+) -> list[Any]:
     """Small runner entry point for the shared deterministic policy protocol."""
     from .evaluation import evaluate_policy
 
-    return evaluate_policy(policy, scenario_factory, scenarios=scenarios, split=split, deterministic=deterministic)
+    return evaluate_policy(
+        policy, scenario_factory, scenarios=scenarios, split=split,
+        deterministic=deterministic, measure_decision_time=measure_decision_time,
+    )
 
 
 def traceable_episode_rows(records: list[Any], record: JobRecord, *, split: str, index_offset: int = 0) -> list[dict[str, Any]]:

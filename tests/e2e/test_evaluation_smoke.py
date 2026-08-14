@@ -35,6 +35,19 @@ def test_deterministic_hold_evaluation_repeats_identical_rows_without_updates():
     assert first[0].events == second[0].events
 
 
+def test_decision_runtime_measurement_is_explicit_and_uses_the_policy_boundary(monkeypatch):
+    from problem2.experiments import evaluation
+
+    ticks = iter(value for step in range(600) for value in (float(step), float(step) + 0.002))
+    monkeypatch.setattr(evaluation, "perf_counter", lambda: next(ticks))
+    records = evaluate_policy(
+        HoldPolicy(), _factory, scenarios=["s1"], split="smoke",
+        deterministic=True, measure_decision_time=True,
+    )
+
+    assert records[0].to_row()["decision_time_mean_ms"] == pytest.approx(2.0)
+
+
 def test_formal_split_rejects_provisional_scenario():
     with pytest.raises(ValueError, match="provisional"):
         evaluate_policy(HoldPolicy(), _factory, scenarios=["s1"], split="validation", deterministic=True)

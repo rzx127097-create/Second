@@ -18,6 +18,62 @@ def _event_total(events: Iterable[Mapping[str, object]], event_type: str, field:
     )
 
 
+def _request_metrics(
+    events: list[Mapping[str, object]], *, episode_steps: int, decision_dt_s: float
+) -> dict[str, float | int]:
+    created: dict[str, tuple[int, float]] = {}
+    started: dict[str, int] = {}
+    completed: set[str] = set()
+    for event in events:
+        request_id = str(event.get("request_id", ""))
+        if not request_id:
+            continue
+        event_type = event.get("event_type")
+        if event_type == "request_created" and request_id not in created:
+            created[request_id] = (int(event.get("step", 0)), float(event.get("amount_l", 0.0)))
+        elif event_type == "service_started" and request_id not in started:
+            started[request_id] = int(event.get("step", 0))
+        elif event_type == "request_completed":
+            completed.add(request_id)
+
+    waits = [
+        max(0, started.get(request_id, int(episode_steps)) - created_step) * decision_dt_s
+        for request_id, (created_step, _amount_l) in created.items()
+    ]
+    return {
+        "request_count": len(created),
+        "request_completed_count": len(completed & created.keys()),
+        "request_completion_rate": len(completed & created.keys()) / len(created) if created else 0.0,
+        "requested_l": sum(amount_l for _step, amount_l in created.values()),
+        "request_wait_mean_s": float(np.mean(waits)) if waits else 0.0,
+        "request_wait_p90_s": float(np.percentile(waits, 90)) if waits else 0.0,
+    }
+
+
+def _vehicle_idle_time_s(events: list[Mapping[str, object]], *, decision_dt_s: float) -> float:
+    service_keys = {
+        (str(event.get("vehicle_id", "")), int(event.get("step", 0)))
+        for event in events
+        if event.get("event_type") == "service_active"
+    }
+    service_steps_without_vehicle = {
+        int(event.get("step", 0))
+        for event in events
+        if event.get("event_type") == "service_active" and not event.get("vehicle_id")
+    }
+    idle_s = 0.0
+    for event in events:
+        if event.get("event_type") != "movement_applied":
+            continue
+        vehicle_id = str(event.get("vehicle_id", ""))
+        step = int(event.get("step", 0))
+        if (vehicle_id, step) in service_keys or step in service_steps_without_vehicle:
+            continue
+        if float(event.get("travelled_distance_m", 0.0)) <= 1e-12:
+            idle_s += float(event.get("duration_s", decision_dt_s))
+    return idle_s
+
+
 @dataclass
 class EpisodeRecord:
     """One actual ScenarioBundle trajectory and its derived smoke metrics."""
@@ -36,6 +92,23 @@ class EpisodeRecord:
     vehicle_distance_m: float
     wait_s: float
     pesticide_disabled_s: float
+    request_count: int
+    request_completed_count: int
+    request_completion_rate: float
+    requested_l: float
+    transferred_l: float
+    request_wait_mean_s: float
+    request_wait_p90_s: float
+    effective_spray_s: float
+    service_s: float
+    rendezvous_road_distance_m: float
+    uav_rendezvous_distance_m: float
+    vehicle_idle_s: float
+    vehicle_inventory_initial_l: float
+    vehicle_inventory_final_l: float
+    vehicle_inventory_utilization: float
+    decision_time_mean_ms: float
+    termination_reason: str
     events: list[dict[str, object]] = field(default_factory=list)
     losses: dict[str, float] = field(default_factory=dict)
     agent_ids: dict[str, list[str]] = field(default_factory=dict)
@@ -84,11 +157,28 @@ class EpisodeRecord:
             "wait_s": self.wait_s,
             "pesticide_disabled_s": self.pesticide_disabled_s,
             "vehicle_distance_m": self.vehicle_distance_m,
+            "request_count": self.request_count,
+            "request_completed_count": self.request_completed_count,
+            "request_completion_rate": self.request_completion_rate,
+            "requested_l": self.requested_l,
+            "transferred_l": self.transferred_l,
+            "request_wait_mean_s": self.request_wait_mean_s,
+            "request_wait_p90_s": self.request_wait_p90_s,
+            "effective_spray_s": self.effective_spray_s,
+            "service_s": self.service_s,
+            "rendezvous_road_distance_m": self.rendezvous_road_distance_m,
+            "uav_rendezvous_distance_m": self.uav_rendezvous_distance_m,
+            "vehicle_idle_s": self.vehicle_idle_s,
+            "vehicle_inventory_initial_l": self.vehicle_inventory_initial_l,
+            "vehicle_inventory_final_l": self.vehicle_inventory_final_l,
+            "vehicle_inventory_utilization": self.vehicle_inventory_utilization,
+            "decision_time_mean_ms": self.decision_time_mean_ms,
+            "termination_reason": self.termination_reason,
             "pesticide_initial_l": self.pesticide_initial_l,
             "pesticide_remaining_l": self.pesticide_remaining_l,
             "pesticide_sprayed_l": self.pesticide_sprayed_l,
             "event_count": self.event_count,
-            "event_schema_version": 1,
+            "event_schema_version": 2,
             "events": list(self.events),
             "success_threshold": self.success_threshold,
             "uav_agent_ids": list(self.agent_ids.get("uav", [])),
@@ -110,18 +200,33 @@ def episode_record_from_bundle(
     agent_ids: dict[str, list[str]],
     policy_name: str = "",
     split: str = "",
-        scenario_id: str = "",
+    scenario_id: str = "",
+    decision_times_s: Iterable[float] = (),
 ) -> EpisodeRecord:
-    """Materialize metrics solely from the final bundle and emitted events.
+    """Materialize metrics solely from final physical state and emitted events."""
 
-    The current provisional adapter emits no wait or pesticide-disabled events,
-    so those fields are deterministic zeros until the lower-level event model
-    starts reporting them.
-    """
-
+    ledger = [dict(event) for event in events]
+    decision_dt_s = float(getattr(bundle.adapter, "decision_dt_s", 1.0))
+    request_metrics = _request_metrics(
+        ledger, episode_steps=int(steps), decision_dt_s=decision_dt_s,
+    )
     final_pest_total = float(np.asarray(bundle.pest_density, dtype=float).sum())
     remaining = float(bundle.resources.total_pesticide_l)
     sprayed = float(getattr(bundle.resources, "_cumulative_sprayed_l", pesticide_initial_l - remaining))
+    vehicle_initial = sum(
+        float(value)
+        for value in getattr(bundle.adapter, "_initial_vehicle_inventory", {}).values()
+    )
+    vehicle_final = sum(
+        float(vehicle.inventory_l)
+        for vehicle in getattr(bundle.resources, "vehicles", {}).values()
+    )
+    inventory_used = max(0.0, vehicle_initial - vehicle_final)
+    decision_times = [float(value) for value in decision_times_s]
+    termination_reason = str(getattr(bundle, "last_termination_reason", "") or "")
+    if not termination_reason:
+        max_steps = int(getattr(bundle, "max_steps", steps))
+        termination_reason = "max_steps" if int(steps) >= max_steps else "rollout_horizon"
     return EpisodeRecord(
         episode_id=episode_id,
         scale_id=str(bundle.scale_id),
@@ -134,10 +239,39 @@ def episode_record_from_bundle(
         pesticide_initial_l=float(pesticide_initial_l),
         pesticide_remaining_l=remaining,
         pesticide_sprayed_l=sprayed,
-        vehicle_distance_m=_event_total(events, "movement_applied", "travelled_distance_m"),
-        wait_s=_event_total(events, "wait", "duration_s"),
-        pesticide_disabled_s=_event_total(events, "pesticide_disabled", "duration_s"),
-        events=list(events),
+        vehicle_distance_m=_event_total(ledger, "movement_applied", "travelled_distance_m"),
+        wait_s=_event_total(ledger, "wait", "duration_s"),
+        pesticide_disabled_s=_event_total(ledger, "pesticide_disabled", "duration_s"),
+        request_count=int(request_metrics["request_count"]),
+        request_completed_count=int(request_metrics["request_completed_count"]),
+        request_completion_rate=float(request_metrics["request_completion_rate"]),
+        requested_l=float(request_metrics["requested_l"]),
+        transferred_l=_event_total(ledger, "pesticide_transfer", "amount_l"),
+        request_wait_mean_s=float(request_metrics["request_wait_mean_s"]),
+        request_wait_p90_s=float(request_metrics["request_wait_p90_s"]),
+        effective_spray_s=sum(
+            float(event.get("duration_s", decision_dt_s))
+            for event in ledger
+            if event.get("event_type") in {"spray_applied", "spray"}
+            and float(event.get("amount_l", 0.0)) > 0.0
+        ),
+        service_s=_event_total(ledger, "service_active", "duration_s"),
+        rendezvous_road_distance_m=_event_total(
+            ledger, "request_reserved", "rendezvous_road_distance_m",
+        ),
+        uav_rendezvous_distance_m=sum(
+            float(event.get("distance_m", 0.0))
+            for event in ledger
+            if event.get("event_type") == "uav_movement_applied"
+            and bool(event.get("rendezvous_committed", False))
+        ),
+        vehicle_idle_s=_vehicle_idle_time_s(ledger, decision_dt_s=decision_dt_s),
+        vehicle_inventory_initial_l=vehicle_initial,
+        vehicle_inventory_final_l=vehicle_final,
+        vehicle_inventory_utilization=(inventory_used / vehicle_initial if vehicle_initial > 0 else 0.0),
+        decision_time_mean_ms=(float(np.mean(decision_times)) * 1000.0 if decision_times else 0.0),
+        termination_reason=termination_reason,
+        events=ledger,
         agent_ids={role: list(ids) for role, ids in agent_ids.items()},
         policy_name=str(policy_name),
         split=str(split),

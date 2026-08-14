@@ -83,6 +83,7 @@ class ScenarioBundle:
     intervention_hash: str = ""
     support_mode: str = "mobile"
     step_count: int = 0
+    last_termination_reason: str | None = None
     _slot_mapping: SlotMapping | None = field(default=None, init=False, repr=False)
 
     @property
@@ -98,6 +99,7 @@ class ScenarioBundle:
 
         self.pest_density = self.initial_density.copy()
         self.step_count = 0
+        self.last_termination_reason = None
         self.adapter.reset(seed=self.seed)
         return self._snapshot(events=())
 
@@ -144,6 +146,7 @@ class ScenarioBundle:
         reduction = max(0.0, 1.0 - current_mean / max(float(np.mean(self.initial_density)), 1e-12))
         terminated = reduction >= self.success_reduction_threshold
         truncated = self.step_count >= self.max_steps and not terminated
+        self.last_termination_reason = "success" if terminated else ("max_steps" if truncated else None)
         info = {
             "scale_id": self.scale_id,
             "seed": self.seed,
@@ -151,7 +154,7 @@ class ScenarioBundle:
             "pesticide_total_l": self.resources.total_pesticide_l,
             "pest_mean": current_mean,
             "reduction_rate": reduction,
-            "termination_reason": "success" if terminated else ("max_steps" if truncated else None),
+            "termination_reason": self.last_termination_reason,
         }
         self.resources.assert_conservation()
         snapshot = self._snapshot(events=tuple(state.events))
