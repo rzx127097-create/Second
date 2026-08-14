@@ -6,6 +6,8 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+from .statistics import hierarchical_paired_bootstrap
+
 
 
 def _bootstrap_ci(values: list[float], *, seed: int = 0, draws: int = 2000) -> tuple[float | None, float | None, str, int]:
@@ -116,3 +118,33 @@ def paired_differences(records: Iterable[Mapping[str, Any]], reference: str = "s
             diffs = grouped_diffs[(entry["method"], entry["scale"])]
             entry.update({"paired_difference_mean": sum(diffs) / len(diffs), "paired_difference_ci_low": low, "paired_difference_ci_high": high, "paired_ci_n": n, "paired_interval_reason": reason})
     return result
+
+
+def hierarchical_paired_summary(
+    records: Iterable[Mapping[str, Any]],
+    *,
+    reference: str = "sr_mappo_mobile",
+    metric: str = "reduction_rate",
+    draws: int = 5000,
+    seed: int = 0,
+    confidence_level: float = 0.95,
+    practical_equivalence_margin: float | None = None,
+    confirmatory: bool = True,
+    group_field: str = "method",
+) -> list[dict[str, object]]:
+    """Return serialization-ready hierarchical paired estimates."""
+
+    return [
+        estimate.to_dict()
+        for estimate in hierarchical_paired_bootstrap(
+            records,
+            reference=reference,
+            metric=metric,
+            draws=draws,
+            seed=seed,
+            confidence_level=confidence_level,
+            practical_equivalence_margin=practical_equivalence_margin,
+            confirmatory=confirmatory,
+            group_field=group_field,
+        )
+    ]

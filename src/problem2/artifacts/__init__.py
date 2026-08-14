@@ -9,7 +9,7 @@ import os
 
 from .evidence_manifest import write_evidence_manifest
 from .figures import plot_metric
-from .summarize import paired_differences, summarize_records
+from .summarize import hierarchical_paired_summary, paired_differences, summarize_records
 from .tables import write_table
 from .validate_logs import read_jsonl
 
