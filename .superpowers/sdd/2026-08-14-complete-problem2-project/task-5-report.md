@@ -84,3 +84,29 @@ pytest -q
 python -m compileall -q src scripts       [exit 0]
 git diff --check                         [exit 0]
 ```
+
+## Review Fix Round 2
+
+- A persisted `completed` job without `checkpoint_path` now transitions to
+  `failed`, records a missing-checkpoint diagnostic atomically, and never calls
+  the worker again.
+- Matrix smoke output now includes `selected_count` and `total_count`. A
+  successful subset is reported as machine-readable `partial`; `completed` is
+  reserved for all jobs selected and accepted. The explicit five-method
+  rejection and no-mobile rejection behavior remains unchanged.
+
+Covering tests:
+
+- `test_completed_job_without_checkpoint_becomes_failed_and_persists_diagnostic`
+- `test_matrix_default_max_jobs_reports_partial_execution`
+
+Round-2 verification:
+
+```text
+pytest tests/e2e/test_cli_and_recovery.py -q
+12 passed in 39.54s
+pytest -q
+131 passed in 44.63s
+python -m compileall -q src scripts       [exit 0]
+git diff --check                         [exit 0]
+```

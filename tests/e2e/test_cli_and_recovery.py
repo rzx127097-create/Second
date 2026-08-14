@@ -135,6 +135,22 @@ def test_completed_job_rejects_corrupt_checkpoint_before_worker(tmp_path: Path) 
     assert calls == []
 
 
+def test_completed_job_without_checkpoint_becomes_failed_and_persists_diagnostic(tmp_path: Path) -> None:
+    identity = make_job_identity("sr_mappo_mobile", "s1", 0, {"lr": 0.001}, git_commit="abc123")
+    record_path = tmp_path / "jobs" / "missing.json"
+    runner = JobRunner(
+        lambda _: pytest.fail("completed job without checkpoint must not rerun worker"),
+        record_path=record_path,
+        checkpoint_validator=lambda _: None,
+    )
+    result = runner.run(JobRecord(identity=identity, status="completed"))
+
+    assert result.status == "failed"
+    assert "checkpoint" in str(result.error).lower()
+    assert load_job_record(record_path).status == "failed"
+    assert "checkpoint" in str(load_job_record(record_path).error).lower()
+
+
 def test_matrix_dry_run_is_json_and_does_not_create_execution_outputs(tmp_path: Path) -> None:
     result = _cli("run_matrix.py", "--config-dir", "configs", "--output-root", str(tmp_path), "--dry-run")
 
@@ -160,6 +176,17 @@ def test_matrix_smoke_reports_each_method_instead_of_silently_skipping_methods(t
     methods = {item["method"] for item in outputs}
     assert methods == {"sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar", "mappo_mobile", "sr_mappo_two_stage"}
     assert all(item["status"] in {"completed", "rejected"} for item in outputs)
+
+
+def test_matrix_default_max_jobs_reports_partial_execution(tmp_path: Path) -> None:
+    result = _cli("run_matrix.py", "--config-dir", "configs", "--output-root", str(tmp_path), "--smoke")
+
+    assert result.returncode == 0
+    payload = _json_output(result)
+    assert payload["status"] == "partial"
+    assert payload["selected_count"] == 1
+    assert payload["total_count"] == 150
+    assert len(payload["jobs"]) == 1
 
 
 def test_matrix_smoke_rejects_matrix_without_mobile_method(tmp_path: Path) -> None:

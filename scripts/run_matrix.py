@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.max_jobs < 1:
             raise ValueError("max-jobs must be positive")
         if not any(job["method"] == "sr_mappo_mobile" for job in jobs):
-            _emit({"status": "failed", "error": "matrix has no sr_mappo_mobile jobs to execute"})
+            _emit({"status": "failed", "selected_count": 0, "total_count": len(jobs), "error": "matrix has no sr_mappo_mobile jobs to execute"})
             return 1
         selected = jobs[:args.max_jobs]
         outputs = []
@@ -82,9 +82,17 @@ def main(argv: list[str] | None = None) -> int:
             )
             child = json.loads(result.stdout) if result.stdout else {"error": result.stderr}
             outputs.append({**job, "status": child.get("status", "failed"), "returncode": result.returncode, "output": child})
-        complete = bool(outputs) and all(item["status"] == "completed" and item.get("returncode", 0) == 0 for item in outputs)
-        _emit({"status": "completed" if complete else "failed", "smoke": True, "jobs": outputs})
-        return 0 if complete else 1
+        all_accepted = bool(outputs) and all(item["status"] == "completed" and item.get("returncode", 0) == 0 for item in outputs)
+        complete = all_accepted and len(selected) == len(jobs)
+        status = "completed" if complete else ("partial" if all_accepted else "failed")
+        _emit({
+            "status": status,
+            "smoke": True,
+            "selected_count": len(selected),
+            "total_count": len(jobs),
+            "jobs": outputs,
+        })
+        return 0 if status in {"completed", "partial"} else 1
     except Exception as exc:  # noqa: BLE001 - CLI boundary must preserve diagnostics as JSON
         _emit({"status": "failed", "error": f"{type(exc).__name__}: {exc}"})
         return 1

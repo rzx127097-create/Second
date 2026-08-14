@@ -104,7 +104,11 @@ class JobRunner:
 
     def run(self, record: JobRecord) -> JobRecord:
         if record.status == "completed":
-            if record.checkpoint_path is not None and not record.checkpoint_path.is_file():
+            if record.checkpoint_path is None:
+                record.status = "failed"
+                record.error = "checkpoint path is missing for completed job"
+                self._persist(record)
+            elif not record.checkpoint_path.is_file():
                 record.status = "failed"
                 record.error = f"checkpoint is missing or inaccessible: {record.checkpoint_path}"
                 self._persist(record)
