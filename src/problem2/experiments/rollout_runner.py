@@ -1,0 +1,193 @@
+"""Real ScenarioBundle rollout collection and CPU SR-MAPPO update runner."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from pathlib import Path
+from typing import Any, Callable
+
+import numpy as np
+
+from problem2.algorithms.common.checkpoint import save_checkpoint
+from problem2.algorithms.sr_mappo.rollout import RolloutBatch
+
+from .metrics import EpisodeRecord, episode_record_from_bundle
+
+
+def _role_inputs(snapshot: Any) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[str, list[str]], dict[str, list[object]]]:
+    """Extract stable role arrays from the bundle's per-agent decision snapshot."""
+
+    role_ids: dict[str, list[str]] = {"uav": [], "vehicle": []}
+    for agent_id, observation in snapshot.role_observations.items():
+        role = str(observation["role"])
+        if role not in role_ids:
+            raise ValueError(f"unsupported policy role: {role}")
+        role_ids[role].append(str(agent_id))
+    for ids in role_ids.values():
+        ids.sort()
+    observations = {
+        role: np.asarray([snapshot.role_observations[agent_id]["vector"] for agent_id in ids], dtype=np.float32)
+        for role, ids in role_ids.items()
+    }
+    masks = {
+        role: np.asarray([snapshot.action_masks[agent_id].mask for agent_id in ids], dtype=bool)
+        for role, ids in role_ids.items()
+    }
+    action_masks = {
+        role: [snapshot.action_masks[agent_id] for agent_id in ids]
+        for role, ids in role_ids.items()
+    }
+    return observations, masks, role_ids, action_masks
+
+
+def _environment_actions(sampled_actions: dict[str, Any], role_ids: dict[str, list[str]], action_masks: dict[str, list[object]]) -> dict[str, str]:
+    """Convert actor indices back into the exact legal environment slot names."""
+
+    converted: dict[str, str] = {}
+    for role in ("uav", "vehicle"):
+        values = np.asarray(sampled_actions[role]).reshape(-1)
+        if len(values) != len(role_ids[role]):
+            raise ValueError(f"sampled {role} action count does not match ScenarioBundle slots")
+        for agent_id, index, mask in zip(role_ids[role], values, action_masks[role]):
+            action_index = int(index)
+            if action_index < 0 or action_index >= len(mask.actions) or not mask.mask[action_index]:
+                raise ValueError(f"sampled an invalid {role} action for {agent_id}")
+            converted[agent_id] = str(mask.actions[action_index])
+    return converted
+
+
+def _scalar_value(algorithm: Any, state: dict[str, Any]) -> float:
+    import torch
+
+    with torch.no_grad():
+        return float(algorithm.value_physical(state).reshape(-1)[0].item())
+
+
+def run_training_episode(
+    bundle: Any,
+    algorithm: Any,
+    trainer: Any,
+    *,
+    horizon: int,
+    episode_id: str,
+) -> EpisodeRecord:
+    """Collect exactly one real joint trajectory from ``ScenarioBundle``.
+
+    The returned record carries its finished ``RolloutBatch`` privately for
+    ``train_policy``.  No action, reward, state, or event is synthesized here.
+    """
+
+    del trainer  # Optimizer ownership stays with train_policy after collection.
+    if horizon < 1:
+        raise ValueError("horizon must be positive")
+    snapshot = bundle.reset()
+    batch = RolloutBatch()
+    initial_pest_total = float(np.asarray(bundle.pest_density, dtype=float).sum())
+    pesticide_initial_l = float(bundle.resources.total_pesticide_l)
+    all_events: list[dict[str, object]] = []
+    components: defaultdict[str, float] = defaultdict(float)
+    total_reward = 0.0
+
+    for step_index in range(int(horizon)):
+        observations, masks, role_ids, action_masks = _role_inputs(snapshot)
+        state = snapshot.critic_state
+        transition = algorithm.collect_transition(
+            observations,
+            masks,
+            state,
+            agent_ids=role_ids,
+            candidate_mapping=snapshot.candidate_mapping,
+            valid_actor_sample={
+                role: [int(mask.mask.sum()) > 1 for mask in role_masks]
+                for role, role_masks in action_masks.items()
+            },
+        )
+        environment_actions = _environment_actions(transition["actions"], role_ids, action_masks)
+        stepped = bundle.step(environment_actions)
+        total_reward += float(stepped.reward)
+        for name, value in stepped.reward_components.items():
+            components[name] += float(value)
+        all_events.extend(dict(event) for event in stepped.events)
+        horizon_cut = step_index + 1 >= horizon
+        done = bool(stepped.terminated or stepped.truncated or horizon_cut)
+        next_value = 0.0 if stepped.terminated else _scalar_value(algorithm, stepped.critic_state)
+        batch.add(
+            observations=observations,
+            policy_observations=transition["policy_observations"],
+            state=state,
+            actions=transition["actions"],
+            masks=masks,
+            log_probs=transition["log_probs"],
+            entropies=transition["entropies"],
+            agent_ids=role_ids,
+            candidate_mapping=snapshot.candidate_mapping,
+            valid_actor_sample=transition["valid_actor_sample"],
+            reward=float(stepped.reward),
+            reward_components=stepped.reward_components,
+            normalization_version=transition["normalization_versions"],
+            episode_id=episode_id,
+            value=_scalar_value(algorithm, state),
+            done=done,
+            terminated=bool(stepped.terminated),
+            truncated=bool(stepped.truncated or (horizon_cut and not stepped.terminated)),
+            next_value=next_value,
+        )
+        snapshot = stepped
+        if done:
+            break
+
+    batch.finish(gamma=0.99, gae_lambda=0.95, last_value=0.0)
+    record = episode_record_from_bundle(
+        bundle,
+        episode_id=episode_id,
+        steps=len(batch),
+        total_reward=total_reward,
+        reward_components=components,
+        initial_pest_total=initial_pest_total,
+        pesticide_initial_l=pesticide_initial_l,
+        events=all_events,
+    )
+    record.rollout = batch
+    return record
+
+
+def train_policy(
+    bundle_factory: Callable[[], Any],
+    algorithm: Any,
+    trainer: Any,
+    *,
+    updates: int,
+    rollout_horizon: int,
+    checkpoint_path: Path | None,
+    start_update: int = 0,
+) -> list[EpisodeRecord]:
+    """Collect, optimize, and atomically checkpoint true ScenarioBundle rollouts."""
+
+    if updates < 1:
+        raise ValueError("updates must be positive")
+    records: list[EpisodeRecord] = []
+    algorithm.train(True)
+    for offset in range(int(updates)):
+        bundle = bundle_factory()
+        update = int(start_update) + offset + 1
+        record = run_training_episode(
+            bundle,
+            algorithm,
+            trainer,
+            horizon=rollout_horizon,
+            episode_id=str(bundle.episode_id),
+        )
+        losses = trainer.update_with_epochs(
+            record.rollout,
+            epochs=1,
+            progress=update / max(1, int(start_update) + int(updates)),
+        )
+        record.losses = {name: float(value) for name, value in losses.items()}
+        del record.rollout
+        records.append(record)
+        if checkpoint_path is not None:
+            save_checkpoint(checkpoint_path, algorithm, step=update)
+    return records
+
+
+__all__ = ["run_training_episode", "train_policy"]
