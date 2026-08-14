@@ -40,6 +40,9 @@ class EpisodeRecord:
     losses: dict[str, float] = field(default_factory=dict)
     agent_ids: dict[str, list[str]] = field(default_factory=dict)
     rollout: Any | None = field(default=None, repr=False, compare=False)
+    policy_name: str = ""
+    split: str = ""
+    scenario_id: str = ""
 
     @property
     def reduction_rate(self) -> float:
@@ -56,6 +59,9 @@ class EpisodeRecord:
     def to_row(self) -> dict[str, object]:
         return {
             "episode_id": self.episode_id,
+            "scenario_id": self.scenario_id or self.scale_id,
+            "split": self.split,
+            "policy_name": self.policy_name,
             "scale_id": self.scale_id,
             "parameter_status": self.parameter_status,
             "steps": self.steps,
@@ -90,6 +96,9 @@ def episode_record_from_bundle(
     pesticide_initial_l: float,
     events: list[dict[str, object]],
     agent_ids: dict[str, list[str]],
+    policy_name: str = "",
+    split: str = "",
+    scenario_id: str = "",
 ) -> EpisodeRecord:
     """Materialize metrics solely from the final bundle and emitted events.
 
@@ -118,6 +127,9 @@ def episode_record_from_bundle(
         pesticide_disabled_s=_event_total(events, "pesticide_disabled", "duration_s"),
         events=list(events),
         agent_ids={role: list(ids) for role, ids in agent_ids.items()},
+        policy_name=str(policy_name),
+        split=str(split),
+        scenario_id=str(scenario_id or bundle.scale_id),
     )
 
 

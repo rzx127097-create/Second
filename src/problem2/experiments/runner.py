@@ -31,3 +31,10 @@ class JobRunner:
             record.error = repr(exc)
             record.status = "failed"
         return record
+
+
+def evaluate_job(policy: Any, scenario_factory: Any, *, scenarios: Any, split: str, deterministic: bool = True) -> list[Any]:
+    """Small runner entry point for the shared deterministic policy protocol."""
+    from .evaluation import evaluate_policy
+
+    return evaluate_policy(policy, scenario_factory, scenarios=scenarios, split=split, deterministic=deterministic)
