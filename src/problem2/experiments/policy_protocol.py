@@ -11,6 +11,7 @@ import numpy as np
 
 class PolicyProtocol(Protocol):
     name: str
+    frozen: bool
 
     def act(self, snapshot: Any) -> Mapping[str, str]:
         """Return legal high-level actions for the supplied decision snapshot."""
@@ -20,6 +21,7 @@ class HoldPolicy:
     """Deterministic baseline that holds every role slot."""
 
     name = "hold"
+    frozen = True
 
     def act(self, snapshot: Any, **_: Any) -> Mapping[str, str]:
         return {agent_id: "hold" for agent_id in sorted(snapshot.role_observations)}
@@ -29,6 +31,19 @@ def _role_ids(snapshot: Any, role: str) -> list[str]:
     return sorted(agent_id for agent_id, observation in snapshot.role_observations.items() if str(observation.get("role")) == role)
 
 
+def _flatten_action_values(value: Any) -> list[Any]:
+    if isinstance(value, np.ndarray):
+        return value.reshape(-1).tolist()
+    if hasattr(value, "detach") and hasattr(value, "reshape"):
+        return value.detach().cpu().reshape(-1).tolist()
+    if isinstance(value, (list, tuple)):
+        flattened: list[Any] = []
+        for item in value:
+            flattened.extend(_flatten_action_values(item) if isinstance(item, (list, tuple, np.ndarray)) else [item])
+        return flattened
+    return [value]
+
+
 def actions_to_environment(snapshot: Any, actions: Mapping[str, Any]) -> dict[str, str]:
     """Convert numeric actor outputs to exact legal ActionMask action names."""
     by_agent: dict[str, Any] = {}
@@ -36,10 +51,10 @@ def actions_to_environment(snapshot: Any, actions: Mapping[str, Any]) -> dict[st
         if role not in actions:
             continue
         ids = _role_ids(snapshot, role)
-        values = np.asarray(actions[role]).reshape(-1)
+        values = _flatten_action_values(actions[role])
         if len(values) != len(ids):
             raise ValueError(f"{role} action count does not match ScenarioBundle slots")
-        by_agent.update(dict(zip(ids, values.tolist())))
+        by_agent.update(dict(zip(ids, values)))
     for agent_id, value in actions.items():
         if agent_id not in {"uav", "vehicle"}:
             by_agent[str(agent_id)] = value
@@ -77,6 +92,7 @@ class AlgorithmPolicyAdapter:
     def __init__(self, algorithm: Any, *, name: str = "SR-MAPPO") -> None:
         self.algorithm = algorithm
         self.name = name
+        self.frozen = not bool(getattr(algorithm, "training", True))
 
     @property
     def training(self) -> bool:
@@ -85,11 +101,13 @@ class AlgorithmPolicyAdapter:
     def eval(self) -> "AlgorithmPolicyAdapter":
         if hasattr(self.algorithm, "eval"):
             self.algorithm.eval()
+        self.frozen = True
         return self
 
     def train(self, mode: bool = True) -> "AlgorithmPolicyAdapter":
         if hasattr(self.algorithm, "train"):
             self.algorithm.train(mode)
+        self.frozen = not bool(mode)
         return self
 
     def act(self, snapshot: Any, *, deterministic: bool = True) -> Mapping[str, str]:

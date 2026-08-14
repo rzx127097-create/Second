@@ -40,6 +40,8 @@ def evaluate_policy(
             raise ValueError("sealed_test requires deterministic=True")
         if not getattr(policy, "name", None) or not hasattr(policy, "eval"):
             raise ValueError("sealed_test requires a named frozen policy with eval mode")
+        if getattr(policy, "frozen", False) is not True or getattr(policy, "training", False) is True:
+            raise ValueError("sealed_test requires a frozen policy")
     records: list[EpisodeRecord] = []
     for scenario_id in scenarios:
         scenario_key = str(scenario_id)

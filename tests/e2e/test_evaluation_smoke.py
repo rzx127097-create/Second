@@ -70,6 +70,31 @@ def test_sealed_test_requires_deterministic_frozen_policy():
         evaluate_policy(HoldPolicy(), _factory, scenarios=["s1"], split="sealed_test", deterministic=True)
 
 
+def test_sealed_test_rejects_mutable_named_policy_on_verified_bundle():
+    class MutablePolicy:
+        name = "mutable"
+        frozen = False
+        training = True
+
+        def eval(self):
+            return self
+
+        def train(self, mode=True):
+            self.training = mode
+            return self
+
+        def act(self, snapshot, **kwargs):
+            return {agent_id: "hold" for agent_id in snapshot.role_observations}
+
+    def verified_factory(scenario_id):
+        bundle = _factory(scenario_id)
+        bundle.parameter_status = "verified"
+        return bundle
+
+    with pytest.raises(ValueError, match="frozen"):
+        evaluate_policy(MutablePolicy(), verified_factory, scenarios=["s1"], split="sealed_test", deterministic=True)
+
+
 def test_stochastic_algorithm_adapter_freezes_normalization_and_training_state():
     torch = pytest.importorskip("torch")
     from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
@@ -134,3 +159,11 @@ def test_action_conversion_rejects_non_integral_float_index():
     snapshot = _factory("s1").reset()
     with pytest.raises(ValueError, match="integer"):
         actions_to_environment(snapshot, {"uav": [4.9, 4], "vehicle": [0]})
+
+
+def test_role_batched_boolean_actions_are_rejected_before_integer_conversion():
+    from problem2.experiments.policy_protocol import actions_to_environment
+
+    snapshot = _factory("s1").reset()
+    with pytest.raises(ValueError, match="invalid action index"):
+        actions_to_environment(snapshot, {"uav": [True, 4], "vehicle": [False]})
