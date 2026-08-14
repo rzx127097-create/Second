@@ -5,9 +5,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from problem2.experiments.policy_protocol import actions_to_environment
+
 
 class FixedSupportBaseline:
     name = "fixed_support"
+    frozen = True
 
     def __init__(self, support_node: str, vehicle_id: str | None = None) -> None:
         if not support_node:
@@ -16,6 +19,10 @@ class FixedSupportBaseline:
         self.vehicle_id = vehicle_id
 
     def act(self, observations: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
+        if hasattr(observations, "role_observations"):
+            snapshot = observations
+            proposed = {agent_id: "hold" for agent_id in snapshot.role_observations}
+            return actions_to_environment(snapshot, proposed)
         actions: dict[str, str] = {}
         for agent_id, data in observations.items():
             if data.get("role") != "vehicle":
@@ -35,4 +42,3 @@ class FixedSupportBaseline:
         return actions
 
     __call__ = act
-

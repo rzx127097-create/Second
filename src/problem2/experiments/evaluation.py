@@ -42,6 +42,8 @@ def evaluate_policy(
             raise ValueError("sealed_test requires a named frozen policy with eval mode")
         if getattr(policy, "frozen", False) is not True or getattr(policy, "training", False) is True:
             raise ValueError("sealed_test requires a frozen policy")
+    if split != "smoke" and getattr(policy, "smoke_only", False):
+        raise ValueError("smoke_only policy cannot be used for formal evaluation")
     records: list[EpisodeRecord] = []
     for scenario_id in scenarios:
         scenario_key = str(scenario_id)

@@ -8,6 +8,7 @@ from typing import Any
 
 class PriorityDispatchPolicy:
     name = "priority_dispatch"
+    frozen = True
 
     def select(
         self,
@@ -38,3 +39,6 @@ class PriorityDispatchPolicy:
 
     dispatch = select
 
+    def act(self, snapshot: Any) -> dict[str, str]:
+        from problem2.experiments.policy_protocol import actions_to_environment
+        return actions_to_environment(snapshot, {agent_id: "hold" for agent_id in snapshot.role_observations})

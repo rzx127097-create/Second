@@ -17,6 +17,7 @@ class RoutePlan:
 
 class RollingAStarPolicy:
     name = "rolling_astar"
+    frozen = True
 
     def __init__(self, graph: Any) -> None:
         self.graph = graph
@@ -40,6 +41,16 @@ class RollingAStarPolicy:
         return min(candidates, key=lambda item: item[:3])[3] if candidates else None
 
     def act(self, observation: Mapping[str, Any]) -> dict[str, Any]:
+        if hasattr(observation, "role_observations"):
+            from problem2.experiments.policy_protocol import actions_to_environment
+            proposed = {agent_id: "hold" for agent_id in observation.role_observations}
+            for vehicle_id, routes in observation.candidate_mapping.items():
+                mask = observation.action_masks[vehicle_id]
+                for slot, _ in routes:
+                    if slot in mask.valid_actions:
+                        proposed[vehicle_id] = slot
+                        break
+            return actions_to_environment(observation, proposed)
         vehicle = next((v for v in observation.values() if v.get("role") == "vehicle"), {})
         current = str(vehicle.get("road_node", vehicle.get("position", "")))
         plan = self.plan(current, observation.get("requests", []))

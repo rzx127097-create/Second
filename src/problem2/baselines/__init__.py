@@ -5,6 +5,7 @@ from .priority_dispatch import PriorityDispatchPolicy
 from .rolling_astar import RollingAStarPolicy, RoutePlan
 from .teleport_service import TeleportServiceBaseline
 from .unlimited_supply import UnlimitedSupplyBaseline
+from .policies import PRIMARY_METHODS, FixedSupportPolicy, RollingAStarAdapter, make_policy
 
 __all__ = [
     "FixedSupportBaseline",
@@ -13,4 +14,8 @@ __all__ = [
     "RoutePlan",
     "TeleportServiceBaseline",
     "UnlimitedSupplyBaseline",
+    "PRIMARY_METHODS",
+    "FixedSupportPolicy",
+    "RollingAStarAdapter",
+    "make_policy",
 ]
