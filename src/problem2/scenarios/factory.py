@@ -27,6 +27,7 @@ from problem2.environment.observations import (
 from problem2.environment.rewards import compute_reward
 from problem2.road.graph import RoadGraph
 from problem2.section4_2.adapter import HeterogeneousDecisionAdapter
+from problem2.scenarios.interventions import ScenarioIntervention, baseline_intervention
 
 
 NORMALIZATION_VERSION = "provisional-v1"
@@ -78,6 +79,9 @@ class ScenarioBundle:
     cell_size_m: tuple[float, float] = (1.0, 1.0)
     normalization_version: str = NORMALIZATION_VERSION
     parameter_status: str = "provisional"
+    intervention_id: str = "baseline"
+    intervention_hash: str = ""
+    support_mode: str = "mobile"
     step_count: int = 0
     _slot_mapping: SlotMapping | None = field(default=None, init=False, repr=False)
 
@@ -240,6 +244,7 @@ def build_synthetic_scenario(
     *,
     config_dir: str | Path,
     scenario_id: str | None = None,
+    intervention: ScenarioIntervention | None = None,
 ) -> ScenarioBundle:
     """Build one deterministic rectangular provisional scenario.
 
@@ -248,6 +253,7 @@ def build_synthetic_scenario(
     """
 
     config = load_config_bundle(config_dir)
+    intervention = intervention or baseline_intervention()
     scenario_registry = config.scenarios
     requested_id = str(scenario_id or scale_id)
     if requested_id in scenario_registry:
@@ -265,11 +271,20 @@ def build_synthetic_scenario(
     vehicle_inventory = float(parameters["vehicle_inventory"]["value"])
     transfer_rate = float(parameters["vehicle_transfer_rate"]["value"])
     rng = np.random.default_rng(int(seed))
-    density = rng.uniform(0.6, 1.0, size=(rows, cols)).astype(float)
+    density = _density_field(rng, (rows, cols), intervention.adaptations.get("demand_dispersion"))
+
+    parameter_overrides = intervention.parameters
+    initial_ratio = float(parameter_overrides.get("uav_initial_pesticide_ratio", 1.0))
+    if intervention.pesticide_mode == "unlimited":
+        decision_dt_s = float(config.scales.get("decision_dt_s", 1.0))
+        capacity = max(capacity, spray_flow * int(scale["max_steps"]) * decision_dt_s * 1.01)
 
     uavs = {
         f"uav-{index + 1}": UAVState(
-            f"uav-{index + 1}", capacity, capacity, spray_flow
+            uav_id=f"uav-{index + 1}",
+            onboard_l=capacity * initial_ratio,
+            capacity_l=capacity,
+            spray_flow_l_s=spray_flow,
         )
         for index in range(uav_count)
     }
@@ -290,8 +305,26 @@ def build_synthetic_scenario(
     for node, neighbours in road_graph.adjacency.items():
         for neighbour in list(neighbours):
             neighbours[neighbour] *= road_factor
+    blockage = float(intervention.adaptations.get("road_blockage", 0.0))
+    if blockage > 0:
+        _apply_connected_road_blockage(road_graph, blockage, int(seed))
     environment = config.environment
     parameter_values = {key: value.get("value") for key, value in parameters.items() if isinstance(value, dict)}
+    for key in ("vehicle_speed", "service_setup_time", "rendezvous_radius"):
+        if key in parameter_overrides:
+            record = parameters[key]
+            value = float(parameter_overrides[key])
+            if not float(record["min"]) <= value <= float(record["max"]):
+                raise ValueError(f"{key} override is outside the registered engineering range")
+            parameter_values[key] = value
+    support_node = sorted(road_graph.nodes)[0] if intervention.condition_id == "baseline" else min(
+        road_graph.nodes,
+        key=lambda node: (
+            (road_graph.nodes[node][0] - extent[0] / 2.0) ** 2
+            + (road_graph.nodes[node][1] - extent[1] / 2.0) ** 2,
+            node,
+        ),
+    )
     adapter = HeterogeneousDecisionAdapter(
         resources,
         road_graph,
@@ -306,6 +339,8 @@ def build_synthetic_scenario(
         service_setup_s=float(parameter_values.get("service_setup_time", 10.0)),
         rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),
         max_candidate_slots=int(environment.get("max_candidate_slots", 4)),
+        support_mode=intervention.support_mode,
+        initial_vehicle_nodes={"vehicle-1": support_node},
     )
     bundle = ScenarioBundle(
         scale_id=scale_id,
@@ -324,9 +359,58 @@ def build_synthetic_scenario(
         physical_extent_m=extent,
         cell_size_m=cell_size_m,
         parameter_status=str(config.parameters.get("status", "provisional")),
+        intervention_id=intervention.condition_id,
+        intervention_hash=intervention.identity_hash,
+        support_mode=intervention.support_mode,
     )
     bundle.reset()
     return bundle
+
+
+def _density_field(rng: np.random.Generator, shape: tuple[int, int], dispersion: object | None) -> np.ndarray:
+    if dispersion is None:
+        return rng.uniform(0.6, 1.0, size=shape).astype(float)
+    rows, cols = shape
+    row_axis, col_axis = np.mgrid[0:rows, 0:cols]
+    counts = {"clustered": 1, "moderate": 2, "dispersed": 4}
+    if str(dispersion) not in counts:
+        raise ValueError("demand_dispersion must be clustered, moderate or dispersed")
+    field = np.full(shape, 0.35, dtype=float)
+    sigma = max(1.0, min(rows, cols) / (3.0 + counts[str(dispersion)]))
+    for _ in range(counts[str(dispersion)]):
+        center_row = int(rng.integers(0, rows))
+        center_col = int(rng.integers(0, cols))
+        field += 0.65 * np.exp(
+            -((row_axis - center_row) ** 2 + (col_axis - center_col) ** 2) / (2.0 * sigma**2)
+        )
+    return np.clip(field, 0.0, 1.0)
+
+
+def _apply_connected_road_blockage(graph: RoadGraph, fraction: float, seed: int) -> None:
+    edges = sorted(
+        (left, right, weight)
+        for left, neighbours in graph.adjacency.items()
+        for right, weight in neighbours.items()
+        if left < right
+    )
+    rng = np.random.default_rng(int(seed) + 7919)
+    order = rng.permutation(len(edges)).tolist()
+    target = int(round(len(edges) * fraction))
+    removed = 0
+    root = min(graph.nodes)
+    for index in order:
+        if removed >= target:
+            break
+        left, right, weight = edges[index]
+        graph.adjacency[left].pop(right, None)
+        graph.adjacency[right].pop(left, None)
+        if len(graph.component(root)) == len(graph.nodes):
+            removed += 1
+        else:
+            graph.adjacency[left][right] = weight
+            graph.adjacency[right][left] = weight
+    if removed < target:
+        raise ValueError("requested road blockage cannot preserve graph connectivity")
 
 
 __all__ = [

@@ -13,3 +13,6 @@ __all__ = [
     "StepSnapshot",
     "build_synthetic_scenario",
 ]
+from .interventions import ScenarioIntervention, baseline_intervention
+
+__all__ = ["ScenarioIntervention", "baseline_intervention"]

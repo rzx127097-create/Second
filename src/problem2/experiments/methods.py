@@ -81,8 +81,6 @@ def method_profile(name: str, algorithm_config: Mapping[str, Any]) -> MethodProf
 
 def _external_action_name(snapshot: Any, vehicle_id: str, phase: str) -> str:
     mask = snapshot.action_masks[vehicle_id]
-    if phase == "fixed_support":
-        return "hold"
     routes = snapshot.candidate_mapping.get(vehicle_id, ())
     for slot, _mapping_key in routes:
         if str(slot) in mask.valid_actions:

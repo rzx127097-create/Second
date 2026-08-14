@@ -110,7 +110,7 @@ def test_two_stage_profile_freezes_vehicle_before_boundary_and_learns_afterward(
     assert second["valid_actor_sample"]["vehicle"] == [True]
 
 
-def test_fixed_profile_executes_hold_and_excludes_vehicle_actor() -> None:
+def test_fixed_profile_accepts_candidate_without_learning_vehicle_movement() -> None:
     transition = {
         "actions": {"uav": [1], "vehicle": [2]},
         "log_probs": {"uav": [0.0], "vehicle": [-0.4]},
@@ -122,5 +122,6 @@ def test_fixed_profile_executes_hold_and_excludes_vehicle_actor() -> None:
     phase = apply_vehicle_behavior_override(_snapshot(), transition, profile, update_index=1, total_updates=2)
 
     assert phase == "fixed_support"
-    assert transition["actions"]["vehicle"] == [0]
+    # The fixed-mode environment exposes candidates only at the support node.
+    assert transition["actions"]["vehicle"] == [2]
     assert transition["valid_actor_sample"]["vehicle"] == [False]

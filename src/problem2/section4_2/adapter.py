@@ -51,6 +51,8 @@ class HeterogeneousDecisionAdapter:
         service_setup_s: float = 10.0,
         rendezvous_radius_m: float = 5.0,
         max_candidate_slots: int = 4,
+        support_mode: str = "mobile",
+        initial_vehicle_nodes: Mapping[str, str] | None = None,
     ) -> None:
         if not vehicle_slots:
             raise ValueError("at least one vehicle slot is required")
@@ -68,6 +70,8 @@ class HeterogeneousDecisionAdapter:
             raise ValueError("request_threshold_ratio must lie in [0, 1]")
         if service_setup_s < 0 or rendezvous_radius_m < 0 or max_candidate_slots < 1:
             raise ValueError("invalid service configuration")
+        if support_mode not in {"mobile", "fixed", "disabled", "teleport"}:
+            raise ValueError("unsupported support_mode")
         self.resources = resources
         self._initial_uav_onboard = {key: float(value.onboard_l) for key, value in resources.uavs.items()}
         self._initial_vehicle_inventory = {key: float(value.inventory_l) for key, value in resources.vehicles.items()}
@@ -83,6 +87,17 @@ class HeterogeneousDecisionAdapter:
         self.service_setup_s = float(service_setup_s)
         self.rendezvous_radius_m = float(rendezvous_radius_m)
         self.max_candidate_slots = int(max_candidate_slots)
+        self.support_mode = str(support_mode)
+        default_start = sorted(self.road_graph.nodes)[0]
+        supplied_starts = dict(initial_vehicle_nodes or {})
+        if any(vehicle_id not in self.vehicle_slots for vehicle_id in supplied_starts):
+            raise ValueError("initial vehicle node references an unknown vehicle")
+        self.initial_vehicle_nodes = {
+            vehicle_id: str(supplied_starts.get(vehicle_id, default_start))
+            for vehicle_id in self.vehicle_slots
+        }
+        if any(not self.road_graph.has_node(node) for node in self.initial_vehicle_nodes.values()):
+            raise ValueError("initial vehicle node must belong to the road graph")
         self.executors: dict[str, RoadVehicleExecutor] = {}
         self.uav_positions: dict[str, tuple[int, int]] = {}
         self._candidate_routes: dict[str, dict[str, tuple[str, ...]]] = {}
@@ -124,9 +139,12 @@ class HeterogeneousDecisionAdapter:
         self._committed_vehicle_id = None
         self._service_target_node = None
         self._service_target_uav_cell = None
-        start = sorted(self.road_graph.nodes)[0]
         self.executors = {
-            vehicle_id: RoadVehicleExecutor(self.road_graph, current_node=start, speed_mps=self.vehicle_speed_mps)
+            vehicle_id: RoadVehicleExecutor(
+                self.road_graph,
+                current_node=self.initial_vehicle_nodes[vehicle_id],
+                speed_mps=self.vehicle_speed_mps,
+            )
             for vehicle_id in self.vehicle_slots
         }
         self.uav_positions = {uav_id: (0, 0) for uav_id in self.uav_slots}
@@ -208,6 +226,9 @@ class HeterogeneousDecisionAdapter:
                 request = self.request_manager.create_request(uav_id, state.capacity_l - state.onboard_l, self._decision_step)
                 if len(self.request_manager) > before:
                     events.append({"event_type": "request_created", "request_id": request.request_id, "uav_id": uav_id, "amount_l": request.requested_l, "step": self._decision_step})
+
+        if self.support_mode == "teleport":
+            self._apply_teleport_service(events)
         for vehicle_id, executor in self.executors.items():
             action = actions[vehicle_id]
             if vehicle_id != self._locked_vehicle_id and action.startswith("slot-"):
@@ -391,7 +412,12 @@ class HeterogeneousDecisionAdapter:
     def _rendezvous_points(self, uav_id: str) -> tuple[RendezvousPoint, ...]:
         uav_x, uav_y = self._uav_metric_position(uav_id)
         points = []
-        for node_id, position in sorted(self.road_graph.nodes.items()):
+        if self.support_mode == "fixed":
+            fixed_nodes = {self.initial_vehicle_nodes[vehicle_id] for vehicle_id in self.vehicle_slots}
+            node_items = sorted((node_id, self.road_graph.nodes[node_id]) for node_id in fixed_nodes)
+        else:
+            node_items = sorted(self.road_graph.nodes.items())
+        for node_id, position in node_items:
             distance_m = hypot(position[0] - uav_x, position[1] - uav_y)
             if distance_m <= self.rendezvous_radius_m + 1e-12:
                 points.append(
@@ -406,6 +432,14 @@ class HeterogeneousDecisionAdapter:
 
     def _refresh_request_candidates(self) -> None:
         if not self.executors:
+            return
+        if self.support_mode in {"disabled", "teleport"}:
+            for vehicle_id in self.vehicle_slots:
+                self._candidate_routes[vehicle_id] = {}
+                self._candidate_request_ids[vehicle_id] = {}
+                self._candidate_mapping_keys[vehicle_id] = {}
+                self._candidate_records[vehicle_id] = {}
+                self._candidate_target_cells[vehicle_id] = {}
             return
         open_requests = sorted(
             (request for request in self.request_manager.active_requests() if request.status is RequestStatus.OPEN),
@@ -492,6 +526,41 @@ class HeterogeneousDecisionAdapter:
                     candidate.road_node_id
                 )
             self._candidate_routes[vehicle_id] = routes
+
+    def _apply_teleport_service(self, events: list[dict[str, object]]) -> None:
+        """Serve at most one FIFO request per step without travel or setup delay."""
+
+        vehicle_id = self.vehicle_slots[0]
+        vehicle = self.resources.vehicle(vehicle_id)
+        if vehicle.inventory_l <= 0 or vehicle.service_cap_l <= 0:
+            return
+        open_requests = [
+            request for request in self.request_manager.active_requests()
+            if request.status is RequestStatus.OPEN
+        ]
+        if not open_requests:
+            return
+        request = min(open_requests, key=lambda item: (item.created_step, item.uav_id, item.request_id))
+        reserved = self.request_manager.reserve_request(
+            request.request_id, vehicle_id, self._decision_step,
+        )
+        if reserved is None:
+            return
+        self.request_manager.start_service(request.request_id, self._decision_step)
+        transferred = self.resources.transfer(request.uav_id, vehicle_id, request.remaining_l)
+        updated = self.request_manager.apply_transfer(
+            request.request_id, transferred.amount_l, self._decision_step,
+        )
+        events.extend([
+            {"event_type": "request_reserved", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "mode": "teleport_diagnostic", "step": self._decision_step},
+            {"event_type": "service_started", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "mode": "teleport_diagnostic", "step": self._decision_step},
+            {"event_type": "pesticide_transfer", "amount_l": transferred.amount_l, "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "mode": "teleport_diagnostic", "step": self._decision_step},
+        ])
+        if updated.status is RequestStatus.COMPLETED:
+            events.append({"event_type": "request_completed", "request_id": request.request_id, "mode": "teleport_diagnostic", "step": self._decision_step})
+        else:
+            self.request_manager.reopen(request.request_id, self._decision_step)
+            events.append({"event_type": "request_partially_satisfied", "request_id": request.request_id, "mode": "teleport_diagnostic", "step": self._decision_step})
 
 
 __all__ = ["DecisionState", "HeterogeneousDecisionAdapter"]
