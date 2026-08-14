@@ -305,6 +305,7 @@ def build_synthetic_scenario(
         request_threshold_ratio=float(environment.get("request_threshold_ratio", 0.20)),
         service_setup_s=float(parameter_values.get("service_setup_time", 10.0)),
         rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),
+        max_candidate_slots=int(environment.get("max_candidate_slots", 4)),
     )
     bundle = ScenarioBundle(
         scale_id=scale_id,

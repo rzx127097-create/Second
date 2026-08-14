@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
+from problem2.config import load_config_bundle
 from problem2.scenarios.factory import build_synthetic_scenario
 
 
@@ -115,3 +117,46 @@ def test_snapshot_uses_grid_coordinates_for_both_actor_roles_and_critic() -> Non
 
     assert snapshot.role_observations["vehicle-1"]["position"] == (0.0, 1.0)
     np.testing.assert_allclose(snapshot.critic_state["vehicles"][0, :2], [0.0, 1.0])
+
+
+def test_vehicle_action_contract_is_configured_and_matches_runtime_slots() -> None:
+    config = load_config_bundle(CONFIG_DIR)
+    environment = config.environment
+    slot_count = int(environment["max_candidate_slots"])
+    expected_names = ["hold", *[f"slot-{index}" for index in range(slot_count)]]
+    assert environment["vehicle_action_names"] == expected_names
+
+    bundle = build_synthetic_scenario("s1", seed=31, config_dir=CONFIG_DIR)
+    snapshot = bundle.reset()
+    vehicle_mask = snapshot.action_masks["vehicle-1"]
+    assert len(vehicle_mask.actions) == slot_count + 1
+    assert list(vehicle_mask.actions) == expected_names
+
+
+def test_request_candidate_and_service_transfer_share_one_runtime_path() -> None:
+    bundle = build_synthetic_scenario("s1", seed=37, config_dir=CONFIG_DIR)
+    snapshot = bundle.reset()
+    bundle.resources.spray("uav-1", 0.85)
+    snapshot = bundle.step({agent_id: "hold" for agent_id in snapshot.role_observations})
+    assert any(event["event_type"] == "request_created" for event in snapshot.events)
+
+    initial_total = bundle.resources.total_pesticide_l
+    transfer_events: list[dict[str, object]] = []
+    for _ in range(20):
+        vehicle_id = "vehicle-1"
+        vehicle_action = "slot-0" if "slot-0" in snapshot.action_masks[vehicle_id].valid_actions else "hold"
+        actions = {
+            agent_id: (vehicle_action if agent_id == vehicle_id else "hold")
+            for agent_id in snapshot.role_observations
+        }
+        snapshot = bundle.step(actions)
+        transfer_events.extend(
+            event for event in snapshot.events if event["event_type"] == "pesticide_transfer"
+        )
+        if transfer_events:
+            break
+
+    assert transfer_events
+    assert sum(float(event["amount_l"]) for event in transfer_events) > 0.0
+    assert bundle.resources.total_pesticide_l == pytest.approx(initial_total)
+    assert any(event["event_type"] == "service_released" for event in snapshot.events)

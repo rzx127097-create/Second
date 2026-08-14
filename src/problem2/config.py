@@ -51,6 +51,15 @@ def _validate(bundle: ConfigBundle) -> None:
         raise ValueError("the flagship algorithm name must remain SR-MAPPO")
     if bundle.environment.get("primary_vehicle_count") != 1:
         raise ValueError("the primary experiment must use one vehicle")
+    max_candidate_slots = bundle.environment.get("max_candidate_slots")
+    if type(max_candidate_slots) is not int or max_candidate_slots < 1:
+        raise ValueError("max_candidate_slots must be a positive integer")
+    expected_vehicle_actions = [
+        "hold",
+        *[f"slot-{index}" for index in range(max_candidate_slots)],
+    ]
+    if list(bundle.environment.get("vehicle_action_names", ())) != expected_vehicle_actions:
+        raise ValueError("vehicle_action_names must match max_candidate_slots")
     if bundle.parameters.get("status") not in {"provisional", "verified"}:
         raise ValueError("parameter registry status must be provisional or verified")
     if bundle.scenario_status not in {"provisional", "verified"}:

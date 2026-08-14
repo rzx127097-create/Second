@@ -42,3 +42,24 @@ def test_formal_matrix_separates_training_validation_and_sealed_test() -> None:
     matrix = bundle.experiments
     assert set(matrix["splits"]) == {"train", "validation", "sealed_test"}
     assert not (set(matrix["train_scenarios"]) & set(matrix["sealed_test_scenarios"]))
+
+
+def test_vehicle_action_names_match_configured_candidate_slots(tmp_path) -> None:
+    import shutil
+
+    config_dir = tmp_path / "configs"
+    shutil.copytree(ROOT / "configs", config_dir)
+    environment_file = config_dir / "environment.yaml"
+    environment_file.write_text(
+        environment_file.read_text(encoding="utf-8").replace(
+            "vehicle_action_names: [hold, slot-0, slot-1, slot-2, slot-3]",
+            "vehicle_action_names: [hold, slot-0]",
+        ),
+        encoding="utf-8",
+    )
+    try:
+        load_config_bundle(config_dir)
+    except ValueError as exc:
+        assert "vehicle_action_names" in str(exc)
+    else:
+        raise AssertionError("mismatched vehicle action names must be rejected")
