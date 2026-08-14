@@ -34,7 +34,7 @@ def _parse_provisional(row: Mapping[str, Any], *, strict: bool) -> bool | None:
             normalized = status.strip().lower()
             if normalized in {"provisional", "smoke", "true", "1"}:
                 values.append(True)
-            elif normalized in {"formal", "final", "sealed", "false", "0"}:
+            elif normalized in {"formal", "final", "sealed", "verified", "false", "0"}:
                 values.append(False)
             else:
                 raise ValueError(f"{status_key} must identify provisional or formal data")
@@ -64,8 +64,13 @@ def validate_episode_records(records: Iterable[Mapping[str, Any]], *, strict: bo
         run_id = str(row["run_id"])
         if not run_id:
             raise ValueError("run_id must be non-empty")
-        if strict and any(not str(row[field]).strip() for field in ("method", "scale", "scenario_id", "config_hash", "git_commit", "split")):
-            raise ValueError("identity and split fields must be non-empty")
+        if strict:
+            identity_fields = ("run_id", "method", "scale", "scenario_id", "config_hash", "git_commit", "split")
+            if any(not isinstance(row[field], str) or not row[field].strip() for field in identity_fields):
+                raise ValueError("identity and split fields must be non-empty strings")
+            for status_field in ("parameter_status", "status"):
+                if status_field in row and (not isinstance(row[status_field], str) or not row[status_field].strip()):
+                    raise ValueError("status fields must be non-empty strings")
         if run_id in seen:
             raise ValueError(f"duplicate run_id: {run_id}")
         seen.add(run_id)

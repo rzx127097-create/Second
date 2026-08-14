@@ -102,6 +102,28 @@ def test_build_artifacts_rejects_mixed_identity_within_method_scale(tmp_path: Pa
         build_artifacts(path, tmp_path / "out", manifest=tmp_path / "manifest.json")
 
 
+def test_verified_parameter_status_is_formal_and_table_note_is_not_provisional(tmp_path: Path) -> None:
+    row = {"run_id": "verified-a", "method": "m", "scale": "s", "training_seed": 1, "scenario_id": "x", "config_hash": "c", "git_commit": "g", "split": "test", "parameter_status": "verified", "reduction_rate": 0.5, "success": True, "transferred_l": 1}
+    path = tmp_path / "verified.jsonl"
+    path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    bundle = build_artifacts(path, tmp_path / "out", manifest=tmp_path / "manifest.json")
+    summary = json.loads(bundle.paths["summary_json"].read_text(encoding="utf-8"))
+    assert summary["provisional"] is False
+    note = bundle.paths["table_markdown"].read_text(encoding="utf-8")
+    assert "Formal seed-level summary" in note
+    assert "Provisional" not in note
+
+
+@pytest.mark.parametrize("field", ["run_id", "config_hash"])
+def test_strict_jsonl_rejects_null_identity_fields(tmp_path: Path, field: str) -> None:
+    row = {"run_id": "a", "method": "m", "scale": "s", "training_seed": 1, "scenario_id": "x", "config_hash": "c", "git_commit": "g", "split": "test", "provisional": True, "reduction_rate": 0.5, "success": True, "transferred_l": 1}
+    row[field] = None
+    path = tmp_path / f"null-{field}.jsonl"
+    path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="non-empty"):
+        read_jsonl(path)
+
+
 def test_plot_metric_rejects_missing_metric(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="missing metric"):
         plot_metric([{"method": "m"}], "reduction_rate_mean", str(tmp_path / "x.svg"))

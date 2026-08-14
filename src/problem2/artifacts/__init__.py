@@ -39,7 +39,8 @@ def build_artifacts(input_jsonl: Path, output_root: Path, *, manifest: Path) -> 
     table_columns = ["method", "scale", "reduction_rate_mean", "reduction_rate_mean_ci_low", "reduction_rate_mean_ci_high", "success_rate", "n_seeds", "n_scenarios"]
     table_tsv = root / "three_line_table.tsv"
     table_md = root / "three_line_table.md"
-    write_table(rows, table_tsv, table_md, columns=table_columns, note="Provisional seed-level summary; scenarios are paired observations within training seeds.")
+    status_note = "Provisional seed-level summary" if provisional else "Formal seed-level summary (verified)"
+    write_table(rows, table_tsv, table_md, columns=table_columns, note=f"{status_note}; scenarios are paired observations within training seeds.")
     figure_svg = root / "reduction_rate.svg"
     figure_png = root / "reduction_rate.png"
     plot_metric(rows, "reduction_rate_mean", str(figure_svg))
