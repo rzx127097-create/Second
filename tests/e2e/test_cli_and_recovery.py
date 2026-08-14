@@ -189,6 +189,20 @@ def test_matrix_default_max_jobs_reports_partial_execution(tmp_path: Path) -> No
     assert len(payload["jobs"]) == 1
 
 
+def test_matrix_smoke_handles_unicode_output_root_without_decode_failure(tmp_path: Path) -> None:
+    """The real Windows workspace contains Chinese path components."""
+    output_root = tmp_path / "论文" / "第二问"
+    result = _cli(
+        "run_matrix.py", "--config-dir", "configs", "--output-root", str(output_root),
+        "--smoke", "--max-jobs", "1",
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = _json_output(result)
+    assert payload["status"] == "partial"
+    assert payload["jobs"][0]["status"] == "completed"
+
+
 def test_matrix_smoke_rejects_matrix_without_mobile_method(tmp_path: Path) -> None:
     config_dir = tmp_path / "configs"
     shutil.copytree(ROOT / "configs", config_dir)

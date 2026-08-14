@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-import subprocess
 import sys
 from typing import Any
 
@@ -15,6 +14,7 @@ if str(ROOT / "src") not in sys.path:
 
 from problem2.config import config_identity, load_config_bundle
 from problem2.experiments.job_identity import capture_git_commit, make_job_identity
+from problem2.experiments.process import run_utf8_json_child
 
 
 def _emit(payload: dict[str, Any]) -> None:
@@ -77,16 +77,16 @@ def main(argv: list[str] | None = None) -> int:
                     "error": f"smoke executor has no training worker for method {job['method']}",
                 })
                 continue
-            result = subprocess.run(
+            result = run_utf8_json_child(
                 [
                     sys.executable, str(ROOT / "scripts" / "train.py"), "--config-dir", args.config_dir,
                     "--scale", str(job["scale"]), "--seed", str(job["training_seed"]), "--updates", "1",
                     "--output-root", args.output_root, "--smoke",
                 ],
-                cwd=ROOT, text=True, encoding="utf-8", capture_output=True, check=False,
+                cwd=ROOT,
             )
-            child = json.loads(result.stdout) if result.stdout else {"error": result.stderr}
-            outputs.append({**job, "status": child.get("status", "failed"), "returncode": result.returncode, "output": child})
+            child = result["payload"]
+            outputs.append({**job, "status": child.get("status", "failed"), "returncode": result["returncode"], "output": child})
         all_accepted = bool(outputs) and all(item["status"] == "completed" and item.get("returncode", 0) == 0 for item in outputs)
         complete = all_accepted and len(selected) == len(jobs)
         status = "completed" if complete else ("partial" if all_accepted else "failed")

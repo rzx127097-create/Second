@@ -1,0 +1,96 @@
+schema_version: 1
+status: provisional
+
+main_comparison:
+  methods:
+    - sr_mappo_mobile
+    - sr_mappo_fixed
+    - sr_mappo_astar
+    - mappo_mobile
+    - sr_mappo_two_stage
+  scales: [s1, s2, s3, s4, s5, s6]
+  training_seeds: [0, 1, 2, 3, 4]
+
+families:
+  mechanism:
+    - id: unlimited_supply
+      kind: diagnostic_upper_bound
+      method: sr_mappo_mobile
+      intervention: {pesticide_mode: unlimited}
+    - id: finite_no_support
+      kind: diagnostic_lower_bound
+      method: sr_mappo_mobile
+      intervention: {support_mode: disabled}
+    - id: matched_fixed
+      kind: causal_comparator
+      method: sr_mappo_fixed
+      intervention: {support_mode: fixed}
+    - id: teleport_diagnostic
+      kind: diagnostic_upper_bound
+      method: sr_mappo_mobile
+      intervention: {support_mode: teleport}
+    - id: rolling_astar_mobile
+      kind: planning_comparator
+      method: sr_mappo_astar
+      intervention: {support_mode: mobile}
+    - id: sr_mappo_mobile
+      kind: proposed_method
+      method: sr_mappo_mobile
+      intervention: {support_mode: mobile}
+
+  sensitivity:
+    - id: uav_initial_pesticide_ratio
+      parameter: uav_initial_pesticide_ratio
+      levels: [0.50, 0.75, 1.00]
+    - id: vehicle_speed
+      parameter: vehicle_speed
+      levels: [0.5, 1.0, 2.0]
+    - id: service_setup_time
+      parameter: service_setup_time
+      levels: [5.0, 10.0, 20.0]
+    - id: rendezvous_radius
+      parameter: rendezvous_radius
+      levels: [3.0, 5.0, 10.0]
+
+  adaptation:
+    - id: hotspot_road_separation
+      kind: hotspot_road_separation
+      levels: [near, medium, far]
+    - id: demand_dispersion
+      kind: demand_dispersion
+      levels: [clustered, moderate, dispersed]
+    - id: simultaneous_requests
+      kind: simultaneous_requests
+      levels: [low, medium, high]
+    - id: local_road_blockage
+      kind: road_blockage
+      levels: [0.0, 0.05, 0.10]
+
+  ablation:
+    - id: full_sr_mappo
+      kind: full
+    - id: no_endurance_prediction
+      kind: remove_endurance_prediction
+    - id: no_air_ground_observation
+      kind: remove_air_ground_observation
+    - id: no_joint_demand_rendezvous
+      kind: remove_joint_demand_rendezvous
+    - id: two_stage_training
+      kind: two_stage_training
+    - id: same_source_mappo
+      kind: same_source_mappo
+
+statistics:
+  pairing_unit: training_seed_then_shared_scenario
+  bootstrap_draws: 5000
+  confidence_level: 0.95
+  multiplicity: holm
+  practical_equivalence_margin: null
+
+execution:
+  max_gpu_workers: 1
+  cpu_preprocess_workers: 2
+  checkpoint_every_updates: 1
+  max_attempts: 2
+  fail_on_nonfinite: true
+  sealed_test_unlock_required: true
