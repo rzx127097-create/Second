@@ -74,3 +74,26 @@ def test_snapshot_exposes_candidate_mapping_from_adapter() -> None:
     snapshot = bundle.reset()
     assert snapshot.candidate_mapping
     assert bundle.adapter.state.candidate_mapping == snapshot.candidate_mapping
+
+
+def test_request_and_service_state_reach_all_section_4_4_inputs() -> None:
+    bundle = build_synthetic_scenario("s1", seed=23, config_dir=CONFIG_DIR)
+    initial = bundle.reset()
+    bundle.resources.spray("uav-1", 0.85)
+    actions = {
+        agent_id: "hold"
+        for agent_id in initial.role_observations
+    }
+
+    snapshot = bundle.step(actions)
+
+    requests = bundle.request_manager.active_requests()
+    assert len(requests) == 1
+    request = requests[0]
+    assert snapshot.role_observations["uav-1"]["request_remaining_l"] == request.remaining_l
+    vehicle = snapshot.role_observations["vehicle-1"]
+    assert vehicle["slot_mapping"][0] == request.request_id
+    assert vehicle["request_slot_mask"][0] == 1
+    assert snapshot.critic_state["requests"].shape[0] == bundle.adapter.max_candidate_slots
+    assert snapshot.critic_state["requests"][0, 0] == request.remaining_l
+    assert snapshot.critic_state["service"][0] == 0.0

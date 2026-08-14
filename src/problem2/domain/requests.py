@@ -41,6 +41,20 @@ class RequestManager:
     def get(self, request_id: str) -> ReplenishmentRequest:
         return self._requests[request_id]
 
+    def active_requests(self) -> tuple[ReplenishmentRequest, ...]:
+        """Return current requests in a deterministic observation order."""
+        closed = {
+            RequestStatus.COMPLETED,
+            RequestStatus.CANCELLED,
+            RequestStatus.UNSATISFIED,
+        }
+        return tuple(
+            sorted(
+                (request for request in self._requests.values() if request.status not in closed),
+                key=lambda request: (request.created_step, request.uav_id, request.request_id),
+            )
+        )
+
     def create_request(self, uav_id: str, requested_l: float, step: int) -> ReplenishmentRequest:
         if requested_l <= 0:
             raise ValueError("requested_l must be positive")

@@ -183,10 +183,12 @@ class ScenarioBundle:
             **{uav_id: position for uav_id, position in self.adapter.uav_positions.items()},
             **vehicle_positions,
         }
-        self._slot_mapping = self._slot_mapping or stable_slot_mapping(
+        active_requests = self.request_manager.active_requests()
+        self._slot_mapping = stable_slot_mapping(
             self.resources.uavs,
             self.resources.vehicles,
-            max_request_slots=0,
+            active_requests,
+            max_request_slots=self.adapter.max_candidate_slots,
         )
         observations = build_observations(
             resources=self.resources,
@@ -194,6 +196,11 @@ class ScenarioBundle:
             vehicle_positions=vehicle_positions,
             pest_density=self.pest_density,
             mapping=self._slot_mapping,
+            requests=active_requests,
+            service_locked=self.service.locked_uav_id is not None,
+            service_phase=self.service.phase,
+            active_request_id=self.service.request_id,
+            max_request_slots=self.adapter.max_candidate_slots,
             step=self.step_count,
             max_steps=self.max_steps,
         )
@@ -203,6 +210,8 @@ class ScenarioBundle:
             vehicle_positions=vehicle_positions,
             pest_density=self.pest_density,
             mapping=self._slot_mapping,
+            requests=active_requests,
+            service=self.service,
             step=self.step_count,
             max_steps=self.max_steps,
         )
