@@ -10,12 +10,14 @@ communication:
   mode: synchronous_reliable
   delay_steps: 0
 road:
-  source: synthetic_smoke
-  source_status: provisional
-  graphml_path: null
-  coordinate_mode: lonlat
-  origin_lonlat: null
+  source: frozen_gis
+  source_status: verified
+  graphml_path: data/roads/jodhpur_cropped_metric.graphml
+  coordinate_mode: metric
+  origin_lonlat: [0.0, 0.0]
   bbox_lonlat: null
   directed_policy: undirected
-  cache_metadata_path: null
+  source_sha256: 62bfda5137bb5e29b46084fe00176313febc4c8d45fffca112c3c8ff3c2fab05
+  source_metadata_sha256: 82b9c902baf1376e2a1438b3630b956ef9c5a65d92537dbf49ec2bbc330aa24c
+  cache_metadata_path: docs/verification/frozen-road-jodhpur.json
   vehicle_must_stay_on_graph: true

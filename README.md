@@ -12,6 +12,16 @@ claims. See `docs/verification/section-4-5-runbook.md` for the complete workflow
 The latest parameter, road-source, scenario, and resource-activation decision
 is recorded in `docs/verification/formal-readiness-report.md`.
 
+The repository includes a frozen representative road derivative at
+`data/roads/jodhpur_cropped_metric.graphml` with provenance in
+`docs/verification/frozen-road-jodhpur.json`. It is derived from the local
+Jodhpur OSM GraphML and is a simulation constraint, not a surveyed farm road.
+Parameter provenance and applicability limits are recorded in
+`docs/evidence/parameter-source-ledger.yaml`. The runtime field is a
+reaction-diffusion-advection exposure model configured in
+`configs/field_dynamics.yaml`; its coefficients remain provisional until
+crop-, wind- and compound-specific calibration is supplied.
+
 ## Environment
 
 Use Windows PowerShell and Python 3.11:
@@ -111,10 +121,10 @@ python scripts/build_artifacts.py `
 ## Formal boundary
 
 While the parameter registry, scenario registry, and protocol are provisional,
-commands without `--smoke` are rejected. Formal work requires engineering
-parameter sources, independent validation scenarios, a frozen configuration,
-an audited frozen GIS road cache, calibrated reaction-diffusion-advection
-dynamics, and a sealed-test unlock. The evidence path is always:
+commands without `--smoke` are rejected. Formal work requires the remaining
+engineering parameter sources, independent validation scenarios, a frozen
+configuration, calibrated reaction-diffusion-advection coefficients, and a
+sealed-test unlock. The evidence path is always:
 
 ```text
 source/config -> raw JSONL -> validated table -> statistics -> figure/table -> prose

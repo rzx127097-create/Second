@@ -8,6 +8,8 @@ manual or field study is scientifically applicable to a particular farm.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 import math
 from pathlib import Path
 from typing import Any, Mapping
@@ -325,6 +327,7 @@ def audit_repository_readiness(
     algorithm = _load_yaml(root / "algorithms" / "sr_mappo.yaml")
     matrix = _load_yaml(root / "experiments" / "formal_matrix.yaml")
     protocol = _load_yaml(root / "experiments" / "chapter4_5.yaml")
+    field_dynamics = _load_yaml(root / "field_dynamics.yaml")
 
     parameter_report = audit_parameter_registry(parameters)
     scenario_report = audit_scenario_registry(scenarios, scales, matrix)
@@ -350,8 +353,11 @@ def audit_repository_readiness(
             road_issues.append({"code": "missing_projection_origin", "message": "frozen_gis requires origin_lonlat"})
         if graphml_path and isinstance(origin, (list, tuple)) and len(origin) == 2:
             try:
+                graphml_source = Path(str(graphml_path))
+                if not graphml_source.is_absolute():
+                    graphml_source = root.parent / graphml_source
                 _graph, road_metadata = load_graphml(
-                    graphml_path,
+                    graphml_source,
                     coordinate_mode=str(road.get("coordinate_mode", "lonlat")),
                     origin_lonlat=(float(origin[0]), float(origin[1])),
                     directed_policy=str(road.get("directed_policy", "undirected")),
@@ -360,8 +366,25 @@ def audit_repository_readiness(
                 if expected_hash != road_metadata["source_sha256"]:
                     road_issues.append({"code": "source_hash_mismatch", "message": "configured road source_sha256 does not match the read-only file"})
                 metadata_path = road.get("cache_metadata_path")
-                if not metadata_path or not Path(str(metadata_path)).is_file():
+                metadata_file = Path(str(metadata_path)) if metadata_path else None
+                if metadata_file is not None and not metadata_file.is_absolute():
+                    metadata_file = root.parent / metadata_file
+                if metadata_file is None or not metadata_file.is_file():
                     road_issues.append({"code": "missing_road_metadata", "message": "cache_metadata_path must point to the audited metadata JSON"})
+                else:
+                    metadata_hash = hashlib.sha256(metadata_file.read_bytes()).hexdigest()
+                    expected_metadata_hash = str(road.get("source_metadata_sha256", ""))
+                    if expected_metadata_hash and expected_metadata_hash != metadata_hash:
+                        road_issues.append({"code": "metadata_hash_mismatch", "message": "source_metadata_sha256 does not match the audited metadata JSON"})
+                    try:
+                        frozen_payload = json.loads(metadata_file.read_text(encoding="utf-8"))
+                        derived_hash = str(frozen_payload.get("derived", {}).get("sha256", ""))
+                        if derived_hash and derived_hash != road_metadata.get("source_sha256"):
+                            road_issues.append({"code": "derived_hash_mismatch", "message": "road metadata derived hash does not match the configured GraphML"})
+                        if frozen_payload.get("ready") is not True:
+                            road_issues.append({"code": "road_derivation_not_ready", "message": "frozen road derivation metadata is not marked ready"})
+                    except (OSError, json.JSONDecodeError, AttributeError) as exc:
+                        road_issues.append({"code": "invalid_road_metadata", "message": str(exc)})
             except Exception as exc:  # noqa: BLE001 - preserve exact source failure in report
                 road_issues.append({"code": type(exc).__name__, "message": str(exc)})
     road_ready = not road_issues
@@ -373,6 +396,22 @@ def audit_repository_readiness(
     if str(algorithm.get("status", "")) != "verified":
         algorithm_issues.append({"code": "registry_provisional", "message": "SR-MAPPO algorithm configuration is provisional"})
     gates.append({"name": "algorithm", "ready": not algorithm_issues, "status": str(algorithm.get("status", "")), "issues": algorithm_issues})
+
+    dynamics_issues: list[dict[str, str]] = []
+    if str(field_dynamics.get("model", "")) != "reaction_diffusion_advection_exposure":
+        dynamics_issues.append({"code": "dynamics_model", "message": "field dynamics must be the declared reaction-diffusion-advection-exposure model"})
+    if str(field_dynamics.get("status", "")) != "verified":
+        dynamics_issues.append({"code": "dynamics_provisional", "message": "field dynamics parameters require crop-, wind- and pesticide-specific calibration"})
+    dynamics_parameters = field_dynamics.get("parameters", {})
+    required_dynamics = {
+        "pest_growth_rate_s", "pest_carrying_capacity", "pest_diffusion_rate_m2_s",
+        "wind_vx_m_s", "wind_vy_m_s", "pesticide_decay_rate_s",
+        "pesticide_diffusion_rate_m2_s", "pesticide_efficacy_per_l",
+        "pest_mortality_per_exposure",
+    }
+    if not isinstance(dynamics_parameters, Mapping) or not required_dynamics.issubset(dynamics_parameters):
+        dynamics_issues.append({"code": "dynamics_parameters", "message": "all reaction, diffusion, advection and exposure parameters are required"})
+    gates.append({"name": "field_dynamics", "ready": not dynamics_issues, "status": str(field_dynamics.get("status", "")), "issues": dynamics_issues})
 
     protocol_issues: list[dict[str, str]] = []
     if str(protocol.get("status", "")) != "verified" or str(matrix.get("status", "")) != "verified":
@@ -396,14 +435,19 @@ def audit_repository_readiness(
         if not gate["ready"]
         for issue in gate.get("issues", [])
     )
-    formal_names = {"parameters", "scenarios", "road_source", "algorithm", "protocol", "resource_activation"}
+    formal_names = {"parameters", "scenarios", "road_source", "algorithm", "field_dynamics", "protocol", "resource_activation"}
     formal_ready = all(bool(gate["ready"]) for gate in gates if gate["name"] in formal_names)
     return ReadinessReport(
         formal_ready=formal_ready,
         highest_gate="M2",
         gates=tuple(gates),
         blockers=blockers,
-        details={"config_dir": str(root), "road_metadata": road_metadata, "scenario": scenario_report.details or {}},
+        details={
+            "config_dir": str(root),
+            "road_metadata": road_metadata,
+            "scenario": scenario_report.details or {},
+            "field_dynamics": field_dynamics,
+        },
     )
 
 

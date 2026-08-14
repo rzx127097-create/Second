@@ -83,7 +83,10 @@ def test_repository_registry_is_explicitly_provisional_until_sources_are_added()
     assert report.ready is False
     assert report.status == "provisional"
     assert report.missing_parameters == ()
-    assert len([issue for issue in report.issues if issue.code == "unverified_source"]) == 11
+    # Public product references now cover inventory, service capacity and
+    # transfer-rate ranges; five project-specific values still need direct
+    # equipment, field or numerical evidence.
+    assert len([issue for issue in report.issues if issue.code == "unverified_source"]) == 5
 
 
 def test_verified_parameter_fixture_has_no_blocking_issues() -> None:

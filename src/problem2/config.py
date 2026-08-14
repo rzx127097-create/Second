@@ -19,6 +19,7 @@ class ConfigBundle:
     algorithm: dict[str, Any]
     experiments: dict[str, Any]
     scenarios: dict[str, Any]
+    field_dynamics: dict[str, Any]
     scenario_status: str
     scenario_source_kind: str
     scenario_dynamics_kind: str
@@ -43,6 +44,7 @@ def load_config_bundle(config_dir: str | Path) -> ConfigBundle:
         algorithm=_load(root / "algorithms" / "sr_mappo.yaml"),
         experiments=_load(root / "experiments" / "formal_matrix.yaml"),
         scenarios=dict(scenario_doc.get("scenarios", {})),
+        field_dynamics=_load(root / "field_dynamics.yaml"),
         scenario_status=str(scenario_doc.get("status", "")),
         scenario_source_kind=str(scenario_doc.get("source_kind", "")),
         scenario_dynamics_kind=str(scenario_doc.get("dynamics_kind", "")),
@@ -119,6 +121,7 @@ def _canonical(bundle: ConfigBundle) -> bytes:
         "scenario_source_kind": bundle.scenario_source_kind,
         "scenario_dynamics_kind": bundle.scenario_dynamics_kind,
         "source_metadata_hash": bundle.source_metadata_hash,
+        "field_dynamics": bundle.field_dynamics,
     }
     return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 

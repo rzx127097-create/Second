@@ -25,6 +25,9 @@ from problem2.environment.observations import (
     stable_slot_mapping,
 )
 from problem2.environment.rewards import compute_reward
+from problem2.field.pest_dynamics import PestDynamics
+from problem2.field.pesticide_field import PesticideField
+from problem2.field.wind_field import WindField
 from problem2.road.graph import RoadGraph
 from problem2.road.graphml import load_graphml
 from problem2.section4_2.adapter import HeterogeneousDecisionAdapter
@@ -72,6 +75,8 @@ class ScenarioBundle:
     adapter: HeterogeneousDecisionAdapter
     initial_density: np.ndarray
     pest_density: np.ndarray
+    pest_dynamics: PestDynamics
+    pesticide_field: PesticideField
     candidate_mapping: dict[str, Any]
     episode_id: str
     scenario_id: str
@@ -104,6 +109,7 @@ class ScenarioBundle:
         """Restore all physical state and return the initial decision."""
 
         self.pest_density = self.initial_density.copy()
+        self.pesticide_field.active.fill(0.0)
         self.step_count = 0
         self.last_termination_reason = None
         self.adapter.reset(seed=self.seed)
@@ -136,18 +142,23 @@ class ScenarioBundle:
         state = self.adapter.step(actions)
         self.step_count += 1
 
-        # Provisional smoke dynamics: each spray event removes a bounded local
-        # amount.  The physical pesticide ledger remains owned by Resources.
+        # Apply deposited liquid to the exposure field, then advance the
+        # mechanistic reaction-diffusion-advection model.  The physical liquid
+        # ledger remains owned by Resources; the field stores exposure units.
         for event in state.events:
             if event.get("event_type") != "spray_applied":
                 continue
             uav_id = str(event.get("uav_id"))
             position = self.adapter.uav_positions[uav_id]
             amount = float(event.get("amount_l", 0.0))
-            row, col = position
-            self.pest_density[row, col] = max(
-                0.0, self.pest_density[row, col] - min(0.25, amount)
-            )
+            self.pesticide_field.deposit(position, amount)
+        self.pest_density = self.pest_dynamics.step(
+            self.pest_density,
+            self.pesticide_field,
+            self.adapter.decision_dt_s,
+            cell_size_m=self.cell_size_m,
+        )
+        self.pesticide_field.step(self.adapter.decision_dt_s, cell_size_m=self.cell_size_m)
         current_mean = float(np.mean(self.pest_density))
         reward = compute_reward(
             previous_mean,
@@ -169,6 +180,7 @@ class ScenarioBundle:
             "step": self.step_count,
             "pesticide_total_l": self.resources.total_pesticide_l,
             "pest_mean": current_mean,
+            "pesticide_exposure_total": float(np.sum(self.pesticide_field.active)),
             "reduction_rate": reduction,
             "termination_reason": self.last_termination_reason,
         }
@@ -302,16 +314,27 @@ def build_synthetic_scenario(
             "value", config.scales.get("decision_dt_s", 1.0)
         )
     )
-    rng = np.random.default_rng(int(seed))
+    field_parameters = config.field_dynamics.get("parameters", {})
+
+    def field_value(name: str, default: float) -> float:
+        record = field_parameters.get(name, {})
+        if not isinstance(record, Mapping):
+            return float(default)
+        return float(record.get("value", default))
+
+    field_wind = WindField(
+        vx_m_s=field_value("wind_vx_m_s", 0.0),
+        vy_m_s=field_value("wind_vy_m_s", 0.0),
+    )
+    pest_dynamics = PestDynamics(
+        growth_rate_s=field_value("pest_growth_rate_s", 0.0),
+        carrying_capacity=field_value("pest_carrying_capacity", 1.0),
+        mortality_per_exposure=field_value("pest_mortality_per_exposure", 0.02),
+        diffusion_rate_m2_s=field_value("pest_diffusion_rate_m2_s", 0.0),
+        wind=field_wind,
+    )
     hotspot_separation = intervention.adaptations.get("hotspot_road_separation")
     cells = _road_cells((rows, cols), hotspot_separation)
-    density = _density_field(
-        rng,
-        (rows, cols),
-        intervention.adaptations.get("demand_dispersion"),
-        road_cells=cells,
-        hotspot_separation=hotspot_separation,
-    )
 
     parameter_overrides = intervention.parameters
     initial_ratio = float(parameter_overrides.get("uav_initial_pesticide_ratio", 1.0))
@@ -335,14 +358,24 @@ def build_synthetic_scenario(
     resources = PesticideResources(uavs=uavs, vehicles=vehicles)
     extent = tuple(float(value) for value in config.scales.get("physical_extent_m", [cols, rows]))
     cell_size_m = (extent[0] / rows, extent[1] / cols)
+    pesticide_field = PesticideField(
+        np.zeros((rows, cols), dtype=float),
+        decay_rate_s=field_value("pesticide_decay_rate_s", 0.0),
+        efficacy_per_l=field_value("pesticide_efficacy_per_l", 1.0),
+        diffusion_rate_m2_s=field_value("pesticide_diffusion_rate_m2_s", 0.0),
+        wind=field_wind,
+    )
     environment = config.environment
     road_config = environment.get("road", {})
     if isinstance(road_config, dict) and str(road_config.get("source")) == "frozen_gis":
         origin = road_config.get("origin_lonlat")
         if not isinstance(origin, (list, tuple)) or len(origin) != 2:
             raise ValueError("frozen_gis road source requires origin_lonlat")
+        graphml_source = Path(str(road_config.get("graphml_path")))
+        if not graphml_source.is_absolute():
+            graphml_source = Path(config_dir).resolve().parent / graphml_source
         road_graph, road_metadata = load_graphml(
-            road_config.get("graphml_path"),
+            graphml_source,
             coordinate_mode=str(road_config.get("coordinate_mode", "lonlat")),
             origin_lonlat=(float(origin[0]), float(origin[1])),
             directed_policy=str(road_config.get("directed_policy", "undirected")),
@@ -357,6 +390,21 @@ def build_synthetic_scenario(
     else:
         road_graph = RoadGraph.from_grid(cells, cell_size_m=cell_size_m)
         road_metadata = {}
+    if hotspot_separation is not None and str(road_config.get("source")) == "frozen_gis":
+        cells = [
+            (
+                min(max(int(round(y / cell_size_m[0])), 0), rows - 1),
+                min(max(int(round(x / cell_size_m[1])), 0), cols - 1),
+            )
+            for x, y in road_graph.nodes.values()
+        ]
+    density = _density_field(
+        np.random.default_rng(int(seed)),
+        (rows, cols),
+        intervention.adaptations.get("demand_dispersion"),
+        road_cells=cells,
+        hotspot_separation=hotspot_separation,
+    )
     # Scenario registry seeds also freeze a small, deterministic road-condition
     # variant.  Connectivity and metric units remain unchanged, while sealed
     # scenarios no longer differ only by an identifier label.
@@ -375,14 +423,26 @@ def build_synthetic_scenario(
             if not float(record["min"]) <= value <= float(record["max"]):
                 raise ValueError(f"{key} override is outside the registered engineering range")
             parameter_values[key] = value
-    support_node = sorted(road_graph.nodes)[0] if intervention.condition_id == "baseline" else min(
-        road_graph.nodes,
-        key=lambda node: (
-            (road_graph.nodes[node][0] - extent[0] / 2.0) ** 2
-            + (road_graph.nodes[node][1] - extent[1] / 2.0) ** 2,
-            node,
-        ),
-    )
+    if intervention.condition_id == "baseline":
+        # The depot is the deterministic road node closest to the field entry
+        # corner, matching the UAV initial position and avoiding an arbitrary
+        # node-ID dependent initial travel leg.
+        support_node = min(
+            road_graph.nodes,
+            key=lambda node: (
+                road_graph.nodes[node][0] ** 2 + road_graph.nodes[node][1] ** 2,
+                node,
+            ),
+        )
+    else:
+        support_node = min(
+            road_graph.nodes,
+            key=lambda node: (
+                (road_graph.nodes[node][0] - extent[1] / 2.0) ** 2
+                + (road_graph.nodes[node][1] - extent[0] / 2.0) ** 2,
+                node,
+            ),
+        )
     simultaneous_level = intervention.adaptations.get("simultaneous_requests")
     request_release_steps = _request_release_steps(tuple(uavs), simultaneous_level)
     ablations = set(intervention.ablation_flags)
@@ -416,6 +476,8 @@ def build_synthetic_scenario(
         adapter=adapter,
         initial_density=density,
         pest_density=density.copy(),
+        pest_dynamics=pest_dynamics,
+        pesticide_field=pesticide_field,
         candidate_mapping={},
         episode_id=f"{requested_id}-seed-{int(seed)}",
         scenario_id=requested_id,

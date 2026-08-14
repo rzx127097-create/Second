@@ -1,0 +1,58 @@
+{
+  "activated": true,
+  "activation_fraction": 0.75,
+  "condition_means": {
+    "finite_no_support": {
+      "pesticide_disabled_s": 160.0,
+      "reduction_rate": 0.6137459422086182,
+      "request_completion_rate": 0.0,
+      "request_count": 2.0,
+      "requested_l": 1.2800000000000011,
+      "transferred_l": 0.0,
+      "wait_s": 0.0
+    },
+    "matched_fixed": {
+      "pesticide_disabled_s": 160.0,
+      "reduction_rate": 0.6137459422086182,
+      "request_completion_rate": 0.0,
+      "request_count": 2.0,
+      "requested_l": 1.2800000000000011,
+      "transferred_l": 0.0,
+      "wait_s": 0.0
+    },
+    "sr_mappo_mobile": {
+      "pesticide_disabled_s": 80.0,
+      "reduction_rate": 0.6137066763177516,
+      "request_completion_rate": 0.0,
+      "request_count": 2.0,
+      "requested_l": 1.2800000000000011,
+      "transferred_l": 0.0,
+      "wait_s": 96.0
+    },
+    "teleport_diagnostic": {
+      "pesticide_disabled_s": 0.0,
+      "reduction_rate": 0.6138521740633103,
+      "request_completion_rate": 1.0,
+      "request_count": 4.0,
+      "requested_l": 2.5600000000000023,
+      "transferred_l": 2.5600000000000023,
+      "wait_s": 0.0
+    },
+    "unlimited_supply": {
+      "pesticide_disabled_s": 0.0,
+      "reduction_rate": 0.6138521740633103,
+      "request_completion_rate": 0.0,
+      "request_count": 0.0,
+      "requested_l": 0.0,
+      "transferred_l": 0.0,
+      "wait_s": 0.0
+    }
+  },
+  "diagnosis": "mixed_total_and_spatiotemporal_constraint",
+  "mobile_gap_closure": -0.36962445003425803,
+  "provisional": true,
+  "raw_path": "C:\\Users\\RZX\\Desktop\\论文\\毕业论文\\Second\\.worktrees\\problem2-code-framework\\runs\\resource-pilot-frozen\\raw.jsonl",
+  "record_count": 10,
+  "spatial_temporal_mismatch": true,
+  "total_shortage": true
+}

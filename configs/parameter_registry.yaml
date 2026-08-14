@@ -1,5 +1,11 @@
 status: provisional
-note: "Demo values are placeholders for interface tests only; do not use as formal experimental evidence."
+note: >-
+  Simulation values are provisional. The UAV records carry explicit DJI T40
+  source metadata and scene-scale conversions. Three ground-support records
+  now carry public product reference ranges and explicit scene-scale
+  conversions, but they still require a vehicle-match or timed field test.
+  Records marked assumption remain blocking for formal evidence. Do not use
+  this registry as formal experimental evidence until status is verified.
 parameters:
   uav_onboard_pesticide:
     symbol: q_i_max
@@ -8,11 +14,11 @@ parameters:
     unit: L
     min: 0.1
     max: 5.0
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-    source_value: null
-    source_unit: null
-    conversion: null
+    source_type: manual
+    source_id: "DJI-T40-official-spec"
+    source_value: 40.0
+    source_unit: L
+    conversion: "value = source_value * 0.025 scene_liquid_scale"
     status: provisional
     scope: main
   uav_spray_flow:
@@ -22,11 +28,11 @@ parameters:
     unit: L/s
     min: 0.001
     max: 0.1
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-    source_value: null
-    source_unit: null
-    conversion: null
+    source_type: manual
+    source_id: "DJI-T40-official-spec"
+    source_value: 0.2
+    source_unit: L/s
+    conversion: "value = source_value * 0.05 scene_flow_scale"
     status: provisional
     scope: main
   uav_usable_fraction:
@@ -50,11 +56,11 @@ parameters:
     unit: m/s
     min: 0.2
     max: 10.0
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-    source_value: null
-    source_unit: null
-    conversion: null
+    source_type: manual
+    source_id: "DJI-T40-official-spec"
+    source_value: 7.0
+    source_unit: m/s
+    conversion: "value = source_value / 7 speed_scale"
     status: provisional
     scope: main
   vehicle_inventory:
@@ -64,12 +70,12 @@ parameters:
     unit: L
     min: 0.5
     max: 20.0
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-    source_value: null
-    source_unit: null
-    conversion: null
-    status: provisional
+    source_type: manual
+    source_id: "DigitalAgro-DroneFiller-public-spec"
+    source_value: 500.0
+    source_unit: L
+    conversion: "value = source_value * 0.01 scene_liquid_scale; vehicle match remains to be confirmed"
+    status: provisional_reference_range
     scope: main
   vehicle_transfer_rate:
     symbol: rho_svc
@@ -78,12 +84,12 @@ parameters:
     unit: L/s
     min: 0.005
     max: 0.2
-    source_type: assumption
-    source_id: "pending-equipment-or-field-source"
-    source_value: null
-    source_unit: null
-    conversion: null
-    status: provisional
+    source_type: manual
+    source_id: "Frost-DroneMAX-public-spec"
+    source_value: 0.7568
+    source_unit: L/s
+    conversion: "value = source_value * 0.02643 scene_flow_scale; timed pump test remains to be completed"
+    status: provisional_reference_range
     scope: main
   vehicle_service_capacity:
     symbol: q_svc_max
@@ -92,12 +98,12 @@ parameters:
     unit: L
     min: 0.1
     max: 20.0
-    source_type: assumption
-    source_id: "pending-vehicle-service-specification"
-    source_value: null
-    source_unit: null
-    conversion: null
-    status: provisional
+    source_type: manual
+    source_id: "DigitalAgro-DroneFiller-public-spec"
+    source_value: 500.0
+    source_unit: L
+    conversion: "value = source_value * 0.01 scene_liquid_scale; per-service transfer remains capped by UAV free capacity and must be vehicle-matched"
+    status: provisional_reference_range
     scope: main
   service_setup_time:
     symbol: T_setup

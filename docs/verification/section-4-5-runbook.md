@@ -214,8 +214,10 @@ engineering source/config -> immutable job -> raw JSONL -> validated table
 -> paired statistics -> figure/table -> thesis prose
 ```
 
-OSM and synthetic roads remain simulation constraints. The mobile-support
-hypothesis is interpreted through the logged chain
+The checked-in OSM-derived road cache is a representative simulation
+constraint, not a surveyed farm network. Synthetic roads remain available only
+for isolated interface fixtures. The mobile-support hypothesis is interpreted
+through the logged chain
 
 ```text
 mobility -> rendezvous distance -> waiting/disabled time
@@ -252,8 +254,9 @@ Never weaken a rolling A* baseline, tune on sealed-test outcomes, fabricate
 missing logs, or rename the flagship algorithm. The public algorithm name is
 `SR-MAPPO` throughout.
 
-The checked-in scenario factory is deliberately smoke-only. M3/M4 remain
-blocked until an audited offline GIS road cache and calibrated
-reaction-diffusion-advection pest/wind/pesticide dynamics are supplied with
-their metadata hashes; changing a YAML status field alone cannot unlock formal
+The scenario factory now uses the audited offline road derivative and a
+mechanistic reaction-diffusion-advection exposure model for pilots. M3/M4
+remain blocked until the remaining engineering parameters and
+pest/wind/pesticide coefficients are calibrated and supplied with their
+metadata hashes; changing a YAML status field alone cannot unlock formal
 execution.

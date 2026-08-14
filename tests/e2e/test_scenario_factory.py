@@ -50,6 +50,14 @@ def test_synthetic_scenario_is_deterministic_and_completes_a_legal_step() -> Non
     first.resources.assert_conservation()
 
 
+def test_scenario_uses_mechanistic_field_dynamics_instead_of_local_smoke_removal() -> None:
+    bundle = build_synthetic_scenario("s1", seed=41, config_dir=CONFIG_DIR)
+
+    assert bundle.dynamics_kind == "reaction_diffusion_advection_exposure"
+    assert bundle.pest_dynamics.diffusion_rate_m2_s > 0.0
+    assert bundle.pesticide_field.decay_rate_s > 0.0
+
+
 def test_provisional_scenario_blocks_formal_use_and_reset_restores_spray_state() -> None:
     bundle = build_synthetic_scenario("s1", seed=3, config_dir=CONFIG_DIR)
     initial = bundle.reset()
@@ -71,11 +79,11 @@ def test_provisional_scenario_blocks_formal_use_and_reset_restores_spray_state()
         raise AssertionError("provisional scenario must not be accepted as formal evidence")
 
 
-def test_verified_status_cannot_promote_synthetic_smoke_scenario_to_formal() -> None:
+def test_verified_status_cannot_promote_provisional_mechanistic_scenario_to_formal() -> None:
     bundle = build_synthetic_scenario("s1", seed=3, config_dir=CONFIG_DIR)
     bundle.parameter_status = "verified"
 
-    with pytest.raises(ValueError, match="synthetic_smoke"):
+    with pytest.raises(ValueError, match="not calibrated formal dynamics"):
         bundle.assert_formal_ready()
 
 
@@ -117,14 +125,16 @@ def test_request_and_service_state_reach_all_section_4_4_inputs() -> None:
 def test_snapshot_uses_grid_coordinates_for_both_actor_roles_and_critic() -> None:
     bundle = build_synthetic_scenario("s1", seed=29, config_dir=CONFIG_DIR)
     bundle.reset()
-    node = str((0, 1))
+    node = min(bundle.road_graph.nodes)
     bundle.adapter.executors["vehicle-1"].current_node = node
     bundle.adapter._refresh_state(events=[])
 
     snapshot = bundle._snapshot(events=())
 
-    assert snapshot.role_observations["vehicle-1"]["position"] == (0.0, 1.0)
-    np.testing.assert_allclose(snapshot.critic_state["vehicles"][0, :2], [0.0, 1.0])
+    position = snapshot.role_observations["vehicle-1"]["position"]
+    assert len(position) == 2
+    assert all(np.isfinite(position))
+    np.testing.assert_allclose(snapshot.critic_state["vehicles"][0, :2], position)
 
 
 def test_vehicle_action_contract_is_configured_and_matches_runtime_slots() -> None:

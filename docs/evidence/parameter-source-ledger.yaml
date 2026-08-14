@@ -1,0 +1,348 @@
+schema_version: 1
+retrieved_at: 2026-08-15
+retrieval_policy: >-
+  Metadata were checked through OpenAlex and the linked publisher or official
+  product page. A source supports only the claim stated in claim_scope; an
+  abstract or specification page is not treated as a compound-specific field
+  calibration.
+sources:
+  - id: DJI-T40-official-spec
+    source_type: official-manual
+    url: https://ag.dji.com/cn/t40/specs
+    title: "T40 Agricultural Drone - Specifications"
+    authors: [DJI Agriculture]
+    journal_or_manual: "DJI official product specification page"
+    year: 2022
+    access_level: official_specification_page
+    verification_status: metadata_and_specification_verified
+    source_values:
+      tank_capacity_l: 40.0
+      pump_max_flow_l_min: 12.0
+      max_operation_speed_m_s: 10.0
+      example_operation_speed_m_s: 7.0
+      example_spray_rate_l_per_mu: 1.0
+      example_spray_width_m: 11.0
+    claim_scope: >-
+      Rated tank volume, maximum pump flow, maximum operation speed and one
+      manufacturer test configuration; not a universal field operating point.
+    applicability_limit: >-
+      The simulation uses a normalized scene scale and therefore records the
+      scale conversion explicitly instead of treating 40 L as the simulated
+      one-UAV capacity.
+  - id: DigitalAgro-DroneFiller-public-spec
+    source_type: official-product-page
+    url: https://webshop.digitalagro.eu/products/dronefiller-station
+    title: "DroneFiller station"
+    authors: [DigitalAgro]
+    journal_or_manual: "DigitalAgro public product specification"
+    year: 2026
+    access_level: public_product_specification_page
+    verification_status: product_page_verified
+    source_values:
+      tank_capacity_l: 500.0
+      premix_tank_capacity_l: 20.0
+      refill_volume_l: 50.0
+      refill_time_s: 60.0
+      hose_length_m: 8.0
+    claim_scope: >-
+      A commercial drone mixing/dispensing station advertises one or two
+      500-L tanks, a 20-L premix tank, an 8-m hose reel, and refuelling a 50-L
+      drone in under 60 s. These values support an engineering reference range
+      for a ground support system, not the exact vehicle used in this study.
+    applicability_limit: >-
+      The page describes a stationary mixing station rather than the road
+      vehicle in the simulation; tank and hose values therefore require an
+      explicit scene-scale conversion and field confirmation before formal use.
+  - id: FarmChem-BatchMate-direct-public-spec
+    source_type: official-product-page
+    url: https://farmchem.com/product/farmchem-ag-drone-batchmate-direct-liquid-mixing-and-pumping-system-dfs-dronebatchmate-direct/
+    title: "FarmChem Ag Drone BatchMate Direct Liquid Mixing & Pumping System"
+    authors: [FarmChem]
+    journal_or_manual: "FarmChem public product specification"
+    year: 2026
+    access_level: public_product_specification_page
+    verification_status: product_page_verified
+    source_values:
+      mix_tank_count: 2
+      mix_tank_capacity_gal_each: 60.0
+      drone_pump_flow_gpm: 41.0
+      drone_pump_flow_l_min: 155.2
+    claim_scope: >-
+      The product page specifies two 60-gallon mix tanks and a 1.25-inch AMT
+      pump rated up to 41 gpm for filling an agricultural drone. This provides
+      an independent upper-bound reference for transfer capacity.
+    applicability_limit: >-
+      The specification is for a trailer/skid system with 120-V equipment; it
+      is not evidence that a small road vehicle in the simulation can sustain
+      this flow or carry this inventory.
+  - id: Frost-DroneMAX-public-spec
+    source_type: official-product-page
+    url: https://www.frostserv.com/products/mixing-equipment/drone-mixing-station/
+    title: "Drone Mixing Station"
+    authors: [Frost Inc.]
+    journal_or_manual: "Frost Inc. public product specification"
+    year: 2026
+    access_level: public_product_specification_page
+    verification_status: product_page_verified
+    source_values:
+      product_tank_capacity_gal: 150.0
+      drone_pump_flow_gpm: 12.0
+      clean_water_transfer_flow_gpm: 9.0
+    claim_scope: >-
+      The DroneMAX mixing/loading skid specifies a 150-gallon product tank and
+      a 12-gpm pump for drone loading. The 12-gpm value is used as a
+      conservative reference transfer rate (0.7568 L/s) for dimensional
+      checking.
+    applicability_limit: >-
+      The page describes a skid and does not report the transient flow,
+      pressure loss, hose length, or service setup time of a mobile field
+      vehicle; those quantities remain to be measured.
+  - id: Chen2020-UAV-droplet-deposition
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.3390/agronomy10020195
+    title: "Effect of Droplet Size Parameters on Droplet Deposition and Drift of Aerial Spraying by Using Plant Protection UAV"
+    authors: [Shengde Chen, Yubin Lan, Zhiyan Zhou, Fan Ouyang, Guobin Wang]
+    journal_or_manual: Agronomy
+    year: 2020
+    volume_issue_pages: "10(2), 195"
+    verification_status: metadata_and_abstract_verified
+    claim_scope: >-
+      Droplet size changes deposition and drift under otherwise comparable UAV
+      spraying conditions; supports a deposition/efficacy mechanism, not a
+      direct estimate of this project's mortality coefficient.
+    applicability_limit: rice-canopy field experiment and its nozzle settings.
+  - id: Qin2018-UAV-droplet-deposition
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.25165/j.ijabe.20181102.3157
+    title: "Droplet deposition and efficiency of fungicides sprayed with small UAV against wheat powdery mildew"
+    authors: [Weicai Qin, Xinyu Xue, Shaoming Zhang, Wei Gu, Baokun Wang]
+    journal_or_manual: "International Journal of Agricultural and Biological Engineering"
+    year: 2018
+    verification_status: metadata_and_abstract_verified
+    claim_scope: UAV working height and spray concentration affect droplet deposition and control efficiency.
+    applicability_limit: wheat disease-control experiment; pesticide and crop differ from locust control.
+  - id: Lan2021-downwash-wind-field
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.3390/agronomy11122399
+    title: "Influence of the Downwash Wind Field of Plant Protection UAV on Droplet Deposition Distribution Characteristics at Different Flight Heights"
+    authors: [Yubin Lan, Shicheng Qian, Shengde Chen, Yingjie Zhao, Xiaoling Deng]
+    journal_or_manual: Agronomy
+    year: 2021
+    volume_issue_pages: "11(12), 2399"
+    verification_status: metadata_and_abstract_verified
+    claim_scope: UAV downwash modifies spatial deposition and should not be omitted from a spray-exposure model.
+    applicability_limit: downwash field is not the same as regional meteorological wind.
+  - id: Biglia2022-UAV-vineyard
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.1016/j.scitotenv.2022.157292
+    title: "UAV-spray application in vineyards: Flight modes and spray system adjustment effects on canopy deposit, coverage, and off-target losses"
+    authors: [Alessandro Biglia, Marco Grella, Nicoletta Bloise, Lorenzo Comba, Eric Mozzanini]
+    journal_or_manual: "The Science of the Total Environment"
+    year: 2022
+    verification_status: metadata_and_abstract_verified
+    claim_scope: flight mode and spray-system adjustments jointly affect canopy deposition and off-target loss.
+    applicability_limit: vineyard canopy geometry is not an open-field locust setting.
+  - id: Grella2017-ground-deposition-drift
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.3390/su9050728
+    title: "Ground Deposition and Airborne Spray Drift Assessment in Vineyard and Orchard: The Influence of Environmental Variables and Sprayer Settings"
+    authors: [Marco Grella, Montserrat Gallart, Paolo Marucco]
+    journal_or_manual: Sustainability
+    year: 2017
+    volume_issue_pages: "9(5), 728"
+    verification_status: metadata_verified
+    claim_scope: environmental variables and sprayer settings alter deposition and drift.
+    applicability_limit: does not identify this simulation's diffusion or decay coefficient.
+  - id: Ariel2015-collective-motion-review
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.1371/journal.pcbi.1004522
+    title: "Locust Collective Motion and Its Modeling"
+    authors: [Gil Ariel, Amir Ayali]
+    journal_or_manual: "PLoS Computational Biology"
+    year: 2015
+    verification_status: metadata_and_abstract_verified
+    claim_scope: locust collective motion models motivate explicit spatial interaction and movement dynamics.
+    applicability_limit: a review of collective-motion models, not a field-calibrated pest-density PDE.
+  - id: Showler2021-early-intervention
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.3390/agronomy11020312
+    title: "Early Intervention against Desert Locusts: Current Proactive Approach and the Prospect of Sustainable Outbreak Prevention"
+    authors: [Allan T. Showler, Mohammed Ould Babah Ebbe, Michel Lecoq, Koutaro Ould Maeno]
+    journal_or_manual: Agronomy
+    year: 2021
+    volume_issue_pages: "11(2), 312"
+    verification_status: metadata_and_abstract_verified
+    claim_scope: locust control timing and intervention context.
+    applicability_limit: does not provide the pesticide-specific exposure-mortality coefficient used here.
+  - id: Tudi2022-pymetrozine-residue-dynamics
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.1016/j.ecoenv.2022.113230
+    title: "Natural dynamics and residues of pymetrozine for typical rice-growing areas of China"
+    authors: [Muyesaier Tudi, Albert Atabila, Huada Daniel Ruan]
+    journal_or_manual: "Ecotoxicology and Environmental Safety"
+    year: 2022
+    verification_status: metadata_verified
+    claim_scope: pesticide residue dynamics are compound- and environment-dependent.
+    applicability_limit: pymetrozine residue measurements cannot be transferred to an unspecified locust pesticide.
+  - id: Liu2024-locust-climate-risk
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.1126/sciadv.adj1164
+    title: "Unveiling the role of climate in spatially synchronized locust outbreak risks"
+    authors: [Xinyue Liu, Dongxiao Zhang, Xiaogang He]
+    journal_or_manual: "Science Advances"
+    year: 2024
+    verification_status: metadata_and_abstract_verified
+    claim_scope: climate drivers contribute to spatially synchronized locust outbreak risk.
+    applicability_limit: risk prediction is not a local field-calibrated reaction coefficient.
+  - id: Mitra2024-desert-locust-migration
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.1038/s41598-024-73250-w
+    title: "Influence of climate on desert locust (Schistocerca gregaria Forskål, 1775) Plague and migration prediction in tropics"
+    authors: [Biswarup Mitra, Amiya Gayen, Sk. Mafizul Haque, Amlan Das]
+    journal_or_manual: "Scientific Reports"
+    year: 2024
+    verification_status: metadata_and_abstract_verified
+    claim_scope: climate variables are relevant to locust plague and migration prediction.
+    applicability_limit: regional prediction does not calibrate this 2-D field model.
+  - id: Zhang2022-desert-steppe-insecticide-toxicity
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.3390/toxins14080546
+    title: "Evaluation of the Toxicity of Chemical and Biogenic Insecticides to Three Outbreaking Insects in Desert Steppes of Northern China"
+    authors: [Wenbing Zhang, Hao Ren, Feilong Sun, Tingting Shen, Shuai Yuan]
+    journal_or_manual: Toxins
+    year: 2022
+    volume_issue_pages: "14(8), 546"
+    verification_status: metadata_and_abstract_verified
+    claim_scope: >-
+      Laboratory bioassays evaluated chemical and biogenic insecticides against
+      outbreaking Acrididae in northern China and therefore support using a
+      species- and compound-specific concentration--mortality calibration
+      protocol.
+    applicability_limit: >-
+      The tested locust species, life stage, formulation and exposure protocol
+      do not identify the mortality coefficient for the unspecified compound in
+      this project; no coefficient is copied into the simulator.
+  - id: Mullie2023-desert-locust-insecticide-use
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.3390/agronomy13030819
+    title: "Insecticide Use against Desert Locust in the Horn of Africa 2019--2021 Reveals a Pressing Need for Change"
+    authors: [Wim C. Mullié, Adam Prakash, Alexander Müller, Elena Lazutkaite]
+    journal_or_manual: Agronomy
+    year: 2023
+    volume_issue_pages: "13(3), 819"
+    verification_status: metadata_and_abstract_verified
+    claim_scope: >-
+      Field-scale desert-locust control campaigns used organophosphate and
+      pyrethroid formulations and documented the need to connect efficacy with
+      environmental monitoring and operational practice.
+    applicability_limit: >-
+      The paper does not provide a transferable local mortality or residue
+      coefficient for the simulator; it is used to justify the calibration and
+      monitoring requirements only.
+  - id: Grant2022-UAV-wind-tunnel-drift
+    source_type: peer-reviewed-study
+    url: https://doi.org/10.3390/drones6080204
+    title: "A Wind-Tunnel Assessment of Parameters That May Impact Spray Drift during UAV Pesticide Application"
+    authors: [Shanique Grant, Jeff Perine, Farah Abi-Akar, Timothy Lane, Brenna Kent]
+    journal_or_manual: Drones
+    year: 2022
+    volume_issue_pages: "6(8), 204"
+    verification_status: metadata_and_abstract_verified
+    claim_scope: >-
+      A wind-tunnel experiment tested 1.5, 3.0 and 4.5 m/s wind speeds and 2
+      and 10 L initial payloads, providing an application-specific reference
+      range for spray-drift sensitivity.
+    applicability_limit: >-
+      Wind-tunnel and UAV downwash conditions are not a replacement for a
+      field-anemometer time series; regional wind components in the model remain
+      provisional.
+  - id: jodhpur-osm-source
+    source_type: open_geospatial_data
+    url: https://www.openstreetmap.org/
+    title: "OpenStreetMap road data used as the upstream source of the local GraphML"
+    authors: [OpenStreetMap contributors]
+    journal_or_manual: "OpenStreetMap data and local GraphML export"
+    year: 2026
+    verification_status: local_source_hash_verified
+    source_values:
+      sha256: b3af36efbfc87fff30bd61d204283dc40c5b8c83a80ba0ee09f3da5ef52a9462
+      bbox_lonlat: [72.9348403, 26.2068436, 73.1354043, 26.3866936]
+    claim_scope: upstream road geometry for a representative road-constrained simulation input.
+    applicability_limit: the cropped/normalized graph is not a surveyed farm road network.
+parameter_mapping:
+  uav_onboard_pesticide:
+    source_id: DJI-T40-official-spec
+    source_value: 40.0
+    source_unit: L
+    simulation_value: 1.0
+    simulation_unit: L
+    conversion: "simulation_value = source_value * 0.025 scene_liquid_scale"
+    status: sourced_with_explicit_scene_scaling
+  uav_spray_flow:
+    source_id: DJI-T40-official-spec
+    source_value: 0.2
+    source_unit: L/s
+    simulation_value: 0.01
+    simulation_unit: L/s
+    conversion: "simulation_value = source_value * 0.05 scene_flow_scale"
+    status: sourced_with_explicit_scene_scaling
+  uav_speed:
+    source_id: DJI-T40-official-spec
+    source_value: 7.0
+    source_unit: m/s
+    simulation_value: 1.0
+    simulation_unit: m/s
+    conversion: "simulation_value = source_value / 7 speed_scale"
+    status: sourced_with_explicit_scene_scaling
+  uav_usable_fraction:
+    source_id: null
+    status: pending_equipment_or_field_measurement
+  vehicle_inventory:
+    source_id: DigitalAgro-DroneFiller-public-spec
+    source_value: 500.0
+    source_unit: L
+    conversion: "simulation_value = source_value * 0.01 scene_liquid_scale"
+    status: sourced_with_explicit_scene_scaling_pending_vehicle_match
+  vehicle_service_capacity:
+    source_id: DigitalAgro-DroneFiller-public-spec
+    source_value: 500.0
+    source_unit: L
+    conversion: "simulation_value = source_value * 0.01 scene_liquid_scale; per-service transfer remains capped by UAV free capacity"
+    status: sourced_with_explicit_scene_scaling_pending_vehicle_match
+  vehicle_transfer_rate:
+    source_id: Frost-DroneMAX-public-spec
+    source_value: 0.7568
+    source_unit: L/s
+    conversion: "simulation_value = source_value * 0.02643 scene_flow_scale"
+    status: sourced_with_explicit_scene_scaling_pending_pump_test
+  service_setup_time:
+    source_id: null
+    status: pending_timed_service-observation
+  rendezvous_radius:
+    source_id: DigitalAgro-DroneFiller-public-spec
+    source_value: 8.0
+    source_unit: m
+    conversion: "simulation_value = source_value * 0.625; factor is a declared safety/geometry assumption pending mobile-hose measurement"
+    status: reference_range_only_pending_air-ground-safety-protocol
+  vehicle_speed:
+    source_id: null
+    status: pending_road-vehicle-specification
+  decision_dt:
+    source_id: null
+    status: pending_numerical-convergence-and-control-loop-check
+field_dynamics_mapping:
+  pest_growth_rate_s: {status: requires_local_pest_time_series}
+  pest_diffusion_rate_m2_s: {status: requires_spatial_tracking_or_calibration}
+  wind_vx_m_s: {status: requires_field_anemometer_or_declared_weather_series}
+  wind_vy_m_s: {status: requires_field_anemometer_or_declared_weather_series}
+  pesticide_decay_rate_s: {status: requires_compound_specific_residue_curve}
+  pesticide_efficacy_per_l: {status: requires_deposition_and_bioassay}
+  pest_mortality_per_exposure: {status: requires_deposition_and_bioassay}
+practical_equivalence:
+  margin: 0.02
+  unit: absolute_reduction_rate
+  basis: >-
+    Pre-registered two-percentage-point operational tolerance for the normalized
+    endpoint. This is a protocol placeholder based on reporting resolution, not
+    an agronomist-confirmed minimum important difference; formal use requires
+    supervisor or agronomist sign-off before sealed-test unlock.

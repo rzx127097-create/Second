@@ -1,0 +1,55 @@
+{
+  "derivation": {
+    "coordinate_transform": {
+      "translate_x_m": 52.24630059600611,
+      "translate_y_m": 18.202634634413275,
+      "uniform_scale": 0.9710329449166407
+    },
+    "physical_extent_m": [
+      300.0,
+      500.0
+    ],
+    "selected_node_count": 15,
+    "selection": "largest connected component within crop"
+  },
+  "derived": {
+    "metadata": {
+      "adjacency_checksum": "c7782bcb28321596e1e32718a2994de9f190f45a187a500d3c7eea0cb54a52b8",
+      "bbox_lonlat": null,
+      "component_sizes": [
+        15
+      ],
+      "coordinate_mode": "metric",
+      "directed_policy": "undirected",
+      "edge_count": 18,
+      "node_count": 15,
+      "origin_lonlat": [
+        0.0,
+        0.0
+      ],
+      "source_crs": "metric",
+      "source_path": "C:\\Users\\RZX\\Desktop\\论文\\毕业论文\\Second\\.worktrees\\problem2-code-framework\\data\\roads\\jodhpur_cropped_metric.graphml",
+      "source_sha256": "62bfda5137bb5e29b46084fe00176313febc4c8d45fffca112c3c8ff3c2fab05"
+    },
+    "path": "C:\\Users\\RZX\\Desktop\\论文\\毕业论文\\Second\\.worktrees\\problem2-code-framework\\data\\roads\\jodhpur_cropped_metric.graphml",
+    "sha256": "62bfda5137bb5e29b46084fe00176313febc4c8d45fffca112c3c8ff3c2fab05"
+  },
+  "name": "frozen_road_source",
+  "ready": true,
+  "source": {
+    "coordinate_mode": "lonlat",
+    "crop_metric_bbox": [
+      0.0,
+      0.0,
+      500.0,
+      300.0
+    ],
+    "origin_lonlat": [
+      73.0351433,
+      26.2967719
+    ],
+    "path": "D:\\Pycharm\\Locust_rl\\data\\jodhpur_drive.graphml",
+    "sha256": "b3af36efbfc87fff30bd61d204283dc40c5b8c83a80ba0ee09f3da5ef52a9462"
+  },
+  "status": "observed"
+}

@@ -14,7 +14,13 @@ ROOT = Path(__file__).resolve().parents[2]
 def _verified_protocol_copy(tmp_path: Path) -> Path:
     path = tmp_path / "chapter4_5.yaml"
     text = (ROOT / "configs" / "experiments" / "chapter4_5.yaml").read_text(encoding="utf-8")
-    path.write_text(text.replace("status: provisional", "status: verified", 1), encoding="utf-8")
+    text = text.replace("status: provisional", "status: verified", 1)
+    text = text.replace("practical_equivalence_margin: 0.02", "practical_equivalence_margin: null")
+    text = text.replace(
+        "practical_equivalence_basis: >-\n    Pre-registered two-percentage-point operational tolerance for the normalized\n    reduction-rate endpoint. This is a provisional reporting-resolution basis\n    and requires supervisor or agronomist confirmation before sealed-test unlock.",
+        "practical_equivalence_basis: null",
+    )
+    path.write_text(text, encoding="utf-8")
     return path
 
 

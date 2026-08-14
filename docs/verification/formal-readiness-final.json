@@ -5,14 +5,10 @@
     "parameters: parameter is an assumption or has a placeholder source",
     "parameters: parameter is an assumption or has a placeholder source",
     "parameters: parameter is an assumption or has a placeholder source",
-    "parameters: parameter is an assumption or has a placeholder source",
-    "parameters: parameter is an assumption or has a placeholder source",
-    "parameters: parameter is an assumption or has a placeholder source",
     "scenarios: scenario, scale and matrix registries must all be verified",
     "algorithm: SR-MAPPO algorithm configuration is provisional",
     "field_dynamics: field dynamics parameters require crop-, wind- and pesticide-specific calibration",
-    "protocol: Chapter 4.5 protocol and formal matrix must be verified",
-    "resource_activation: resource counterfactual pilot has not established an active bottleneck"
+    "protocol: Chapter 4.5 protocol and formal matrix must be verified"
   ],
   "details": {
     "config_dir": "C:\\Users\\RZX\\Desktop\\论文\\毕业论文\\Second\\.worktrees\\problem2-code-framework\\configs",
@@ -232,21 +228,6 @@
         {
           "code": "unverified_source",
           "message": "parameter is an assumption or has a placeholder source",
-          "path": "parameters.vehicle_inventory"
-        },
-        {
-          "code": "unverified_source",
-          "message": "parameter is an assumption or has a placeholder source",
-          "path": "parameters.vehicle_transfer_rate"
-        },
-        {
-          "code": "unverified_source",
-          "message": "parameter is an assumption or has a placeholder source",
-          "path": "parameters.vehicle_service_capacity"
-        },
-        {
-          "code": "unverified_source",
-          "message": "parameter is an assumption or has a placeholder source",
           "path": "parameters.service_setup_time"
         },
         {
@@ -285,7 +266,7 @@
       "issues": [],
       "name": "road_source",
       "ready": true,
-      "status": "observed"
+      "status": "verified"
     },
     {
       "issues": [
@@ -321,15 +302,10 @@
       "status": "provisional"
     },
     {
-      "issues": [
-        {
-          "code": "resource_activation_pending",
-          "message": "resource counterfactual pilot has not established an active bottleneck"
-        }
-      ],
+      "issues": [],
       "name": "resource_activation",
-      "ready": false,
-      "status": "pending"
+      "ready": true,
+      "status": "observed"
     }
   ],
   "highest_gate": "M2"

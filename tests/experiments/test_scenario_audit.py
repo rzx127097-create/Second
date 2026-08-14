@@ -61,7 +61,7 @@ def test_repository_scenario_registry_is_not_formal_ready() -> None:
 
     assert report.ready is False
     assert any(issue.code == "registry_provisional" for issue in report.issues)
-    assert any(issue.code == "missing_source_metadata" for issue in report.issues)
+    assert not any(issue.code == "missing_source_metadata" for issue in report.issues)
 
 
 def test_scenario_audit_cli_writes_report(tmp_path: Path) -> None:

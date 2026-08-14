@@ -1,0 +1,108 @@
+schema_version: 1
+status: provisional
+model: reaction_diffusion_advection_exposure
+unit_system: SI
+notes: >-
+  Mechanistic field model used for pilot and interface verification. Parameter
+  values are explicitly provisional until crop- and pesticide-specific field
+  calibration is supplied; this file must not be cited as a field validation.
+parameters:
+  pest_growth_rate_s:
+    symbol: r_p
+    value: 0.0002
+    unit: s^-1
+    min: 0.0
+    max: 0.01
+    source_type: peer-reviewed-study
+    source_id: "Ariel2015-collective-motion-review"
+    source_value: null
+    source_unit: null
+    conversion: "pilot scale parameter; requires crop-specific calibration"
+  pest_carrying_capacity:
+    symbol: K_p
+    value: 1.0
+    unit: normalized-density
+    min: 0.1
+    max: 10.0
+    source_type: manual
+    source_id: "model-normalization"
+    source_value: 1.0
+    source_unit: normalized-density
+    conversion: "value = source_value"
+  pest_diffusion_rate_m2_s:
+    symbol: D_p
+    value: 0.5
+    unit: m^2/s
+    min: 0.0
+    max: 100.0
+    source_type: peer-reviewed-study
+    source_id: "Ariel2015-collective-motion-review"
+    source_value: null
+    source_unit: null
+    conversion: "pilot scale parameter; requires spatial calibration"
+  wind_vx_m_s:
+    symbol: u_x
+    value: 1.5
+    unit: m/s
+    min: -6.0
+    max: 6.0
+    source_type: peer-reviewed-study
+    source_id: "Lan2021-downwash-wind-field"
+    source_value: null
+    source_unit: null
+    conversion: "scenario wind range; requires field meteorology"
+  wind_vy_m_s:
+    symbol: u_y
+    value: 0.5
+    unit: m/s
+    min: -6.0
+    max: 6.0
+    source_type: peer-reviewed-study
+    source_id: "Lan2021-downwash-wind-field"
+    source_value: null
+    source_unit: null
+    conversion: "scenario wind range; requires field meteorology"
+  pesticide_decay_rate_s:
+    symbol: lambda_p
+    value: 0.001155
+    unit: s^-1
+    min: 0.0
+    max: 0.1
+    source_type: peer-reviewed-study
+    source_id: "Tudi2022-pymetrozine-residue-dynamics"
+    source_value: null
+    source_unit: null
+    conversion: "first-order rate requires compound-specific half-life"
+  pesticide_diffusion_rate_m2_s:
+    symbol: D_c
+    value: 0.5
+    unit: m^2/s
+    min: 0.0
+    max: 100.0
+    source_type: peer-reviewed-study
+    source_id: "Grella2017-ground-deposition-drift"
+    source_value: null
+    source_unit: null
+    conversion: "pilot scale parameter; requires deposition calibration"
+  pesticide_efficacy_per_l:
+    symbol: alpha_c
+    value: 0.05
+    unit: normalized-density/L
+    min: 0.0
+    max: 1.0
+    source_type: peer-reviewed-study
+    source_id: "Qin2018-UAV-droplet-deposition"
+    source_value: null
+    source_unit: null
+    conversion: "exposure-to-mortality coefficient; requires bioassay calibration"
+  pest_mortality_per_exposure:
+    symbol: mu_c
+    value: 0.02
+    unit: normalized-density/(L*s)
+    min: 0.0
+    max: 1.0
+    source_type: peer-reviewed-study
+    source_id: "Showler2021-early-intervention"
+    source_value: null
+    source_unit: null
+    conversion: "exposure-response coefficient; requires pesticide bioassay"

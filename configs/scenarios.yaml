@@ -1,7 +1,7 @@
 status: provisional
-source_kind: synthetic_smoke
-dynamics_kind: smoke_local_removal
-source_metadata_hash: null
+source_kind: frozen_gis
+dynamics_kind: reaction_diffusion_advection_exposure
+source_metadata_hash: 82b9c902baf1376e2a1438b3630b956ef9c5a65d92537dbf49ec2bbc330aa24c
 scenarios:
   train_001: {split: train, scale: s1, seed_offset: 1001}
   train_s1_002: {split: train, scale: s1, seed_offset: 1102}

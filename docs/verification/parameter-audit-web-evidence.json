@@ -10,21 +10,6 @@
     {
       "code": "unverified_source",
       "message": "parameter is an assumption or has a placeholder source",
-      "path": "parameters.vehicle_inventory"
-    },
-    {
-      "code": "unverified_source",
-      "message": "parameter is an assumption or has a placeholder source",
-      "path": "parameters.vehicle_transfer_rate"
-    },
-    {
-      "code": "unverified_source",
-      "message": "parameter is an assumption or has a placeholder source",
-      "path": "parameters.vehicle_service_capacity"
-    },
-    {
-      "code": "unverified_source",
-      "message": "parameter is an assumption or has a placeholder source",
       "path": "parameters.service_setup_time"
     },
     {
