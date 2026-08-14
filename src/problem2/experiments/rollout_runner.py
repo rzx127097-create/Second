@@ -146,6 +146,7 @@ def run_training_episode(
         initial_pest_total=initial_pest_total,
         pesticide_initial_l=pesticide_initial_l,
         events=all_events,
+        agent_ids=role_ids,
     )
     record.rollout = batch
     return record
@@ -160,11 +161,14 @@ def train_policy(
     rollout_horizon: int,
     checkpoint_path: Path | None,
     start_update: int = 0,
+    total_updates: int | None = None,
 ) -> list[EpisodeRecord]:
     """Collect, optimize, and atomically checkpoint true ScenarioBundle rollouts."""
 
     if updates < 1:
         raise ValueError("updates must be positive")
+    if total_updates is not None and int(total_updates) < int(start_update) + int(updates):
+        raise ValueError("total_updates must cover start_update plus updates")
     records: list[EpisodeRecord] = []
     algorithm.train(True)
     for offset in range(int(updates)):
@@ -180,10 +184,10 @@ def train_policy(
         losses = trainer.update_with_epochs(
             record.rollout,
             epochs=1,
-            progress=update / max(1, int(start_update) + int(updates)),
+            progress=None if total_updates is None else update / int(total_updates),
         )
         record.losses = {name: float(value) for name, value in losses.items()}
-        del record.rollout
+        record.rollout = None
         records.append(record)
         if checkpoint_path is not None:
             save_checkpoint(checkpoint_path, algorithm, step=update)

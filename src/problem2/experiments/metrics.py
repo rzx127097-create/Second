@@ -38,6 +38,8 @@ class EpisodeRecord:
     pesticide_disabled_s: float
     events: list[dict[str, object]] = field(default_factory=list)
     losses: dict[str, float] = field(default_factory=dict)
+    agent_ids: dict[str, list[str]] = field(default_factory=dict)
+    rollout: Any | None = field(default=None, repr=False, compare=False)
 
     @property
     def reduction_rate(self) -> float:
@@ -71,6 +73,8 @@ class EpisodeRecord:
             "pesticide_remaining_l": self.pesticide_remaining_l,
             "pesticide_sprayed_l": self.pesticide_sprayed_l,
             "event_count": self.event_count,
+            "uav_agent_ids": list(self.agent_ids.get("uav", [])),
+            "vehicle_agent_ids": list(self.agent_ids.get("vehicle", [])),
             **self.losses,
         }
 
@@ -85,6 +89,7 @@ def episode_record_from_bundle(
     initial_pest_total: float,
     pesticide_initial_l: float,
     events: list[dict[str, object]],
+    agent_ids: dict[str, list[str]],
 ) -> EpisodeRecord:
     """Materialize metrics solely from the final bundle and emitted events.
 
@@ -112,6 +117,7 @@ def episode_record_from_bundle(
         wait_s=_event_total(events, "wait", "duration_s"),
         pesticide_disabled_s=_event_total(events, "pesticide_disabled", "duration_s"),
         events=list(events),
+        agent_ids={role: list(ids) for role, ids in agent_ids.items()},
     )
 
 

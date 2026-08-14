@@ -110,7 +110,10 @@ class SRMAPPOTrainer:
             device=device,
         )
         batch.returns_normalized = True
-        state_values = [state.get("vector", state) if isinstance(state, dict) else state for state in batch.states]
+        state_values = np.asarray(
+            [state.get("vector", state) if isinstance(state, dict) else state for state in batch.states],
+            dtype=np.float32,
+        )
         states = torch.as_tensor(state_values, dtype=torch.float32, device=device)
         values = self.algorithm.critic(states)
         if self.algorithm.stability_components["return_normalization"]:
@@ -135,14 +138,18 @@ class SRMAPPOTrainer:
         for role, actor, optimizer in (("uav", self.algorithm.uav_actor, self.optimizers["uav"]), ("vehicle", self.algorithm.vehicle_actor, self.optimizers["vehicle"])):
             policy_observations = getattr(batch, "policy_observations", {}).get(role)
             observations_source = batch.observations[role] if policy_observations is None else policy_observations
-            observations = torch.as_tensor(observations_source, dtype=torch.float32, device=device)
+            observations = torch.as_tensor(
+                np.asarray(observations_source, dtype=np.float32),
+                dtype=torch.float32,
+                device=device,
+            )
             if observations.ndim == 3:
                 time_steps, agents, features = observations.shape
                 observations = observations.reshape(time_steps * agents, features)
             logits = actor(observations)
-            masks = torch.as_tensor(batch.masks[role], dtype=torch.bool, device=device)
-            actions = torch.as_tensor(batch.actions[role], dtype=torch.long, device=device)
-            old_log_probs = torch.as_tensor(batch.log_probs[role], dtype=torch.float32, device=device)
+            masks = torch.as_tensor(np.asarray(batch.masks[role], dtype=bool), dtype=torch.bool, device=device)
+            actions = torch.as_tensor(np.asarray(batch.actions[role], dtype=np.int64), dtype=torch.long, device=device)
+            old_log_probs = torch.as_tensor(np.asarray(batch.log_probs[role], dtype=np.float32), dtype=torch.float32, device=device)
             valid_mask = torch.as_tensor(batch.role_valid_mask(role), dtype=torch.bool, device=device)
             if masks.ndim == 3:
                 masks = masks.reshape(-1, masks.shape[-1])
