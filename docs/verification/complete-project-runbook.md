@@ -32,8 +32,9 @@ python --version
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -U pip
-pip install -e .
-pip install -e ".[rl]"  # optional; required by neural-network smoke training
+pip install -e ".[dev,rl]"  # pytest + torch; required by end-to-end smoke
+# Non-RL domain-only checks may omit torch:
+# pip install -e ".[dev]"
 ```
 
 The smoke path uses CPU and a small hidden layer/horizon. It is the only
@@ -61,7 +62,10 @@ selected job uses canonical key `sr_mappo_mobile` and writes:
 Resume the same identity after an interruption by rerunning the training
 command with the same config, scale, seed, and output root. The runner loads the
 existing checkpoint and continues from its recorded step; it never changes the
-job identity. Failed jobs may be retried up to `--max-attempts`. Matrix output
+job identity. Failed jobs may be retried up to `--max-attempts`. The e2e test
+uses a deterministic failure injection in the worker to exercise this persisted
+retry path; that injected failure is a recovery check, not a scientific result.
+Matrix output
 `partial` means accepted selected jobs completed while unselected jobs remain;
 `failed` means at least one selected job did not complete. Inspect the persisted
 job JSON before retrying.
@@ -77,9 +81,11 @@ python scripts\evaluate.py --config-dir configs `
 ```
 
 The output JSON includes `status`, `split`, `scenario`, and `raw_path`. The
-validation JSONL row preserves `run_id`, `method`, `scale`, `training_seed`,
-`scenario_id`, `config_hash`, `git_commit`, `split`, `provisional`,
-`reduction_rate`, `success`, and `transferred_l`.
+validation raw JSONL row preserves `run_id`, `method`, `scale`,
+`training_seed`, `scenario_id`, `config_hash`, `git_commit`, `split`,
+`parameter_status`, `reduction_rate`, `success`, and `transferred_l`.
+The strict artifact parser derives the normalized boolean `provisional` field;
+summary rows and the evidence manifest carry that normalized status.
 
 Build validated tables, summaries, figures, and an input/output hash manifest
 from that generated JSONL:

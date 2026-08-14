@@ -10,9 +10,10 @@ Windows PowerShell、Python 3.11（`python --version` 应为 3.11.x）：
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -U pip
-pip install -e .
-# 需要 SR-MAPPO 神经网络训练时：
-pip install -e ".[rl]"
+# 完整开发与端到端 smoke（含 pytest、torch）：
+pip install -e ".[dev,rl]"
+# 仅运行非 RL domain 测试时可省略 torch：
+# pip install -e ".[dev]"
 ```
 
 ## 验证
