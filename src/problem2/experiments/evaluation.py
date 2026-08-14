@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+import inspect
+import pickle
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -33,8 +35,11 @@ def evaluate_policy(
     """Evaluate a policy on exact, resettable ScenarioBundle scenarios."""
     if split not in {"smoke", "train", "validation", "sealed_test"}:
         raise ValueError("unknown evaluation split")
-    if split == "sealed_test" and not getattr(policy, "name", None):
-        raise ValueError("sealed evaluation requires a named frozen policy")
+    if split == "sealed_test":
+        if not deterministic:
+            raise ValueError("sealed_test requires deterministic=True")
+        if not getattr(policy, "name", None) or not hasattr(policy, "eval"):
+            raise ValueError("sealed_test requires a named frozen policy with eval mode")
     records: list[EpisodeRecord] = []
     for scenario_id in scenarios:
         scenario_key = str(scenario_id)
@@ -44,7 +49,7 @@ def evaluate_policy(
         if split != "smoke":
             bundle.assert_formal_ready()
         was_training = getattr(policy, "training", None)
-        if deterministic and hasattr(policy, "eval"):
+        if hasattr(policy, "eval"):
             policy.eval()
         snapshot = bundle.reset()
         initial_pest_total = float(np.asarray(bundle.pest_density, dtype=float).sum())
@@ -55,10 +60,12 @@ def evaluate_policy(
         agent_ids = {"uav": [], "vehicle": []}
         try:
             while True:
-                try:
-                    proposed = policy.act(snapshot, deterministic=deterministic)
-                except TypeError:
-                    proposed = policy.act(snapshot)
+                parameters = inspect.signature(policy.act).parameters
+                accepts_deterministic = "deterministic" in parameters or any(
+                    parameter.kind is inspect.Parameter.VAR_KEYWORD
+                    for parameter in parameters.values()
+                )
+                proposed = policy.act(snapshot, deterministic=deterministic) if accepts_deterministic else policy.act(snapshot)
                 environment_actions = actions_to_environment(snapshot, proposed)
                 for agent_id, observation in snapshot.role_observations.items():
                     role = str(observation.get("role"))
@@ -73,7 +80,7 @@ def evaluate_policy(
                 if stepped.terminated or stepped.truncated:
                     break
         finally:
-            if deterministic and was_training is not None and hasattr(policy, "train"):
+            if was_training is not None and hasattr(policy, "train"):
                 policy.train(bool(was_training))
         records.append(episode_record_from_bundle(
             bundle,
@@ -100,16 +107,35 @@ def load_evaluation_checkpoint(path: str | Path, algorithm_factory: Callable[[],
     source = Path(path)
     if not source.is_file():
         raise FileNotFoundError(f"checkpoint does not exist: {source}")
-    from problem2.algorithms.common.checkpoint import load_checkpoint
-
     try:
+        try:
+            import torch
+        except ImportError:
+            with source.open("rb") as handle:
+                raw_payload = pickle.load(handle)
+        else:
+            raw_payload = torch.load(source, map_location="cpu", weights_only=False)
+        if not isinstance(raw_payload, Mapping):
+            raise ValueError("checkpoint payload must be a mapping")
+        raw_format = raw_payload["format"]
+        raw_step = raw_payload["step"]
+        if type(raw_format) is not int or raw_format != 2:
+            raise ValueError("checkpoint format must be exactly integer 2")
+        if type(raw_step) is not int or raw_step < 0:
+            raise ValueError("checkpoint step must be a non-negative integer")
+    except Exception as exc:  # noqa: BLE001 - normalize all malformed payloads
+        raise ValueError(f"invalid evaluation checkpoint: {source}") from exc
+    try:
+        from problem2.algorithms.common.checkpoint import load_checkpoint
         algorithm, metadata = load_checkpoint(source, algorithm_factory)
     except Exception as exc:  # noqa: BLE001 - normalize persistence errors at evaluation boundary
         raise ValueError(f"invalid evaluation checkpoint: {source}") from exc
-    if not isinstance(metadata, Mapping) or metadata.get("format") != 2:
+    if not isinstance(metadata, Mapping) or type(metadata.get("format")) is not int or type(metadata.get("step")) is not int:
         raise ValueError("unsupported checkpoint format")
-    step = metadata.get("step")
-    if isinstance(step, bool) or not isinstance(step, int) or step < 0:
+    if metadata["format"] != raw_format or metadata["step"] != raw_step:
+        raise ValueError("checkpoint metadata changed during load")
+    step = metadata["step"]
+    if step < 0:
         raise ValueError("checkpoint step metadata is invalid")
     algorithm.eval() if hasattr(algorithm, "eval") else None
     return algorithm, {"step": step, "format": 2}

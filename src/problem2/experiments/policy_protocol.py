@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from numbers import Integral, Real
 from typing import Any, Protocol
 
 import numpy as np
@@ -52,6 +53,10 @@ def actions_to_environment(snapshot: Any, actions: Mapping[str, Any]) -> dict[st
             if action not in mask.actions or not mask.mask[mask.actions.index(action)]:
                 raise ValueError(f"action is not legal for {agent_id}: {action}")
         else:
+            if isinstance(value, (bool, np.bool_)):
+                raise ValueError(f"invalid action index for {agent_id}: {value!r}")
+            if isinstance(value, Real) and not isinstance(value, Integral) and not float(value).is_integer():
+                raise ValueError(f"action index must be an integer for {agent_id}: {value!r}")
             try:
                 index = int(value)
             except (TypeError, ValueError) as exc:

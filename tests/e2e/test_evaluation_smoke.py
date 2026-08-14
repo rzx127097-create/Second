@@ -61,3 +61,76 @@ def test_checkpoint_integrity_rejects_missing_and_bad_payload(tmp_path):
     bad.write_bytes(b"not-a-checkpoint")
     with pytest.raises(ValueError, match="invalid evaluation checkpoint"):
         load_evaluation_checkpoint(bad, lambda: object())
+
+
+def test_sealed_test_requires_deterministic_frozen_policy():
+    with pytest.raises(ValueError, match="deterministic"):
+        evaluate_policy(HoldPolicy(), _factory, scenarios=["s1"], split="sealed_test", deterministic=False)
+    with pytest.raises(ValueError, match="frozen"):
+        evaluate_policy(HoldPolicy(), _factory, scenarios=["s1"], split="sealed_test", deterministic=True)
+
+
+def test_stochastic_algorithm_adapter_freezes_normalization_and_training_state():
+    torch = pytest.importorskip("torch")
+    from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
+    from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
+    from problem2.experiments.policy_protocol import AlgorithmPolicyAdapter
+
+    bundle = _factory("s1")
+    snapshot = bundle.reset()
+    algorithm = SRMAPPOAlgorithm(
+        uav_obs_dim=len(snapshot.role_observations["uav-1"]["vector"]),
+        vehicle_obs_dim=len(snapshot.role_observations["vehicle-1"]["vector"]),
+        state_dim=len(snapshot.critic_state["vector"]),
+        uav_action_dim=len(snapshot.action_masks["uav-1"]),
+        vehicle_action_dim=len(snapshot.action_masks["vehicle-1"]),
+        hidden_dim=8,
+    )
+    trainer = SRMAPPOTrainer(algorithm, learning_rate=1e-3)
+    algorithm.obs_normalizer.update([[1.0] * len(snapshot.role_observations["uav-1"]["vector"])])
+    algorithm.vehicle_obs_normalizer.update([[1.0] * len(snapshot.role_observations["vehicle-1"]["vector"])])
+    mean_before = algorithm.obs_normalizer.mean.copy()
+    count_before = algorithm.obs_normalizer.count
+    vehicle_mean_before = algorithm.vehicle_obs_normalizer.mean.copy()
+    vehicle_count_before = algorithm.vehicle_obs_normalizer.count
+    training_before = algorithm.training
+    optimizer_before = trainer.state_dict()
+    evaluate_policy(AlgorithmPolicyAdapter(algorithm), _factory, scenarios=["s1"], split="smoke", deterministic=False)
+    assert algorithm.training is training_before
+    assert algorithm.obs_normalizer.count == count_before
+    assert algorithm.vehicle_obs_normalizer.count == vehicle_count_before
+    assert (algorithm.obs_normalizer.mean == mean_before).all()
+    assert (algorithm.vehicle_obs_normalizer.mean == vehicle_mean_before).all()
+    assert trainer.state_dict() == optimizer_before
+
+
+@pytest.mark.parametrize(
+    ("step", "format_value"),
+    [
+        (1.5, 2),
+        ("7", 2),
+        (True, 2),
+        (1, 2.0),
+        (1, "2"),
+        (1, None),
+    ],
+)
+def test_checkpoint_rejects_noncanonical_raw_metadata(tmp_path, step, format_value):
+    torch = pytest.importorskip("torch")
+    from problem2.experiments.evaluation import load_evaluation_checkpoint
+
+    payload = {"step": step, "algorithm": {}}
+    if format_value is not None:
+        payload["format"] = format_value
+    path = tmp_path / f"bad-{str(step)}-{str(format_value)}.pt"
+    torch.save(payload, path)
+    with pytest.raises(ValueError):
+        load_evaluation_checkpoint(path, lambda: (_ for _ in ()).throw(AssertionError("factory must not run")))
+
+
+def test_action_conversion_rejects_non_integral_float_index():
+    from problem2.experiments.policy_protocol import actions_to_environment
+
+    snapshot = _factory("s1").reset()
+    with pytest.raises(ValueError, match="integer"):
+        actions_to_environment(snapshot, {"uav": [4.9, 4], "vehicle": [0]})
