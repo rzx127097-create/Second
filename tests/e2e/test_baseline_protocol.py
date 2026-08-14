@@ -88,7 +88,11 @@ def test_smoke_actions_use_each_agents_own_first_legal_action() -> None:
 class _FakeAlgorithm:
     training = False
 
+    def __init__(self):
+        self.deterministic_values = []
+
     def act(self, observations, masks, deterministic=True):
+        self.deterministic_values.append(deterministic)
         return {"uav": [5, 5], "vehicle": [1]}
 
 
@@ -104,6 +108,20 @@ def test_astar_checkpoint_uses_loaded_uav_and_current_candidate_vehicle(monkeypa
     assert actions["uav-1"] == "spray"
     assert actions["uav-2"] == "spray"
     assert actions["vehicle-1"].startswith("slot-") or actions["vehicle-1"] == "hold"
+
+
+def test_astar_rejects_learned_vehicle_slot_without_current_candidate(monkeypatch, tmp_path) -> None:
+    bundle = build_synthetic_scenario("s1", seed=7, config_dir=CONFIG_DIR)
+    checkpoint = tmp_path / "checkpoint.pt"
+    checkpoint.write_bytes(b"placeholder")
+    policy = make_policy("sr_mappo_astar", checkpoint=checkpoint)
+    fake = _FakeAlgorithm()
+    monkeypatch.setattr(policy, "_load_algorithm", lambda snapshot: fake)
+    snapshot = bundle.reset()
+    snapshot = replace(snapshot, candidate_mapping={"vehicle-1": ()})
+    actions = policy.act(snapshot, deterministic=False)
+    assert actions["vehicle-1"] == "hold"
+    assert fake.deterministic_values == [False]
 
 
 def test_fixed_checkpoint_forces_vehicle_hold_and_retains_support_metadata(monkeypatch, tmp_path) -> None:

@@ -67,7 +67,7 @@ class _SnapshotPolicy:
         }
         return actions_to_environment(snapshot, proposed)
 
-    def _learned_actions(self, snapshot: Any, algorithm: Any) -> dict[str, str]:
+    def _learned_actions(self, snapshot: Any, algorithm: Any, *, deterministic: bool = True) -> dict[str, str]:
         observations = {
             role: [snapshot.role_observations[agent_id]["vector"] for agent_id, obs in snapshot.role_observations.items() if str(obs.get("role")) == role]
             for role in ("uav", "vehicle")
@@ -76,7 +76,7 @@ class _SnapshotPolicy:
             role: [snapshot.action_masks[agent_id].mask for agent_id, obs in snapshot.role_observations.items() if str(obs.get("role")) == role]
             for role in ("uav", "vehicle")
         }
-        return actions_to_environment(snapshot, algorithm.act(observations, masks, deterministic=True))
+        return actions_to_environment(snapshot, algorithm.act(observations, masks, deterministic=deterministic))
 
     def _load_algorithm(self, snapshot: Any) -> Any:
         if self._algorithm is not None:
@@ -112,7 +112,7 @@ class _SnapshotPolicy:
         if self.checkpoint is None:
             return self._smoke_actions(snapshot)
         algorithm = self._load_algorithm(snapshot)
-        return self._learned_actions(snapshot, algorithm)
+        return self._learned_actions(snapshot, algorithm, deterministic=deterministic)
 
 
 class FixedSupportPolicy(_SnapshotPolicy):
@@ -125,7 +125,7 @@ class FixedSupportPolicy(_SnapshotPolicy):
         if self.checkpoint is None:
             proposed = self._smoke_actions(snapshot)
         else:
-            proposed = self._learned_actions(snapshot, self._load_algorithm(snapshot))
+            proposed = self._learned_actions(snapshot, self._load_algorithm(snapshot), deterministic=deterministic)
         for vehicle_id, observation in snapshot.role_observations.items():
             if str(observation.get("role")) == "vehicle":
                 proposed[vehicle_id] = "hold"
@@ -138,13 +138,17 @@ class RollingAStarAdapter(_SnapshotPolicy):
         proposed = (
             self._smoke_actions(snapshot)
             if self.checkpoint is None
-            else self._learned_actions(snapshot, self._load_algorithm(snapshot))
+            else self._learned_actions(snapshot, self._load_algorithm(snapshot), deterministic=deterministic)
         )
-        for vehicle_id, routes in snapshot.candidate_mapping.items():
+        vehicle_ids = [
+            agent_id for agent_id, observation in snapshot.role_observations.items()
+            if str(observation.get("role")) == "vehicle"
+        ]
+        for vehicle_id in vehicle_ids:
+            routes = snapshot.candidate_mapping.get(vehicle_id, ())
             mask = snapshot.action_masks[vehicle_id]
             valid_slots = [str(slot) for slot, _ in routes if str(slot) in mask.valid_actions]
-            if valid_slots:
-                proposed[vehicle_id] = valid_slots[0]
+            proposed[vehicle_id] = valid_slots[0] if valid_slots else "hold"
         return actions_to_environment(snapshot, proposed)
 
 
