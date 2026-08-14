@@ -14,17 +14,23 @@ def _bootstrap_ci(values: list[float], *, seed: int = 0, draws: int = 2000) -> t
         return None, None, "n<2; bootstrap interval unavailable", n
     try:
         import numpy as np
-    except ImportError:
-        # A deterministic analytic fallback still makes the limitation explicit.
-        mean = sum(values) / n
-        return mean, mean, "numpy unavailable; degenerate interval", n
+    except ImportError as exc:
+        raise RuntimeError("NumPy is required for deterministic bootstrap confidence intervals") from exc
     rng = np.random.default_rng(seed)
     sample = np.asarray(values, dtype=float)
     means = sample[rng.integers(0, n, size=(draws, n))].mean(axis=1)
     return float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5)), "percentile bootstrap 95%; seed=0; draws=2000", n
 
 
-def summarize_records(records: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def summarize_records(records: Iterable[Mapping[str, Any]], *, strict: bool = False) -> list[dict[str, Any]]:
+    records = [dict(record) for record in records]
+    provenance: dict[tuple[str, str], tuple[str, str, str, bool | None]] = {}
+    for row in records:
+        key = (str(row["method"]), str(row["scale"]))
+        identity = (str(row.get("config_hash", "")), str(row.get("git_commit", "")), str(row.get("split", "")), row.get("provisional"))
+        if strict and key in provenance and identity != provenance[key]:
+            raise ValueError(f"mixed provenance for method/scale: {key}")
+        provenance.setdefault(key, identity)
     groups: dict[tuple[str, str, int], list[Mapping[str, Any]]] = defaultdict(list)
     for row in records:
         groups[(str(row["method"]), str(row["scale"]), int(row["training_seed"]))].append(row)
@@ -37,6 +43,8 @@ def summarize_records(records: Iterable[Mapping[str, Any]]) -> list[dict[str, An
             "method": method, "scale": scale, "training_seed": seed,
             "run_id": str(rows[0]["run_id"]), "config_hash": str(rows[0]["config_hash"]),
             "git_commit": str(rows[0]["git_commit"]),
+            "split": str(rows[0].get("split", "")),
+            "provisional": rows[0].get("provisional"),
             "reduction_rate_mean": sum(reductions) / len(reductions),
             "success_rate": sum(bool(row["success"]) for row in rows) / len(rows),
             "transferred_l_mean": sum(transfers) / len(transfers),
@@ -71,26 +79,24 @@ def summarize_records(records: Iterable[Mapping[str, Any]]) -> list[dict[str, An
             "n_seeds": len(seed_rows),
             "n_scenarios": sum(int(row["n_scenarios"]) for row in seed_rows),
             "seed_level": seed_rows,
-            "provisional": True,
+            "provisional": first.get("provisional", True),
         })
     return summaries
 
 
 def paired_differences(records: Iterable[Mapping[str, Any]], reference: str = "sr_mappo_mobile") -> list[dict[str, Any]]:
-    by_key: dict[tuple[str, str], dict[str, Mapping[str, Any]]] = defaultdict(dict)
+    by_key: dict[tuple[str, str, int], dict[str, Mapping[str, Any]]] = defaultdict(dict)
     for row in records:
-        by_key[(str(row["scale"]), str(row["scenario_id"]))][str(row["method"])] = row
+        by_key[(str(row["scale"]), str(row["scenario_id"]), int(row["training_seed"]))][str(row["method"])] = row
     result: list[dict[str, Any]] = []
-    for (scale, scenario), methods in sorted(by_key.items()):
+    for (scale, scenario, training_seed), methods in sorted(by_key.items()):
         ref = methods.get(reference)
         for method, row in sorted(methods.items()):
             if method == reference:
                 continue
-            entry: dict[str, Any] = {"method": method, "scale": scale, "scenario_id": scenario, "reference_method": reference, "provisional": True}
+            entry: dict[str, Any] = {"method": method, "scale": scale, "scenario_id": scenario, "training_seed": training_seed, "reference_method": reference, "provisional": row.get("provisional", True)}
             if ref is None:
                 entry.update({"reduction_difference": None, "pairing_available": False, "pairing_reason": "reference method missing"})
-            elif int(ref["training_seed"]) != int(row["training_seed"]):
-                entry.update({"reduction_difference": None, "pairing_available": False, "pairing_reason": "training seed mismatch"})
             else:
                 entry.update({"reduction_difference": float(row["reduction_rate"]) - float(ref["reduction_rate"]), "pairing_available": True, "pairing_reason": "paired shared scenario"})
             result.append(entry)

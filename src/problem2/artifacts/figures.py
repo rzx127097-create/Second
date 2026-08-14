@@ -15,7 +15,9 @@ def plot_metric(rows: Iterable[Mapping[str, Any]], metric: str, output_path: str
         raise RuntimeError("plotting requires matplotlib") from exc
     rows = list(rows)
     methods = [str(row.get("method", "")) for row in rows]
-    values = [float(row.get(metric, 0.0)) for row in rows]
+    if any(metric not in row for row in rows):
+        raise ValueError(f"missing metric: {metric}")
+    values = [float(row[metric]) for row in rows]
     low = [row.get(f"{metric}_ci_low") for row in rows]
     high = [row.get(f"{metric}_ci_high") for row in rows]
     plt.rcParams.update({"font.family": ["Arial", "DejaVu Sans"], "axes.spines.top": False, "axes.spines.right": False, "svg.fonttype": "none"})

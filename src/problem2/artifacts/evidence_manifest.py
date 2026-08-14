@@ -27,6 +27,7 @@ def write_evidence_manifest(path: Path, input_path: Path, output_paths: Mapping[
         "script_version": "artifact-pipeline-v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "provisional": provisional,
+        "self": {"path": str(path), "sha256": None, "sha256_note": "self-hash omitted because serialization changes its own bytes"},
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
