@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import importlib.util
 import subprocess
 import sys
@@ -164,8 +165,12 @@ def test_complete_project_smoke_resume_evaluate_and_build_artifacts(tmp_path: Pa
     assert all(path.is_file() for path in paths.values())
     manifest = json.loads(paths["manifest_json"].read_text(encoding="utf-8"))
     assert manifest["input"]["path"] == str(validation_raw)
+    assert manifest["input"]["sha256"] == hashlib.sha256(validation_raw.read_bytes()).hexdigest()
     assert manifest["identity"]["method"] == ["sr_mappo_mobile"]
     assert manifest["identity"]["split"] == ["validation"]
     assert set(manifest["outputs"]) == expected_outputs - {"manifest_json"}
     assert all(set(entry) == {"path", "sha256"} for entry in manifest["outputs"].values())
     assert all(len(entry["sha256"]) == 64 for entry in manifest["outputs"].values())
+    for entry in manifest["outputs"].values():
+        output_path = Path(entry["path"])
+        assert entry["sha256"] == hashlib.sha256(output_path.read_bytes()).hexdigest()

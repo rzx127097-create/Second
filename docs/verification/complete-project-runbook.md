@@ -100,7 +100,8 @@ python scripts\build_artifacts.py `
 The artifact command emits a `paths` object. Check that `validated_csv`,
 `summary_json`, `three_line_table.tsv`, `three_line_table.md`, `figure_svg`,
 `figure_png`, and `manifest_json` exist. The manifest records the input path and
-SHA-256, output paths and hashes, and identity sets, preserving the chain
+SHA-256 of the exact input bytes, output paths and hashes of the exact output
+bytes, and identity sets, preserving the chain
 `config/source -> raw JSONL -> validated CSV -> summary/table/figure -> prose`.
 
 ## Formal matrix gates
