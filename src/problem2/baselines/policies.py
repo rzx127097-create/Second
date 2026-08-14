@@ -56,24 +56,27 @@ class _SnapshotPolicy:
         return self
 
     @staticmethod
-    def _legal(snapshot: Any, role: str) -> str:
-        ids = sorted(
-            agent_id
-            for agent_id, observation in snapshot.role_observations.items()
-            if str(observation.get("role")) == role
-        )
-        if not ids:
-            return "hold"
-        agent_id = ids[0]
+    def _legal(snapshot: Any, agent_id: str) -> str:
         mask = snapshot.action_masks[agent_id]
         return str(mask.valid_actions[0])
 
     def _smoke_actions(self, snapshot: Any) -> dict[str, str]:
         proposed = {
-            agent_id: self._legal(snapshot, str(observation.get("role")))
-            for agent_id, observation in snapshot.role_observations.items()
+            agent_id: self._legal(snapshot, agent_id)
+            for agent_id in snapshot.role_observations
         }
         return actions_to_environment(snapshot, proposed)
+
+    def _learned_actions(self, snapshot: Any, algorithm: Any) -> dict[str, str]:
+        observations = {
+            role: [snapshot.role_observations[agent_id]["vector"] for agent_id, obs in snapshot.role_observations.items() if str(obs.get("role")) == role]
+            for role in ("uav", "vehicle")
+        }
+        masks = {
+            role: [snapshot.action_masks[agent_id].mask for agent_id, obs in snapshot.role_observations.items() if str(obs.get("role")) == role]
+            for role in ("uav", "vehicle")
+        }
+        return actions_to_environment(snapshot, algorithm.act(observations, masks, deterministic=True))
 
     def _load_algorithm(self, snapshot: Any) -> Any:
         if self._algorithm is not None:
@@ -94,7 +97,14 @@ class _SnapshotPolicy:
             role: len(snapshot.action_masks[role_ids[role][0]].actions)
             for role in ("uav", "vehicle")
         }
-        factory = lambda: SRMAPPOAlgorithm(uav_dim, vehicle_dim, state_dim, action_dims["uav"], action_dims["vehicle"])
+        factory = lambda: SRMAPPOAlgorithm(
+            uav_dim,
+            vehicle_dim,
+            state_dim,
+            action_dims["uav"],
+            action_dims["vehicle"],
+            stability_components=self.metadata.get("stability_components"),
+        )
         self._algorithm, _ = load_evaluation_checkpoint(self.checkpoint, factory)
         return self._algorithm
 
@@ -102,15 +112,7 @@ class _SnapshotPolicy:
         if self.checkpoint is None:
             return self._smoke_actions(snapshot)
         algorithm = self._load_algorithm(snapshot)
-        observations = {
-            role: [snapshot.role_observations[agent_id]["vector"] for agent_id, obs in snapshot.role_observations.items() if str(obs.get("role")) == role]
-            for role in ("uav", "vehicle")
-        }
-        masks = {
-            role: [snapshot.action_masks[agent_id].mask for agent_id, obs in snapshot.role_observations.items() if str(obs.get("role")) == role]
-            for role in ("uav", "vehicle")
-        }
-        return actions_to_environment(snapshot, algorithm.act(observations, masks, deterministic=deterministic))
+        return self._learned_actions(snapshot, algorithm)
 
 
 class FixedSupportPolicy(_SnapshotPolicy):
@@ -119,11 +121,25 @@ class FixedSupportPolicy(_SnapshotPolicy):
         self.support_node = str(support_node)
         self.vehicle_id = vehicle_id
 
+    def act(self, snapshot: Any, *, deterministic: bool = True) -> Mapping[str, str]:
+        if self.checkpoint is None:
+            proposed = self._smoke_actions(snapshot)
+        else:
+            proposed = self._learned_actions(snapshot, self._load_algorithm(snapshot))
+        for vehicle_id, observation in snapshot.role_observations.items():
+            if str(observation.get("role")) == "vehicle":
+                proposed[vehicle_id] = "hold"
+        return actions_to_environment(snapshot, proposed)
+
 
 class RollingAStarAdapter(_SnapshotPolicy):
     def act(self, snapshot: Any, *, deterministic: bool = True) -> Mapping[str, str]:
         # Candidate routes are the only route information exposed to this policy.
-        proposed = self._smoke_actions(snapshot)
+        proposed = (
+            self._smoke_actions(snapshot)
+            if self.checkpoint is None
+            else self._learned_actions(snapshot, self._load_algorithm(snapshot))
+        )
         for vehicle_id, routes in snapshot.candidate_mapping.items():
             mask = snapshot.action_masks[vehicle_id]
             valid_slots = [str(slot) for slot, _ in routes if str(slot) in mask.valid_actions]
@@ -157,6 +173,7 @@ def make_policy(method: str, checkpoint: Path | None = None) -> PolicyProtocol:
         metadata["stability_components"].update({"observation_normalization": False, "return_normalization": False})
     if method == "sr_mappo_two_stage":
         metadata["initialization"] = "two_stage"
+        metadata["training_protocol"] = "two_stage"
     return _SnapshotPolicy(method, checkpoint=checkpoint, metadata=metadata)
 
 
