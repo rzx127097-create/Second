@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
+import hashlib
 import json
 import os
 import random
@@ -20,7 +21,11 @@ from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
 from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
 from problem2.config import config_identity, load_config_bundle
 from problem2.experiments.evaluation import load_evaluation_checkpoint
-from problem2.experiments.job_identity import capture_git_commit, make_job_identity
+from problem2.experiments.job_identity import (
+    assert_clean_formal_source,
+    capture_git_provenance,
+    make_job_identity,
+)
 from problem2.experiments.methods import PRIMARY_METHODS, method_profile
 from problem2.experiments.specification import load_experiment_spec, protocol_identity
 from problem2.experiments.recovery import load_job_record
@@ -110,6 +115,20 @@ def _merge_jsonl_rows(path: Path, rows: list[dict[str, Any]], *, expected_job_id
     temporary.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in combined), encoding="utf-8")
     os.replace(temporary, path)
     return path
+
+
+def _checkpoint_provenance(job: JobRecord) -> dict[str, object]:
+    return {"job_id": job.job_id, **job.identity.to_dict()}
+
+
+def _annotate_completed_raw(path: Path, job: JobRecord, checkpoint: Path, step: int) -> str:
+    digest = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+    for row in rows:
+        row["checkpoint_sha256"] = digest
+        row["checkpoint_step"] = int(step)
+    _write_jsonl_rows(path, rows)
+    return digest
 
 
 def _algorithm_factory(
@@ -217,10 +236,15 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         if args.updates < 1:
             raise ValueError("updates must be positive")
+        git_provenance = capture_git_provenance(str(ROOT))
+        if not args.smoke:
+            assert_clean_formal_source(git_provenance)
         output_root = Path(args.output_root).resolve()
         algorithm_config = config.algorithm
         profile = method_profile(args.method, algorithm_config)
         protocol_path = Path(args.protocol or (config_dir / "experiments" / "chapter4_5.yaml"))
+        experiment_spec = load_experiment_spec(protocol_path, config)
+        checkpoint_interval = int(experiment_spec.execution["checkpoint_every_updates"])
         intervention, condition_id = _resolve_intervention(
             config=config,
             protocol_path=protocol_path,
@@ -240,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
         horizon = 3 if args.smoke else int(algorithm_config["rollout_horizon"])
         identity = make_job_identity(
             args.method, args.scale, args.seed, config_identity(config),
-            config_hash=config_identity(config), git_commit=capture_git_commit(str(ROOT)),
+            config_hash=config_identity(config), git_commit=git_provenance.commit,
             execution_profile="smoke" if args.smoke else "formal",
             target_updates=args.updates,
             rollout_horizon=horizon,
@@ -248,6 +272,8 @@ def main(argv: list[str] | None = None) -> int:
             condition_id=condition_id,
             scenario_split="train",
             protocol_hash=protocol_identity(protocol_path),
+            source_tree_hash=git_provenance.source_tree_hash,
+            git_dirty=git_provenance.dirty,
         )
         checkpoint_path = output_root / "checkpoints" / f"{identity.job_id}.pt"
         record_path = output_root / "jobs" / f"{identity.job_id}.json"
@@ -271,12 +297,23 @@ def main(argv: list[str] | None = None) -> int:
         ]
         if not scenario_ids:
             raise ValueError(f"no train scenarios registered for scale {args.scale}")
+        if not args.smoke:
+            formal_probe = build_synthetic_scenario(
+                args.scale,
+                args.seed,
+                config_dir=config_dir,
+                scenario_id=scenario_ids[0],
+                intervention=intervention,
+            )
+            formal_probe.assert_formal_ready()
         scenario_cursor = {"index": 0}
 
         def worker(job: JobRecord) -> dict[str, Any]:
             start_update = 0
             if job.checkpoint_path is not None and job.checkpoint_path.exists():
                 algorithm, metadata = load_checkpoint(job.checkpoint_path, algorithm_factory)
+                if metadata.get("provenance") != _checkpoint_provenance(job):
+                    raise ValueError("checkpoint provenance does not match the immutable job identity")
                 start_update = int(metadata["step"])
             else:
                 algorithm = algorithm_factory()
@@ -289,7 +326,8 @@ def main(argv: list[str] | None = None) -> int:
             scenario_cursor["index"] = start_update
             remaining_updates = int(args.updates) - int(start_update)
             if remaining_updates <= 0:
-                return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": existing_count, "resume": "target_already_reached"}
+                digest = _annotate_completed_raw(raw_path, job, checkpoint_path, start_update)
+                return {"checkpoint_path": str(checkpoint_path), "checkpoint_sha256": digest, "checkpoint_step": start_update, "raw_path": str(raw_path), "episode_count": existing_count, "resume": "target_already_reached"}
             def make_bundle():
                 scenario_id = scenario_ids[scenario_cursor["index"] % len(scenario_ids)]
                 scenario_cursor["index"] += 1
@@ -300,23 +338,44 @@ def main(argv: list[str] | None = None) -> int:
                     scenario_id=scenario_id,
                     intervention=intervention,
                 )
-            records = train_policy(
-                make_bundle,
-                algorithm,
-                algorithm._trainer,
-                updates=remaining_updates,
-                rollout_horizon=horizon,
-                checkpoint_path=None,
-                start_update=start_update,
-                total_updates=args.updates,
-                algorithm_config=algorithm_config,
-                method_profile=profile,
+            committed_step = int(start_update)
+            committed_count = int(existing_count)
+            while committed_step < int(args.updates):
+                chunk_size = min(checkpoint_interval, int(args.updates) - committed_step)
+                records = train_policy(
+                    make_bundle,
+                    algorithm,
+                    algorithm._trainer,
+                    updates=chunk_size,
+                    rollout_horizon=horizon,
+                    checkpoint_path=None,
+                    start_update=committed_step,
+                    total_updates=args.updates,
+                    algorithm_config=algorithm_config,
+                    method_profile=profile,
+                )
+                rows = traceable_episode_rows(
+                    records, job, split="train", index_offset=committed_step,
+                )
+                _merge_jsonl_rows(raw_path, rows, expected_job_id=job.job_id)
+                committed_step += len(records)
+                committed_count += len(rows)
+                save_checkpoint(
+                    checkpoint_path,
+                    algorithm,
+                    step=committed_step,
+                    provenance=_checkpoint_provenance(job),
+                )
+            digest = _annotate_completed_raw(
+                raw_path, job, checkpoint_path, committed_step,
             )
-            rows = traceable_episode_rows(records, job, split="train", index_offset=start_update)
-            _merge_jsonl_rows(raw_path, rows, expected_job_id=job.job_id)
-            final_step = start_update + len(records)
-            save_checkpoint(checkpoint_path, algorithm, step=final_step)
-            return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": existing_count + len(rows)}
+            return {
+                "checkpoint_path": str(checkpoint_path),
+                "checkpoint_sha256": digest,
+                "checkpoint_step": committed_step,
+                "raw_path": str(raw_path),
+                "episode_count": committed_count,
+            }
 
         completed = JobRunner(
             worker,

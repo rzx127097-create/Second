@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
+import hashlib
 from typing import Any
+
+import numpy as np
 
 from .statistics import hierarchical_paired_bootstrap
 
@@ -148,3 +151,73 @@ def hierarchical_paired_summary(
             group_field=group_field,
         )
     ]
+
+
+def summarize_metric_groups(
+    records: Iterable[Mapping[str, Any]],
+    *,
+    group_fields: tuple[str, ...],
+    metrics: tuple[str, ...],
+    draws: int = 2000,
+    seed: int = 0,
+    confidence_level: float = 0.95,
+) -> list[dict[str, object]]:
+    """Summarize scenarios within fitted-policy seed before seeds themselves."""
+
+    if int(draws) < 1:
+        raise ValueError("summary bootstrap draws must be positive")
+    if not 0.0 < float(confidence_level) < 1.0:
+        raise ValueError("confidence_level must lie in (0, 1)")
+    rows = [dict(record) for record in records]
+    if not rows:
+        return []
+    grouped_seed: dict[tuple[object, ...], list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        missing = [field for field in (*group_fields, "training_seed", "scenario_id", *metrics) if field not in row]
+        if missing:
+            raise ValueError(f"metric summary fields are missing: {sorted(set(missing))}")
+        key = tuple(row[field] for field in group_fields) + (int(row["training_seed"]),)
+        grouped_seed[key].append(row)
+
+    seed_rows: list[dict[str, object]] = []
+    for key, group in sorted(grouped_seed.items(), key=lambda item: tuple(map(str, item[0]))):
+        result = {field: key[index] for index, field in enumerate(group_fields)}
+        result["training_seed"] = int(key[-1])
+        result["n_scenarios"] = len(group)
+        result["scenario_ids"] = sorted(str(row["scenario_id"]) for row in group)
+        for metric in metrics:
+            values = [float(bool(row[metric])) if metric == "success" else float(row[metric]) for row in group]
+            if any(not np.isfinite(value) for value in values):
+                raise ValueError(f"metric summary contains non-finite {metric}")
+            result[f"{metric}_seed_mean"] = sum(values) / len(values)
+        seed_rows.append(result)
+
+    grouped: dict[tuple[object, ...], list[dict[str, object]]] = defaultdict(list)
+    for row in seed_rows:
+        grouped[tuple(row[field] for field in group_fields)].append(row)
+    alpha = (1.0 - float(confidence_level)) / 2.0
+    summaries: list[dict[str, object]] = []
+    for key, group in sorted(grouped.items(), key=lambda item: tuple(map(str, item[0]))):
+        result = {field: key[index] for index, field in enumerate(group_fields)}
+        stable_key = "|".join(map(str, key)).encode("utf-8")
+        group_seed = int.from_bytes(hashlib.sha256(stable_key).digest()[:4], "big")
+        rng = np.random.default_rng(int(seed) ^ group_seed)
+        result["training_seeds"] = sorted(int(row["training_seed"]) for row in group)
+        result["n_training_seeds"] = len(group)
+        result["n_scenarios"] = sum(int(row["n_scenarios"]) for row in group)
+        result["n_unique_scenarios"] = len({
+            scenario for row in group for scenario in row["scenario_ids"]
+        })
+        for metric in metrics:
+            values = np.asarray([float(row[f"{metric}_seed_mean"]) for row in group], dtype=float)
+            result[f"{metric}_mean"] = float(values.mean())
+            if len(values) < 2:
+                low = high = None
+            else:
+                sampled = values[rng.integers(0, len(values), size=(int(draws), len(values)))]
+                means = sampled.mean(axis=1)
+                low, high = (float(value) for value in np.quantile(means, (alpha, 1.0 - alpha)))
+            result[f"{metric}_ci_low"] = low
+            result[f"{metric}_ci_high"] = high
+        summaries.append(result)
+    return summaries

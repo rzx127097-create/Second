@@ -82,6 +82,11 @@ class ScenarioBundle:
     intervention_id: str = "baseline"
     intervention_hash: str = ""
     support_mode: str = "mobile"
+    ablation_flags: tuple[str, ...] = ()
+    include_air_ground_observation: bool = True
+    scenario_source_kind: str = "synthetic_smoke"
+    dynamics_kind: str = "smoke_local_removal"
+    source_metadata_hash: str = ""
     step_count: int = 0
     last_termination_reason: str | None = None
     _slot_mapping: SlotMapping | None = field(default=None, init=False, repr=False)
@@ -110,6 +115,16 @@ class ScenarioBundle:
             raise ValueError(
                 "scenario parameters are provisional; formal training/evaluation is blocked"
             )
+        if self.scenario_source_kind != "frozen_gis":
+            raise ValueError(
+                f"scenario source {self.scenario_source_kind!r} is not a frozen GIS source"
+            )
+        if self.dynamics_kind != "calibrated_reaction_diffusion_advection":
+            raise ValueError(
+                f"scenario dynamics {self.dynamics_kind!r} are not calibrated formal dynamics"
+            )
+        if len(self.source_metadata_hash) != 64:
+            raise ValueError("formal scenario source metadata must have a SHA-256 identity")
 
     def step(self, actions: Mapping[str, str]) -> StepSnapshot:
         """Apply one validated joint action and update the pest field."""
@@ -198,6 +213,7 @@ class ScenarioBundle:
             max_candidate_slots=self.adapter.max_candidate_slots,
             step=self.step_count,
             max_steps=self.max_steps,
+            include_air_ground_observation=self.include_air_ground_observation,
         )
         critic = build_structured_critic_state(
             self.resources,
@@ -274,7 +290,15 @@ def build_synthetic_scenario(
     vehicle_inventory = float(parameters["vehicle_inventory"]["value"])
     transfer_rate = float(parameters["vehicle_transfer_rate"]["value"])
     rng = np.random.default_rng(int(seed))
-    density = _density_field(rng, (rows, cols), intervention.adaptations.get("demand_dispersion"))
+    hotspot_separation = intervention.adaptations.get("hotspot_road_separation")
+    cells = _road_cells((rows, cols), hotspot_separation)
+    density = _density_field(
+        rng,
+        (rows, cols),
+        intervention.adaptations.get("demand_dispersion"),
+        road_cells=cells,
+        hotspot_separation=hotspot_separation,
+    )
 
     parameter_overrides = intervention.parameters
     initial_ratio = float(parameter_overrides.get("uav_initial_pesticide_ratio", 1.0))
@@ -297,7 +321,6 @@ def build_synthetic_scenario(
         )
     }
     resources = PesticideResources(uavs=uavs, vehicles=vehicles)
-    cells = [(row, col) for row in range(rows) for col in range(cols)]
     extent = tuple(float(value) for value in config.scales.get("physical_extent_m", [cols, rows]))
     cell_size_m = (extent[1] / rows, extent[0] / cols)
     road_graph = RoadGraph.from_grid(cells, cell_size_m=cell_size_m)
@@ -328,6 +351,9 @@ def build_synthetic_scenario(
             node,
         ),
     )
+    simultaneous_level = intervention.adaptations.get("simultaneous_requests")
+    request_release_steps = _request_release_steps(tuple(uavs), simultaneous_level)
+    ablations = set(intervention.ablation_flags)
     adapter = HeterogeneousDecisionAdapter(
         resources,
         road_graph,
@@ -344,6 +370,9 @@ def build_synthetic_scenario(
         max_candidate_slots=int(environment.get("max_candidate_slots", 4)),
         support_mode=intervention.support_mode,
         initial_vehicle_nodes={"vehicle-1": support_node},
+        request_release_steps=request_release_steps,
+        endurance_prediction_enabled="remove_endurance_prediction" not in ablations,
+        joint_demand_rendezvous_enabled="remove_joint_demand_rendezvous" not in ablations,
     )
     bundle = ScenarioBundle(
         scale_id=scale_id,
@@ -365,12 +394,34 @@ def build_synthetic_scenario(
         intervention_id=intervention.condition_id,
         intervention_hash=intervention.identity_hash,
         support_mode=intervention.support_mode,
+        ablation_flags=tuple(sorted(ablations)),
+        include_air_ground_observation="remove_air_ground_observation" not in ablations,
     )
     bundle.reset()
     return bundle
 
 
-def _density_field(rng: np.random.Generator, shape: tuple[int, int], dispersion: object | None) -> np.ndarray:
+def _road_cells(shape: tuple[int, int], hotspot_separation: object | None) -> list[tuple[int, int]]:
+    rows, cols = shape
+    if hotspot_separation is None:
+        return [(row, col) for row in range(rows) for col in range(cols)]
+    center_row, center_col = rows // 2, cols // 2
+    return sorted(
+        {(center_row, col) for col in range(cols)}
+        | {(row, center_col) for row in range(rows)}
+    )
+
+
+def _density_field(
+    rng: np.random.Generator,
+    shape: tuple[int, int],
+    dispersion: object | None,
+    *,
+    road_cells: list[tuple[int, int]],
+    hotspot_separation: object | None,
+) -> np.ndarray:
+    if hotspot_separation is not None:
+        return _hotspot_distance_field(rng, shape, road_cells, str(hotspot_separation))
     if dispersion is None:
         return rng.uniform(0.6, 1.0, size=shape).astype(float)
     rows, cols = shape
@@ -387,6 +438,44 @@ def _density_field(rng: np.random.Generator, shape: tuple[int, int], dispersion:
             -((row_axis - center_row) ** 2 + (col_axis - center_col) ** 2) / (2.0 * sigma**2)
         )
     return np.clip(field, 0.0, 1.0)
+
+
+def _hotspot_distance_field(
+    rng: np.random.Generator,
+    shape: tuple[int, int],
+    road_cells: list[tuple[int, int]],
+    level: str,
+) -> np.ndarray:
+    rows, cols = shape
+    row_axis, col_axis = np.mgrid[0:rows, 0:cols]
+    road = np.asarray(road_cells, dtype=float)
+    grid = np.column_stack((row_axis.reshape(-1), col_axis.reshape(-1))).astype(float)
+    distances = np.sqrt(((grid[:, None, :] - road[None, :, :]) ** 2).sum(axis=2)).min(axis=1)
+    max_distance = float(distances.max())
+    target = {"near": 0.0, "medium": max_distance * 0.5, "far": max_distance}[level]
+    error = np.abs(distances - target)
+    choices = np.flatnonzero(error <= error.min() + 1e-12)
+    center_index = int(choices[int(rng.integers(0, len(choices)))])
+    center_row, center_col = grid[center_index]
+    sigma = max(0.75, min(rows, cols) / 14.0)
+    field = 0.01 + 0.99 * np.exp(
+        -((row_axis - center_row) ** 2 + (col_axis - center_col) ** 2) / (2.0 * sigma**2)
+    )
+    return np.clip(field, 0.0, 1.0)
+
+
+def _request_release_steps(
+    uav_ids: tuple[str, ...], level: object | None
+) -> dict[str, int]:
+    if level is None or str(level) == "high":
+        offsets = [1] * len(uav_ids)
+    elif str(level) == "medium":
+        offsets = [1 + index // 2 for index in range(len(uav_ids))]
+    elif str(level) == "low":
+        offsets = [1 + index for index in range(len(uav_ids))]
+    else:
+        raise ValueError("simultaneous_requests must be low, medium or high")
+    return dict(zip(sorted(uav_ids), offsets))
 
 
 def _apply_connected_road_blockage(graph: RoadGraph, fraction: float, seed: int) -> None:

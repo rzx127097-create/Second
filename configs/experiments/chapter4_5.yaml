@@ -86,11 +86,13 @@ statistics:
   confidence_level: 0.95
   multiplicity: holm
   practical_equivalence_margin: null
+  practical_equivalence_basis: null
 
 execution:
   max_gpu_workers: 1
   cpu_preprocess_workers: 2
   checkpoint_every_updates: 1
+  checkpoint_selection_rule: final_update
   max_attempts: 2
   fail_on_nonfinite: true
   sealed_test_unlock_required: true

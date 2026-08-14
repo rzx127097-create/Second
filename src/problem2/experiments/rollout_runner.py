@@ -206,6 +206,7 @@ def train_policy(
     total_updates: int | None = None,
     algorithm_config: dict[str, Any] | None = None,
     method_profile: Any | None = None,
+    checkpoint_provenance: dict[str, Any] | None = None,
 ) -> list[EpisodeRecord]:
     """Collect, optimize, and atomically checkpoint true ScenarioBundle rollouts."""
 
@@ -244,7 +245,12 @@ def train_policy(
         record.rollout = None
         records.append(record)
         if checkpoint_path is not None:
-            save_checkpoint(checkpoint_path, algorithm, step=update)
+            save_checkpoint(
+                checkpoint_path,
+                algorithm,
+                step=update,
+                provenance=checkpoint_provenance,
+            )
     return records
 
 

@@ -151,7 +151,11 @@ def load_evaluation_checkpoint(path: str | Path, algorithm_factory: Callable[[],
     if step < 0:
         raise ValueError("checkpoint step metadata is invalid")
     algorithm.eval() if hasattr(algorithm, "eval") else None
-    return algorithm, {"step": step, "format": 2}
+    return algorithm, {
+        "step": step,
+        "format": 2,
+        "provenance": dict(raw_payload.get("provenance") or {}),
+    }
 
 
 __all__.append("load_evaluation_checkpoint")

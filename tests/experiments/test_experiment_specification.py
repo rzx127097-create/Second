@@ -11,6 +11,13 @@ from problem2.experiments.specification import load_experiment_spec
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _verified_protocol_copy(tmp_path: Path) -> Path:
+    path = tmp_path / "chapter4_5.yaml"
+    text = (ROOT / "configs" / "experiments" / "chapter4_5.yaml").read_text(encoding="utf-8")
+    path.write_text(text.replace("status: provisional", "status: verified", 1), encoding="utf-8")
+    return path
+
+
 def test_chapter45_protocol_expands_every_registered_experiment_family() -> None:
     """Removing a Chapter 4.5 family or a canonical method breaks executable coverage."""
     config = load_config_bundle(ROOT / "configs")
@@ -81,3 +88,19 @@ def test_protocol_rejects_diagnostic_as_main_method(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="main methods"):
         load_experiment_spec(path, load_config_bundle(ROOT / "configs"))
+
+
+def test_verified_protocol_requires_finite_justified_equivalence_margin(tmp_path: Path) -> None:
+    config = load_config_bundle(ROOT / "configs")
+    protocol = _verified_protocol_copy(tmp_path)
+
+    with pytest.raises(ValueError, match="practical_equivalence_margin"):
+        load_experiment_spec(protocol, config)
+
+    text = protocol.read_text(encoding="utf-8").replace(
+        "practical_equivalence_margin: null",
+        "practical_equivalence_margin: 0.02",
+    )
+    protocol.write_text(text, encoding="utf-8")
+    with pytest.raises(ValueError, match="practical_equivalence_basis"):
+        load_experiment_spec(protocol, config)

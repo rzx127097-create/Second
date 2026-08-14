@@ -26,6 +26,10 @@ def test_orchestrator_expands_all_families_with_protocol_bound_identities(tmp_pa
         assert all(job.identity.family == family for job in jobs)
         assert all(job.identity.protocol_hash == orchestrator.protocol_hash for job in jobs)
         assert all(job.identity.scenario_split == "train" for job in jobs)
+        assert {job.identity.target_updates for job in jobs} == {
+            int(orchestrator.config.algorithm["total_updates"]),
+        }
+        assert all(job.identity.target_updates > 0 for job in jobs)
 
     main = orchestrator.plan("main_comparison", execution_profile="smoke")[:5]
     assert {job.identity.method for job in main} == {

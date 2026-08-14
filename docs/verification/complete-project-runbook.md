@@ -117,9 +117,22 @@ SHA-256 of the exact input bytes, output paths and hashes of the exact output
 bytes, and identity sets, preserving the chain
 `config/source -> raw JSONL -> validated CSV -> summary/table/figure -> prose`.
 
+## Chapter 4.5 matrix gates
+
+The detailed Chapter 4.5 commands, family sizes, artifact contract, and
+failure-recovery checklist are maintained in
+[`section-4-5-runbook.md`](section-4-5-runbook.md). This document remains the
+complete-project smoke entry point; the section-specific runbook is required
+before starting a pilot or formal matrix.
+
+`run_matrix.py --dry-run` is read-only and enumerates the immutable jobs for the
+selected family. With the checked-in protocol, the main comparison has
+`5 methods x 6 scales x 5 training seeds = 150` jobs. The mechanism,
+sensitivity, adaptation, and ablation families are scoped separately and must
+not be silently merged into the main comparison.
+
 ## Formal matrix gates
 
-`run_matrix.py --dry-run` is read-only and may enumerate all 150 immutable jobs.
 Actual matrix execution requires explicit `--smoke` while status is provisional.
 Formal execution without smoke is rejected. Before M3/M4, do not claim a
 verified parameter set, multi-seed validation, sealed-test performance, or

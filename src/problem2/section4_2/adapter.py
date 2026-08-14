@@ -53,6 +53,9 @@ class HeterogeneousDecisionAdapter:
         max_candidate_slots: int = 4,
         support_mode: str = "mobile",
         initial_vehicle_nodes: Mapping[str, str] | None = None,
+        request_release_steps: Mapping[str, int] | None = None,
+        endurance_prediction_enabled: bool = True,
+        joint_demand_rendezvous_enabled: bool = True,
     ) -> None:
         if not vehicle_slots:
             raise ValueError("at least one vehicle slot is required")
@@ -88,6 +91,16 @@ class HeterogeneousDecisionAdapter:
         self.rendezvous_radius_m = float(rendezvous_radius_m)
         self.max_candidate_slots = int(max_candidate_slots)
         self.support_mode = str(support_mode)
+        supplied_release_steps = dict(request_release_steps or {})
+        if any(identifier not in self.uav_slots for identifier in supplied_release_steps):
+            raise ValueError("request release schedule references an unknown UAV")
+        if any(type(value) is not int or value < 1 for value in supplied_release_steps.values()):
+            raise ValueError("request release steps must be positive integers")
+        self.request_release_steps = {
+            uav_id: int(supplied_release_steps.get(uav_id, 1)) for uav_id in self.uav_slots
+        }
+        self.endurance_prediction_enabled = bool(endurance_prediction_enabled)
+        self.joint_demand_rendezvous_enabled = bool(joint_demand_rendezvous_enabled)
         default_start = sorted(self.road_graph.nodes)[0]
         supplied_starts = dict(initial_vehicle_nodes or {})
         if any(vehicle_id not in self.vehicle_slots for vehicle_id in supplied_starts):
@@ -236,7 +249,11 @@ class HeterogeneousDecisionAdapter:
 
         for uav_id in self.uav_slots:
             state = self.resources.uav(uav_id)
-            if self.request_threshold_ratio > 0 and state.onboard_l <= state.capacity_l * self.request_threshold_ratio + 1e-12:
+            if (
+                self._decision_step >= self.request_release_steps[uav_id]
+                and self.request_threshold_ratio > 0
+                and state.onboard_l <= state.capacity_l * self.request_threshold_ratio + 1e-12
+            ):
                 before = len(self.request_manager)
                 request = self.request_manager.create_request(uav_id, state.capacity_l - state.onboard_l, self._decision_step)
                 if len(self.request_manager) > before:
@@ -436,6 +453,8 @@ class HeterogeneousDecisionAdapter:
     def _must_approach_rendezvous(self, uav_id: str) -> bool:
         if self._service_target_node is None:
             return False
+        if not self.endurance_prediction_enabled:
+            return False
         uav = self.resources.uav(uav_id)
         remaining_s = remaining_work_time_s(
             onboard_l=uav.onboard_l,
@@ -503,16 +522,21 @@ class HeterogeneousDecisionAdapter:
                 if not points:
                     continue
                 uav = self.resources.uav(request.uav_id)
+                remaining_work_s = (
+                    remaining_work_time_s(
+                        onboard_l=uav.onboard_l,
+                        spray_flow_l_s=uav.spray_flow_l_s,
+                    )
+                    if self.endurance_prediction_enabled
+                    else 1.0e12
+                )
                 candidates = generate_rendezvous_candidates(
                     points,
                     graph=self.road_graph,
                     vehicle_node=executor.current_node,
                     vehicle_speed_mps=self.vehicle_speed_mps,
                     uav_speed_mps=self.uav_speed_mps,
-                    remaining_work_s=remaining_work_time_s(
-                        onboard_l=uav.onboard_l,
-                        spray_flow_l_s=uav.spray_flow_l_s,
-                    ),
+                    remaining_work_s=remaining_work_s,
                     requested_l=request.remaining_l,
                     vehicle_inventory_l=vehicle.inventory_l,
                     service_cap_l=vehicle.service_cap_l,
@@ -526,24 +550,44 @@ class HeterogeneousDecisionAdapter:
                 feasible = [candidate for candidate in candidates if candidate.feasible]
                 if not feasible:
                     continue
-                best = min(
-                    feasible,
-                    key=lambda candidate: (
-                        candidate.joint_arrival_eta_s,
-                        candidate.road_distance_m,
-                        candidate.point_id,
-                        candidate.road_node_id,
-                    ),
-                )
+                if self.joint_demand_rendezvous_enabled:
+                    best = min(
+                        feasible,
+                        key=lambda candidate: (
+                            candidate.joint_arrival_eta_s,
+                            candidate.road_distance_m,
+                            candidate.point_id,
+                            candidate.road_node_id,
+                        ),
+                    )
+                else:
+                    best = min(
+                        feasible,
+                        key=lambda candidate: (
+                            candidate.road_distance_m,
+                            candidate.point_id,
+                            candidate.road_node_id,
+                        ),
+                    )
                 selected.append((best, request.created_step))
-            selected.sort(
-                key=lambda item: (
-                    -item[0].urgency,
-                    item[1],
-                    item[0].joint_arrival_eta_s,
-                    item[0].mapping_key,
+            if self.joint_demand_rendezvous_enabled:
+                selected.sort(
+                    key=lambda item: (
+                        -item[0].urgency,
+                        item[1],
+                        item[0].joint_arrival_eta_s,
+                        item[0].mapping_key,
+                    )
                 )
-            )
+            else:
+                selected.sort(
+                    key=lambda item: (
+                        item[1],
+                        item[0].request_id,
+                        item[0].road_distance_m,
+                        item[0].mapping_key,
+                    )
+                )
             slots = build_candidate_action_slots(
                 (candidate for candidate, _ in selected),
                 max_slots=self.max_candidate_slots,

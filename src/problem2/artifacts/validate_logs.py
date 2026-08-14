@@ -76,7 +76,7 @@ def validate_episode_records(records: Iterable[Mapping[str, Any]], *, strict: bo
     if not rows:
         raise ValueError("episode records are empty")
     seen: set[str] = set()
-    seen_observations: set[tuple[str, str, int, str]] = set()
+    seen_observations: set[tuple[str, str, str, str, int, str]] = set()
     for row in rows:
         missing = REQUIRED_FIELDS - row.keys()
         if not strict:
@@ -157,9 +157,18 @@ def validate_episode_records(records: Iterable[Mapping[str, Any]], *, strict: bo
         status = _parse_provisional(row, strict=strict)
         if status is not None:
             row["provisional"] = status
-        observation = (str(row["method"]), str(row["scale"]), seed, str(row["scenario_id"]))
+        observation = (
+            str(row.get("family", "")),
+            str(row.get("condition_id", "")),
+            str(row["method"]),
+            str(row["scale"]),
+            seed,
+            str(row["scenario_id"]),
+        )
         if observation in seen_observations:
-            raise ValueError("duplicate method/scale/training_seed/scenario_id")
+            raise ValueError(
+                "duplicate family/condition/method/scale/training_seed/scenario_id"
+            )
         seen_observations.add(observation)
         row["training_seed"] = seed
         row["reduction_rate"] = reduction

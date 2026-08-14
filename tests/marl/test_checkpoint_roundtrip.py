@@ -15,10 +15,17 @@ def test_checkpoint_roundtrip_preserves_policy_and_normalization(tmp_path) -> No
     masks = {"uav": torch.ones(1, 3, dtype=torch.bool), "vehicle": torch.ones(1, 2, dtype=torch.bool)}
     before = algorithm.act(observation, masks, deterministic=True)
     path = tmp_path / "sr_mappo.pt"
-    save_checkpoint(path, algorithm, step=17)
+    provenance = {
+        "job_id": "job-17",
+        "config_hash": "a" * 64,
+        "protocol_hash": "b" * 64,
+        "source_tree_hash": "c" * 64,
+    }
+    save_checkpoint(path, algorithm, step=17, provenance=provenance)
     restored, metadata = load_checkpoint(path, algorithm_factory=lambda: SRMAPPOAlgorithm(uav_obs_dim=4, vehicle_obs_dim=5, state_dim=6, uav_action_dim=3, vehicle_action_dim=2))
     after = restored.act(observation, masks, deterministic=True)
     assert metadata["step"] == 17
+    assert metadata["provenance"] == provenance
     assert before == after
     np.testing.assert_allclose(restored.obs_normalizer.mean, algorithm.obs_normalizer.mean)
 

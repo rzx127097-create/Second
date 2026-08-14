@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import hashlib
 import importlib.util
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -87,7 +88,10 @@ def test_complete_project_smoke_resume_evaluate_and_build_artifacts(tmp_path: Pa
     config = load_config_bundle(ROOT / "configs")
     algorithm_factory = train_module._algorithm_factory(ROOT / "configs", "s1", 0, 16, float(config.algorithm["learning_rate"]))
     recovery_record_path = output_root / "jobs" / "recovery.json"
-    recovery_record = JobRecord(identity=JobRecord.from_dict(identity).identity, checkpoint_path=checkpoint)
+    recovery_checkpoint = output_root / "checkpoints" / "recovery.pt"
+    shutil.copy2(checkpoint, recovery_checkpoint)
+    recovery_identity = JobRecord.from_dict(identity).identity
+    recovery_record = JobRecord(identity=recovery_identity, checkpoint_path=recovery_checkpoint)
     calls = 0
 
     def worker(record: JobRecord) -> dict[str, str]:
@@ -95,17 +99,18 @@ def test_complete_project_smoke_resume_evaluate_and_build_artifacts(tmp_path: Pa
         calls += 1
         if calls == 1:
             raise RuntimeError("deterministic failure injection")
-        algorithm, metadata = load_checkpoint(checkpoint, algorithm_factory)
+        algorithm, metadata = load_checkpoint(recovery_checkpoint, algorithm_factory)
         train_module.train_policy(
             lambda: build_synthetic_scenario("s1", 0, config_dir=ROOT / "configs"),
             algorithm,
             algorithm._trainer,
             updates=1,
             rollout_horizon=3,
-            checkpoint_path=checkpoint,
+            checkpoint_path=recovery_checkpoint,
             start_update=int(metadata["step"]),
+            checkpoint_provenance={"job_id": record.job_id, **record.identity.to_dict()},
         )
-        return {"checkpoint_path": str(checkpoint)}
+        return {"checkpoint_path": str(recovery_checkpoint), "checkpoint_step": 2}
 
     runner = JobRunner(
         worker,
@@ -123,8 +128,8 @@ def test_complete_project_smoke_resume_evaluate_and_build_artifacts(tmp_path: Pa
     assert resumed.status == "completed"
     assert resumed.attempts == 2
     assert resumed.job_id == job["job_id"]
-    assert resumed.checkpoint_path is not None and resumed.checkpoint_path.resolve() == checkpoint.resolve()
-    assert _checkpoint_step(checkpoint) == 2
+    assert resumed.checkpoint_path is not None and resumed.checkpoint_path.resolve() == recovery_checkpoint.resolve()
+    assert _checkpoint_step(recovery_checkpoint) == 2
 
     evaluation = _run(
         "evaluate.py",

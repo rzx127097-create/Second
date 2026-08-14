@@ -71,6 +71,14 @@ def test_provisional_scenario_blocks_formal_use_and_reset_restores_spray_state()
         raise AssertionError("provisional scenario must not be accepted as formal evidence")
 
 
+def test_verified_status_cannot_promote_synthetic_smoke_scenario_to_formal() -> None:
+    bundle = build_synthetic_scenario("s1", seed=3, config_dir=CONFIG_DIR)
+    bundle.parameter_status = "verified"
+
+    with pytest.raises(ValueError, match="synthetic_smoke"):
+        bundle.assert_formal_ready()
+
+
 def test_snapshot_exposes_candidate_mapping_from_adapter() -> None:
     bundle = build_synthetic_scenario("s1", seed=5, config_dir=CONFIG_DIR)
     snapshot = bundle.reset()

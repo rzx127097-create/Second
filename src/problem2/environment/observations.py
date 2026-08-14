@@ -135,6 +135,7 @@ def build_uav_observation(
     service_phase: Any = "idle",
     step: int = 0,
     max_steps: int = 1,
+    include_air_ground_observation: bool = True,
     **_: Any,
 ) -> dict[str, Any]:
     """Build one decentralized UAV observation.
@@ -178,6 +179,8 @@ def build_uav_observation(
                 1.0 if service_locked and vehicle_id in mapping.vehicle_ids else 0.0,
             )
         )
+    if not include_air_ground_observation:
+        vehicle_features = [0.0] * len(vehicle_features)
     vector = _as_array(
         (
             own_norm,
@@ -217,6 +220,7 @@ def build_vehicle_observation(
     max_request_slots: int | None = None,
     candidate_features: Iterable[Mapping[str, Any]] | None = None,
     max_candidate_slots: int | None = None,
+    include_air_ground_observation: bool = True,
     **_: Any,
 ) -> dict[str, Any]:
     """Build a fixed-slot vehicle observation from current requests."""
@@ -289,6 +293,10 @@ def build_vehicle_observation(
             float(row.get("vehicle_wait_s", 0.0)),
             float(bool(row.get("pesticide_disabled_expected", False))),
         )
+    if not include_air_ground_observation:
+        request_slots.fill(0.0)
+        request_features.fill(0.0)
+        candidate_matrix.fill(0.0)
     vector = _as_array(
         (
             norm_position,

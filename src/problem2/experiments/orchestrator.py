@@ -9,7 +9,7 @@ from typing import Any
 from problem2.config import config_identity, load_config_bundle
 from problem2.scenarios.interventions import ScenarioIntervention
 
-from .job_identity import JobIdentity, capture_git_commit, make_job_identity
+from .job_identity import JobIdentity, capture_git_provenance, make_job_identity
 from .methods import method_profile
 from .specification import Chapter45Spec, ExperimentCondition, load_experiment_spec, protocol_identity
 
@@ -69,7 +69,8 @@ class Chapter45Orchestrator:
         self.spec: Chapter45Spec = load_experiment_spec(self.protocol_path, self.config)
         self.protocol_hash = protocol_identity(self.protocol_path)
         self.config_hash = config_identity(self.config)
-        self.git_commit = capture_git_commit(str(Path(__file__).resolve().parents[3]))
+        self.git_provenance = capture_git_provenance(str(Path(__file__).resolve().parents[3]))
+        self.git_commit = self.git_provenance.commit
 
     def _identity(
         self,
@@ -89,12 +90,14 @@ class Chapter45Orchestrator:
             config_hash=self.config_hash,
             git_commit=self.git_commit,
             execution_profile=execution_profile,
-            target_updates=1 if execution_profile == "smoke" else int(self.config.algorithm.get("updates", 0)),
+            target_updates=1 if execution_profile == "smoke" else int(self.config.algorithm["total_updates"]),
             rollout_horizon=3 if execution_profile == "smoke" else int(self.config.algorithm["rollout_horizon"]),
             family=family,
             condition_id=condition_id,
             scenario_split="train",
             protocol_hash=self.protocol_hash,
+            source_tree_hash=self.git_provenance.source_tree_hash,
+            git_dirty=self.git_provenance.dirty,
         )
 
     def _condition_method(self, condition: ExperimentCondition) -> str:

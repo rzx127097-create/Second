@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import hashlib
+import math
 from typing import Any, Mapping
 
 import yaml
@@ -192,9 +193,29 @@ def load_experiment_spec(path: str | Path, config: ConfigBundle) -> Chapter45Spe
         raise ValueError("statistics must preserve the seed-then-scenario hierarchy")
     if int(statistics.get("bootstrap_draws", 0)) < 2000:
         raise ValueError("bootstrap_draws must be at least 2000")
+    if status == "verified":
+        margin = statistics.get("practical_equivalence_margin")
+        if (
+            isinstance(margin, bool)
+            or not isinstance(margin, (int, float))
+            or not math.isfinite(float(margin))
+            or float(margin) <= 0.0
+        ):
+            raise ValueError(
+                "a verified protocol requires a finite positive practical_equivalence_margin"
+            )
+        basis = statistics.get("practical_equivalence_basis")
+        if not isinstance(basis, str) or not basis.strip():
+            raise ValueError(
+                "a verified protocol requires a non-empty practical_equivalence_basis"
+            )
     execution = _mapping(root.get("execution"), "execution")
     if int(execution.get("max_gpu_workers", 0)) != 1:
         raise ValueError("the current hardware contract permits one GPU worker")
+    if type(execution.get("checkpoint_every_updates")) is not int or int(execution["checkpoint_every_updates"]) < 1:
+        raise ValueError("checkpoint_every_updates must be a positive integer")
+    if execution.get("checkpoint_selection_rule") != "final_update":
+        raise ValueError("the current implementation requires checkpoint_selection_rule=final_update")
     scope_root = _mapping(root.get("family_scopes"), "family_scopes")
     if set(scope_root) != required:
         raise ValueError(f"family_scopes must exactly equal {sorted(required)}")

@@ -12,6 +12,7 @@ from .figures import plot_metric
 from .summarize import hierarchical_paired_summary, paired_differences, summarize_records
 from .tables import write_table
 from .validate_logs import read_jsonl
+from .chapter45 import Chapter45ArtifactBundle, build_chapter45_artifacts
 
 
 @dataclass(frozen=True)

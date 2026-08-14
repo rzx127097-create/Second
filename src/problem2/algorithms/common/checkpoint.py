@@ -9,7 +9,11 @@ from pathlib import Path
 from typing import Any, Callable
 
 
-def _payload(algorithm: Any, step: int) -> dict[str, Any]:
+def _payload(
+    algorithm: Any,
+    step: int,
+    provenance: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     trainer = getattr(algorithm, "_trainer", None)
     payload = {
         "step": int(step),
@@ -17,6 +21,7 @@ def _payload(algorithm: Any, step: int) -> dict[str, Any]:
         "trainer": trainer.state_dict() if trainer is not None else None,
         "format": 2,
         "training_seed": getattr(algorithm, "training_seed", None),
+        "provenance": dict(provenance or {}),
     }
     try:
         import numpy as np
@@ -37,11 +42,17 @@ def _payload(algorithm: Any, step: int) -> dict[str, Any]:
     return payload
 
 
-def save_checkpoint(path: str | Path, algorithm: Any, step: int) -> Path:
+def save_checkpoint(
+    path: str | Path,
+    algorithm: Any,
+    step: int,
+    *,
+    provenance: dict[str, Any] | None = None,
+) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".tmp")
-    payload = _payload(algorithm, step)
+    payload = _payload(algorithm, step, provenance)
     try:
         import torch
     except ImportError:
@@ -86,4 +97,11 @@ def load_checkpoint(path: str | Path, algorithm_factory: Callable[[], Any]) -> t
             torch.set_rng_state(rng["torch"])
         if rng.get("torch_cuda") is not None and torch.cuda.is_available():
             torch.cuda.set_rng_state_all(rng["torch_cuda"])
-    return algorithm, {"step": int(payload["step"]), "format": int(payload.get("format", 1))}
+    metadata = {
+        "step": int(payload["step"]),
+        "format": int(payload.get("format", 1)),
+    }
+    provenance = dict(payload.get("provenance") or {})
+    if provenance:
+        metadata["provenance"] = provenance
+    return algorithm, metadata

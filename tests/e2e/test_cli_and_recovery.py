@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import importlib.util
 import os
 import shutil
@@ -11,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from problem2.config import config_identity, load_config_bundle
-from problem2.experiments.job_identity import capture_git_commit, make_job_identity
+from problem2.experiments.job_identity import GitProvenance, capture_git_commit, make_job_identity
 from problem2.experiments.recovery import load_job_record, retry_failed_job, save_job_record
 from problem2.experiments.runner import JobRecord, JobRunner
 
@@ -37,6 +38,21 @@ def _json_output(result: subprocess.CompletedProcess[str]) -> dict[str, object]:
     return json.loads(result.stdout)
 
 
+def _train_module():
+    source = ROOT / "scripts" / "train.py"
+    spec = importlib.util.spec_from_file_location("problem2_train_recovery_cli", source)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _checkpoint_step(path: Path) -> int:
+    torch = pytest.importorskip("torch")
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    return int(payload["step"])
+
+
 def test_train_cli_runs_real_smoke_job_and_writes_traceable_raw_rows(tmp_path: Path) -> None:
     """Removing real rollout execution or identity enrichment breaks this boundary."""
     result = _cli(
@@ -56,14 +72,26 @@ def test_train_cli_runs_real_smoke_job_and_writes_traceable_raw_rows(tmp_path: P
     raw_path = Path(str(payload["raw_path"]))
     job = json.loads(job_file.read_text(encoding="utf-8"))
     row = json.loads(raw_path.read_text(encoding="utf-8").splitlines()[0])
-    assert {"job_id", "config_hash", "git_commit", "status", "attempts", "checkpoint_path", "error"} <= job.keys()
+    assert {
+        "job_id", "config_hash", "git_commit", "source_tree_hash", "git_dirty",
+        "status", "attempts", "checkpoint_path", "checkpoint_sha256",
+        "checkpoint_step", "error",
+    } <= job.keys()
     assert job["status"] == "completed"
     assert Path(str(job["checkpoint_path"])).is_file()
     assert {
         "run_id", "method", "scale", "training_seed", "scenario_id", "config_hash",
-        "git_commit", "reduction_rate", "success", "transferred_l",
+        "git_commit", "source_tree_hash", "checkpoint_sha256", "checkpoint_step",
+        "reduction_rate", "success", "transferred_l",
     } <= row.keys()
     assert row["method"] == "sr_mappo_mobile"
+    assert len(str(job["source_tree_hash"])) == 64
+    assert len(str(job["checkpoint_sha256"])) == 64
+    checkpoint_payload = pytest.importorskip("torch").load(
+        Path(str(job["checkpoint_path"])), map_location="cpu", weights_only=False,
+    )
+    assert checkpoint_payload["provenance"]["job_id"] == job["job_id"]
+    assert checkpoint_payload["provenance"]["source_tree_hash"] == job["source_tree_hash"]
 
     evaluated = _cli(
         "evaluate.py", "--config-dir", "configs", "--checkpoint", str(job["checkpoint_path"]),
@@ -75,6 +103,50 @@ def test_train_cli_runs_real_smoke_job_and_writes_traceable_raw_rows(tmp_path: P
     evaluation_row = json.loads(Path(str(evaluation["raw_path"])).read_text(encoding="utf-8").splitlines()[0])
     assert evaluation_row["split"] == "validation"
     assert evaluation_row["scenario_id"] == "val_001"
+    assert evaluation_row["checkpoint_sha256"] == job["checkpoint_sha256"]
+    assert evaluation_row["source_tree_hash"] == job["source_tree_hash"]
+
+
+def test_train_cli_commits_each_update_and_resumes_after_mid_job_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    module = _train_module()
+    original_train_policy = module.train_policy
+    calls = 0
+
+    def fail_on_second_update(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("injected failure after first committed update")
+        return original_train_policy(*args, **kwargs)
+
+    monkeypatch.setattr(module, "train_policy", fail_on_second_update)
+    arguments = [
+        "--config-dir", str(ROOT / "configs"),
+        "--scale", "s1", "--seed", "0", "--updates", "2",
+        "--output-root", str(tmp_path), "--smoke",
+    ]
+
+    assert module.main(arguments) == 1
+    job_path = next((tmp_path / "jobs").glob("*.json"))
+    failed = load_job_record(job_path)
+    assert failed.status == "failed"
+    assert failed.checkpoint_path is not None
+    assert _checkpoint_step(failed.checkpoint_path) == 1
+    raw_path = tmp_path / "raw" / f"{failed.job_id}.jsonl"
+    assert len(raw_path.read_text(encoding="utf-8").splitlines()) == 1
+
+    monkeypatch.setattr(module, "train_policy", original_train_policy)
+    assert module.main(arguments) == 0
+    completed = load_job_record(job_path)
+    assert completed.status == "completed"
+    assert completed.attempts == 2
+    assert completed.job_id == failed.job_id
+    assert _checkpoint_step(completed.checkpoint_path) == 2
+    rows = [json.loads(line) for line in raw_path.read_text(encoding="utf-8").splitlines()]
+    assert [row["update"] for row in rows] == [1, 2]
+    assert len({row["run_id"] for row in rows}) == 2
 
 
 def test_train_cli_blocks_provisional_formal_execution(tmp_path: Path) -> None:
@@ -220,7 +292,9 @@ def test_matrix_smoke_rejects_matrix_without_mobile_method(tmp_path: Path) -> No
     assert "no sr_mappo_mobile jobs" in str(_json_output(result)["error"])
 
 
-def test_sealed_test_never_changes_to_smoke_split(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_sealed_test_rejects_smoke_mode_for_formal_checkpoint(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
     source = ROOT / "scripts" / "evaluate.py"
     spec = importlib.util.spec_from_file_location("problem2_evaluate_cli", source)
     assert spec is not None and spec.loader is not None
@@ -234,7 +308,16 @@ def test_sealed_test_never_changes_to_smoke_split(monkeypatch: pytest.MonkeyPatc
         "sr_mappo_mobile", "s1", 0, config_identity(config),
         config_hash=config_identity(config), git_commit=capture_git_commit(str(ROOT)),
     )
-    save_job_record(tmp_path / "jobs" / "sealed.json", JobRecord(identity=identity, status="completed", checkpoint_path=checkpoint))
+    save_job_record(
+        tmp_path / "jobs" / "sealed.json",
+        JobRecord(
+            identity=identity,
+            status="completed",
+            checkpoint_path=checkpoint,
+            checkpoint_sha256=hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
+            checkpoint_step=1,
+        ),
+    )
     seen: dict[str, object] = {}
 
     class Snapshot:
@@ -243,8 +326,23 @@ def test_sealed_test_never_changes_to_smoke_split(monkeypatch: pytest.MonkeyPatc
         action_masks = {"uav-1": [True], "vehicle-1": [True]}
 
     monkeypatch.setattr(module, "_is_provisional", lambda _: False)
-    monkeypatch.setattr(module, "load_evaluation_checkpoint", lambda *_: (object(), {"step": 1, "format": 2}))
+    expected_provenance = {"job_id": identity.job_id, **identity.to_dict()}
+    monkeypatch.setattr(module, "load_evaluation_checkpoint", lambda *_: (object(), {"step": 1, "format": 2, "provenance": expected_provenance}))
     monkeypatch.setattr(module, "build_synthetic_scenario", lambda *_args, **_kwargs: type("Bundle", (), {"reset": lambda self: Snapshot()})())
+    monkeypatch.setattr(
+        module,
+        "reserve_sealed_access",
+        lambda *_args, **_kwargs: {
+            "reservation_id": "reservation-1",
+            "access_key": f"{identity.job_id}:test_001",
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "commit_sealed_access",
+        lambda *_args, **_kwargs: {"access_key": f"{identity.job_id}:test_001"},
+    )
+    monkeypatch.setattr(module, "release_sealed_access", lambda *_args, **_kwargs: True)
 
     def fake_evaluate(policy, factory, *, scenarios, split, deterministic):
         seen.update(split=split, deterministic=deterministic)
@@ -254,8 +352,38 @@ def test_sealed_test_never_changes_to_smoke_split(monkeypatch: pytest.MonkeyPatc
     assert module.main([
         "--config-dir", str(ROOT / "configs"), "--checkpoint", str(checkpoint),
         "--split", "sealed_test", "--scenario", "test_001", "--smoke",
-    ]) == 0
-    assert seen == {"split": "sealed_test", "deterministic": True}
+        "--freeze-manifest", str(tmp_path / "freeze.json"),
+        "--sealed-unlock", str(tmp_path / "unlock.json"),
+    ]) == 1
+    assert seen == {}
+
+
+def test_formal_evaluation_requires_the_exact_clean_training_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = ROOT / "scripts" / "evaluate.py"
+    spec = importlib.util.spec_from_file_location("problem2_evaluate_source_guard", source)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    identity = make_job_identity(
+        "sr_mappo_mobile", "s1", 0, {"x": 1},
+        git_commit="a" * 40,
+        source_tree_hash="b" * 64,
+        git_dirty=False,
+    )
+    job = JobRecord(identity=identity)
+    monkeypatch.setattr(
+        module,
+        "capture_git_provenance",
+        lambda *_: GitProvenance("a" * 40, "c" * 64, False),
+    )
+
+    with pytest.raises(ValueError, match="source tree"):
+        module._assert_evaluation_source(job, smoke=False)
+
+    with pytest.raises(ValueError, match="source tree"):
+        module._assert_evaluation_source(job, smoke=True)
 
 
 def test_failed_job_retries_only_its_identity_and_persists_full_error(tmp_path: Path) -> None:

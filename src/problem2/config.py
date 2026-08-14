@@ -49,6 +49,12 @@ def load_config_bundle(config_dir: str | Path) -> ConfigBundle:
 def _validate(bundle: ConfigBundle) -> None:
     if bundle.algorithm.get("name") != "SR-MAPPO":
         raise ValueError("the flagship algorithm name must remain SR-MAPPO")
+    total_updates = bundle.algorithm.get("total_updates")
+    if type(total_updates) is not int or total_updates < 1:
+        raise ValueError("algorithm total_updates must be a positive integer")
+    rollout_horizon = bundle.algorithm.get("rollout_horizon")
+    if type(rollout_horizon) is not int or rollout_horizon < 1:
+        raise ValueError("algorithm rollout_horizon must be a positive integer")
     if bundle.environment.get("primary_vehicle_count") != 1:
         raise ValueError("the primary experiment must use one vehicle")
     max_candidate_slots = bundle.environment.get("max_candidate_slots")

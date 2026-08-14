@@ -20,6 +20,14 @@ ADAPTATION_KEYS = {
     "simultaneous_requests",
     "road_blockage",
 }
+ABLATION_FLAGS = {
+    "full",
+    "remove_endurance_prediction",
+    "remove_air_ground_observation",
+    "remove_joint_demand_rendezvous",
+    "two_stage_training",
+    "same_source_mappo",
+}
 
 
 @dataclass(frozen=True)
@@ -50,12 +58,21 @@ class ScenarioIntervention:
             raise ValueError(f"unknown parameter overrides: {sorted(unknown_parameters)}")
         if unknown_adaptations:
             raise ValueError(f"unknown adaptation overrides: {sorted(unknown_adaptations)}")
+        unknown_ablations = set(self.ablation_flags) - ABLATION_FLAGS
+        if unknown_ablations:
+            raise ValueError(f"unknown ablation flags: {sorted(unknown_ablations)}")
         ratio = parameters.get("uav_initial_pesticide_ratio", 1.0)
         if not 0.0 < float(ratio) <= 1.0:
             raise ValueError("uav_initial_pesticide_ratio must lie in (0, 1]")
         blockage = adaptations.get("road_blockage", 0.0)
         if not 0.0 <= float(blockage) <= 0.5:
             raise ValueError("road_blockage must lie in [0, 0.5]")
+        separation = adaptations.get("hotspot_road_separation")
+        if separation is not None and str(separation) not in {"near", "medium", "far"}:
+            raise ValueError("hotspot_road_separation must be near, medium or far")
+        simultaneity = adaptations.get("simultaneous_requests")
+        if simultaneity is not None and str(simultaneity) not in {"low", "medium", "high"}:
+            raise ValueError("simultaneous_requests must be low, medium or high")
 
     @property
     def parameters(self) -> dict[str, object]:
@@ -110,4 +127,4 @@ def baseline_intervention() -> ScenarioIntervention:
     return ScenarioIntervention("baseline")
 
 
-__all__ = ["ScenarioIntervention", "baseline_intervention"]
+__all__ = ["ABLATION_FLAGS", "ScenarioIntervention", "baseline_intervention"]

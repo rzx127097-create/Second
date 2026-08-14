@@ -12,12 +12,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from problem2.artifacts import build_artifacts
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("input", type=Path, help="UTF-8 JSONL episode records")
     parser.add_argument("--output", type=Path, required=True, help="artifact output directory")
     parser.add_argument("--manifest", type=Path, help="evidence manifest path")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     manifest = args.manifest or (args.output / "evidence_manifest.json")
     try:
         bundle = build_artifacts(args.input, args.output, manifest=manifest)
