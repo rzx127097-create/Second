@@ -30,3 +30,13 @@ The smoke test evaluates a hold policy twice on `s1` and compares all metric row
 Formal scenario parameters remain provisional in the repository, so formal validation/sealed-test evaluation is intentionally blocked until the parameter registry is verified. No Word documents were modified.
 
 Commit SHA: `8229162` (superseded by the final amend if this line changes).
+
+## Review hardening
+
+- RED: `pytest tests/e2e/test_evaluation_smoke.py -q` -> 2 failures: sealed-test provisional guard masked the deterministic/frozen contract, and the test exposed the trainer's `optimizers` state API.
+- GREEN: `pytest tests/e2e/test_evaluation_smoke.py -q` -> `13 passed`.
+- Sealed-test now requires `deterministic=True`, a named policy, and eval capability; every evaluation enters eval mode (including stochastic smoke), freezes normalization/optimizer state, and restores prior training mode.
+- Checkpoint metadata is parsed before atomic `load_checkpoint`; `format` must be exactly integer `2`, `step` exactly a non-bool non-negative integer, and returned metadata must match raw values.
+- Numeric action conversion rejects booleans and non-integral float indices; action method dispatch no longer masks internal `TypeError`.
+- Review fix commit SHA: `3e20d500a21fdba2c6b123b5602fb6445fb818d5`.
+- Full verification after hardening: `pytest -q` -> `109 passed`; `python -m compileall -q src scripts` -> passed; `git diff --check` -> passed (only normal LF/CRLF notices).
