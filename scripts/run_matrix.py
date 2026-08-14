@@ -29,9 +29,9 @@ def _jobs(config: Any) -> list[dict[str, object]]:
     digest = config_identity(config)
     commit = capture_git_commit(str(ROOT))
     jobs: list[dict[str, object]] = []
-    for method in config.experiments["methods"]:
-        for scale in config.experiments["scales"]:
-            for seed in config.experiments["training_seeds"]:
+    for scale in config.experiments["scales"]:
+        for seed in config.experiments["training_seeds"]:
+            for method in config.experiments["methods"]:
                 identity = make_job_identity(method, scale, seed, digest, config_hash=digest, git_commit=commit)
                 jobs.append({**identity.to_dict(), "job_id": identity.job_id})
     return jobs
@@ -59,9 +59,19 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("matrix execution requires explicit --smoke until a formal executor is configured")
         if args.max_jobs < 1:
             raise ValueError("max-jobs must be positive")
-        selected = [job for job in jobs if job["method"] == "sr_mappo_mobile"][:args.max_jobs]
+        if not any(job["method"] == "sr_mappo_mobile" for job in jobs):
+            _emit({"status": "failed", "error": "matrix has no sr_mappo_mobile jobs to execute"})
+            return 1
+        selected = jobs[:args.max_jobs]
         outputs = []
         for job in selected:
+            if job["method"] != "sr_mappo_mobile":
+                outputs.append({
+                    **job,
+                    "status": "rejected",
+                    "error": f"smoke executor has no training worker for method {job['method']}",
+                })
+                continue
             result = subprocess.run(
                 [
                     sys.executable, str(ROOT / "scripts" / "train.py"), "--config-dir", args.config_dir,
@@ -70,9 +80,11 @@ def main(argv: list[str] | None = None) -> int:
                 ],
                 cwd=ROOT, text=True, encoding="utf-8", capture_output=True, check=False,
             )
-            outputs.append({"job_id": job["job_id"], "returncode": result.returncode, "output": json.loads(result.stdout) if result.stdout else {"error": result.stderr}})
-        _emit({"status": "completed" if all(item["returncode"] == 0 for item in outputs) else "failed", "smoke": True, "jobs": outputs})
-        return 0 if all(item["returncode"] == 0 for item in outputs) else 1
+            child = json.loads(result.stdout) if result.stdout else {"error": result.stderr}
+            outputs.append({**job, "status": child.get("status", "failed"), "returncode": result.returncode, "output": child})
+        complete = bool(outputs) and all(item["status"] == "completed" and item.get("returncode", 0) == 0 for item in outputs)
+        _emit({"status": "completed" if complete else "failed", "smoke": True, "jobs": outputs})
+        return 0 if complete else 1
     except Exception as exc:  # noqa: BLE001 - CLI boundary must preserve diagnostics as JSON
         _emit({"status": "failed", "error": f"{type(exc).__name__}: {exc}"})
         return 1

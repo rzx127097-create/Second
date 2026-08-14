@@ -60,12 +60,41 @@ class JobRunner:
         *,
         max_attempts: int = 2,
         record_path: str | Path | None = None,
+        checkpoint_validator: Callable[[Path], Any] | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be positive")
         self.worker = worker
         self.max_attempts = int(max_attempts)
         self.record_path = Path(record_path) if record_path is not None else None
+        self.checkpoint_validator = checkpoint_validator
+
+    @staticmethod
+    def _validate_checkpoint_payload(path: Path) -> None:
+        """Validate the canonical checkpoint envelope before trusting completion."""
+        import pickle
+        from collections.abc import Mapping
+
+        try:
+            try:
+                import torch
+            except ImportError:
+                with path.open("rb") as handle:
+                    payload = pickle.load(handle)
+            else:
+                payload = torch.load(path, map_location="cpu", weights_only=False)
+        except Exception as exc:  # noqa: BLE001 - normalize corrupt persistence
+            raise ValueError(f"invalid checkpoint payload: {path}") from exc
+        if not isinstance(payload, Mapping) or type(payload.get("format")) is not int or payload.get("format") != 2:
+            raise ValueError(f"invalid checkpoint payload: {path}")
+        if type(payload.get("step")) is not int or payload.get("step") < 0 or not isinstance(payload.get("algorithm"), Mapping):
+            raise ValueError(f"invalid checkpoint payload: {path}")
+
+    def _validate_checkpoint(self, path: Path) -> None:
+        if self.checkpoint_validator is not None:
+            self.checkpoint_validator(path)
+        else:
+            self._validate_checkpoint_payload(path)
 
     def _persist(self, record: JobRecord) -> None:
         if self.record_path is not None:
@@ -79,6 +108,13 @@ class JobRunner:
                 record.status = "failed"
                 record.error = f"checkpoint is missing or inaccessible: {record.checkpoint_path}"
                 self._persist(record)
+            elif record.checkpoint_path is not None:
+                try:
+                    self._validate_checkpoint(record.checkpoint_path)
+                except Exception as exc:  # noqa: BLE001 - preserve checkpoint diagnosis
+                    record.status = "failed"
+                    record.error = "".join(traceback.format_exception(exc)).strip()
+                    self._persist(record)
             return record
         if record.status not in {"pending", "failed"}:
             raise ValueError(f"job cannot run from status: {record.status}")
@@ -97,6 +133,8 @@ class JobRunner:
                 record.checkpoint_path = Path(str(record.result["checkpoint_path"]))
             if record.checkpoint_path is not None and not record.checkpoint_path.is_file():
                 raise FileNotFoundError(f"checkpoint is missing or inaccessible: {record.checkpoint_path}")
+            if record.checkpoint_path is not None:
+                self._validate_checkpoint(record.checkpoint_path)
             record.status = "completed"
         except Exception as exc:  # noqa: BLE001 - persisted job failure
             record.error = "".join(traceback.format_exception(exc)).strip()

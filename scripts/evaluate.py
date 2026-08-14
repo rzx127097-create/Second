@@ -17,7 +17,6 @@ from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
 from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
 from problem2.config import config_identity, load_config_bundle
 from problem2.experiments.evaluation import evaluate_policy, load_evaluation_checkpoint
-from problem2.experiments.job_identity import capture_git_commit, make_job_identity
 from problem2.experiments.policy_protocol import AlgorithmPolicyAdapter
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.runner import JobRecord, traceable_episode_rows
@@ -40,15 +39,18 @@ def _is_provisional(config: Any) -> bool:
     return config.parameters.get("status") != "verified" or config.experiments.get("status") != "verified"
 
 
-def _checkpoint_record(path: Path, config: Any) -> JobRecord:
+def _checkpoint_record(path: Path) -> JobRecord:
     candidate = path.parent.parent / "jobs" / f"{path.stem}.json"
-    if candidate.is_file():
-        return load_job_record(candidate)
-    identity = make_job_identity(
-        "sr_mappo_mobile", "s1", 0, config_identity(config),
-        config_hash=config_identity(config), git_commit=capture_git_commit(str(ROOT)),
-    )
-    return JobRecord(identity=identity, checkpoint_path=path)
+    if not candidate.is_file():
+        raise FileNotFoundError(f"persisted job record does not exist for checkpoint: {candidate}")
+    record = load_job_record(candidate)
+    if record.status != "completed":
+        raise ValueError(f"job record is not completed: {candidate}")
+    if record.checkpoint_path is None:
+        raise ValueError(f"job record has no checkpoint path: {candidate}")
+    if record.checkpoint_path.resolve() != path.resolve():
+        raise ValueError("checkpoint path does not match its persisted job record")
+    return record
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -69,12 +71,12 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("sealed_test is blocked because parameter or matrix status is provisional")
         if _is_provisional(config) and not args.smoke:
             raise ValueError("formal evaluation is blocked because parameter or matrix status is provisional")
-        checkpoint = Path(args.checkpoint)
+        checkpoint = Path(args.checkpoint).resolve()
         if not checkpoint.is_file():
             raise FileNotFoundError(f"checkpoint does not exist: {checkpoint}")
-        job = _checkpoint_record(checkpoint, config)
-        if job.checkpoint_path is not None and job.checkpoint_path != checkpoint:
-            raise ValueError("checkpoint path does not match its persisted job record")
+        job = _checkpoint_record(checkpoint)
+        if job.identity.config_hash != config_identity(config):
+            raise ValueError("checkpoint job config hash does not match the requested configuration")
         physical_scale = job.identity.scale
         snapshot = build_synthetic_scenario(physical_scale, job.identity.training_seed, config_dir=config_dir).reset()
 
@@ -99,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
             bundle.episode_id = f"{scenario_id}-seed-{job.identity.training_seed}"
             return bundle
 
-        inner_split = "smoke" if args.smoke else args.split
+        inner_split = args.split if args.split == "sealed_test" else ("smoke" if args.smoke else args.split)
         records = evaluate_policy(
             AlgorithmPolicyAdapter(algorithm, name="SR-MAPPO"), scenario_factory,
             scenarios=[args.scenario], split=inner_split, deterministic=True,

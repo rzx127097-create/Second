@@ -17,6 +17,7 @@ from problem2.algorithms.common.checkpoint import load_checkpoint
 from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
 from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
 from problem2.config import config_identity, load_config_bundle
+from problem2.experiments.evaluation import load_evaluation_checkpoint
 from problem2.experiments.job_identity import capture_git_commit, make_job_identity
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.rollout_runner import train_policy
@@ -77,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         if args.updates < 1:
             raise ValueError("updates must be positive")
-        output_root = Path(args.output_root)
+        output_root = Path(args.output_root).resolve()
         identity = make_job_identity(
             "sr_mappo_mobile", args.scale, args.seed, config_identity(config),
             config_hash=config_identity(config), git_commit=capture_git_commit(str(ROOT)),
@@ -114,7 +115,12 @@ def main(argv: list[str] | None = None) -> int:
             _write_jsonl(raw_path, rows)
             return {"checkpoint_path": str(checkpoint_path), "raw_path": str(raw_path), "episode_count": len(rows)}
 
-        completed = JobRunner(worker, max_attempts=args.max_attempts, record_path=record_path).run(record)
+        completed = JobRunner(
+            worker,
+            max_attempts=args.max_attempts,
+            record_path=record_path,
+            checkpoint_validator=lambda path: load_evaluation_checkpoint(path, algorithm_factory),
+        ).run(record)
         payload = {**completed.to_dict(), "job_file": str(record_path), "raw_path": str(raw_path), "smoke": bool(args.smoke)}
         _emit(payload)
         return 0 if completed.status == "completed" else 1
