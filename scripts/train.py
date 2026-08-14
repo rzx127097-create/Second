@@ -20,6 +20,7 @@ from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
 from problem2.config import config_identity, load_config_bundle
 from problem2.experiments.evaluation import load_evaluation_checkpoint
 from problem2.experiments.job_identity import capture_git_commit, make_job_identity
+from problem2.experiments.methods import PRIMARY_METHODS, method_profile
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.rollout_runner import train_policy
 from problem2.experiments.runner import JobRecord, JobRunner, traceable_episode_rows
@@ -108,7 +109,7 @@ def _merge_jsonl_rows(path: Path, rows: list[dict[str, Any]], *, expected_job_id
     return path
 
 
-def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int, algorithm_config: dict[str, Any]):
+def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int, algorithm_config: dict[str, Any], profile: Any):
     if not isinstance(algorithm_config, dict):
         algorithm_config = {"learning_rate": float(algorithm_config)}
     def factory() -> SRMAPPOAlgorithm:
@@ -122,7 +123,7 @@ def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int,
             vehicle_action_dim=len(snapshot.action_masks["vehicle-1"]),
             hidden_dim=hidden_dim,
             device="cpu",
-            stability_components=algorithm_config.get("stability_components"),
+            stability_components=profile.stability_components,
         )
         algorithm.training_seed = int(seed)
         SRMAPPOTrainer(
@@ -140,6 +141,7 @@ def _algorithm_factory(config_dir: Path, scale: str, seed: int, hidden_dim: int,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--algorithm", default="SR-MAPPO", choices=["SR-MAPPO"])
+    parser.add_argument("--method", default="sr_mappo_mobile", choices=list(PRIMARY_METHODS))
     parser.add_argument("--config-dir", required=True)
     parser.add_argument("--scale", required=True)
     parser.add_argument("--seed", type=int, required=True)
@@ -159,10 +161,11 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("updates must be positive")
         output_root = Path(args.output_root).resolve()
         algorithm_config = config.algorithm
+        profile = method_profile(args.method, algorithm_config)
         hidden_dim = 16 if args.smoke else int(algorithm_config["hidden_dim"])
         horizon = 3 if args.smoke else int(algorithm_config["rollout_horizon"])
         identity = make_job_identity(
-            "sr_mappo_mobile", args.scale, args.seed, config_identity(config),
+            args.method, args.scale, args.seed, config_identity(config),
             config_hash=config_identity(config), git_commit=capture_git_commit(str(ROOT)),
             execution_profile="smoke" if args.smoke else "formal",
             target_updates=args.updates,
@@ -174,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         record = load_job_record(record_path) if record_path.exists() else JobRecord(identity=identity, checkpoint_path=checkpoint_path)
         if record.identity != identity:
             raise ValueError("persisted job identity does not match requested immutable identity")
-        algorithm_factory = _algorithm_factory(config_dir, args.scale, args.seed, hidden_dim, algorithm_config)
+        algorithm_factory = _algorithm_factory(config_dir, args.scale, args.seed, hidden_dim, algorithm_config, profile)
         scenario_ids = [
             scenario_id for scenario_id in config.experiments.get("train_scenarios", [])
             if str(config.scenarios.get(scenario_id, {}).get("scale")) == str(args.scale)
@@ -214,6 +217,7 @@ def main(argv: list[str] | None = None) -> int:
                 start_update=start_update,
                 total_updates=args.updates,
                 algorithm_config=algorithm_config,
+                method_profile=profile,
             )
             rows = traceable_episode_rows(records, job, split="train", index_offset=start_update)
             _merge_jsonl_rows(raw_path, rows, expected_job_id=job.job_id)

@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
                 [
                     sys.executable, str(ROOT / "scripts" / "train.py"), "--config-dir", args.config_dir,
                     "--scale", str(job["scale"]), "--seed", str(job["training_seed"]), "--updates", "1",
-                    "--output-root", args.output_root, "--smoke",
+                    "--method", str(job["method"]), "--output-root", args.output_root, "--smoke",
                 ],
                 cwd=ROOT,
             )

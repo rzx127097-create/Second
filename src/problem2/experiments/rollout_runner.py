@@ -83,6 +83,9 @@ def run_training_episode(
     horizon: int,
     episode_id: str,
     algorithm_config: dict[str, Any] | None = None,
+    method_profile: Any | None = None,
+    update_index: int = 1,
+    total_updates: int = 1,
 ) -> EpisodeRecord:
     """Collect exactly one real joint trajectory from ``ScenarioBundle``.
 
@@ -93,6 +96,12 @@ def run_training_episode(
     del trainer  # Optimizer ownership stays with train_policy after collection.
     if horizon < 1:
         raise ValueError("horizon must be positive")
+    if method_profile is None:
+        from .methods import method_profile as build_method_profile
+
+        method_profile = build_method_profile("sr_mappo_mobile", algorithm_config or {
+            "stability_components": getattr(algorithm, "stability_components", {}),
+        })
     snapshot = bundle.reset()
     batch = RolloutBatch()
     initial_pest_total = float(np.asarray(bundle.pest_density, dtype=float).sum())
@@ -101,6 +110,9 @@ def run_training_episode(
     components: defaultdict[str, float] = defaultdict(float)
     total_reward = 0.0
 
+    training_phase = method_profile.vehicle_phase(
+        update_index=int(update_index), total_updates=int(total_updates),
+    )
     for step_index in range(int(horizon)):
         observations, masks, role_ids, action_masks = _role_inputs(snapshot)
         state = snapshot.critic_state
@@ -114,6 +126,15 @@ def run_training_episode(
                 role: [int(mask.mask.sum()) > 1 for mask in role_masks]
                 for role, role_masks in action_masks.items()
             },
+        )
+        from .methods import apply_vehicle_behavior_override
+
+        training_phase = apply_vehicle_behavior_override(
+            snapshot,
+            transition,
+            method_profile,
+            update_index=int(update_index),
+            total_updates=int(total_updates),
         )
         environment_actions = _environment_actions(transition["actions"], role_ids, action_masks)
         stepped = bundle.step(environment_actions)
@@ -163,6 +184,8 @@ def run_training_episode(
         agent_ids=role_ids,
     )
     record.rollout = batch
+    record.policy_name = str(method_profile.name)
+    record.training_phase = str(training_phase)
     return record
 
 
@@ -177,6 +200,7 @@ def train_policy(
     start_update: int = 0,
     total_updates: int | None = None,
     algorithm_config: dict[str, Any] | None = None,
+    method_profile: Any | None = None,
 ) -> list[EpisodeRecord]:
     """Collect, optimize, and atomically checkpoint true ScenarioBundle rollouts."""
 
@@ -197,6 +221,9 @@ def train_policy(
             horizon=rollout_horizon,
             episode_id=str(bundle.episode_id),
             algorithm_config=algorithm_config,
+            method_profile=method_profile,
+            update_index=update,
+            total_updates=int(total_updates or (int(start_update) + int(updates))),
         )
         losses = trainer.update_with_epochs(
             record.rollout,

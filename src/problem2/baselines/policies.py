@@ -6,26 +6,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from problem2.experiments.methods import PRIMARY_METHODS, STABILITY_COMPONENTS
 from problem2.experiments.policy_protocol import PolicyProtocol, actions_to_environment
-
-
-PRIMARY_METHODS = (
-    "sr_mappo_mobile",
-    "sr_mappo_fixed",
-    "sr_mappo_astar",
-    "mappo_mobile",
-    "sr_mappo_two_stage",
-)
-
-STABILITY_COMPONENTS = (
-    "observation_normalization",
-    "return_normalization",
-    "orthogonal_initialization",
-    "layer_normalization",
-    "value_clipping",
-    "huber_value_loss",
-    "learning_rate_decay",
-)
 
 
 class _SnapshotPolicy:
@@ -198,7 +180,7 @@ def make_policy(method: str, checkpoint: Path | None = None) -> PolicyProtocol:
         return policy
     if method == "mappo_mobile":
         metadata["algorithm_family"] = "same_source_heterogeneous_mappo"
-        metadata["stability_components"].update({"observation_normalization": False, "return_normalization": False})
+        metadata["stability_components"] = {component: False for component in STABILITY_COMPONENTS}
     if method == "sr_mappo_two_stage":
         metadata["initialization"] = "two_stage"
         metadata["training_protocol"] = "two_stage"

@@ -44,6 +44,7 @@ class EpisodeRecord:
     split: str = ""
     scenario_id: str = ""
     success_threshold: float = 0.85
+    training_phase: str = ""
 
     @property
     def reduction_rate(self) -> float:
@@ -63,6 +64,7 @@ class EpisodeRecord:
             "scenario_id": self.scenario_id or self.scale_id,
             "split": self.split,
             "policy_name": self.policy_name,
+            "training_phase": self.training_phase,
             "scale_id": self.scale_id,
             "parameter_status": self.parameter_status,
             "steps": self.steps,
