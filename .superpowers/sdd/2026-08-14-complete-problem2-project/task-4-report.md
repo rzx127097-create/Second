@@ -47,3 +47,10 @@ SHA: `0bc6b5f3d9e3f589a560b15011e9c15eb2dae4c7`.
 - Checkpoint factories receive the declared stability-component map; `mappo_mobile` disables only observation/return normalization. Two-stage adapters expose `initialization` and `training_protocol` metadata and remain smoke-only without checkpoints.
 - Policy purity is tested by comparing pesticide totals, UAV onboard amounts, vehicle inventories, and adapter vehicle nodes before/after `policy.act`; only `ScenarioBundle.step` performs transitions and conservation checks.
 - Review-fix commit SHA: `aaa07c0dd7b3b090b8bc5a2f6cdf44f30733ef04`.
+
+## Rolling Candidate Fix
+
+- RED: the new regression test failed because a learned vehicle `slot-0` survived when `candidate_mapping` was empty, and `deterministic=False` was not forwarded to the actor.
+- GREEN: focused baseline/e2e tests -> `12 passed`; full suite -> `119 passed`; `python -m compileall -q src scripts` and `git diff --check` -> success.
+- Every vehicle in the rolling adapter now receives the first deterministic currently valid candidate slot, or explicit legal `hold` when no candidate exists. Formal learned calls thread the adapter's `deterministic` argument through the actor.
+- Commit SHA: `49a55e89e723c6259b923eabaec26d40c745bff9` (`fix: constrain rolling planner candidate actions`).
