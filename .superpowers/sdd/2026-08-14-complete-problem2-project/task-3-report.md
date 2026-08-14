@@ -40,3 +40,13 @@ Commit SHA: `8229162` (superseded by the final amend if this line changes).
 - Numeric action conversion rejects booleans and non-integral float indices; action method dispatch no longer masks internal `TypeError`.
 - Review fix commit SHA: `3e20d500a21fdba2c6b123b5602fb6445fb818d5`.
 - Full verification after hardening: `pytest -q` -> `109 passed`; `python -m compileall -q src scripts` -> passed; `git diff --check` -> passed (only normal LF/CRLF notices).
+
+## Frozen-marker follow-up
+
+- RED: `pytest tests/e2e/test_evaluation_smoke.py -q` -> mutable named policy was accepted by sealed-test (`Failed: DID NOT RAISE`).
+- GREEN: `pytest tests/e2e/test_evaluation_smoke.py -q` -> `15 passed`.
+- `PolicyProtocol` implementations now expose an explicit `frozen` marker. `HoldPolicy` is frozen; `AlgorithmPolicyAdapter` derives it from algorithm eval state and updates it on `eval()`/`train()`.
+- Sealed-test requires deterministic mode, a non-empty name, eval capability, `frozen is True`, and no active training state before scenario construction. Evaluation still enters eval mode for stochastic smoke/validation and restores prior state.
+- Role-batched action flattening preserves booleans from Python sequences, NumPy arrays, and tensors before validation; booleans and non-integral floats are rejected.
+- Follow-up fix commit SHA: `d0ed7856ccc70d962dc80ea538fa9497e4783942`.
+- Full verification: `pytest -q` -> `111 passed`; `python -m compileall -q src scripts` -> passed; `git diff --check` -> passed (only normal LF/CRLF notices).
