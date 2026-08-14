@@ -69,7 +69,7 @@ def _request_value(request: Any, key: str, default: Any = 0.0) -> Any:
 
 def _phase_code(value: Any) -> float:
     text = getattr(value, "value", value)
-    return {"idle": 0.0, "preparing": 1.0, "transferring": 2.0, "reserved": 1.0}.get(str(text), 0.0)
+    return {"idle": 0.0, "reserved": 1.0, "preparing": 2.0, "transferring": 3.0}.get(str(text), 0.0)
 
 
 def _shape_from_density(pest_density: Any) -> tuple[int, int] | None:
@@ -351,9 +351,17 @@ def build_observations(*args: Any, **kwargs: Any) -> dict[str, dict[str, Any]]:
     if resources is None:
         raise TypeError("resources is required")
     mapping = kwargs.pop("mapping", None) or stable_slot_mapping(resources.uavs, resources.vehicles, kwargs.get("requests", ()))
+    locked_uav_id = kwargs.pop("service_locked_uav_id", None)
+    legacy_service_locked = bool(kwargs.pop("service_locked", False))
     result: dict[str, dict[str, Any]] = {}
     for uav_id in mapping.uav_ids:
-        result[uav_id] = build_uav_observation(uav_id, resources, mapping=mapping, **kwargs)
+        result[uav_id] = build_uav_observation(
+            uav_id,
+            resources,
+            mapping=mapping,
+            service_locked=(uav_id == locked_uav_id) if locked_uav_id is not None else legacy_service_locked,
+            **kwargs,
+        )
     for vehicle_id in mapping.vehicle_ids:
         result[vehicle_id] = build_vehicle_observation(vehicle_id, resources, mapping=mapping, **kwargs)
     return result

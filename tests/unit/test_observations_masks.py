@@ -11,6 +11,7 @@ from problem2.environment.action_masks import (
     vehicle_action_mask,
 )
 from problem2.environment.observations import (
+    build_observations,
     build_structured_critic_state,
     build_uav_observation,
     build_vehicle_observation,
@@ -68,6 +69,20 @@ def test_vehicle_observation_uses_fixed_vehicle_and_request_slots() -> None:
     assert observation["request_slots"].shape == (2,)
     assert observation["request_slot_mask"].tolist() == [1, 1]
     assert observation["slot_mapping"] == ("req-1", "req-2")
+
+
+def test_observation_builder_marks_only_the_served_uav_as_locked() -> None:
+    resources = _resources()
+    mapping = stable_slot_mapping(resources.uavs, resources.vehicles)
+
+    observations = build_observations(
+        resources=resources,
+        mapping=mapping,
+        service_locked_uav_id="uav-1",
+    )
+
+    assert observations["uav-1"]["service_locked"] is True
+    assert observations["uav-2"]["service_locked"] is False
 
 
 def test_critic_state_is_structured_and_flattening_is_stable() -> None:

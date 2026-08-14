@@ -6,6 +6,7 @@ import pytest
 from problem2.domain.resources import PesticideResources
 from problem2.domain.state import UAVState, VehicleState
 from problem2.environment.action_masks import ActionMask
+from problem2.environment.service_state_machine import ServicePhase
 from problem2.road.graph import RoadGraph
 from problem2.section4_2.road_executor import RoadVehicleExecutor
 from problem2.section4_2.adapter import HeterogeneousDecisionAdapter
@@ -33,6 +34,28 @@ def resources_with_unassigned_uav() -> PesticideResources:
             "uav-2": UAVState("uav-2", 0.4, 1.0, 0.01),
         },
         vehicles={"vehicle-1": VehicleState("vehicle-1", 0.5, 0.5, 0.02, 0.3)},
+    )
+
+
+def rendezvous_adapter() -> HeterogeneousDecisionAdapter:
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.8, 1.0, 0.01)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 0.5, 0.5, 1.0, 0.5)},
+    )
+    return HeterogeneousDecisionAdapter(
+        candidate_resources,
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=2.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 7),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        request_threshold_ratio=0.9,
+        service_setup_s=1.0,
+        rendezvous_radius_m=0.5,
+        max_candidate_slots=3,
     )
 
 
@@ -157,6 +180,35 @@ def test_adapter_builds_vehicle_slots_from_section_4_3_rendezvous_candidates() -
     assert state.candidate_mapping["vehicle-1"] == (
         ("slot-0", f"{request.request_id}:rv-a"),
     )
+
+
+def test_reservation_does_not_hard_lock_uav_before_joint_arrival() -> None:
+    adapter = rendezvous_adapter()
+    adapter.reset(seed=21)
+    requested = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+    assert requested.candidate_mapping["vehicle-1"][0][1].endswith(":rv-a")
+
+    reserved = adapter.step({"uav-1": "right", "vehicle-1": "slot-0"})
+
+    assert adapter.service.phase is ServicePhase.RESERVED
+    assert adapter.uav_positions["uav-1"] == (0, 1)
+    assert "spray" in reserved.action_masks["uav-1"].valid_actions
+    assert not any(event["event_type"] == "joint_arrival" for event in reserved.events)
+
+
+def test_service_preparation_starts_only_after_both_roles_arrive() -> None:
+    adapter = rendezvous_adapter()
+    adapter.reset(seed=22)
+    adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+    adapter.step({"uav-1": "right", "vehicle-1": "slot-0"})
+
+    arrived = adapter.step({"uav-1": "left", "vehicle-1": "hold"})
+
+    assert adapter.uav_positions["uav-1"] == (0, 0)
+    assert adapter.service.phase is ServicePhase.PREPARING
+    assert arrived.action_masks["uav-1"].valid_actions == ("hold",)
+    assert arrived.action_masks["vehicle-1"].valid_actions == ("hold",)
+    assert any(event["event_type"] == "joint_arrival" for event in arrived.events)
 
 
 def test_adapter_records_actual_spray_and_lock_blocks_spray() -> None:

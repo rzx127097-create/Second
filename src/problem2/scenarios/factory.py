@@ -197,7 +197,7 @@ class ScenarioBundle:
             pest_density=self.pest_density,
             mapping=self._slot_mapping,
             requests=active_requests,
-            service_locked=self.service.locked_uav_id is not None,
+            service_locked_uav_id=self.service.locked_uav_id,
             service_phase=self.service.phase,
             active_request_id=self.service.request_id,
             max_request_slots=self.adapter.max_candidate_slots,

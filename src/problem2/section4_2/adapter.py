@@ -91,7 +91,10 @@ class HeterogeneousDecisionAdapter:
         self._candidate_target_cells: dict[str, dict[str, tuple[int, int]]] = {}
         self._locked_uav_id: str | None = None
         self._locked_vehicle_id: str | None = None
+        self._committed_uav_id: str | None = None
+        self._committed_vehicle_id: str | None = None
         self._service_target_node: str | None = None
+        self._service_target_uav_cell: tuple[int, int] | None = None
         self._decision_step = 0
         self.request_manager = RequestManager()
         self.service = ServiceStateMachine()
@@ -116,7 +119,10 @@ class HeterogeneousDecisionAdapter:
         self._decision_step = 0
         self._locked_uav_id = None
         self._locked_vehicle_id = None
+        self._committed_uav_id = None
+        self._committed_vehicle_id = None
         self._service_target_node = None
+        self._service_target_uav_cell = None
         start = sorted(self.road_graph.nodes)[0]
         self.executors = {
             vehicle_id: RoadVehicleExecutor(self.road_graph, current_node=start, speed_mps=self.vehicle_speed_mps)
@@ -209,11 +215,19 @@ class HeterogeneousDecisionAdapter:
                 if route is not None:
                     executor.set_route(route)
                 if request_id is not None and self.service.phase is ServicePhase.IDLE:
-                    reserved = self.service.reserve_specific(self.request_manager, request_id, vehicle_id, self._decision_step, self.service_setup_s)
+                    reserved = self.service.reserve_specific(
+                        self.request_manager,
+                        request_id,
+                        vehicle_id,
+                        self._decision_step,
+                        self.service_setup_s,
+                        defer_preparation=True,
+                    )
                     if reserved is not None and reserved.request_id == request_id:
                         self._service_target_node = route[-1] if route else None
-                        self._locked_uav_id = reserved.uav_id
-                        self._locked_vehicle_id = vehicle_id
+                        self._service_target_uav_cell = self._candidate_target_cells.get(vehicle_id, {}).get(action)
+                        self._committed_uav_id = reserved.uav_id
+                        self._committed_vehicle_id = vehicle_id
                         events.append({"event_type": "request_reserved", "request_id": reserved.request_id, "uav_id": reserved.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
             advance = executor.advance(dt_s=self.decision_dt_s)
             events.append({"event_type": "movement_applied", "vehicle_id": vehicle_id, "travelled_distance_m": advance.travelled_distance_m, "remaining_edge_distance_m": advance.remaining_edge_distance_m, "route_complete": advance.route_complete, "step": self._decision_step})
@@ -221,12 +235,29 @@ class HeterogeneousDecisionAdapter:
         active_request_id = self.service.request_id
         if active_request_id is not None:
             request = self.request_manager.get(active_request_id)
-            vehicle_id = self._locked_vehicle_id
-            at_target = bool(vehicle_id and self._service_target_node and self.executors[vehicle_id].current_node == self._service_target_node)
-            if not at_target:
-                events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "rendezvous_travel", "step": self._decision_step})
-                events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
-            else:
+            vehicle_id = self._committed_vehicle_id or self._locked_vehicle_id
+            vehicle_arrived = bool(
+                vehicle_id
+                and self._service_target_node
+                and self.executors[vehicle_id].current_node == self._service_target_node
+                and self.executors[vehicle_id].route_index >= len(self.executors[vehicle_id].route) - 1
+            )
+            uav_arrived = self._uav_has_arrived(request.uav_id)
+            if self.service.phase is ServicePhase.RESERVED:
+                if vehicle_arrived and uav_arrived:
+                    self.service.begin_preparation(self.request_manager, self._decision_step)
+                    self._locked_uav_id = request.uav_id
+                    self._locked_vehicle_id = vehicle_id
+                    events.append({"event_type": "joint_arrival", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
+                    events.append({"event_type": "service_started", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
+                else:
+                    if vehicle_arrived and not uav_arrived:
+                        events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "vehicle_waiting_for_uav", "step": self._decision_step})
+                    elif uav_arrived and not vehicle_arrived:
+                        events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "uav_waiting_for_vehicle", "step": self._decision_step})
+                    if self.resources.uav(request.uav_id).onboard_l <= 1e-12:
+                        events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
+            elif self.service.phase in {ServicePhase.PREPARING, ServicePhase.TRANSFERRING}:
                 previous_phase = self.service.phase
                 transferred = self.service.tick(self.request_manager, self.resources, vehicle_id, self.decision_dt_s, self._decision_step)
                 if previous_phase is ServicePhase.PREPARING:
@@ -240,7 +271,10 @@ class HeterogeneousDecisionAdapter:
                         events.append({"event_type": "request_completed", "request_id": request.request_id, "step": self._decision_step})
                     self._locked_uav_id = None
                     self._locked_vehicle_id = None
+                    self._committed_uav_id = None
+                    self._committed_vehicle_id = None
                     self._service_target_node = None
+                    self._service_target_uav_cell = None
         self._refresh_request_candidates()
         events.append({"event_type": "field_updated", "step": self._decision_step})
         self._refresh_state(events=events)
@@ -250,7 +284,16 @@ class HeterogeneousDecisionAdapter:
         masks: dict[str, ActionMask] = {}
         for uav_id in self.uav_slots:
             state = self.resources.uav(uav_id)
-            masks[uav_id] = uav_action_mask(self.uav_positions.get(uav_id, (0, 0)), self.uav_grid_shape, onboard_l=state.onboard_l, spray_flow_l_s=state.spray_flow_l_s, locked=uav_id == self._locked_uav_id)
+            committed = uav_id == self._committed_uav_id
+            masks[uav_id] = uav_action_mask(
+                self.uav_positions.get(uav_id, (0, 0)),
+                self.uav_grid_shape,
+                onboard_l=state.onboard_l,
+                spray_flow_l_s=state.spray_flow_l_s,
+                locked=uav_id == self._locked_uav_id,
+                rendezvous_target=self._service_target_uav_cell if committed else None,
+                must_approach=committed and self._must_approach_rendezvous(uav_id),
+            )
         for vehicle_id in self.vehicle_slots:
             routes = self._candidate_routes.get(vehicle_id, {})
             current_node = self.executors[vehicle_id].current_node
@@ -260,7 +303,7 @@ class HeterogeneousDecisionAdapter:
                 for index in range(self.max_candidate_slots)
                 for route in (routes.get(f"slot-{index}"),)
             ]
-            masks[vehicle_id] = vehicle_action_mask(locked=(vehicle_id == self._locked_vehicle_id or self.executors[vehicle_id].route_index < len(self.executors[vehicle_id].route) - 1), candidate_slots=candidates, max_slots=self.max_candidate_slots, inventory_l=self.resources.vehicle(vehicle_id).inventory_l, service_cap_l=self.resources.vehicle(vehicle_id).service_cap_l)
+            masks[vehicle_id] = vehicle_action_mask(locked=(vehicle_id in {self._locked_vehicle_id, self._committed_vehicle_id} or self.executors[vehicle_id].route_index < len(self.executors[vehicle_id].route) - 1), candidate_slots=candidates, max_slots=self.max_candidate_slots, inventory_l=self.resources.vehicle(vehicle_id).inventory_l, service_cap_l=self.resources.vehicle(vehicle_id).service_cap_l)
         return masks
 
     def _refresh_state(self, *, events: list[dict[str, object]]) -> None:
@@ -283,6 +326,26 @@ class HeterogeneousDecisionAdapter:
         row = min(max(int(round(y_m / row_size_m)), 0), self.uav_grid_shape[0] - 1)
         col = min(max(int(round(x_m / col_size_m)), 0), self.uav_grid_shape[1] - 1)
         return row, col
+
+    def _uav_has_arrived(self, uav_id: str) -> bool:
+        if self._service_target_node is None:
+            return False
+        uav_x, uav_y = self._uav_metric_position(uav_id)
+        target_x, target_y = self.road_graph.nodes[self._service_target_node]
+        return hypot(target_x - uav_x, target_y - uav_y) <= self.rendezvous_radius_m + 1e-12
+
+    def _must_approach_rendezvous(self, uav_id: str) -> bool:
+        if self._service_target_node is None:
+            return False
+        uav = self.resources.uav(uav_id)
+        remaining_s = remaining_work_time_s(
+            onboard_l=uav.onboard_l,
+            spray_flow_l_s=uav.spray_flow_l_s,
+        )
+        uav_x, uav_y = self._uav_metric_position(uav_id)
+        target_x, target_y = self.road_graph.nodes[self._service_target_node]
+        travel_s = hypot(target_x - uav_x, target_y - uav_y) / self.uav_speed_mps
+        return remaining_s <= travel_s + self.service_setup_s + self.decision_dt_s
 
     def _rendezvous_points(self, uav_id: str) -> tuple[RendezvousPoint, ...]:
         uav_x, uav_y = self._uav_metric_position(uav_id)

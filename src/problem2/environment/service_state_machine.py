@@ -11,6 +11,7 @@ from problem2.domain.resources import PesticideResources
 
 class ServicePhase(str, Enum):
     IDLE = "idle"
+    RESERVED = "reserved"
     PREPARING = "preparing"
     TRANSFERRING = "transferring"
 
@@ -23,6 +24,8 @@ class ServiceStateMachine:
 
     @property
     def locked_uav_id(self) -> str | None:
+        if self.phase is ServicePhase.RESERVED:
+            return None
         return self._locked_uav_id
 
     _locked_uav_id: str | None = None
@@ -33,6 +36,8 @@ class ServiceStateMachine:
         vehicle_id: str,
         step: int,
         setup_s: float,
+        *,
+        defer_preparation: bool = False,
     ) -> ReplenishmentRequest | None:
         if self.phase is not ServicePhase.IDLE:
             return None
@@ -42,7 +47,7 @@ class ServiceStateMachine:
         self.request_id = request.request_id
         self._locked_uav_id = request.uav_id
         self.setup_remaining_s = max(0.0, setup_s)
-        self.phase = ServicePhase.PREPARING
+        self.phase = ServicePhase.RESERVED if defer_preparation else ServicePhase.PREPARING
         return request
 
     def reserve_specific(
@@ -52,6 +57,8 @@ class ServiceStateMachine:
         vehicle_id: str,
         step: int,
         setup_s: float,
+        *,
+        defer_preparation: bool = False,
     ) -> ReplenishmentRequest | None:
         if self.phase is not ServicePhase.IDLE:
             return None
@@ -61,8 +68,18 @@ class ServiceStateMachine:
         self.request_id = request.request_id
         self._locked_uav_id = request.uav_id
         self.setup_remaining_s = max(0.0, setup_s)
-        self.phase = ServicePhase.PREPARING
+        self.phase = ServicePhase.RESERVED if defer_preparation else ServicePhase.PREPARING
         return request
+
+    def begin_preparation(self, manager: RequestManager, step: int) -> None:
+        """Enter the hard service lock after a deferred joint arrival."""
+        del step
+        if self.phase is not ServicePhase.RESERVED or self.request_id is None:
+            raise ValueError("a reserved request is required before preparation")
+        request = manager.get(self.request_id)
+        if request.status is not RequestStatus.RESERVED:
+            raise ValueError("request state is inconsistent with deferred preparation")
+        self.phase = ServicePhase.PREPARING
 
     def tick(
         self,
@@ -74,6 +91,8 @@ class ServiceStateMachine:
     ) -> float:
         """Advance one service phase and return actual transferred volume."""
         if self.phase is ServicePhase.IDLE:
+            return 0.0
+        if self.phase is ServicePhase.RESERVED:
             return 0.0
         assert self.request_id is not None
         request = manager.get(self.request_id)
