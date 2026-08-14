@@ -1,16 +1,82 @@
-"""Enumerate immutable formal jobs without executing them implicitly."""
+"""Enumerate immutable experiment-matrix jobs without hidden execution."""
 
 from __future__ import annotations
 
 import argparse
+import json
+from pathlib import Path
+import subprocess
+import sys
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
+from problem2.config import config_identity, load_config_bundle
+from problem2.experiments.job_identity import capture_git_commit, make_job_identity
 
 
-def main() -> None:
+def _emit(payload: dict[str, Any]) -> None:
+    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+
+
+def _is_provisional(config: Any) -> bool:
+    return config.parameters.get("status") != "verified" or config.experiments.get("status") != "verified"
+
+
+def _jobs(config: Any) -> list[dict[str, object]]:
+    digest = config_identity(config)
+    commit = capture_git_commit(str(ROOT))
+    jobs: list[dict[str, object]] = []
+    for method in config.experiments["methods"]:
+        for scale in config.experiments["scales"]:
+            for seed in config.experiments["training_seeds"]:
+                identity = make_job_identity(method, scale, seed, digest, config_hash=digest, git_commit=commit)
+                jobs.append({**identity.to_dict(), "job_id": identity.job_id})
+    return jobs
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-dir", required=True)
-    parser.parse_args()
-    raise SystemExit("Matrix execution is gated until engineering parameters are verified.")
+    parser.add_argument("--output-root", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--max-jobs", type=int, default=1)
+    args = parser.parse_args(argv)
+    try:
+        config = load_config_bundle(args.config_dir)
+        provisional = _is_provisional(config)
+        jobs = _jobs(config)
+        if args.dry_run:
+            _emit({"status": "dry_run", "provisional": provisional, "job_count": len(jobs), "jobs": jobs})
+            return 0
+        if provisional and not args.smoke:
+            _emit({"status": "rejected", "error": "formal matrix execution is blocked because parameter or matrix status is provisional"})
+            return 2
+        if not args.smoke:
+            raise ValueError("matrix execution requires explicit --smoke until a formal executor is configured")
+        if args.max_jobs < 1:
+            raise ValueError("max-jobs must be positive")
+        selected = [job for job in jobs if job["method"] == "sr_mappo_mobile"][:args.max_jobs]
+        outputs = []
+        for job in selected:
+            result = subprocess.run(
+                [
+                    sys.executable, str(ROOT / "scripts" / "train.py"), "--config-dir", args.config_dir,
+                    "--scale", str(job["scale"]), "--seed", str(job["training_seed"]), "--updates", "1",
+                    "--output-root", args.output_root, "--smoke",
+                ],
+                cwd=ROOT, text=True, encoding="utf-8", capture_output=True, check=False,
+            )
+            outputs.append({"job_id": job["job_id"], "returncode": result.returncode, "output": json.loads(result.stdout) if result.stdout else {"error": result.stderr}})
+        _emit({"status": "completed" if all(item["returncode"] == 0 for item in outputs) else "failed", "smoke": True, "jobs": outputs})
+        return 0 if all(item["returncode"] == 0 for item in outputs) else 1
+    except Exception as exc:  # noqa: BLE001 - CLI boundary must preserve diagnostics as JSON
+        _emit({"status": "failed", "error": f"{type(exc).__name__}: {exc}"})
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
