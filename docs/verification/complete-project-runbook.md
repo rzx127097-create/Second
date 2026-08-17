@@ -2,12 +2,11 @@
 
 ## Scope and claim boundary
 
-This runbook verifies the M2 implementation path end to end: a real
-`ScenarioBundle` CPU smoke update, checkpoint recovery, one validation scene,
-and the traceable artifact pipeline. It is an engineering check, not a paper
-result. The checked-in parameter registry and formal matrix are `provisional`.
-Do not report smoke metrics as formal performance, deployment evidence, or a
-superiority claim.
+This runbook covers two distinct M2 paths: a reduced CPU smoke check and a
+full-budget controlled-simulation path. Controlled-simulation outputs can
+support pilot analysis after multi-seed validation, but they are not field
+validation or deployment evidence. Do not report smoke metrics as thesis
+performance or infer method superiority before paired pilot/formal evidence.
 
 M3 is blocked until engineering parameter sources and independent validation
 scenarios with multiple training seeds are documented and frozen. M4 is blocked
@@ -37,8 +36,10 @@ pip install -e ".[dev,rl]"  # pytest + torch; required by end-to-end smoke
 # pip install -e ".[dev]"
 ```
 
-The smoke path uses CPU and a small hidden layer/horizon. It is the only
-execution path permitted while configuration status is provisional.
+The smoke path uses CPU and a small hidden layer/horizon. The `simulation`
+profile uses the configured hidden dimension, rollout horizon, update budget,
+mechanistic field model, and frozen OSM-derived road input while retaining
+explicit assumption warnings.
 
 ## End-to-end smoke
 
@@ -73,7 +74,7 @@ job identity. Failed jobs may be retried up to `--max-attempts`. The e2e test
 uses a deterministic failure injection in the worker to exercise this persisted
 retry path; that injected failure is a recovery check, not a scientific result.
 
-The job identity also includes the execution profile (`smoke` or `formal`),
+The job identity also includes the execution profile (`smoke`, `simulation`, or legacy `formal`),
 target update budget and rollout horizon, so those choices cannot share a
 checkpoint or raw log accidentally. Raw rows are appended atomically on
 resume; duplicate `run_id` values and non-monotone update sequences are
@@ -125,6 +126,21 @@ failure-recovery checklist are maintained in
 complete-project smoke entry point; the section-specific runbook is required
 before starting a pilot or formal matrix.
 
+Before a controlled-simulation pilot, run:
+
+```powershell
+python scripts\audit_simulation_preflight.py --config-dir configs `
+  --report runs\simulation-preflight.json --strict
+python scripts\run_matrix.py --config-dir configs `
+  --protocol configs\experiments\chapter4_5.yaml `
+  --family main_comparison --output-root runs\simulation `
+  --simulation --dry-run
+```
+
+The preflight blocks invalid units/ranges, unstable field updates, road/source
+hash drift, scenario leakage, disabled SR-MAPPO stability components, and stale
+resource evidence. Missing field calibration remains an explicit warning.
+
 `run_matrix.py --dry-run` is read-only and enumerates the immutable jobs for the
 selected family. With the checked-in protocol, the main comparison has
 `5 methods x 6 scales x 5 training seeds = 150` jobs. The mechanism,
@@ -133,8 +149,9 @@ not be silently merged into the main comparison.
 
 ## Formal matrix gates
 
-Actual matrix execution requires explicit `--smoke` while status is provisional.
-Formal execution without smoke is rejected. Before M3/M4, do not claim a
+Actual controlled-simulation matrix execution requires `--simulation` and a
+clean Git worktree. Legacy formal execution remains rejected while registries
+are provisional. Before M3/M4, do not claim a
 verified parameter set, multi-seed validation, sealed-test performance, or
 method superiority. Keep the five canonical keys exactly as configured:
 

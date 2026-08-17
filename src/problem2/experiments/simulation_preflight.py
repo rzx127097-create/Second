@@ -389,6 +389,8 @@ def audit_simulation_preflight(
     required_stability = {"observation_normalization", "return_normalization", "orthogonal_initialization", "layer_normalization", "value_clipping", "huber_value_loss", "learning_rate_decay"}
     if not required_stability.issubset({str(key) for key in stability}):
         errors.append(_issue("error", "incomplete_sr_mappo_stability", "algorithms.sr_mappo.stability_components", "all declared SR-MAPPO stability components are required"))
+    elif any(stability.get(key) is not True for key in required_stability):
+        errors.append(_issue("error", "disabled_sr_mappo_stability", "algorithms.sr_mappo.stability_components", "all SR-MAPPO stability components must be enabled for the flagship simulation profile"))
     _audit_road(config_path, config, errors)
     _audit_splits(config, errors)
     try:

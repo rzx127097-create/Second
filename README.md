@@ -5,10 +5,12 @@ heterogeneous UAV and road-constrained pesticide-supply-vehicle cooperation.
 The ground vehicle supplies pesticide liquid only. Battery charging and battery
 exchange are outside this problem.
 
-The current checked-in configuration is **provisional**. The implementation and
-its deterministic invariants are at maturity M2. Smoke runs verify the software
-path; they are not formal thesis results, deployment evidence, or superiority
-claims. See `docs/verification/section-4-5-runbook.md` for the complete workflow.
+The current checked-in configuration is a **controlled-simulation profile**.
+The implementation and deterministic invariants are at maturity M2. Smoke runs
+verify the software path; `--simulation` runs use full model and training
+budgets under explicit assumptions. Neither is field validation, deployment
+evidence, or a superiority claim. See
+`docs/verification/section-4-5-runbook.md` for the complete workflow.
 The latest parameter, road-source, scenario, and resource-activation decision
 is recorded in `docs/verification/formal-readiness-report.md`.
 
@@ -91,6 +93,50 @@ python scripts/evaluate_matrix.py --config-dir configs `
   --split validation --smoke --max-jobs 1
 ```
 
+## Controlled-simulation preflight and pilot
+
+Run the technical preflight before any pilot. Assumption-source warnings are
+expected; numerical, road, split, resource-conservation, or identity errors
+must be corrected before training.
+
+```powershell
+python scripts/audit_simulation_preflight.py `
+  --config-dir configs `
+  --report runs/simulation-preflight.json `
+  --strict
+
+python scripts/run_resource_pilot.py `
+  --config-dir configs `
+  --output runs/resource-pilot/raw.jsonl `
+  --report runs/resource-pilot/activation.json `
+  --scale s1 --episodes 5 --max-steps 600
+
+python scripts/audit_simulation_preflight.py `
+  --config-dir configs `
+  --resource-report runs/resource-pilot/activation.json `
+  --report runs/simulation-preflight-with-resource.json `
+  --strict
+```
+
+The resource report must match the current configuration, simulation profile,
+Git commit, and source-tree hash. The older checked-in pilot predates the
+boundary and efficacy corrections and is not current mechanism evidence.
+
+After committing the verified source so the worktree is clean, enumerate the
+full 150-job main-comparison matrix and run one pilot identity:
+
+```powershell
+python scripts/run_matrix.py --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml `
+  --family main_comparison --output-root runs/simulation `
+  --simulation --dry-run
+
+python scripts/run_matrix.py --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml `
+  --family main_comparison --output-root runs/simulation `
+  --simulation --max-jobs 1
+```
+
 After all formal validation jobs are complete and the configuration status is
 verified, freeze the selected final-update checkpoints and validation evidence,
 then issue the one-time sealed-test ledger:
@@ -98,7 +144,7 @@ then issue the one-time sealed-test ledger:
 ```powershell
 $jobFiles = (Get-ChildItem -LiteralPath $out\jobs -Filter "*.json").FullName
 $validationLogs = (Get-ChildItem -LiteralPath $out\raw -Filter "evaluation-*-val_*.jsonl").FullName
-python scripts/freeze_sealed_test.py freeze `
+python scripts/freeze_sealed_test.py freeze --simulation `
   --config-dir configs --job-file $jobFiles --validation $validationLogs `
   --output $out\validation-freeze.json
 python scripts/freeze_sealed_test.py unlock `
@@ -121,7 +167,8 @@ python scripts/build_artifacts.py `
 ## Formal boundary
 
 While the parameter registry, scenario registry, and protocol are provisional,
-commands without `--smoke` are rejected. Formal work requires the remaining
+legacy formal commands are rejected; use `--smoke` for interface checks or
+`--simulation` for full controlled-simulation runs. Field-valid formal work requires the remaining
 engineering parameter sources, independent validation scenarios, a frozen
 configuration, calibrated reaction-diffusion-advection coefficients, and a
 sealed-test unlock. The evidence path is always:

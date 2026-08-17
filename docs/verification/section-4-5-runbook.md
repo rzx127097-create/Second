@@ -7,10 +7,10 @@ methods, mechanism interventions, parameter sensitivity, adaptation conditions,
 component ablations, recoverable jobs, shared-scenario evaluation, paired
 statistics, and traceable figures/tables.
 
-The checked-in `configs/experiments/chapter4_5.yaml` is `provisional`. The
-commands below are therefore smoke or planning commands. Their outputs may
-verify interfaces and invariants, but must not be copied into the thesis as
-formal results. A formal result requires the M3/M4 gates described at the end.
+The checked-in protocol is executed as a controlled simulation. Smoke outputs
+verify interfaces only. Full `--simulation` outputs become pilot evidence only
+after multi-seed shared-scenario evaluation and identity checks; they are not
+field deployment evidence.
 
 ## 1. Protocol dry-run
 
@@ -25,7 +25,7 @@ foreach ($family in $families) {
     --protocol configs/experiments/chapter4_5.yaml `
     --family $family `
     --output-root runs/planning `
-    --dry-run
+    --simulation --dry-run
 }
 ```
 
@@ -64,7 +64,37 @@ host is treated as stale after the configured 24-hour timeout, allowing a
 crashed remote worker to be recovered without immediate cross-host job
 stealing.
 
-## 3. Shared validation and sealed-test rules
+## 3. Controlled-simulation pilot sequence
+
+Run the technical preflight and regenerate the resource pilot after any model,
+parameter, profile, or source-code change:
+
+```powershell
+python scripts/audit_simulation_preflight.py --config-dir configs `
+  --report runs/simulation-preflight.json --strict
+python scripts/run_resource_pilot.py --config-dir configs `
+  --output runs/resource-pilot/raw.jsonl `
+  --report runs/resource-pilot/activation.json `
+  --scale s1 --episodes 5 --max-steps 600
+python scripts/audit_simulation_preflight.py --config-dir configs `
+  --resource-report runs/resource-pilot/activation.json `
+  --report runs/simulation-preflight-with-resource.json --strict
+```
+
+Commit the tested source, verify a clean worktree, then run one smallest-scale
+and one largest-scale job before expanding the matrix. Never launch the full
+540-job set (150 main + 90 mechanism + 120 sensitivity + 120 adaptation + 60
+ablation) before these pilots complete without non-finite losses or corrupted
+artifacts.
+
+```powershell
+python scripts/run_matrix.py --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml `
+  --family main_comparison --output-root runs/simulation `
+  --simulation --max-jobs 1
+```
+
+## 4. Shared validation and sealed-test rules
 
 Each checkpoint is evaluated on identical scenario IDs for paired comparisons:
 
@@ -72,7 +102,7 @@ Each checkpoint is evaluated on identical scenario IDs for paired comparisons:
 python scripts/evaluate.py --config-dir configs `
   --protocol configs/experiments/chapter4_5.yaml `
   --checkpoint $out\checkpoints\<job-id>.pt `
-  --split validation --scenario val_001 --smoke
+  --split validation --scenario val_001 --simulation
 ```
 
 For matrix execution, use the batch entry point so every selected checkpoint is
@@ -82,7 +112,7 @@ evaluated on every registered scenario of its physical scale:
 python scripts/evaluate_matrix.py --config-dir configs `
   --protocol configs/experiments/chapter4_5.yaml `
   --family main_comparison --output-root $out `
-  --split validation --smoke --max-jobs 5
+  --split validation --simulation --max-jobs 5
 ```
 
 The batch evaluator rejects missing/incomplete training jobs, validates any
@@ -97,7 +127,7 @@ optimizer state, and RNG state. Evaluation does not update learning state. A
 `sealed_test` call is rejected until the parameter status and policy freeze
 gate are verified; it must never fall back to a smoke or validation scenario.
 
-After every formal validation row exists, freeze the exact final-update
+After every controlled-simulation validation row exists, freeze the exact final-update
 checkpoints, validation inputs, protocol, source tree, and pre-registered
 statistics. The practical-equivalence margin and its agronomic basis must be
 non-empty before this command can succeed:
@@ -105,7 +135,7 @@ non-empty before this command can succeed:
 ```powershell
 $jobFiles = (Get-ChildItem -LiteralPath $out\jobs -Filter "*.json").FullName
 $validationLogs = (Get-ChildItem -LiteralPath $out\raw -Filter "evaluation-*-val_*.jsonl").FullName
-python scripts/freeze_sealed_test.py freeze `
+python scripts/freeze_sealed_test.py freeze --simulation `
   --config-dir configs `
   --protocol configs/experiments/chapter4_5.yaml `
   --job-file $jobFiles `
@@ -130,6 +160,7 @@ python scripts/evaluate_matrix.py --config-dir configs `
   --protocol configs/experiments/chapter4_5.yaml `
   --family main_comparison --output-root $out `
   --split sealed_test `
+  --simulation `
   --max-jobs 150 `
   --freeze-manifest $out\validation-freeze.json `
   --sealed-unlock $out\sealed-unlock.json
@@ -141,7 +172,7 @@ point the ledger records its path, run ID, and SHA-256. Failed evaluations
 release their reservation. The final Chapter 4.5 artifact build recomputes raw
 hashes and verifies them against the frozen checkpoint identities.
 
-## 4. Resource activation audit
+## 5. Resource activation audit
 
 Before interpreting a mobility result, audit the event-derived resource
 metrics:
@@ -158,7 +189,7 @@ pesticide-disabled time, rendezvous distance, effective spraying time, and
 conservation-compatible inventory fields. If requests are absent, the report
 must not call the resource mechanism activated.
 
-## 5. Chapter 4.5 artifact package
+## 6. Chapter 4.5 artifact package
 
 For the five-job CPU smoke, use the basic artifact command on one named
 validation row. This checks the CSV/summary/figure/table path without treating
@@ -198,7 +229,7 @@ For a formal build, omit `--allow-partial` only after the complete matrix gate
 passes. Any missing identity, stale hash, mixed provenance, duplicate run ID,
 or provisional protocol must fail closed.
 
-## 6. Statistics and evidence chain
+## 7. Statistics and evidence chain
 
 Use training seeds as independent replications and scenarios as paired
 observations within a trained policy. The hierarchical analysis resamples
@@ -227,20 +258,20 @@ mobility -> rendezvous distance -> waiting/disabled time
 If an intermediate metric does not support the endpoint change, report the
 mechanism as unresolved rather than selecting a favorable endpoint.
 
-## 7. Verification commands
+## 8. Verification commands
 
 ```powershell
 pytest -q
 python -m compileall -q src scripts
 git diff --check
-python scripts/run_matrix.py --config-dir configs --family main_comparison --output-root runs/planning --dry-run
+python scripts/run_matrix.py --config-dir configs --family main_comparison --output-root runs/planning --simulation --dry-run
 ```
 
 The complete e2e suite performs real CPU updates and normally takes several
 minutes. A timeout is not a pass; rerun with a sufficient process timeout and
 inspect the per-directory test results.
 
-## 8. Maturity gates and permitted claims
+## 9. Maturity gates and permitted claims
 
 - **M0/M1:** concept or frozen design only; use proposed/planned wording.
 - **M2 (current):** implementation tests verify interfaces, masks, event order,
@@ -254,9 +285,9 @@ Never weaken a rolling A* baseline, tune on sealed-test outcomes, fabricate
 missing logs, or rename the flagship algorithm. The public algorithm name is
 `SR-MAPPO` throughout.
 
-The scenario factory now uses the audited offline road derivative and a
-mechanistic reaction-diffusion-advection exposure model for pilots. M3/M4
-remain blocked until the remaining engineering parameters and
-pest/wind/pesticide coefficients are calibrated and supplied with their
-metadata hashes; changing a YAML status field alone cannot unlock formal
-execution.
+The scenario factory uses the audited offline road derivative and a mechanistic
+reaction-diffusion-advection-exposure model. M3 requires current resource
+activation evidence and multi-seed validation pilots. M4 requires a frozen
+simulation matrix, one-time sealed-test evaluation, paired statistics, and a
+complete artifact manifest. These levels support controlled-simulation claims,
+not field deployment claims.

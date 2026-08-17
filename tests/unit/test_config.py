@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from problem2.config import config_identity, load_config_bundle
+from problem2.experiments.simulation_preflight import load_simulation_profile
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -82,3 +83,25 @@ def test_vehicle_action_names_match_configured_candidate_slots(tmp_path) -> None
         assert "vehicle_action_names" in str(exc)
     else:
         raise AssertionError("mismatched vehicle action names must be rejected")
+
+
+def test_controlled_simulation_units_resources_and_stability_are_consistent() -> None:
+    bundle = load_config_bundle(ROOT / "configs")
+    profile = load_simulation_profile(ROOT / "configs")
+    parameters = bundle.parameters["parameters"]
+    usable_l = (
+        float(parameters["uav_onboard_pesticide"]["value"])
+        * float(parameters["uav_usable_fraction"]["value"])
+    )
+
+    assert float(parameters["vehicle_service_capacity"]["value"]) == usable_l
+    assert float(parameters["decision_dt"]["value"]) == float(bundle.scales["decision_dt_s"])
+    assert float(parameters["uav_speed"]["value"]) * float(parameters["decision_dt"]["value"]) > 0.0
+    assert float(parameters["vehicle_speed"]["value"]) * float(parameters["decision_dt"]["value"]) > 0.0
+    assert all(bundle.algorithm["stability_components"].values())
+    assert set(profile.document["engineering_parameters"]) == {
+        "uav_onboard_pesticide", "uav_spray_flow", "uav_usable_fraction",
+        "uav_speed", "vehicle_inventory", "vehicle_transfer_rate",
+        "vehicle_service_capacity", "service_setup_time", "rendezvous_radius",
+        "vehicle_speed", "decision_dt",
+    }

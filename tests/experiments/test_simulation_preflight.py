@@ -84,6 +84,24 @@ def test_unstable_field_update_is_an_error(tmp_path: Path) -> None:
     assert any(issue.code == "wind_cfl_violation" for issue in report.errors)
 
 
+def test_disabled_sr_mappo_stability_component_is_an_error(tmp_path: Path) -> None:
+    config_dir = _config_copy(tmp_path)
+    algorithm = config_dir / "algorithms" / "sr_mappo.yaml"
+    algorithm.write_text(
+        algorithm.read_text(encoding="utf-8").replace(
+            "observation_normalization: true",
+            "observation_normalization: false",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    report = audit_simulation_preflight(config_dir)
+
+    assert report.ready is False
+    assert any(issue.code == "disabled_sr_mappo_stability" for issue in report.errors)
+
+
 def test_inactive_resource_pilot_is_warning_not_activation_evidence(tmp_path: Path) -> None:
     report_path = tmp_path / "resource.json"
     report_path.write_text(
