@@ -554,6 +554,19 @@ class HeterogeneousDecisionAdapter:
             onboard_l=uav.onboard_l,
             spray_flow_l_s=uav.spray_flow_l_s,
         )
+        if self.support_mode == "teleport":
+            # Teleport is a diagnostic upper bound for spatial-temporal
+            # mismatch. It removes road travel and service setup delay while
+            # retaining one decision interval and the declared safety margin.
+            required_response_s = self.decision_dt_s + self.request_safety_margin_s
+            if remaining_work_s > required_response_s + 1e-12:
+                return None
+            return {
+                "remaining_work_s": remaining_work_s,
+                "required_response_s": required_response_s,
+                "safety_margin_s": self.request_safety_margin_s,
+                "target_l": requested_l,
+            }
         points = self._rendezvous_points(
             uav_id,
             include_all_nodes=self.support_mode != "fixed",

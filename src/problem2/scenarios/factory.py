@@ -414,7 +414,8 @@ def build_synthetic_scenario(
 
     parameter_overrides = intervention.parameters
     initial_ratio = float(parameter_overrides.get("uav_initial_pesticide_ratio", 1.0))
-    if intervention.pesticide_mode == "unlimited":
+    unlimited_pesticide = intervention.pesticide_mode == "unlimited"
+    if unlimited_pesticide:
         capacity = max(capacity, spray_flow * int(scale["max_steps"]) * decision_dt_s * 1.01)
 
     uavs = {
@@ -524,8 +525,19 @@ def build_synthetic_scenario(
         uav_grid_shape=(rows, cols),
         uav_cell_size_m=cell_size_m,
         uav_speed_mps=float(parameter_values.get("uav_speed", max(cell_size_m) / decision_dt_s)),
-        request_threshold_ratio=float(environment.get("request_threshold_ratio", 0.20)),
-        dynamic_request_enabled="remove_endurance_prediction" not in ablations,
+        # An unlimited-supply diagnostic must remove the onboard pesticide
+        # bottleneck completely: neither forecast nor fixed-threshold requests
+        # are meaningful when the UAV can cover the whole frozen horizon.
+        request_threshold_ratio=(
+            0.0 if unlimited_pesticide else float(environment.get("request_threshold_ratio", 0.20))
+        ),
+        dynamic_request_enabled=(
+            not unlimited_pesticide
+            # With support disabled there is no vehicle response to forecast;
+            # the common fixed low-pesticide threshold records unmet demand.
+            and intervention.support_mode != "disabled"
+            and "remove_endurance_prediction" not in ablations
+        ),
         request_safety_margin_s=float(parameter_values.get("request_safety_margin", 10.0)),
         service_setup_s=float(parameter_values.get("service_setup_time", 10.0)),
         rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),

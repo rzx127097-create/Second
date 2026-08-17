@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from problem2.scenarios.factory import build_synthetic_scenario
 from problem2.scenarios.interventions import ScenarioIntervention
@@ -68,6 +69,26 @@ def test_unlimited_diagnostic_removes_onboard_bottleneck_without_breaking_conser
     assert not any(event["event_type"] == "request_created" for event in bundle.adapter.state.events)
 
 
+def test_unlimited_diagnostic_never_creates_replenishment_requests_over_the_horizon() -> None:
+    intervention = ScenarioIntervention(condition_id="unlimited-full-horizon", pesticide_mode="unlimited")
+    bundle = build_synthetic_scenario("s1", 7, config_dir=CONFIG_DIR, intervention=intervention)
+    # Keep the diagnostic on its full fixed horizon so a late trigger cannot be
+    # hidden by the treatment-success termination condition.
+    bundle.success_reduction_threshold = 2.0
+
+    for _ in range(bundle.max_steps):
+        stepped = _legal_step(bundle, spray=True)
+        if stepped.truncated:
+            break
+
+    assert len(bundle.request_manager) == 0
+    assert not any(
+        event["event_type"] == "request_created"
+        for event in bundle.adapter.state.events
+    )
+    bundle.resources.assert_conservation()
+
+
 def test_disabled_support_keeps_inventory_stranded_and_closes_vehicle_slots() -> None:
     intervention = ScenarioIntervention(
         condition_id="no-support",
@@ -82,6 +103,33 @@ def test_disabled_support_keeps_inventory_stranded_and_closes_vehicle_slots() ->
     assert any(event["event_type"] == "request_created" for event in stepped.events)
     assert stepped.action_masks["vehicle-1"].valid_actions == ("hold",)
     assert bundle.resources.vehicle("vehicle-1").inventory_l == initial_inventory
+
+
+def test_disabled_support_uses_low_pesticide_threshold_instead_of_vehicle_response() -> None:
+    intervention = ScenarioIntervention(
+        condition_id="no-support-threshold",
+        support_mode="disabled",
+    )
+    bundle = build_synthetic_scenario("s1", 11, config_dir=CONFIG_DIR, intervention=intervention)
+
+    first = _legal_step(bundle, spray=True)
+    assert not any(event["event_type"] == "request_created" for event in first.events)
+
+    created: dict[str, object] | None = None
+    for _ in range(100):
+        stepped = _legal_step(bundle, spray=True)
+        created = next(
+            (event for event in stepped.events if event["event_type"] == "request_created"),
+            None,
+        )
+        if created is not None:
+            break
+
+    assert created is not None
+    assert created["trigger"] == "fixed_threshold"
+    state = bundle.resources.uav(str(created["uav_id"]))
+    minimum_request_l = state.capacity_l * (1.0 - bundle.adapter.request_threshold_ratio)
+    assert float(created["amount_l"]) >= minimum_request_l - 1e-12
 
 
 def test_fixed_support_exposes_only_routes_ending_at_the_frozen_support_node() -> None:
@@ -121,6 +169,41 @@ def test_teleport_diagnostic_transfers_real_inventory_without_vehicle_travel() -
     assert bundle.resources.vehicle("vehicle-1").inventory_l < inventory_before
     assert sum(float(event.get("travelled_distance_m", 0.0)) for event in stepped.events) == 0.0
     assert bundle.resources.assert_conservation() is None
+
+
+def test_teleport_diagnostic_triggers_only_at_zero_travel_response_and_avoids_micro_requests() -> None:
+    intervention = ScenarioIntervention(
+        condition_id="teleport-trigger",
+        support_mode="teleport",
+    )
+    bundle = build_synthetic_scenario("s1", 17, config_dir=CONFIG_DIR, intervention=intervention)
+    finite = build_synthetic_scenario("s1", 17, config_dir=CONFIG_DIR)
+    bundle.success_reduction_threshold = 2.0
+    assert bundle.resources.total_pesticide_l == pytest.approx(finite.resources.total_pesticide_l)
+    expected_response_s = bundle.adapter.decision_dt_s + bundle.adapter.request_safety_margin_s
+    created: list[dict[str, object]] = []
+
+    for _ in range(bundle.max_steps):
+        stepped = _legal_step(bundle, spray=True)
+        created.extend(
+            event for event in stepped.events if event["event_type"] == "request_created"
+        )
+        if stepped.truncated:
+            break
+
+    assert created
+    assert all(
+        float(event["required_response_s"]) == pytest.approx(expected_response_s)
+        for event in created
+    )
+    # With a 0.8 L UAV tank and 0.01 L/s spray flow, a request is made only
+    # after the one-step-plus-margin response window, so it is not a 0.01 L
+    # per-step replenishment request.
+    minimum_expected_l = bundle.resources.uav("uav-1").capacity_l - (
+        bundle.resources.uav("uav-1").spray_flow_l_s * expected_response_s
+    )
+    assert min(float(event["amount_l"]) for event in created) >= minimum_expected_l - 1e-12
+    bundle.resources.assert_conservation()
 
 
 def test_adaptation_variants_are_seed_deterministic_and_change_the_declared_state() -> None:
