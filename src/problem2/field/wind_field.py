@@ -30,8 +30,8 @@ class WindField:
         """
         if dt_s < 0:
             raise ValueError("dt_s must be non-negative")
-        if boundary not in {"open", "closed"}:
-            raise ValueError("boundary must be open or closed")
+        if boundary not in {"open", "closed", "periodic"}:
+            raise ValueError("boundary must be open, closed or periodic")
         result = np.asarray(values, dtype=float).copy()
         if result.ndim != 2:
             raise ValueError("values must be two-dimensional")
@@ -44,6 +44,18 @@ class WindField:
         c_y = abs(float(self.vy_m_s)) * dt_s / dy
         if c_x > 1.0 + 1e-12 or c_y > 1.0 + 1e-12:
             raise ValueError("wind advection violates the CFL condition")
+        if boundary == "periodic":
+            if result.shape[1] > 1 and self.vx_m_s != 0:
+                shift_x = 1 if self.vx_m_s > 0 else -1
+                result = (1.0 - c_x) * result + c_x * np.roll(
+                    result, shift_x, axis=1,
+                )
+            if result.shape[0] > 1 and self.vy_m_s != 0:
+                shift_y = 1 if self.vy_m_s > 0 else -1
+                result = (1.0 - c_y) * result + c_y * np.roll(
+                    result, shift_y, axis=0,
+                )
+            return np.maximum(result, 0.0)
         if result.shape[1] == 1:
             # A degenerate column has no internal x-face.  A closed boundary
             # therefore has zero net x-flux and must leave the column intact.

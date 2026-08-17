@@ -30,7 +30,7 @@ foreach ($family in $families) {
 ```
 
 Expected checked-in job counts are 150 for `main_comparison`, 90 for
-`mechanism`, 120 for `sensitivity`, 120 for `adaptation`, and 60 for
+`mechanism`, 150 for `sensitivity`, 120 for `adaptation`, and 60 for
 `ablation`. The command reports the protocol hash, provisional status, and
 immutable job identities. A changed configuration, condition, seed, split,
 protocol, or Git commit must create a different job identity.
@@ -75,15 +75,21 @@ python scripts/audit_simulation_preflight.py --config-dir configs `
 python scripts/run_resource_pilot.py --config-dir configs `
   --output runs/resource-pilot/raw.jsonl `
   --report runs/resource-pilot/activation.json `
-  --scale s1 --episodes 5 --max-steps 600
+  --scale s1 --scale s3 --scale s6 --episodes 3
 python scripts/audit_simulation_preflight.py --config-dir configs `
   --resource-report runs/resource-pilot/activation.json `
   --report runs/simulation-preflight-with-resource.json --strict
 ```
 
+Omitting `--max-steps` is intentional: the activation pilot uses each scale's
+frozen horizon. A short `--max-steps` value is permitted only for CLI smoke
+tests and cannot support a resource-mechanism decision. The report's treatment
+endpoint is explicitly non-comparative because the deterministic stress policy
+is not an algorithm baseline.
+
 Commit the tested source, verify a clean worktree, then run one smallest-scale
 and one largest-scale job before expanding the matrix. Never launch the full
-540-job set (150 main + 90 mechanism + 120 sensitivity + 120 adaptation + 60
+570-job set (150 main + 90 mechanism + 150 sensitivity + 120 adaptation + 60
 ablation) before these pilots complete without non-finite losses or corrupted
 artifacts.
 

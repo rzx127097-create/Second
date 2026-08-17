@@ -3,6 +3,7 @@ primary_vehicle_count: 1
 uav_action_names: [up, down, left, right, hold, spray]
 max_candidate_slots: 4
 vehicle_action_names: [hold, slot-0, slot-1, slot-2, slot-3]
+request_threshold_ratio: 0.20
 termination:
   success_reduction_threshold: 0.85
   max_steps_from_scale: true

@@ -12,6 +12,7 @@ PARAMETER_KEYS = {
     "uav_initial_pesticide_ratio",
     "vehicle_speed",
     "service_setup_time",
+    "request_safety_margin",
     "rendezvous_radius",
 }
 ADAPTATION_KEYS = {

@@ -308,6 +308,42 @@ def _scale_record(config_dir: str | Path, scale_id: str) -> dict[str, Any]:
     raise ValueError(f"unknown scale_id: {scale_id}")
 
 
+def _serviceable_support_node(
+    graph: RoadGraph,
+    *,
+    grid_shape: tuple[int, int],
+    cell_size_m: tuple[float, float],
+    rendezvous_radius_m: float,
+    anchor_m: tuple[float, float],
+) -> str:
+    """Choose the nearest road node whose mapped UAV cell is serviceable."""
+
+    rows, cols = grid_shape
+    row_size_m, col_size_m = cell_size_m
+    radius_sq = float(rendezvous_radius_m) ** 2
+    serviceable: list[str] = []
+    for node_id, (x_m, y_m) in graph.nodes.items():
+        row = min(max(int(round(float(y_m) / row_size_m)), 0), rows - 1)
+        col = min(max(int(round(float(x_m) / col_size_m)), 0), cols - 1)
+        target_x = float(col) * col_size_m
+        target_y = float(row) * row_size_m
+        if (float(x_m) - target_x) ** 2 + (float(y_m) - target_y) ** 2 <= radius_sq + 1e-12:
+            serviceable.append(str(node_id))
+    if not serviceable:
+        raise ValueError(
+            "road graph has no UAV-serviceable node within rendezvous_radius_m"
+        )
+    anchor_x, anchor_y = anchor_m
+    return min(
+        serviceable,
+        key=lambda node_id: (
+            (float(graph.nodes[node_id][0]) - anchor_x) ** 2
+            + (float(graph.nodes[node_id][1]) - anchor_y) ** 2,
+            node_id,
+        ),
+    )
+
+
 def build_synthetic_scenario(
     scale_id: str,
     seed: int,
@@ -456,33 +492,25 @@ def build_synthetic_scenario(
     if blockage > 0:
         _apply_connected_road_blockage(road_graph, blockage, int(seed))
     parameter_values = {key: value.get("value") for key, value in parameters.items() if isinstance(value, dict)}
-    for key in ("vehicle_speed", "service_setup_time", "rendezvous_radius"):
+    for key in (
+        "vehicle_speed",
+        "service_setup_time",
+        "request_safety_margin",
+        "rendezvous_radius",
+    ):
         if key in parameter_overrides:
             record = parameters[key]
             value = float(parameter_overrides[key])
             if not float(record["min"]) <= value <= float(record["max"]):
                 raise ValueError(f"{key} override is outside the registered engineering range")
             parameter_values[key] = value
-    if intervention.condition_id == "baseline":
-        # The depot is the deterministic road node closest to the field entry
-        # corner, matching the UAV initial position and avoiding an arbitrary
-        # node-ID dependent initial travel leg.
-        support_node = min(
-            road_graph.nodes,
-            key=lambda node: (
-                road_graph.nodes[node][0] ** 2 + road_graph.nodes[node][1] ** 2,
-                node,
-            ),
-        )
-    else:
-        support_node = min(
-            road_graph.nodes,
-            key=lambda node: (
-                (road_graph.nodes[node][0] - extent[1] / 2.0) ** 2
-                + (road_graph.nodes[node][1] - extent[0] / 2.0) ** 2,
-                node,
-            ),
-        )
+    support_node = _serviceable_support_node(
+        road_graph,
+        grid_shape=(rows, cols),
+        cell_size_m=cell_size_m,
+        rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),
+        anchor_m=(0.0, 0.0),
+    )
     simultaneous_level = intervention.adaptations.get("simultaneous_requests")
     request_release_steps = _request_release_steps(tuple(uavs), simultaneous_level)
     ablations = set(intervention.ablation_flags)
@@ -497,6 +525,8 @@ def build_synthetic_scenario(
         uav_cell_size_m=cell_size_m,
         uav_speed_mps=float(parameter_values.get("uav_speed", max(cell_size_m) / decision_dt_s)),
         request_threshold_ratio=float(environment.get("request_threshold_ratio", 0.20)),
+        dynamic_request_enabled="remove_endurance_prediction" not in ablations,
+        request_safety_margin_s=float(parameter_values.get("request_safety_margin", 10.0)),
         service_setup_s=float(parameter_values.get("service_setup_time", 10.0)),
         rendezvous_radius_m=float(parameter_values.get("rendezvous_radius", 5.0)),
         max_candidate_slots=int(environment.get("max_candidate_slots", 4)),

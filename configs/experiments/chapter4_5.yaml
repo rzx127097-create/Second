@@ -48,6 +48,9 @@ families:
     - id: service_setup_time
       parameter: service_setup_time
       levels: [5.0, 10.0, 20.0]
+    - id: request_safety_margin
+      parameter: request_safety_margin
+      levels: [0.0, 10.0, 20.0]
     - id: rendezvous_radius
       parameter: rendezvous_radius
       levels: [3.0, 5.0, 10.0]

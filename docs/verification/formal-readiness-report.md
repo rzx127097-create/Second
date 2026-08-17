@@ -5,11 +5,12 @@ Repository branch: `feature/problem2-code-framework`
 
 ## Decision
 
-The repository is ready for deterministic interface checks, field-model
-checks, frozen-road pilots and resource-mechanism pilots. It is **not yet
-unlocked for formal thesis experiments**. The highest supported maturity remains
-**M2**, because external parameter calibration and the sealed-test protocol
-have not been independently approved. The gate is intentionally fail-closed.
+The repository is ready for deterministic checks and controlled-simulation
+training pilots after the tested source is committed and the identity-bound
+preflight is regenerated. The highest supported maturity remains **M2**:
+multi-seed validation pilots and the sealed-test evaluation have not yet been
+run. Field calibration is outside the declared controlled-simulation scope and
+limits claim strength; it is not a software gate for starting simulation jobs.
 
 ## Evidence completed
 
@@ -23,11 +24,11 @@ speed. The registry records the current normalized simulation values together
 with explicit scale conversions; they are not presented as the aircraft's
 literal tank or flow values.
 
-Eight parameters remain pending external evidence: usable capacity fraction,
-support-vehicle inventory, transfer rate, one-service capacity, setup time,
-rendezvous radius, support-vehicle road speed and decision interval. The ledger
-states the exact equipment manual, transfer test, safety protocol or numerical
-convergence record still required for each one.
+Six engineering parameters remain explicit controlled-simulation assumptions:
+usable capacity fraction, setup time, request safety margin, rendezvous radius,
+support-vehicle road speed and decision interval. They are frozen with units,
+ranges and sensitivity levels. Equipment or field evidence would be required
+only to reinterpret them as device- or site-specific constants.
 
 ### Mechanistic field model
 
@@ -43,9 +44,9 @@ spray deposition -> pesticide advection/diffusion/first-order decay
 The implementation is in `src/problem2/field/` and is configured by
 `configs/field_dynamics.yaml`. It enforces non-negativity, carrying-capacity
 clipping, explicit diffusion stability and an upwind CFL condition. The
-configuration is still `status: provisional`: growth, diffusion, wind,
-compound decay and exposure-mortality coefficients require local field,
-meteorological, residue and bioassay data before formal use.
+controlled-simulation profile freezes the coefficients for reproducible
+comparison; local meteorological, residue and bioassay data would still be
+required for field-effectiveness interpretation.
 
 ### Frozen representative road input
 
@@ -66,22 +67,23 @@ must use that wording unless a target-farm GIS survey is supplied.
 
 ### Resource-activation pilot
 
-The frozen-road pilot was rerun with two episodes at scale `s1`:
+The former 160-step pilot is retired because it truncated the first complete
+service cycle. Regenerate the controlled-simulation service probe on the small,
+medium and largest scales:
 
 ```powershell
 python scripts/run_resource_pilot.py `
   --config-dir configs `
-  --output runs/resource-pilot-frozen/raw.jsonl `
-  --report runs/resource-pilot-frozen/activation.json `
-  --scale s1 --episodes 2 --max-steps 160
+  --output runs/resource-pilot/raw.jsonl `
+  --report runs/resource-pilot/activation.json `
+  --scale s1 --scale s3 --scale s6 --episodes 3
 ```
 
-It reported `activated: true`, activation fraction `0.75`, and diagnosis
-`mixed_total_and_spatiotemporal_constraint`. Teleport service transferred
-2.56 L in the pilot; no-support and fixed-support conditions accumulated
-pesticide-disabled time; mobile support reduced disabled time but did not
-complete a transfer within this short horizon. This is mechanism activation
-evidence only, not a claim that mobile SR-MAPPO improves endpoint reduction.
+The pilot uses common prepositioned road-serviceable work sites and a
+deterministic high-demand policy. It is accepted only when all three scales
+show requests, actual mobile transfer, resource conservation and finite event
+metrics. Its endpoint comparison is deliberately marked invalid; formal
+algorithm conclusions require trained policies and paired validation scenes.
 
 ### Practical-equivalence protocol
 
@@ -98,19 +100,17 @@ Run the current report with:
 ```powershell
 python scripts/audit_readiness.py `
   --config-dir configs `
-  --resource-report runs/resource-pilot-frozen/activation.json `
+  --resource-report runs/resource-pilot/activation.json `
   --report runs/readiness/formal-readiness.json
 ```
 
-The road-source gate is now ready. The remaining blockers are:
+Before formal matrix execution, the remaining tasks are:
 
-1. eight engineering parameters still need source records, ranges and unit
-   conversions;
-2. the field-dynamics coefficients need crop-, wind- and compound-specific
-   calibration;
-3. scenario, algorithm and protocol registries remain provisional;
-4. the practical-equivalence margin needs domain approval;
-5. multi-seed pilot and sealed-test evidence have not yet been collected.
+1. commit the verified source and regenerate identity-bound pilot/preflight
+   reports from that commit;
+2. freeze scenario, algorithm and protocol registries after validation pilots;
+3. approve the practical-equivalence margin before sealed-test unlock;
+4. complete multi-seed validation pilots before expanding to the full matrix.
 
 `SR-MAPPO` remains the only flagship algorithm name. HAPPO and
 `AG-SR-MAPPO` are neither implemented nor registered.
@@ -119,9 +119,10 @@ The road-source gate is now ready. The remaining blockers are:
 
 - “implementation tests verify the field-model invariants and road/service
   interfaces”;
-- “the frozen-road pilot activates a finite-resource bottleneck”;
-- “the pilot exhibits both total-supply and spatial-temporal mismatch effects”;
-- “the current coefficients and normalized engineering values are provisional.”
+- “the service probe activates requests and completes mobile pesticide
+  transfer while preserving resource conservation”;
+- “the current coefficients and normalized engineering values are frozen
+  controlled-simulation settings, not field-calibrated constants.”
 
 The following are not yet permitted: formal efficacy, universal scalability,
 field deployment validation, or a claim that mobile support is superior.

@@ -119,6 +119,20 @@ engineering_parameters:
     selection_rule: Use 10 s and vary 5, 10 and 20 s.
     sensitivity_required: true
     sensitivity_levels: [5.0, 10.0, 20.0]
+  request_safety_margin:
+    runtime_path: parameter_registry.parameters.request_safety_margin
+    value: 10.0
+    unit: s
+    min: 0.0
+    max: 60.0
+    source_type: assumption
+    source_id: controlled-scene-assumption-request-safety-margin-v1
+    reference_range: [0.0, 60.0]
+    conversion: value = forecast and dispatch safety margin in seconds
+    assumption_rationale: Ten seconds is shorter than the nominal spray endurance and absorbs bounded arrival-time error.
+    selection_rule: Use 10 s and vary 0, 10 and 20 s.
+    sensitivity_required: true
+    sensitivity_levels: [0.0, 10.0, 20.0]
   rendezvous_radius:
     runtime_path: parameter_registry.parameters.rendezvous_radius
     value: 5.0

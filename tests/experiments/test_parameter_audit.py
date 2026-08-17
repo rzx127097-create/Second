@@ -62,7 +62,7 @@ def test_parameter_audit_rejects_out_of_range_and_inconsistent_units() -> None:
                 "uav_onboard_pesticide", "uav_usable_fraction", "uav_spray_flow",
                 "uav_speed", "vehicle_inventory", "vehicle_transfer_rate",
                 "vehicle_service_capacity", "service_setup_time", "rendezvous_radius",
-                "vehicle_speed", "decision_dt",
+                "vehicle_speed", "decision_dt", "request_safety_margin",
             )},
         }
     )
@@ -84,16 +84,17 @@ def test_repository_registry_is_explicitly_provisional_until_sources_are_added()
     assert report.status == "provisional"
     assert report.missing_parameters == ()
     # Public product references now cover inventory, service capacity and
-    # transfer-rate ranges; five project-specific values still need direct
+    # transfer-rate ranges; six project-specific values still need direct
     # equipment, field or numerical evidence.
-    assert len([issue for issue in report.issues if issue.code == "unverified_source"]) == 5
+    assert len([issue for issue in report.issues if issue.code == "unverified_source"]) == 6
 
 
 def test_verified_parameter_fixture_has_no_blocking_issues() -> None:
     names = (
         "uav_onboard_pesticide", "uav_usable_fraction", "uav_spray_flow", "uav_speed",
         "vehicle_inventory", "vehicle_transfer_rate", "service_setup_time",
-        "vehicle_service_capacity", "rendezvous_radius", "vehicle_speed", "decision_dt",
+        "vehicle_service_capacity", "request_safety_margin", "rendezvous_radius",
+        "vehicle_speed", "decision_dt",
     )
     registry = {"status": "verified", "parameters": {name: _record() for name in names}}
     registry["parameters"]["uav_usable_fraction"] = _record(

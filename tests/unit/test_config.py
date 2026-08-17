@@ -103,5 +103,9 @@ def test_controlled_simulation_units_resources_and_stability_are_consistent() ->
         "uav_onboard_pesticide", "uav_spray_flow", "uav_usable_fraction",
         "uav_speed", "vehicle_inventory", "vehicle_transfer_rate",
         "vehicle_service_capacity", "service_setup_time", "rendezvous_radius",
-        "vehicle_speed", "decision_dt",
+        "vehicle_speed", "decision_dt", "request_safety_margin",
     }
+    assert 0.0 <= float(parameters["request_safety_margin"]["value"]) < (
+        usable_l / float(parameters["uav_spray_flow"]["value"])
+    )
+    assert float(bundle.environment["request_threshold_ratio"]) == 0.20

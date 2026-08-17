@@ -21,6 +21,7 @@ class ServiceStateMachine:
     phase: ServicePhase = ServicePhase.IDLE
     request_id: str | None = None
     setup_remaining_s: float = 0.0
+    allocation_remaining_l: float = 0.0
 
     @property
     def locked_uav_id(self) -> str | None:
@@ -104,15 +105,43 @@ class ServiceStateMachine:
             self.setup_remaining_s = max(0.0, self.setup_remaining_s - dt_s)
             if self.setup_remaining_s <= 1e-12:
                 manager.start_service(self.request_id, step)
+                request = manager.get(self.request_id)
+                uav = resources.uav(request.uav_id)
+                vehicle = resources.vehicle(vehicle_id)
+                self.allocation_remaining_l = min(
+                    request.remaining_l,
+                    max(0.0, uav.capacity_l - uav.onboard_l),
+                    max(0.0, vehicle.inventory_l),
+                    max(0.0, vehicle.service_cap_l),
+                )
+                if self.allocation_remaining_l <= 1e-12:
+                    manager.mark_unsatisfied(self.request_id, "no_transfer_capacity", step)
+                    self._release()
+                    return 0.0
                 self.phase = ServicePhase.TRANSFERRING
             return 0.0
         amount = min(
+            self.allocation_remaining_l,
             request.remaining_l,
             resources.uav(request.uav_id).capacity_l - resources.uav(request.uav_id).onboard_l,
             resources.vehicle(vehicle_id).transfer_rate_l_s * dt_s,
         )
         result = resources.transfer(request.uav_id, vehicle_id, amount)
-        manager.apply_transfer(self.request_id, result.amount_l, step)
+        self.allocation_remaining_l = max(
+            0.0, self.allocation_remaining_l - result.amount_l,
+        )
+        batch_complete = (
+            self.allocation_remaining_l <= 1e-12
+            or resources.vehicle(vehicle_id).inventory_l <= 1e-12
+            or resources.uav(request.uav_id).capacity_l
+            - resources.uav(request.uav_id).onboard_l <= 1e-12
+        )
+        manager.apply_transfer(
+            self.request_id,
+            result.amount_l,
+            step,
+            batch_complete=batch_complete,
+        )
         current = manager.get(self.request_id)
         if current.status is RequestStatus.COMPLETED:
             self._release()
@@ -137,3 +166,4 @@ class ServiceStateMachine:
         self.request_id = None
         self._locked_uav_id = None
         self.setup_remaining_s = 0.0
+        self.allocation_remaining_l = 0.0

@@ -19,6 +19,7 @@ import yaml
 
 from problem2.config import config_identity, load_config_bundle
 from problem2.experiments.job_identity import capture_git_provenance
+from problem2.road.graphml import load_graphml
 
 
 ENGINEERING_PARAMETERS = (
@@ -30,6 +31,7 @@ ENGINEERING_PARAMETERS = (
     "vehicle_transfer_rate",
     "vehicle_service_capacity",
     "service_setup_time",
+    "request_safety_margin",
     "rendezvous_radius",
     "vehicle_speed",
     "decision_dt",
@@ -165,6 +167,24 @@ def _check_profile_record(
             errors.append(_issue("error", "profile_value_out_of_range", path, "profile value lies outside its range"))
     if str(record.get("unit")) != str(runtime_record.get("unit")):
         errors.append(_issue("error", "profile_runtime_unit_mismatch", path, "profile and runtime units differ"))
+    profile_source_type = str(record.get("source_type", "")).strip()
+    runtime_source_type = str(runtime_record.get("source_type", "")).strip()
+    runtime_source_id = str(
+        runtime_record.get("simulation_source_id")
+        if runtime_source_type == "assumption"
+        and runtime_record.get("simulation_source_id")
+        else runtime_record.get("source_id", "")
+    ).strip()
+    if (
+        profile_source_type != runtime_source_type
+        or str(record.get("source_id", "")).strip() != runtime_source_id
+    ):
+        errors.append(_issue(
+            "error",
+            "profile_runtime_source_mismatch",
+            path,
+            "profile and runtime source metadata differ",
+        ))
     if _finite(record.get("value")) and _finite(runtime_record.get("value")):
         if not math.isclose(float(record["value"]), float(runtime_record["value"]), rel_tol=1e-12, abs_tol=1e-12):
             errors.append(_issue("error", "profile_runtime_mismatch", path, "profile and runtime values differ"))
@@ -177,7 +197,7 @@ def _check_profile_record(
             errors.append(_issue("error", "invalid_sensitivity_levels", f"{path}.sensitivity_levels", "at least two finite sensitivity levels are required"))
     elif not str(record.get("sensitivity_exclusion_rationale", "")).strip():
         errors.append(_issue("error", "missing_sensitivity_exclusion", path, "an exclusion rationale is required when sensitivity is false"))
-    if str(record.get("source_type")) == "assumption":
+    if profile_source_type == "assumption":
         warnings.append(_issue("warning", "assumption_source", path, "parameter is an explicit controlled-simulation assumption"))
 
 
@@ -278,10 +298,26 @@ def _derived_regimes(config: Any, profile: SimulationProfile, errors: list[Simul
     pest_diffusion = float(runtime_field["pest_diffusion_rate_m2_s"]["value"])
     pesticide_diffusion = float(runtime_field["pesticide_diffusion_rate_m2_s"]["value"])
     rows: dict[str, Any] = {}
+    rendezvous_candidate_count: dict[str, int] = {}
+    uav_steps_per_cell: dict[str, float] = {}
     max_courant = 0.0
     max_pest_diffusion_number = 0.0
     max_pesticide_diffusion_number = 0.0
     minimum_horizon_s = math.inf
+    road_config = config.environment.get("road", {})
+    graphml_path = Path(str(road_config.get("graphml_path", "")))
+    if not graphml_path.is_absolute():
+        graphml_path = profile.path.parent.parent / graphml_path
+    origin = road_config.get("origin_lonlat", [0.0, 0.0])
+    road_graph, _road_metadata = load_graphml(
+        graphml_path,
+        coordinate_mode=str(road_config.get("coordinate_mode", "metric")),
+        origin_lonlat=(float(origin[0]), float(origin[1])),
+        directed_policy=str(road_config.get("directed_policy", "undirected")),
+        bbox_lonlat=tuple(road_config["bbox_lonlat"]) if road_config.get("bbox_lonlat") else None,
+    )
+    rendezvous_radius = float(runtime_parameters["rendezvous_radius"]["value"])
+    uav_step_distance = float(runtime_parameters["uav_speed"]["value"]) * dt
     for scale in config.scales.get("scales", []):
         scale_id = str(scale["id"])
         grid_rows, grid_cols = (int(scale["grid"][0]), int(scale["grid"][1]))
@@ -302,6 +338,21 @@ def _derived_regimes(config: Any, profile: SimulationProfile, errors: list[Simul
             "pest_diffusion_number": pest_number,
             "pesticide_diffusion_number": pesticide_number,
         }
+        candidate_count = 0
+        for x_m, y_m in road_graph.nodes.values():
+            mapped_x = round(float(x_m) / dx) * dx
+            mapped_y = round(float(y_m) / dy) * dy
+            if math.hypot(float(x_m) - mapped_x, float(y_m) - mapped_y) <= rendezvous_radius + 1e-12:
+                candidate_count += 1
+        rendezvous_candidate_count[scale_id] = candidate_count
+        uav_steps_per_cell[scale_id] = min(dx, dy) / max(uav_step_distance, 1e-12)
+        if candidate_count == 0:
+            errors.append(_issue(
+                "error",
+                "no_rendezvous_geometry",
+                f"scales.{scale_id}",
+                "no road node maps to a UAV cell within the configured rendezvous radius",
+            ))
     if max_courant > 1.0 + 1e-12:
         errors.append(_issue("error", "wind_cfl_violation", "field_dynamics", f"maximum wind Courant number is {max_courant:.6g}"))
     if max_pest_diffusion_number > 0.5 + 1e-12 or max_pesticide_diffusion_number > 0.5 + 1e-12:
@@ -331,6 +382,9 @@ def _derived_regimes(config: Any, profile: SimulationProfile, errors: list[Simul
         "vehicle_to_uav_inventory_ratio": float(runtime_parameters["vehicle_inventory"]["value"]) / max(usable_l, 1e-12),
         "uav_distance_per_decision_m": float(runtime_parameters["uav_speed"]["value"]) * dt,
         "vehicle_distance_per_decision_m": float(runtime_parameters["vehicle_speed"]["value"]) * dt,
+        "request_safety_margin_s": float(runtime_parameters["request_safety_margin"]["value"]),
+        "rendezvous_candidate_count": rendezvous_candidate_count,
+        "uav_steps_per_cell": uav_steps_per_cell,
         "max_wind_courant": max_courant,
         "max_pest_diffusion_number": max_pest_diffusion_number,
         "max_pesticide_diffusion_number": max_pesticide_diffusion_number,

@@ -138,6 +138,37 @@ def test_resource_audit_identifies_mismatch_and_mobile_gap_closure() -> None:
     assert report.diagnosis == "mixed_total_and_spatiotemporal_constraint"
 
 
+def test_resource_audit_does_not_call_unserviceable_mobile_support_activated() -> None:
+    rows = [
+        _row("unlimited_supply", 0.90, requests=0, disabled=0.0, wait=0.0),
+        _row("finite_no_support", 0.50, requests=2, disabled=10.0, wait=0.0),
+        _row("matched_fixed", 0.50, requests=2, disabled=10.0, wait=10.0),
+        _row("teleport_diagnostic", 0.80, requests=2, disabled=0.0, wait=0.0),
+        _row("sr_mappo_mobile", 0.50, requests=2, disabled=10.0, wait=10.0),
+    ]
+    rows[-1]["request_completion_rate"] = 0.0
+    rows[-1]["transferred_l"] = 0.0
+
+    report = audit_resource_activation(rows)
+
+    assert report.demand_activated is True
+    assert report.mobile_service_feasible is False
+    assert report.activated is False
+    assert report.diagnosis == "resource_constraint_active_but_mobile_unserviceable"
+
+
+def test_mobile_gap_closure_requires_a_positive_teleport_gap() -> None:
+    rows = [
+        _row("matched_fixed", 0.80, requests=2, disabled=3.0, wait=2.0),
+        _row("teleport_diagnostic", 0.70, requests=2, disabled=1.0, wait=0.0),
+        _row("sr_mappo_mobile", 0.75, requests=2, disabled=2.0, wait=1.0),
+    ]
+
+    report = audit_resource_activation(rows)
+
+    assert report.mobile_gap_closure is None
+
+
 def test_resource_audit_script_writes_machine_readable_report(tmp_path: Path) -> None:
     input_path = tmp_path / "episodes.jsonl"
     report_path = tmp_path / "audit.json"

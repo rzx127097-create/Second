@@ -36,9 +36,18 @@ class RendezvousCandidate:
         return f"{self.request_id}:{self.point_id}"
 
 
-def _point_values(point: RendezvousPoint | Mapping[str, Any]) -> tuple[str, str, tuple[float, float], float, bool]:
+def _point_values(
+    point: RendezvousPoint | Mapping[str, Any],
+) -> tuple[str, str, tuple[float, float], float, bool, float]:
     if isinstance(point, RendezvousPoint):
-        return point.point_id, point.road_node_id, point.position, point.distance_m, point.reachable
+        return (
+            point.point_id,
+            point.road_node_id,
+            point.position,
+            point.distance_m,
+            point.reachable,
+            point.service_separation_m,
+        )
     try:
         return (
             str(point["point_id"]),
@@ -46,6 +55,7 @@ def _point_values(point: RendezvousPoint | Mapping[str, Any]) -> tuple[str, str,
             (float(point["position"][0]), float(point["position"][1])),
             float(point["distance_m"]),
             bool(point.get("reachable", True)),
+            float(point.get("service_separation_m", 0.0)),
         )
     except (KeyError, TypeError, IndexError, ValueError) as exc:
         raise ValueError("rendezvous point must provide identifiers, position and distance_m") from exc
@@ -100,15 +110,22 @@ def generate_rendezvous_candidates(
     )
     result: list[RendezvousCandidate] = []
     for point in points:
-        point_id, road_node_id, _position, uav_distance_m, reachable = _point_values(point)
+        (
+            point_id,
+            road_node_id,
+            _position,
+            uav_distance_m,
+            reachable,
+            service_separation_m,
+        ) = _point_values(point)
         if not reachable or not graph.has_node(road_node_id):
             continue
         try:
             _path, road_distance_m = shortest_path(graph, vehicle_node, road_node_id)
         except ValueError:
             continue
-        if uav_distance_m < 0:
-            raise ValueError("uav distance must be non-negative")
+        if uav_distance_m < 0 or service_separation_m < 0:
+            raise ValueError("rendezvous distances must be non-negative")
         uav_eta_s = eta_seconds(uav_distance_m, uav_speed_mps)
         vehicle_ready_eta_s = vehicle_release_s + eta_seconds(road_distance_m, vehicle_speed_mps)
         joint_arrival_eta_s = max(uav_eta_s, vehicle_ready_eta_s)
@@ -119,7 +136,7 @@ def generate_rendezvous_candidates(
             response_time_s=joint_arrival_eta_s + service_duration_s,
         )
         reason: str | None = None
-        if uav_distance_m > rendezvous_radius_m + 1e-12:
+        if service_separation_m > rendezvous_radius_m + 1e-12:
             reason = "outside_rendezvous_radius"
         elif vehicle_inventory_l <= 0:
             reason = "vehicle_inventory_empty"

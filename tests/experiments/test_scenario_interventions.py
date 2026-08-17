@@ -29,6 +29,7 @@ def test_parameter_intervention_is_typed_bounded_and_recorded() -> None:
             ("vehicle_speed", 2.0),
             ("service_setup_time", 20.0),
             ("rendezvous_radius", 10.0),
+            ("request_safety_margin", 20.0),
         ),
     )
     bundle = build_synthetic_scenario("s1", 5, config_dir=CONFIG_DIR, intervention=intervention)
@@ -38,6 +39,7 @@ def test_parameter_intervention_is_typed_bounded_and_recorded() -> None:
     assert bundle.adapter.vehicle_speed_mps == 2.0
     assert bundle.adapter.service_setup_s == 20.0
     assert bundle.adapter.rendezvous_radius_m == 10.0
+    assert bundle.adapter.request_safety_margin_s == 20.0
     assert all(state.onboard_l == 0.5 * state.capacity_l for state in bundle.resources.uavs.values())
 
 
@@ -47,6 +49,8 @@ def test_vehicle_service_capacity_is_explicitly_separate_from_inventory() -> Non
     assert bundle.resources.vehicle("vehicle-1").service_cap_l <= (
         bundle.resources.vehicle("vehicle-1").capacity_l
     )
+    assert bundle.adapter.dynamic_request_enabled is True
+    assert bundle.adapter.request_safety_margin_s == 10.0
 
 
 def test_unlimited_diagnostic_removes_onboard_bottleneck_without_breaking_conservation() -> None:
@@ -264,6 +268,8 @@ def test_remove_endurance_prediction_removes_exhaustion_signal_from_candidates()
     assert np.any(full_candidates[:, 9] == 1.0)
     assert np.all(removed_candidates[:, 9] == 0.0)
     assert np.isfinite(removed_candidates).all()
+    assert full.adapter.dynamic_request_enabled is True
+    assert removed.adapter.dynamic_request_enabled is False
 
 
 def test_remove_joint_demand_rendezvous_uses_fifo_instead_of_urgency_order() -> None:
@@ -287,10 +293,10 @@ def test_remove_joint_demand_rendezvous_uses_fifo_instead_of_urgency_order() -> 
     # Exhausting both UAVs makes both urgency scores ``inf`` and therefore
     # cannot distinguish joint prioritisation from FIFO ordering.
     for bundle in (full, removed):
-        bundle.adapter.request_threshold_ratio = 0.9
         bundle.reset()
-        bundle.resources.spray("uav-1", 0.3)
+        bundle.resources.spray("uav-1", 0.4)
         bundle.resources.spray("uav-2", 0.7)
+        _legal_step(bundle)
 
     full_snapshot = _legal_step(full)
     removed_snapshot = _legal_step(removed)

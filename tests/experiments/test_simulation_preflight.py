@@ -36,6 +36,14 @@ def test_assumption_sources_are_warnings_not_runtime_errors(tmp_path: Path) -> N
     assert report.warnings
     assert all(issue.level == "warning" for issue in report.warnings)
     assert report.to_dict()["evidence_mode"] == "controlled_simulation"
+    assert all(
+        count > 0
+        for count in report.derived_regimes["rendezvous_candidate_count"].values()
+    )
+    assert all(
+        value >= 1.0
+        for value in report.derived_regimes["uav_steps_per_cell"].values()
+    )
 
 
 def test_missing_assumption_rationale_is_a_technical_error(tmp_path: Path) -> None:
@@ -68,6 +76,26 @@ def test_profile_runtime_value_mismatch_is_an_error(tmp_path: Path) -> None:
 
     assert report.ready is False
     assert any(issue.code == "profile_runtime_mismatch" for issue in report.errors)
+
+
+def test_profile_runtime_source_mismatch_is_an_error(tmp_path: Path) -> None:
+    config_dir = _config_copy(tmp_path)
+    field = config_dir / "field_dynamics.yaml"
+    field.write_text(
+        field.read_text(encoding="utf-8").replace(
+            "source_type: peer-reviewed-study",
+            "source_type: assumption",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    report = audit_simulation_preflight(config_dir)
+
+    assert report.ready is False
+    assert any(
+        issue.code == "profile_runtime_source_mismatch" for issue in report.errors
+    )
 
 
 def test_unstable_field_update_is_an_error(tmp_path: Path) -> None:

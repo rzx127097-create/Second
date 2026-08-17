@@ -125,6 +125,43 @@ def test_adapter_maps_vehicle_slot_to_route_and_advances_on_road() -> None:
     assert completed.action_masks["vehicle-1"].valid_actions == ("hold",)
 
 
+def test_uav_grid_motion_uses_metric_speed_instead_of_one_cell_per_step() -> None:
+    adapter = HeterogeneousDecisionAdapter(
+        resources(),
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 2),
+        uav_cell_size_m=(10.0, 10.0),
+        uav_speed_mps=1.0,
+    )
+    adapter.reset(seed=4)
+
+    started = adapter.step({"uav-1": "right", "vehicle-1": "hold"})
+
+    assert adapter.uav_positions["uav-1"] == (0, 0)
+    movement = next(
+        event for event in started.events
+        if event["event_type"] == "uav_movement_applied"
+    )
+    assert movement["distance_m"] == pytest.approx(1.0)
+    assert movement["route_complete"] is False
+    assert started.action_masks["uav-1"].valid_actions == ("hold",)
+
+    travelled = movement["distance_m"]
+    for _ in range(9):
+        state = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+        travelled += next(
+            event["distance_m"] for event in state.events
+            if event["event_type"] == "uav_movement_applied"
+        )
+
+    assert travelled == pytest.approx(10.0)
+    assert adapter.uav_positions["uav-1"] == (0, 1)
+    assert "left" in state.action_masks["uav-1"].valid_actions
+
+
 def test_adapter_reset_restores_pesticide_state_deterministically() -> None:
     adapter = HeterogeneousDecisionAdapter(
         resources(), graph(), uav_slots=("uav-1",), vehicle_slots=("vehicle-1",),
@@ -188,6 +225,163 @@ def test_adapter_builds_vehicle_slots_from_section_4_3_rendezvous_candidates() -
     assert candidate["joint_arrival_eta_s"] == pytest.approx(0.0)
 
 
+def test_joint_rendezvous_can_select_a_future_uav_cell_outside_service_radius() -> None:
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.1, 1.0, 0.1)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 1.0, 1.0, 1.0, 1.0)},
+    )
+    adapter = HeterogeneousDecisionAdapter(
+        candidate_resources,
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=1.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 7),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        request_threshold_ratio=0.9,
+        service_setup_s=0.0,
+        rendezvous_radius_m=0.5,
+        max_candidate_slots=3,
+        initial_vehicle_nodes={"vehicle-1": "c"},
+    )
+    adapter.reset(seed=31)
+
+    state = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    request = adapter.request_manager.active_requests()[0]
+    assert state.candidate_mapping["vehicle-1"] == (
+        ("slot-0", f"{request.request_id}:rv-b"),
+    )
+
+
+def test_dynamic_request_uses_remaining_endurance_and_response_time() -> None:
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.1, 1.0, 0.1)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 1.0, 1.0, 1.0, 1.0)},
+    )
+    adapter = HeterogeneousDecisionAdapter(
+        candidate_resources,
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=1.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 7),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        request_threshold_ratio=0.0,
+        dynamic_request_enabled=True,
+        request_safety_margin_s=1.0,
+        service_setup_s=1.0,
+        rendezvous_radius_m=0.5,
+        initial_vehicle_nodes={"vehicle-1": "c"},
+    )
+    adapter.reset(seed=32)
+
+    state = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    assert len(adapter.request_manager.active_requests()) == 1
+    created = next(event for event in state.events if event["event_type"] == "request_created")
+    assert created["trigger"] == "dynamic_endurance"
+    assert created["remaining_work_s"] == pytest.approx(1.0)
+    assert created["required_response_s"] > created["remaining_work_s"]
+    assert created["amount_l"] >= 0.9
+
+
+def test_dynamic_request_volume_is_bounded_by_current_tank_gap() -> None:
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.3, 1.0, 0.01)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 1.0, 1.0, 0.01, 0.8)},
+    )
+    adapter = HeterogeneousDecisionAdapter(
+        candidate_resources,
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=1.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 7),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        dynamic_request_enabled=True,
+        service_setup_s=0.0,
+        rendezvous_radius_m=0.5,
+        initial_vehicle_nodes={"vehicle-1": "a"},
+    )
+    adapter.reset(seed=33)
+
+    state = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    created = next(event for event in state.events if event["event_type"] == "request_created")
+    request = adapter.request_manager.active_requests()[0]
+    assert created["amount_l"] == pytest.approx(0.7)
+    assert request.requested_l == pytest.approx(0.7)
+
+
+def test_fixed_support_request_forecast_uses_the_stationary_service_node() -> None:
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.1, 1.0, 0.1)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 1.0, 1.0, 10.0, 1.0)},
+    )
+    adapter = HeterogeneousDecisionAdapter(
+        candidate_resources,
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=100.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 7),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        dynamic_request_enabled=True,
+        service_setup_s=0.0,
+        rendezvous_radius_m=0.5,
+        support_mode="fixed",
+        initial_vehicle_nodes={"vehicle-1": "a"},
+    )
+    adapter.reset(seed=34)
+    adapter.uav_positions["uav-1"] = (0, 6)
+    adapter._uav_metric_positions["uav-1"] = (6.0, 0.0)
+    adapter._refresh_state(events=[])
+
+    state = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    created = next(event for event in state.events if event["event_type"] == "request_created")
+    assert created["required_response_s"] == pytest.approx(6.09)
+
+
+def test_request_forecast_uses_four_connected_uav_travel_distance() -> None:
+    diagonal_graph = RoadGraph.from_edges({"rv": (3.0, 4.0)}, [])
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.6, 1.0, 0.1)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 1.0, 1.0, 10.0, 1.0)},
+    )
+    adapter = HeterogeneousDecisionAdapter(
+        candidate_resources,
+        diagonal_graph,
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=1.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(5, 4),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        dynamic_request_enabled=True,
+        service_setup_s=0.0,
+        rendezvous_radius_m=0.5,
+        support_mode="fixed",
+        initial_vehicle_nodes={"vehicle-1": "rv"},
+    )
+    adapter.reset(seed=35)
+
+    state = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    created = next(event for event in state.events if event["event_type"] == "request_created")
+    assert created["required_response_s"] == pytest.approx(7.04)
+
+
 def test_reservation_does_not_hard_lock_uav_before_joint_arrival() -> None:
     adapter = rendezvous_adapter()
     adapter.reset(seed=21)
@@ -215,6 +409,22 @@ def test_service_preparation_starts_only_after_both_roles_arrive() -> None:
     assert arrived.action_masks["uav-1"].valid_actions == ("hold",)
     assert arrived.action_masks["vehicle-1"].valid_actions == ("hold",)
     assert any(event["event_type"] == "joint_arrival" for event in arrived.events)
+
+
+def test_service_lock_is_not_counted_as_empty_tank_disablement() -> None:
+    adapter = rendezvous_adapter()
+    adapter.reset(seed=23)
+    adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+    adapter.step({"uav-1": "right", "vehicle-1": "slot-0"})
+    adapter.step({"uav-1": "left", "vehicle-1": "hold"})
+
+    service_step = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    assert adapter.resources.uav("uav-1").onboard_l > 0.0
+    assert any(event["event_type"] == "service_active" for event in service_step.events)
+    assert not any(
+        event["event_type"] == "pesticide_disabled" for event in service_step.events
+    )
 
 
 def test_adapter_records_actual_spray_and_lock_blocks_spray() -> None:

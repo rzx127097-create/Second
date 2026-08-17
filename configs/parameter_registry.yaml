@@ -1,11 +1,10 @@
 status: provisional
 note: >-
-  Simulation values are provisional. The UAV records carry explicit DJI T40
-  source metadata and scene-scale conversions. Three ground-support records
-  now carry public product reference ranges and explicit scene-scale
-  conversions, but they still require a vehicle-match or timed field test.
-  Records marked assumption remain blocking for formal evidence. Do not use
-  this registry as formal experimental evidence until status is verified.
+  Values are frozen for the declared controlled-simulation scope. The UAV
+  records carry DJI T40 metadata and explicit scene-scale conversions; three
+  ground-support records carry public product reference ranges. Records marked
+  assumption are auditable simulation choices and require sensitivity analysis.
+  They are not field-validated constants and cannot support deployment claims.
 parameters:
   uav_onboard_pesticide:
     symbol: q_i_max
@@ -127,6 +126,25 @@ parameters:
     assumption_rationale: "Ten seconds represents a short but nonzero connection and preparation interval in a discrete service model."
     selection_rule: "Use the lower-middle operating point and vary 5, 10 and 20 seconds in sensitivity."
     sensitivity_levels: [5.0, 10.0, 20.0]
+    status: provisional
+    scope: main
+  request_safety_margin:
+    symbol: Delta_T_safe
+    meaning: "time margin used by the dynamic replenishment-request trigger"
+    value: 10.0
+    unit: s
+    min: 0.0
+    max: 60.0
+    source_type: assumption
+    source_id: "controlled-scene-assumption-request-safety-margin-v1"
+    source_value: null
+    source_unit: null
+    conversion: null
+    simulation_source_id: "controlled-scene-assumption-request-safety-margin-v1"
+    reference_range: [0.0, 60.0]
+    assumption_rationale: "Ten seconds provides a bounded forecast-error buffer without exceeding the 80 s nominal spray endurance."
+    selection_rule: "Use 10 s in the main run and vary 0, 10 and 20 s in sensitivity."
+    sensitivity_levels: [0.0, 10.0, 20.0]
     status: provisional
     scope: main
   rendezvous_radius:

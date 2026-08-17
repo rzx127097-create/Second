@@ -53,11 +53,12 @@
   using each scale's metric cell size. Do not silently amplify efficacy or
   mortality to force the 85% threshold; emit a treatment-capacity warning when
   the deterministic upper-bound diagnostic shows the endpoint is unreachable.
-- Use a mass-conserving closed boundary for pest advection. Keep the existing
-  open boundary for pesticide exposure so spray drift can leave the field. A
-  pest leaving the grid must not be counted as pesticide control.
+- Use a mass-conserving periodic numerical boundary for pest advection. Keep
+  the existing open boundary for pesticide exposure so spray drift can leave
+  the field. A pest leaving the modeled grid must not be counted as pesticide
+  control.
 - Add explicit rationale, selection rule, sensitivity policy, and reference or
-  scene-scale conversion metadata for all 11 engineering records and all
+  scene-scale conversion metadata for all 12 engineering records and all
   field-dynamics records.
 
 - [ ] **Step 1: Write failing tests**
@@ -104,7 +105,7 @@
   python scripts/audit_simulation_preflight.py --config-dir configs --report runs/simulation-preflight.json
   ```
 
-  Confirm the report contains the 11 engineering values, field parameters,
+  Confirm the report contains the 12 engineering values, field parameters,
   cell sizes, spray endurance, nominal service time, CFL/diffusion numbers and
   explicit warnings. If the treatment-capacity diagnostic shows the old
   efficacy/mortality pair is analytically incapable of reaching 85% even with

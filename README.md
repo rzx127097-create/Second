@@ -109,7 +109,7 @@ python scripts/run_resource_pilot.py `
   --config-dir configs `
   --output runs/resource-pilot/raw.jsonl `
   --report runs/resource-pilot/activation.json `
-  --scale s1 --episodes 5 --max-steps 600
+  --scale s1 --scale s3 --scale s6 --episodes 3
 
 python scripts/audit_simulation_preflight.py `
   --config-dir configs `
@@ -120,7 +120,11 @@ python scripts/audit_simulation_preflight.py `
 
 The resource report must match the current configuration, simulation profile,
 Git commit, and source-tree hash. The older checked-in pilot predates the
-boundary and efficacy corrections and is not current mechanism evidence.
+boundary and efficacy corrections and is not current mechanism evidence. The
+pilot prepositions UAVs at shared road-serviceable work sites and uses a
+deterministic stress policy; it validates request, waiting, transfer, and
+conservation paths only. Its treatment endpoint is not a fair algorithm
+comparison.
 
 After committing the verified source so the worktree is clean, enumerate the
 full 150-job main-comparison matrix and run one pilot identity:

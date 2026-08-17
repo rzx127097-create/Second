@@ -39,7 +39,9 @@ def _restored_algorithm() -> SRMAPPOAlgorithm:
 
 def _request_bundle():
     bundle = _bundle()
-    bundle.adapter._initial_uav_onboard["uav-1"] = 0.15
+    # Start empty so the dynamic endurance trigger has an immediate, physical
+    # reason to create a request during the short rollout smoke horizon.
+    bundle.adapter._initial_uav_onboard["uav-1"] = 0.0
     bundle.adapter.service_setup_s = 0.0
     bundle.adapter.rendezvous_radius_m = 30.0
     bundle.adapter.vehicle_speed_mps = 100.0

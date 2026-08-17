@@ -60,6 +60,7 @@ def test_chapter45_protocol_expands_every_registered_experiment_family() -> None
         "vehicle_speed",
         "service_setup_time",
         "rendezvous_radius",
+        "request_safety_margin",
     }
     assert len(spec.expand("main_comparison")) == 5 * 6 * 5
     assert spec.statistics["bootstrap_draws"] >= 2000

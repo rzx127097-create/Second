@@ -107,6 +107,35 @@ def test_candidate_generation_uses_road_eta_and_rejects_unreachable_or_late_poin
     assert deferred[0].pesticide_disabled_expected is True
 
 
+def test_candidate_service_radius_checks_arrival_geometry_not_current_uav_distance() -> None:
+    candidates = generate_rendezvous_candidates(
+        [{
+            "point_id": "p-b",
+            "road_node_id": "b",
+            "position": (2.0, 0.0),
+            "distance_m": 2.0,
+            "service_separation_m": 0.25,
+        }],
+        graph=road_graph(),
+        vehicle_node="c",
+        vehicle_speed_mps=1.0,
+        uav_speed_mps=1.0,
+        remaining_work_s=10.0,
+        requested_l=0.2,
+        vehicle_inventory_l=1.0,
+        service_cap_l=0.5,
+        service_setup_s=1.0,
+        transfer_rate_l_s=0.1,
+        rendezvous_radius_m=0.5,
+        request_id="req-1",
+        uav_id="uav-1",
+    )
+
+    assert candidates[0].uav_distance_m == pytest.approx(2.0)
+    assert candidates[0].feasible is True
+    assert candidates[0].reason is None
+
+
 def test_candidate_action_slots_preserve_mapping_and_disable_padding() -> None:
     candidate = RendezvousCandidate(
         request_id="req-1",

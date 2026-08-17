@@ -46,13 +46,41 @@ def _action_for_snapshot(snapshot: Any) -> dict[str, str]:
     for agent_id, observation in snapshot.role_observations.items():
         valid = snapshot.action_masks[agent_id].valid_actions
         if observation.get("role") == "uav":
-            actions[agent_id] = "spray" if "spray" in valid else "hold"
+            actions[agent_id] = (
+                "spray"
+                if "spray" in valid
+                else next((name for name in valid if name != "hold"), "hold")
+            )
         else:
             actions[agent_id] = next((name for name in valid if name != "hold"), "hold")
     return actions
 
 
-def _run_episode(config_dir: Path, scale: str, seed: int, scenario_id: str, intervention: ScenarioIntervention, max_steps: int) -> dict[str, object]:
+def _preposition_uavs_for_spatial_probe(bundle: Any) -> None:
+    """Place UAVs at shared remote, road-serviceable diagnostic work sites."""
+
+    adapter = bundle.adapter
+    probe_uav = adapter.uav_slots[0]
+    points = sorted(
+        adapter._rendezvous_points(probe_uav, include_all_nodes=True),
+        key=lambda point: (point.distance_m, point.road_node_id),
+        reverse=True,
+    )
+    if len(points) < len(adapter.uav_slots):
+        raise ValueError("resource pilot needs one serviceable work site per UAV")
+    for uav_id, point in zip(adapter.uav_slots, points):
+        target_cell = adapter.road_node_to_uav_cell(point.road_node_id)
+        row_size_m, col_size_m = adapter.uav_cell_size_m
+        adapter.uav_positions[uav_id] = target_cell
+        adapter._uav_metric_positions[uav_id] = (
+            float(target_cell[1]) * col_size_m,
+            float(target_cell[0]) * row_size_m,
+        )
+    adapter._refresh_request_candidates()
+    adapter._refresh_state(events=[])
+
+
+def _run_episode(config_dir: Path, scale: str, seed: int, scenario_id: str, intervention: ScenarioIntervention, max_steps: int | None) -> dict[str, object]:
     bundle = build_synthetic_scenario(
         scale,
         seed,
@@ -60,14 +88,17 @@ def _run_episode(config_dir: Path, scale: str, seed: int, scenario_id: str, inte
         scenario_id=scenario_id,
         intervention=intervention,
     )
-    snapshot = bundle.reset()
+    bundle.reset()
+    _preposition_uavs_for_spatial_probe(bundle)
+    snapshot = bundle._snapshot(events=())
     initial_pest = float(bundle.initial_density.sum())
     initial_pesticide = float(bundle.resources.total_pesticide_l)
     events: list[dict[str, object]] = []
     reward_total = 0.0
     reward_components: dict[str, float] = {}
     steps = 0
-    while steps < min(int(max_steps), bundle.max_steps):
+    step_limit = bundle.max_steps if max_steps is None else min(int(max_steps), bundle.max_steps)
+    while steps < step_limit:
         step = bundle.step(_action_for_snapshot(snapshot))
         steps += 1
         snapshot = step
@@ -90,6 +121,9 @@ def _run_episode(config_dir: Path, scale: str, seed: int, scenario_id: str, inte
         policy_name="resource_pilot_script",
         split="train",
         scenario_id=scenario_id,
+        evidence_mode="simulation",
+        simulation_profile_sha256=bundle.simulation_profile_sha256,
+        preflight_warnings=bundle.simulation_preflight_warnings,
     )
     row = record.to_row()
     row.update({
@@ -107,14 +141,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
-    parser.add_argument("--scale", action="append", default=["s1"])
+    parser.add_argument("--scale", action="append", default=[])
     parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--max-steps", type=int, default=160)
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=None,
+        help="optional smoke-test truncation; defaults to each scale's frozen horizon",
+    )
     args = parser.parse_args(argv)
-    if args.episodes < 1 or args.max_steps < 1:
+    if args.episodes < 1 or (args.max_steps is not None and args.max_steps < 1):
         raise ValueError("episodes and max-steps must be positive")
     rows: list[dict[str, object]] = []
-    for scale in tuple(dict.fromkeys(str(value) for value in args.scale)):
+    scales = args.scale or ["s1"]
+    for scale in tuple(dict.fromkeys(str(value) for value in scales)):
         scenario_id = _scenario_id(args.config_dir, scale)
         for episode in range(args.episodes):
             for _condition_id, intervention in _conditions():
@@ -127,6 +167,21 @@ def main(argv: list[str] | None = None) -> int:
     provenance = capture_git_provenance(str(ROOT))
     report = {
         **activation.to_dict(),
+        "total_shortage": None,
+        "spatial_temporal_mismatch": None,
+        "mobile_gap_closure": None,
+        "diagnosis": (
+            "resource_service_chain_activated"
+            if activation.activated
+            else "resource_service_chain_not_activated"
+        ),
+        "interpretation_scope": "resource_service_activation_only",
+        "endpoint_comparison_valid": False,
+        "spatial_probe_initialization": "prepositioned_serviceable_work_sites",
+        "policy_note": (
+            "The deterministic stress policy maximizes spraying and follows "
+            "service masks; treatment endpoints are not a fair algorithm comparison."
+        ),
         "raw_path": str(args.output.resolve()),
         "provisional": True,
         "config_hash": config_identity(config),

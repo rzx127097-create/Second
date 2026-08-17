@@ -48,6 +48,8 @@ class HeterogeneousDecisionAdapter:
         uav_cell_size_m: tuple[float, float] = (1.0, 1.0),
         uav_speed_mps: float = 1.0,
         request_threshold_ratio: float = 0.0,
+        dynamic_request_enabled: bool = False,
+        request_safety_margin_s: float = 0.0,
         service_setup_s: float = 10.0,
         rendezvous_radius_m: float = 5.0,
         max_candidate_slots: int = 4,
@@ -71,7 +73,12 @@ class HeterogeneousDecisionAdapter:
             raise ValueError("uav_cell_size_m must contain two positive dimensions")
         if not 0.0 <= request_threshold_ratio <= 1.0:
             raise ValueError("request_threshold_ratio must lie in [0, 1]")
-        if service_setup_s < 0 or rendezvous_radius_m < 0 or max_candidate_slots < 1:
+        if (
+            service_setup_s < 0
+            or request_safety_margin_s < 0
+            or rendezvous_radius_m < 0
+            or max_candidate_slots < 1
+        ):
             raise ValueError("invalid service configuration")
         if support_mode not in {"mobile", "fixed", "disabled", "teleport"}:
             raise ValueError("unsupported support_mode")
@@ -87,6 +94,8 @@ class HeterogeneousDecisionAdapter:
         self.uav_cell_size_m = (float(uav_cell_size_m[0]), float(uav_cell_size_m[1]))
         self.uav_speed_mps = float(uav_speed_mps)
         self.request_threshold_ratio = float(request_threshold_ratio)
+        self.dynamic_request_enabled = bool(dynamic_request_enabled)
+        self.request_safety_margin_s = float(request_safety_margin_s)
         self.service_setup_s = float(service_setup_s)
         self.rendezvous_radius_m = float(rendezvous_radius_m)
         self.max_candidate_slots = int(max_candidate_slots)
@@ -113,6 +122,8 @@ class HeterogeneousDecisionAdapter:
             raise ValueError("initial vehicle node must belong to the road graph")
         self.executors: dict[str, RoadVehicleExecutor] = {}
         self.uav_positions: dict[str, tuple[int, int]] = {}
+        self._uav_metric_positions: dict[str, tuple[float, float]] = {}
+        self._uav_transit: dict[str, dict[str, object]] = {}
         self._candidate_routes: dict[str, dict[str, tuple[str, ...]]] = {}
         self._candidate_request_ids: dict[str, dict[str, str]] = {}
         self._candidate_mapping_keys: dict[str, dict[str, str]] = {}
@@ -161,6 +172,8 @@ class HeterogeneousDecisionAdapter:
             for vehicle_id in self.vehicle_slots
         }
         self.uav_positions = {uav_id: (0, 0) for uav_id in self.uav_slots}
+        self._uav_metric_positions = {uav_id: (0.0, 0.0) for uav_id in self.uav_slots}
+        self._uav_transit = {}
         self._candidate_routes = {}
         self._candidate_request_ids = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
         self._candidate_mapping_keys = {vehicle_id: {} for vehicle_id in self.vehicle_slots}
@@ -225,39 +238,54 @@ class HeterogeneousDecisionAdapter:
 
         for uav_id in self.uav_slots:
             action = actions[uav_id]
+            if uav_id in self._uav_transit:
+                self._advance_uav_transit(uav_id, events)
+                continue
             position = self.uav_positions[uav_id]
             if action in {"up", "down", "left", "right"}:
                 new_position = legal_uav_position(
                     position, action, self.uav_grid_shape, locked=uav_id == self._locked_uav_id,
                 )
-                self.uav_positions[uav_id] = new_position
-                row_size_m, col_size_m = self.uav_cell_size_m
-                if uav_id == self._committed_uav_id:
-                    events.append({
-                        "event_type": "uav_movement_applied",
-                        "uav_id": uav_id,
-                        "distance_m": hypot(
-                            (new_position[0] - position[0]) * row_size_m,
-                            (new_position[1] - position[1]) * col_size_m,
-                        ),
-                        "rendezvous_committed": True,
-                        "step": self._decision_step,
-                    })
+                if new_position != position:
+                    self._start_uav_transit(uav_id, new_position, action)
+                    self._advance_uav_transit(uav_id, events)
             elif action == "spray" and uav_id != self._locked_uav_id:
                 sprayed = self.resources.spray_step(uav_id, self.decision_dt_s)
                 events.append({"event_type": "spray_applied", "uav_id": uav_id, "amount_l": sprayed.amount_l, "duration_s": self.decision_dt_s, "pesticide_limited": sprayed.pesticide_limited, "step": self._decision_step})
 
         for uav_id in self.uav_slots:
             state = self.resources.uav(uav_id)
-            if (
-                self._decision_step >= self.request_release_steps[uav_id]
+            dynamic_trigger = self._dynamic_request_trigger(uav_id)
+            threshold_trigger = (
+                not self.dynamic_request_enabled
                 and self.request_threshold_ratio > 0
                 and state.onboard_l <= state.capacity_l * self.request_threshold_ratio + 1e-12
+            )
+            if (
+                self._decision_step >= self.request_release_steps[uav_id]
+                and (dynamic_trigger is not None or threshold_trigger)
             ):
                 before = len(self.request_manager)
-                request = self.request_manager.create_request(uav_id, state.capacity_l - state.onboard_l, self._decision_step)
+                requested_l = (
+                    float(dynamic_trigger["target_l"])
+                    if dynamic_trigger is not None
+                    else state.capacity_l - state.onboard_l
+                )
+                request = self.request_manager.create_request(
+                    uav_id, requested_l, self._decision_step,
+                )
                 if len(self.request_manager) > before:
-                    events.append({"event_type": "request_created", "request_id": request.request_id, "uav_id": uav_id, "amount_l": request.requested_l, "step": self._decision_step})
+                    event: dict[str, object] = {
+                        "event_type": "request_created",
+                        "request_id": request.request_id,
+                        "uav_id": uav_id,
+                        "amount_l": request.requested_l,
+                        "trigger": "dynamic_endurance" if dynamic_trigger is not None else "fixed_threshold",
+                        "step": self._decision_step,
+                    }
+                    if dynamic_trigger is not None:
+                        event.update(dynamic_trigger)
+                    events.append(event)
 
         if self.support_mode == "teleport":
             self._apply_teleport_service(events)
@@ -323,7 +351,8 @@ class HeterogeneousDecisionAdapter:
                 transferred = self.service.tick(self.request_manager, self.resources, vehicle_id, self.decision_dt_s, self._decision_step)
                 if previous_phase is ServicePhase.PREPARING:
                     events.append({"event_type": "wait", "duration_s": self.decision_dt_s, "reason": "service_setup", "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
-                events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
+                if self.resources.uav(request.uav_id).onboard_l <= 1e-12:
+                    events.append({"event_type": "pesticide_disabled", "duration_s": self.decision_dt_s, "uav_id": request.uav_id, "step": self._decision_step})
                 if transferred > 0:
                     events.append({"event_type": "pesticide_transfer", "amount_l": transferred, "request_id": request.request_id, "uav_id": request.uav_id, "vehicle_id": vehicle_id, "step": self._decision_step})
                 if self.service.phase is ServicePhase.IDLE:
@@ -366,7 +395,7 @@ class HeterogeneousDecisionAdapter:
                 self.uav_grid_shape,
                 onboard_l=state.onboard_l,
                 spray_flow_l_s=state.spray_flow_l_s,
-                locked=uav_id == self._locked_uav_id,
+                locked=(uav_id == self._locked_uav_id or uav_id in self._uav_transit),
                 rendezvous_target=self._service_target_uav_cell if committed else None,
                 must_approach=committed and self._must_approach_rendezvous(uav_id),
             )
@@ -431,9 +460,146 @@ class HeterogeneousDecisionAdapter:
         return result
 
     def _uav_metric_position(self, uav_id: str) -> tuple[float, float]:
-        row, col = self.uav_positions[uav_id]
+        return self._uav_metric_positions[uav_id]
+
+    def _uav_route_distance_m(
+        self,
+        uav_id: str,
+        target_metric: tuple[float, float],
+    ) -> float:
+        """Return executable four-connected distance, including in-edge travel."""
+
+        transit = self._uav_transit.get(uav_id)
+        if transit is None:
+            origin_x, origin_y = self._uav_metric_positions[uav_id]
+            committed_distance_m = 0.0
+        else:
+            origin_x, origin_y = transit["target_metric"]
+            committed_distance_m = float(transit["remaining_m"])
+        return committed_distance_m + abs(float(target_metric[0]) - float(origin_x)) + abs(
+            float(target_metric[1]) - float(origin_y)
+        )
+
+    def _start_uav_transit(
+        self,
+        uav_id: str,
+        target_cell: tuple[int, int],
+        action: str,
+    ) -> None:
         row_size_m, col_size_m = self.uav_cell_size_m
-        return float(col) * col_size_m, float(row) * row_size_m
+        target_metric = (
+            float(target_cell[1]) * col_size_m,
+            float(target_cell[0]) * row_size_m,
+        )
+        current_metric = self._uav_metric_positions[uav_id]
+        remaining_m = hypot(
+            target_metric[0] - current_metric[0],
+            target_metric[1] - current_metric[1],
+        )
+        self._uav_transit[uav_id] = {
+            "action": action,
+            "target_cell": target_cell,
+            "target_metric": target_metric,
+            "remaining_m": remaining_m,
+            "rendezvous_committed": uav_id == self._committed_uav_id,
+        }
+
+    def _advance_uav_transit(
+        self,
+        uav_id: str,
+        events: list[dict[str, object]],
+    ) -> None:
+        transit = self._uav_transit[uav_id]
+        current_x, current_y = self._uav_metric_positions[uav_id]
+        target_x, target_y = transit["target_metric"]
+        remaining_m = float(transit["remaining_m"])
+        travelled_m = min(remaining_m, self.uav_speed_mps * self.decision_dt_s)
+        route_complete = travelled_m + 1e-12 >= remaining_m
+        if route_complete:
+            self._uav_metric_positions[uav_id] = (float(target_x), float(target_y))
+            self.uav_positions[uav_id] = tuple(transit["target_cell"])
+            del self._uav_transit[uav_id]
+            remaining_after_m = 0.0
+        else:
+            fraction = travelled_m / remaining_m
+            self._uav_metric_positions[uav_id] = (
+                current_x + (float(target_x) - current_x) * fraction,
+                current_y + (float(target_y) - current_y) * fraction,
+            )
+            remaining_after_m = remaining_m - travelled_m
+            transit["remaining_m"] = remaining_after_m
+        events.append({
+            "event_type": "uav_movement_applied",
+            "uav_id": uav_id,
+            "distance_m": travelled_m,
+            "remaining_edge_distance_m": remaining_after_m,
+            "route_complete": route_complete,
+            "rendezvous_committed": bool(transit["rendezvous_committed"]),
+            "step": self._decision_step,
+        })
+
+    def _dynamic_request_trigger(self, uav_id: str) -> dict[str, float] | None:
+        if not self.dynamic_request_enabled:
+            return None
+        uav = self.resources.uav(uav_id)
+        gap_l = max(0.0, uav.capacity_l - uav.onboard_l)
+        if gap_l <= 1e-12:
+            return None
+        # The trigger forecasts when service is needed, while the request
+        # volume remains the auditable free tank capacity at creation time.
+        # Forecasting extra consumption here can leave a request open after
+        # the UAV has already been filled to capacity.
+        requested_l = gap_l
+        remaining_work_s = remaining_work_time_s(
+            onboard_l=uav.onboard_l,
+            spray_flow_l_s=uav.spray_flow_l_s,
+        )
+        points = self._rendezvous_points(
+            uav_id,
+            include_all_nodes=self.support_mode != "fixed",
+        )
+        required_response_s = float("inf")
+        for vehicle_id, executor in self.executors.items():
+            vehicle = self.resources.vehicle(vehicle_id)
+            transfer_l = min(requested_l, vehicle.inventory_l, vehicle.service_cap_l)
+            if transfer_l <= 1e-12 or not points:
+                continue
+            candidates = generate_rendezvous_candidates(
+                points,
+                graph=self.road_graph,
+                vehicle_node=executor.current_node,
+                vehicle_speed_mps=self.vehicle_speed_mps,
+                uav_speed_mps=self.uav_speed_mps,
+                remaining_work_s=remaining_work_s,
+                requested_l=requested_l,
+                vehicle_inventory_l=vehicle.inventory_l,
+                service_cap_l=vehicle.service_cap_l,
+                service_setup_s=self.service_setup_s,
+                transfer_rate_l_s=vehicle.transfer_rate_l_s,
+                rendezvous_radius_m=self.rendezvous_radius_m,
+                request_id="request-probe",
+                uav_id=uav_id,
+                allow_late_service=True,
+            )
+            feasible = [candidate for candidate in candidates if candidate.feasible]
+            if not feasible:
+                continue
+            arrival_s = min(candidate.joint_arrival_eta_s for candidate in feasible)
+            service_s = self.service_setup_s + transfer_l / vehicle.transfer_rate_l_s
+            required_response_s = min(
+                required_response_s,
+                arrival_s + service_s + self.request_safety_margin_s,
+            )
+        if required_response_s == float("inf"):
+            return None
+        if remaining_work_s > required_response_s + 1e-12:
+            return None
+        return {
+            "remaining_work_s": remaining_work_s,
+            "required_response_s": required_response_s,
+            "safety_margin_s": self.request_safety_margin_s,
+            "target_l": requested_l,
+        }
 
     def road_node_to_uav_cell(self, node_id: str) -> tuple[int, int]:
         """Map one metric road node to the shared UAV grid coordinate frame."""
@@ -451,7 +617,7 @@ class HeterogeneousDecisionAdapter:
         return hypot(target_x - uav_x, target_y - uav_y) <= self.rendezvous_radius_m + 1e-12
 
     def _must_approach_rendezvous(self, uav_id: str) -> bool:
-        if self._service_target_node is None:
+        if self._service_target_node is None or self._service_target_uav_cell is None:
             return False
         if not self.endurance_prediction_enabled:
             return False
@@ -460,28 +626,46 @@ class HeterogeneousDecisionAdapter:
             onboard_l=uav.onboard_l,
             spray_flow_l_s=uav.spray_flow_l_s,
         )
-        uav_x, uav_y = self._uav_metric_position(uav_id)
-        target_x, target_y = self.road_graph.nodes[self._service_target_node]
-        travel_s = hypot(target_x - uav_x, target_y - uav_y) / self.uav_speed_mps
+        row_size_m, col_size_m = self.uav_cell_size_m
+        target_metric = (
+            float(self._service_target_uav_cell[1]) * col_size_m,
+            float(self._service_target_uav_cell[0]) * row_size_m,
+        )
+        travel_s = self._uav_route_distance_m(uav_id, target_metric) / self.uav_speed_mps
         return remaining_s <= travel_s + self.service_setup_s + self.decision_dt_s
 
-    def _rendezvous_points(self, uav_id: str) -> tuple[RendezvousPoint, ...]:
-        uav_x, uav_y = self._uav_metric_position(uav_id)
+    def _rendezvous_points(
+        self,
+        uav_id: str,
+        *,
+        include_all_nodes: bool = False,
+    ) -> tuple[RendezvousPoint, ...]:
         points = []
-        if self.support_mode == "fixed":
+        if self.support_mode == "fixed" and not include_all_nodes:
             fixed_nodes = {self.initial_vehicle_nodes[vehicle_id] for vehicle_id in self.vehicle_slots}
             node_items = sorted((node_id, self.road_graph.nodes[node_id]) for node_id in fixed_nodes)
         else:
             node_items = sorted(self.road_graph.nodes.items())
         for node_id, position in node_items:
-            distance_m = hypot(position[0] - uav_x, position[1] - uav_y)
-            if distance_m <= self.rendezvous_radius_m + 1e-12:
+            target_cell = self.road_node_to_uav_cell(node_id)
+            row_size_m, col_size_m = self.uav_cell_size_m
+            target_metric = (
+                float(target_cell[1]) * col_size_m,
+                float(target_cell[0]) * row_size_m,
+            )
+            service_separation_m = hypot(
+                position[0] - target_metric[0],
+                position[1] - target_metric[1],
+            )
+            if service_separation_m <= self.rendezvous_radius_m + 1e-12:
+                distance_m = self._uav_route_distance_m(uav_id, target_metric)
                 points.append(
                     RendezvousPoint(
                         point_id=f"rv-{node_id}",
                         road_node_id=node_id,
-                        position=position,
+                        position=target_metric,
                         distance_m=distance_m,
+                        service_separation_m=service_separation_m,
                     )
                 )
         return tuple(points)

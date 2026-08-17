@@ -100,7 +100,14 @@ class RequestManager:
             raise ValueError("request must be reserved before serving")
         request.status = RequestStatus.SERVING
 
-    def apply_transfer(self, request_id: str, amount_l: float, step: int) -> ReplenishmentRequest:
+    def apply_transfer(
+        self,
+        request_id: str,
+        amount_l: float,
+        step: int,
+        *,
+        batch_complete: bool = True,
+    ) -> ReplenishmentRequest:
         if amount_l < 0:
             raise ValueError("amount_l must be non-negative")
         request = self.get(request_id)
@@ -114,7 +121,7 @@ class RequestManager:
             request.completed_step = step
             request.close_reason = "fulfilled"
             self._active_by_uav.pop(request.uav_id, None)
-        else:
+        elif batch_complete:
             request.status = RequestStatus.PARTIALLY_SATISFIED
         return request
 

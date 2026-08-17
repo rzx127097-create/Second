@@ -5,6 +5,7 @@ import pytest
 
 from problem2.config import load_config_bundle
 from problem2.scenarios.factory import build_synthetic_scenario
+from problem2.scenarios.interventions import ScenarioIntervention
 
 
 CONFIG_DIR = "configs"
@@ -42,11 +43,11 @@ def test_synthetic_scenario_is_deterministic_and_completes_a_legal_step() -> Non
     }
     stepped = first.step(actions)
     assert stepped.step == 1
-    assert [event["event_type"] for event in stepped.events] == [
-        "actions_validated",
-        "movement_applied",
-        "field_updated",
-    ]
+    event_types = [event["event_type"] for event in stepped.events]
+    assert event_types[0] == "actions_validated"
+    assert event_types[-1] == "field_updated"
+    assert event_types.count("uav_movement_applied") == 2
+    assert event_types.count("movement_applied") == 1
     first.resources.assert_conservation()
 
 
@@ -168,7 +169,8 @@ def test_request_candidate_and_service_transfer_share_one_runtime_path() -> None
 
     initial_total = bundle.resources.total_pesticide_l
     transfer_events: list[dict[str, object]] = []
-    for _ in range(20):
+    release_events: list[dict[str, object]] = []
+    for _ in range(80):
         vehicle_id = "vehicle-1"
         vehicle_action = "slot-0" if "slot-0" in snapshot.action_masks[vehicle_id].valid_actions else "hold"
         actions = {
@@ -179,10 +181,55 @@ def test_request_candidate_and_service_transfer_share_one_runtime_path() -> None
         transfer_events.extend(
             event for event in snapshot.events if event["event_type"] == "pesticide_transfer"
         )
-        if transfer_events:
+        release_events.extend(
+            event for event in snapshot.events if event["event_type"] == "service_released"
+        )
+        if release_events:
             break
 
     assert transfer_events
     assert sum(float(event["amount_l"]) for event in transfer_events) > 0.0
     assert bundle.resources.total_pesticide_l == pytest.approx(initial_total)
-    assert any(event["event_type"] == "service_released" for event in snapshot.events)
+    assert len(transfer_events) > 1
+    assert release_events
+
+
+@pytest.mark.parametrize("scale_id", ["s1", "s2", "s3", "s4", "s5", "s6"])
+def test_fixed_support_has_a_serviceable_request_slot_at_every_scale(scale_id: str) -> None:
+    bundle = build_synthetic_scenario(
+        scale_id,
+        seed=43,
+        config_dir=CONFIG_DIR,
+        intervention=ScenarioIntervention("matched_fixed", support_mode="fixed"),
+    )
+    snapshot = bundle.reset()
+    bundle.resources.spray("uav-1", bundle.resources.uav("uav-1").onboard_l)
+
+    snapshot = bundle.step({agent_id: "hold" for agent_id in snapshot.role_observations})
+
+    assert any(
+        action.startswith("slot-")
+        for action in snapshot.action_masks["vehicle-1"].valid_actions
+    )
+
+
+def test_mobile_and_fixed_support_share_one_serviceable_entry_depot() -> None:
+    nodes: list[str] = []
+    for condition_id, support_mode in (
+        ("sr_mappo_mobile", "mobile"),
+        ("matched_fixed", "fixed"),
+    ):
+        bundle = build_synthetic_scenario(
+            "s3",
+            seed=47,
+            config_dir=CONFIG_DIR,
+            intervention=ScenarioIntervention(condition_id, support_mode=support_mode),
+        )
+        bundle.reset()
+        node = bundle.adapter.initial_vehicle_nodes["vehicle-1"]
+        nodes.append(node)
+        x_m, y_m = bundle.road_graph.nodes[node]
+        assert x_m**2 + y_m**2 <= 25.0
+        assert bundle.adapter._rendezvous_points("uav-1")
+
+    assert nodes[0] == nodes[1]

@@ -139,6 +139,39 @@ def test_partial_service_reopens_request_and_releases_service_lock() -> None:
     assert service.locked_uav_id is None
 
 
+def test_multistep_transfer_keeps_service_locked_until_frozen_batch_completes() -> None:
+    resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.10, 1.00, 0.01)},
+        vehicles={
+            "vehicle-1": VehicleState(
+                "vehicle-1", 1.00, 1.00, 0.20, 0.80,
+            )
+        },
+    )
+    manager = RequestManager()
+    request = manager.create_request("uav-1", requested_l=0.80, step=0)
+    service = ServiceStateMachine()
+    service.reserve(manager, "vehicle-1", step=1, setup_s=0.0)
+
+    assert service.tick(manager, resources, "vehicle-1", dt_s=1.0, step=2) == 0.0
+    assert service.phase is ServicePhase.TRANSFERRING
+
+    for step in range(3, 6):
+        assert service.tick(
+            manager, resources, "vehicle-1", dt_s=1.0, step=step,
+        ) == pytest.approx(0.20)
+        assert service.phase is ServicePhase.TRANSFERRING
+        assert manager.get(request.request_id).status is RequestStatus.SERVING
+
+    assert service.tick(
+        manager, resources, "vehicle-1", dt_s=1.0, step=6,
+    ) == pytest.approx(0.20)
+    assert manager.get(request.request_id).status is RequestStatus.COMPLETED
+    assert service.phase is ServicePhase.IDLE
+    assert resources.uav("uav-1").onboard_l == pytest.approx(0.90)
+    resources.assert_conservation()
+
+
 def test_service_rejects_a_vehicle_that_did_not_reserve_the_request() -> None:
     resources = PesticideResources(
         uavs={"uav-1": UAVState("uav-1", 0.10, 0.50, 0.01)},

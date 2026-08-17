@@ -121,7 +121,7 @@ def test_nonmain_family_dry_run_is_side_effect_free(tmp_path: Path) -> None:
     [
         ("main_comparison", 150),
         ("mechanism", 90),
-        ("sensitivity", 120),
+        ("sensitivity", 150),
         ("adaptation", 120),
         ("ablation", 60),
     ],

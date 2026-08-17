@@ -29,6 +29,7 @@ REQUIRED_PARAMETER_NAMES = (
     "uav_usable_fraction",
     "vehicle_inventory",
     "vehicle_service_capacity",
+    "request_safety_margin",
     "vehicle_speed",
     "vehicle_transfer_rate",
 )

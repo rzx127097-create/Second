@@ -15,7 +15,7 @@ def test_orchestrator_expands_all_families_with_protocol_bound_identities(tmp_pa
     expected = {
         "main_comparison": 150,
         "mechanism": 90,
-        "sensitivity": 120,
+        "sensitivity": 150,
         "adaptation": 120,
         "ablation": 60,
     }

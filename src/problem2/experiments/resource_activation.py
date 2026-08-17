@@ -11,6 +11,8 @@ from typing import Iterable, Mapping
 class ResourceActivationReport:
     record_count: int
     activated: bool
+    demand_activated: bool
+    mobile_service_feasible: bool
     activation_fraction: float
     total_shortage: bool
     spatial_temporal_mismatch: bool
@@ -95,7 +97,7 @@ def audit_resource_activation(
         for condition, condition_rows in grouped.items()
     }
     activation_fraction = active_rows / finite_rows if finite_rows else 0.0
-    activated = active_rows > 0
+    demand_activated = active_rows > 0
 
     def reduction(condition: str) -> float | None:
         values = condition_means.get(condition)
@@ -106,22 +108,29 @@ def audit_resource_activation(
     fixed = reduction("matched_fixed")
     teleport = reduction("teleport_diagnostic")
     mobile = reduction("sr_mappo_mobile")
+    mobile_metrics = condition_means.get("sr_mappo_mobile", {})
+    mobile_service_feasible = bool(
+        mobile_metrics.get("transferred_l", 0.0) > effect_tolerance
+    )
+    activated = demand_activated and mobile_service_feasible
     total_shortage = bool(
-        activated and unlimited is not None and no_support is not None
+        demand_activated and unlimited is not None and no_support is not None
         and unlimited - no_support > effect_tolerance
     )
     spatial_temporal_mismatch = bool(
-        activated and teleport is not None and fixed is not None
+        demand_activated and teleport is not None and fixed is not None
         and teleport - fixed > effect_tolerance
     )
     mobile_gap_closure = None
     if fixed is not None and teleport is not None and mobile is not None:
         denominator = teleport - fixed
-        if abs(denominator) > effect_tolerance:
+        if denominator > effect_tolerance:
             mobile_gap_closure = (mobile - fixed) / denominator
 
-    if not activated:
+    if not demand_activated:
         diagnosis = "resource_constraint_not_activated"
+    elif not mobile_service_feasible:
+        diagnosis = "resource_constraint_active_but_mobile_unserviceable"
     elif total_shortage and spatial_temporal_mismatch:
         diagnosis = "mixed_total_and_spatiotemporal_constraint"
     elif total_shortage:
@@ -133,6 +142,8 @@ def audit_resource_activation(
     return ResourceActivationReport(
         record_count=len(rows),
         activated=activated,
+        demand_activated=demand_activated,
+        mobile_service_feasible=mobile_service_feasible,
         activation_fraction=activation_fraction,
         total_shortage=total_shortage,
         spatial_temporal_mismatch=spatial_temporal_mismatch,
