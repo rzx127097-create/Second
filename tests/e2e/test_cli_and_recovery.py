@@ -85,6 +85,7 @@ def test_train_cli_runs_real_smoke_job_and_writes_traceable_raw_rows(tmp_path: P
         "reduction_rate", "success", "transferred_l",
     } <= row.keys()
     assert row["method"] == "sr_mappo_mobile"
+    assert row["evidence_mode"] == "smoke"
     assert len(str(job["source_tree_hash"])) == 64
     assert len(str(job["checkpoint_sha256"])) == 64
     checkpoint_payload = pytest.importorskip("torch").load(
@@ -105,6 +106,86 @@ def test_train_cli_runs_real_smoke_job_and_writes_traceable_raw_rows(tmp_path: P
     assert evaluation_row["scenario_id"] == "val_001"
     assert evaluation_row["checkpoint_sha256"] == job["checkpoint_sha256"]
     assert evaluation_row["source_tree_hash"] == job["source_tree_hash"]
+
+
+def test_train_cli_runs_one_controlled_simulation_update_with_full_hidden_dim(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    module = _train_module()
+    config_dir = tmp_path / "configs"
+    shutil.copytree(ROOT / "configs", config_dir)
+    shutil.copytree(ROOT / "data", tmp_path / "data")
+    (tmp_path / "docs" / "verification").mkdir(parents=True)
+    shutil.copy2(
+        ROOT / "docs" / "verification" / "frozen-road-jodhpur.json",
+        tmp_path / "docs" / "verification" / "frozen-road-jodhpur.json",
+    )
+    algorithm = config_dir / "algorithms" / "sr_mappo.yaml"
+    algorithm.write_text(
+        algorithm.read_text(encoding="utf-8").replace(
+            "rollout_horizon: 128", "rollout_horizon: 3", 1,
+        ).replace("total_updates: 1000", "total_updates: 1", 1),
+        encoding="utf-8",
+    )
+    scales = config_dir / "scales.yaml"
+    scales.write_text(
+        scales.read_text(encoding="utf-8").replace("max_steps: 600", "max_steps: 60", 1),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        module,
+        "capture_git_provenance",
+        lambda *_args: GitProvenance("a" * 40, "b" * 64, False),
+    )
+
+    assert module.main([
+        "--config-dir", str(config_dir),
+        "--scale", "s1", "--seed", "0", "--updates", "1",
+        "--output-root", str(tmp_path / "runs"),
+        "--simulation", "--device", "cpu",
+    ]) == 0
+    job_path = next((tmp_path / "runs" / "jobs").glob("*.json"))
+    job = json.loads(job_path.read_text(encoding="utf-8"))
+    assert job["execution_profile"] == "simulation"
+    assert job["target_updates"] == 1
+    assert job["rollout_horizon"] == 3
+    assert len(job["source_tree_hash"]) == 64
+    checkpoint = Path(str(job["checkpoint_path"]))
+    payload = pytest.importorskip("torch").load(
+        checkpoint, map_location="cpu", weights_only=False,
+    )
+    assert payload["provenance"]["execution_profile"] == "simulation"
+    raw_row = json.loads(
+        next((tmp_path / "runs" / "raw").glob("*.jsonl")).read_text(encoding="utf-8").splitlines()[0]
+    )
+    assert raw_row["evidence_mode"] == "controlled_simulation"
+    assert len(raw_row["simulation_profile_sha256"]) == 64
+
+    evaluate_source = ROOT / "scripts" / "evaluate.py"
+    evaluate_spec = importlib.util.spec_from_file_location(
+        "problem2_evaluate_simulation_e2e", evaluate_source,
+    )
+    assert evaluate_spec is not None and evaluate_spec.loader is not None
+    evaluate_module = importlib.util.module_from_spec(evaluate_spec)
+    evaluate_spec.loader.exec_module(evaluate_module)
+    monkeypatch.setattr(
+        evaluate_module,
+        "capture_git_provenance",
+        lambda *_args: GitProvenance("a" * 40, "b" * 64, False),
+    )
+    assert evaluate_module.main([
+        "--config-dir", str(config_dir),
+        "--checkpoint", str(checkpoint),
+        "--split", "validation", "--scenario", "val_001",
+        "--simulation",
+    ]) == 0
+    evaluation_row = json.loads(
+        (tmp_path / "runs" / "raw" / f"evaluation-{job['job_id']}-val_001.jsonl")
+        .read_text(encoding="utf-8").splitlines()[0]
+    )
+    assert evaluation_row["execution_profile"] == "simulation"
+    assert evaluation_row["evidence_mode"] == "simulation"
+    assert len(evaluation_row["simulation_profile_sha256"]) == 64
 
 
 def test_train_cli_commits_each_update_and_resumes_after_mid_job_failure(
@@ -175,6 +256,29 @@ def test_evaluate_cli_checks_checkpoint_and_split_isolation(tmp_path: Path) -> N
     )
     assert wrong_split.returncode != 0
     assert "does not belong" in str(_json_output(wrong_split)["error"])
+
+
+def test_simulation_evaluation_mode_accepts_only_simulation_checkpoint() -> None:
+    source = ROOT / "scripts" / "evaluate.py"
+    spec = importlib.util.spec_from_file_location("problem2_evaluate_simulation_mode", source)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    identity = make_job_identity(
+        "sr_mappo_mobile", "s1", 0, {"x": 1},
+        git_commit="a" * 40,
+        execution_profile="simulation",
+        source_tree_hash="b" * 64,
+    )
+    job = JobRecord(identity=identity)
+
+    module._assert_evaluation_mode(
+        job, split="validation", smoke=False, simulation=True,
+    )
+    with pytest.raises(ValueError, match="execution profile"):
+        module._assert_evaluation_mode(
+            job, split="validation", smoke=False, simulation=False,
+        )
 
 
 def test_evaluate_cli_rejects_checkpoint_without_persisted_job_identity(tmp_path: Path) -> None:

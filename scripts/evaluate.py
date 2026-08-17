@@ -34,6 +34,7 @@ from problem2.experiments.recovery import load_job_record
 from problem2.experiments.runner import JobRecord, traceable_episode_rows
 from problem2.scenarios.factory import build_synthetic_scenario
 from problem2.experiments.specification import load_experiment_spec, protocol_identity
+from problem2.experiments.simulation_preflight import audit_simulation_preflight
 from problem2.baselines import make_policy
 
 
@@ -62,9 +63,13 @@ def _assert_evaluation_source(job: JobRecord, *, smoke: bool) -> None:
         raise ValueError("evaluation source tree does not match the frozen training job")
 
 
-def _assert_evaluation_mode(job: JobRecord, *, split: str, smoke: bool) -> None:
-    checkpoint_is_smoke = job.identity.execution_profile == "smoke"
-    if bool(smoke) != checkpoint_is_smoke:
+def _assert_evaluation_mode(
+    job: JobRecord, *, split: str, smoke: bool, simulation: bool,
+) -> None:
+    if smoke and simulation:
+        raise ValueError("smoke and simulation evaluation modes cannot be combined")
+    requested_profile = "smoke" if smoke else ("simulation" if simulation else "formal")
+    if job.identity.execution_profile != requested_profile:
         raise ValueError("evaluation mode must match the checkpoint execution profile")
     if split == "sealed_test" and smoke:
         raise ValueError("sealed_test cannot use a smoke checkpoint or smoke evaluation mode")
@@ -96,28 +101,39 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--split", choices=["train", "validation", "sealed_test"], required=True)
     parser.add_argument("--scenario", required=True)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--simulation", action="store_true")
     parser.add_argument("--freeze-manifest")
     parser.add_argument("--sealed-unlock")
     args = parser.parse_args(argv)
     try:
+        if args.simulation and args.smoke:
+            raise ValueError("--simulation and --smoke cannot be combined")
         config_dir = Path(args.config_dir)
         config = load_config_bundle(config_dir)
+        preflight = audit_simulation_preflight(config_dir) if args.simulation else None
+        if preflight is not None and not preflight.ready:
+            raise ValueError("controlled-simulation evaluation failed technical preflight")
         protocol_path = Path(args.protocol or (config_dir / "experiments" / "chapter4_5.yaml"))
         spec = load_experiment_spec(protocol_path, config)
         scenarios = [str(value) for value in config.experiments[f"{args.split}_scenarios"]]
         if args.scenario not in scenarios:
             raise ValueError(f"scenario {args.scenario!r} does not belong to split {args.split!r}")
-        if args.split == "sealed_test" and _is_provisional(config):
+        if args.split == "sealed_test" and _is_provisional(config) and not args.simulation:
             raise ValueError("sealed_test is blocked because a configuration status is provisional")
         if args.split == "sealed_test" and (not args.freeze_manifest or not args.sealed_unlock):
             raise ValueError("sealed_test requires a validation freeze manifest and sealed unlock record")
-        if _is_provisional(config) and not args.smoke:
+        if _is_provisional(config) and not args.smoke and not args.simulation:
             raise ValueError("formal evaluation is blocked because a configuration status is provisional")
         checkpoint = Path(args.checkpoint).resolve()
         if not checkpoint.is_file():
             raise FileNotFoundError(f"checkpoint does not exist: {checkpoint}")
         job = _checkpoint_record(checkpoint)
-        _assert_evaluation_mode(job, split=args.split, smoke=bool(args.smoke))
+        _assert_evaluation_mode(
+            job,
+            split=args.split,
+            smoke=bool(args.smoke),
+            simulation=bool(args.simulation),
+        )
         if job.identity.config_hash != config_identity(config):
             raise ValueError("checkpoint job config hash does not match the requested configuration")
         if job.identity.protocol_hash and job.identity.protocol_hash != protocol_identity(protocol_path):
@@ -204,6 +220,7 @@ def main(argv: list[str] | None = None) -> int:
             records = evaluate_policy(
                 policy, scenario_factory,
                 scenarios=[args.scenario], split=inner_split, deterministic=True,
+                evidence_mode="simulation" if args.simulation else "formal",
             )
             rows = traceable_episode_rows(records, job, split=args.split)
             _write_jsonl(raw_path, rows)
@@ -222,7 +239,22 @@ def main(argv: list[str] | None = None) -> int:
                     reservation_id=str(sealed_reservation["reservation_id"]),
                 )
             raise
-        _emit({"status": "completed", "split": args.split, "scenario": args.scenario, "raw_path": str(raw_path), "smoke": bool(args.smoke), "sealed_receipt": sealed_receipt})
+        _emit({
+            "status": "completed",
+            "split": args.split,
+            "scenario": args.scenario,
+            "raw_path": str(raw_path),
+            "smoke": bool(args.smoke),
+            "simulation": bool(args.simulation),
+            "execution_profile": job.identity.execution_profile,
+            "evidence_mode": preflight.evidence_mode if preflight is not None else "formal",
+            "simulation_profile_sha256": preflight.profile_sha256 if preflight is not None else "",
+            "preflight_warnings": (
+                [issue.to_dict() for issue in preflight.warnings]
+                if preflight is not None else []
+            ),
+            "sealed_receipt": sealed_receipt,
+        })
         return 0
     except Exception as exc:  # noqa: BLE001 - CLI boundary must preserve diagnostics as JSON
         _emit({"status": "failed", "error": f"{type(exc).__name__}: {exc}"})

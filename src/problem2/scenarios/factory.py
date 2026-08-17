@@ -96,6 +96,7 @@ class ScenarioBundle:
     source_metadata_hash: str = ""
     config_hash: str = ""
     simulation_profile_sha256: str = ""
+    evidence_mode: str = "controlled_simulation"
     simulation_preflight_ready: bool = True
     simulation_preflight_errors: tuple[dict[str, object], ...] = ()
     simulation_preflight_warnings: tuple[dict[str, object], ...] = ()

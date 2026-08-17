@@ -187,6 +187,11 @@ def run_training_episode(
         events=all_events,
         agent_ids=role_ids,
         decision_times_s=decision_times_s,
+        evidence_mode=str(getattr(bundle, "evidence_mode", "formal")),
+        simulation_profile_sha256=str(
+            getattr(bundle, "simulation_profile_sha256", "")
+        ),
+        preflight_warnings=getattr(bundle, "simulation_preflight_warnings", ()),
     )
     record.rollout = batch
     record.policy_name = str(method_profile.name)

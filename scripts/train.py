@@ -31,6 +31,7 @@ from problem2.experiments.specification import load_experiment_spec, protocol_id
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.rollout_runner import train_policy
 from problem2.experiments.runner import JobRecord, JobRunner, traceable_episode_rows
+from problem2.experiments.simulation_preflight import audit_simulation_preflight
 from problem2.scenarios.factory import build_synthetic_scenario
 from problem2.scenarios.interventions import ScenarioIntervention
 
@@ -224,14 +225,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--updates", type=int, required=True)
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--simulation", action="store_true")
     parser.add_argument("--max-attempts", type=int, default=2)
     parser.add_argument("--device", choices=["cpu", "cuda", "auto"], default="auto")
     args = parser.parse_args(argv)
     try:
+        if args.simulation and args.smoke:
+            raise ValueError("--simulation and --smoke cannot be combined")
         config_dir = Path(args.config_dir)
         config = load_config_bundle(config_dir)
         _seed_everything(args.seed)
-        if _is_provisional(config) and not args.smoke:
+        execution_profile = (
+            "smoke" if args.smoke else ("simulation" if args.simulation else "formal")
+        )
+        preflight = audit_simulation_preflight(config_dir) if args.simulation else None
+        if preflight is not None and not preflight.ready:
+            _emit({
+                "status": "rejected",
+                "error": "controlled-simulation training failed technical preflight",
+                "preflight": preflight.to_dict(),
+            })
+            return 2
+        if _is_provisional(config) and execution_profile == "formal":
             _emit({"status": "rejected", "error": "formal training is blocked because a configuration status is provisional"})
             return 2
         if args.updates < 1:
@@ -265,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
         identity = make_job_identity(
             args.method, args.scale, args.seed, config_identity(config),
             config_hash=config_identity(config), git_commit=git_provenance.commit,
-            execution_profile="smoke" if args.smoke else "formal",
+            execution_profile=execution_profile,
             target_updates=args.updates,
             rollout_horizon=horizon,
             family=args.family,
@@ -298,14 +313,17 @@ def main(argv: list[str] | None = None) -> int:
         if not scenario_ids:
             raise ValueError(f"no train scenarios registered for scale {args.scale}")
         if not args.smoke:
-            formal_probe = build_synthetic_scenario(
+            execution_probe = build_synthetic_scenario(
                 args.scale,
                 args.seed,
                 config_dir=config_dir,
                 scenario_id=scenario_ids[0],
                 intervention=intervention,
             )
-            formal_probe.assert_formal_ready()
+            if args.simulation:
+                execution_probe.assert_simulation_ready()
+            else:
+                execution_probe.assert_formal_ready()
         scenario_cursor = {"index": 0}
 
         def worker(job: JobRecord) -> dict[str, Any]:
@@ -331,13 +349,21 @@ def main(argv: list[str] | None = None) -> int:
             def make_bundle():
                 scenario_id = scenario_ids[scenario_cursor["index"] % len(scenario_ids)]
                 scenario_cursor["index"] += 1
-                return build_synthetic_scenario(
+                bundle = build_synthetic_scenario(
                     args.scale,
                     args.seed,
                     config_dir=config_dir,
                     scenario_id=scenario_id,
                     intervention=intervention,
                 )
+                bundle.evidence_mode = (
+                    "smoke" if execution_profile == "smoke"
+                    else ("controlled_simulation" if execution_profile == "simulation" else "formal")
+                )
+                if execution_profile == "formal":
+                    bundle.simulation_profile_sha256 = ""
+                    bundle.simulation_preflight_warnings = ()
+                return bundle
             committed_step = int(start_update)
             committed_count = int(existing_count)
             while committed_step < int(args.updates):
@@ -388,6 +414,14 @@ def main(argv: list[str] | None = None) -> int:
             "job_file": str(record_path),
             "raw_path": str(raw_path),
             "smoke": bool(args.smoke),
+            "simulation": bool(args.simulation),
+            "execution_profile": execution_profile,
+            "evidence_mode": preflight.evidence_mode if preflight is not None else "formal",
+            "simulation_profile_sha256": preflight.profile_sha256 if preflight is not None else "",
+            "preflight_warnings": (
+                [issue.to_dict() for issue in preflight.warnings]
+                if preflight is not None else []
+            ),
             "device": device,
             "intervention": intervention.to_dict(),
             "intervention_hash": intervention.identity_hash,

@@ -69,6 +69,56 @@ def test_freeze_cli_requires_every_canonical_experiment_family(
     assert captured_ids == tuple(f"{family}-job" for family in planned_families)
 
 
+def test_freeze_cli_simulation_uses_simulation_jobs_and_preflight(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    source = ROOT / "scripts" / "freeze_sealed_test.py"
+    spec = importlib.util.spec_from_file_location("problem2_freeze_simulation", source)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    planned_profiles: list[str] = []
+    captured_profile = ""
+
+    class FakeOrchestrator:
+        def __init__(self, *_args, **_kwargs) -> None:
+            pass
+
+        def plan(self, family: str, *, execution_profile: str):
+            planned_profiles.append(execution_profile)
+            return (SimpleNamespace(identity=SimpleNamespace(job_id=f"{family}-job")),)
+
+    def fake_freeze(*_args, execution_profile, **_kwargs):
+        nonlocal captured_profile
+        captured_profile = str(execution_profile)
+        return {"freeze_hash": "f" * 64}
+
+    monkeypatch.setattr(module, "Chapter45Orchestrator", FakeOrchestrator)
+    monkeypatch.setattr(module, "load_job_record", lambda _: object())
+    monkeypatch.setattr(module, "create_validation_freeze", fake_freeze)
+    monkeypatch.setattr(
+        module,
+        "audit_simulation_preflight",
+        lambda *_args, **_kwargs: SimpleNamespace(ready=True, to_dict=lambda: {"ready": True}),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        module,
+        "_formal_config_ready",
+        lambda *_args, **_kwargs: pytest.fail("simulation freeze must not call the formal gate"),
+    )
+
+    assert module.main([
+        "freeze", "--simulation",
+        "--config-dir", str(ROOT / "configs"),
+        "--job-file", str(tmp_path / "job.json"),
+        "--validation", str(tmp_path / "validation.jsonl"),
+        "--output", str(tmp_path / "freeze.json"),
+    ]) == 0
+    assert set(planned_profiles) == {"simulation"}
+    assert captured_profile == "simulation"
+
+
 class _Algorithm:
     training_seed = 0
     _trainer = None
@@ -77,7 +127,7 @@ class _Algorithm:
         return {"weight": 1.0}
 
 
-def _formal_job(tmp_path: Path) -> JobRecord:
+def _formal_job(tmp_path: Path, *, execution_profile: str = "formal") -> JobRecord:
     identity = make_job_identity(
         "sr_mappo_mobile",
         "s1",
@@ -85,7 +135,7 @@ def _formal_job(tmp_path: Path) -> JobRecord:
         {"formal": True},
         config_hash="a" * 64,
         git_commit="b" * 40,
-        execution_profile="formal",
+        execution_profile=execution_profile,
         target_updates=3,
         rollout_horizon=16,
         family="main_comparison",
@@ -120,6 +170,7 @@ def _validation_file(tmp_path: Path, job: JobRecord) -> Path:
             "config_hash": job.identity.config_hash,
             "git_commit": job.identity.git_commit,
             "git_dirty": job.identity.git_dirty,
+            "execution_profile": job.identity.execution_profile,
             "family": job.identity.family,
             "condition_id": job.identity.condition_id,
             "protocol_hash": job.identity.protocol_hash,
@@ -161,6 +212,43 @@ def test_validation_freeze_binds_checkpoints_validation_and_statistics(tmp_path:
     job.checkpoint_path.write_bytes(b"tampered")
     with pytest.raises(ValueError, match="checkpoint hash"):
         verify_validation_freeze(freeze_path)
+
+
+def test_simulation_validation_freeze_accepts_only_simulation_jobs(tmp_path: Path) -> None:
+    job = _formal_job(tmp_path, execution_profile="simulation")
+    validation = _validation_file(tmp_path, job)
+
+    manifest = create_validation_freeze(
+        tmp_path / "simulation-freeze.json",
+        config_hash=job.identity.config_hash,
+        protocol_hash=job.identity.protocol_hash,
+        statistics={
+            "practical_equivalence_margin": 0.02,
+            "practical_equivalence_basis": "controlled-simulation reporting resolution",
+        },
+        jobs=[job],
+        expected_job_ids=(job.job_id,),
+        validation_paths=[validation],
+        validation_scenarios_by_scale={"s1": ("val_001", "val_s1_002")},
+        execution_profile="simulation",
+    )
+
+    assert manifest["execution_profile"] == "simulation"
+    assert verify_validation_freeze(tmp_path / "simulation-freeze.json")["execution_profile"] == "simulation"
+    with pytest.raises(ValueError, match="formal jobs"):
+        create_validation_freeze(
+            tmp_path / "wrong-profile-freeze.json",
+            config_hash=job.identity.config_hash,
+            protocol_hash=job.identity.protocol_hash,
+            statistics={
+                "practical_equivalence_margin": 0.02,
+                "practical_equivalence_basis": "controlled-simulation reporting resolution",
+            },
+            jobs=[job],
+            expected_job_ids=(job.job_id,),
+            validation_paths=[validation],
+            validation_scenarios_by_scale={"s1": ("val_001", "val_s1_002")},
+        )
 
 
 def test_validation_freeze_rejects_mislabeled_job_identity_fields(tmp_path: Path) -> None:

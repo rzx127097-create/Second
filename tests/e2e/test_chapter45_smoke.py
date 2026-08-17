@@ -184,6 +184,21 @@ def test_matrix_evaluation_runs_all_shared_scale_scenarios_and_reuses_outputs(
     assert all(item["reused"] is True for item in second["evaluations"])
 
 
+def test_matrix_evaluation_rejects_conflicting_simulation_and_smoke(
+    tmp_path: Path,
+) -> None:
+    result, payload = _run_script(
+        "evaluate_matrix.py",
+        "--config-dir", "configs",
+        "--output-root", str(tmp_path),
+        "--split", "validation",
+        "--simulation", "--smoke",
+    )
+
+    assert result.returncode != 0
+    assert "cannot be combined" in str(payload["error"])
+
+
 def test_sealed_matrix_reruns_evaluation_when_existing_raw_has_no_receipt(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:

@@ -17,6 +17,7 @@ from problem2.experiments.orchestrator import Chapter45Orchestrator
 from problem2.experiments.process import run_utf8_json_child
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.freeze import verify_sealed_evidence
+from problem2.experiments.simulation_preflight import audit_simulation_preflight
 
 
 def _emit(payload: dict[str, Any]) -> None:
@@ -134,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--split", choices=["validation", "sealed_test"], required=True)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--simulation", action="store_true")
     parser.add_argument("--max-jobs", type=int, default=1)
     parser.add_argument("--max-scenarios", type=int)
     parser.add_argument("--freeze-manifest")
@@ -141,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.simulation and args.smoke:
+            raise ValueError("--simulation and --smoke cannot be combined")
         if args.max_jobs < 1:
             raise ValueError("max-jobs must be positive")
         if args.max_scenarios is not None and args.max_scenarios < 1:
@@ -151,16 +155,24 @@ def main(argv: list[str] | None = None) -> int:
             protocol_path=args.protocol,
         )
         provisional = _is_provisional(orchestrator)
-        if args.split == "sealed_test" and provisional:
+        preflight = (
+            audit_simulation_preflight(orchestrator.config_dir)
+            if args.simulation else None
+        )
+        if preflight is not None and not preflight.ready:
+            raise ValueError("controlled-simulation matrix evaluation failed technical preflight")
+        if args.split == "sealed_test" and provisional and not args.simulation:
             raise ValueError("sealed_test is blocked because configuration or protocol status is provisional")
         if args.split == "sealed_test" and (not args.freeze_manifest or not args.sealed_unlock):
             raise ValueError("sealed_test requires a validation freeze manifest and sealed unlock record")
-        if provisional and not args.smoke:
+        if provisional and not args.smoke and not args.simulation:
             raise ValueError("formal matrix evaluation is blocked because configuration or protocol status is provisional")
 
         jobs = orchestrator.plan(
             args.family,
-            execution_profile="smoke" if args.smoke else "formal",
+            execution_profile=(
+                "smoke" if args.smoke else ("simulation" if args.simulation else "formal")
+            ),
         )
         selected = jobs[: args.max_jobs]
         output_root = Path(args.output_root).resolve()
@@ -234,6 +246,7 @@ def main(argv: list[str] | None = None) -> int:
                             if args.split == "sealed_test" else []
                         ),
                         *(["--smoke"] if args.smoke else []),
+                        *(["--simulation"] if args.simulation else []),
                     ],
                     cwd=ROOT,
                 )
@@ -259,6 +272,9 @@ def main(argv: list[str] | None = None) -> int:
             "family": args.family,
             "split": args.split,
             "smoke": bool(args.smoke),
+            "simulation": bool(args.simulation),
+            "evidence_mode": preflight.evidence_mode if preflight is not None else "formal",
+            "preflight": preflight.to_dict() if preflight is not None else None,
             "protocol_hash": orchestrator.protocol_hash,
             "selected_job_count": len(selected),
             "total_job_count": len(jobs),

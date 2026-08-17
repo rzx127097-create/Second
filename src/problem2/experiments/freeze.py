@@ -165,9 +165,11 @@ def _statistics_identity(statistics: Mapping[str, object]) -> str:
     return _canonical_hash(dict(statistics))
 
 
-def _selected_checkpoint(job: JobRecord) -> dict[str, object]:
-    if job.status != "completed" or job.identity.execution_profile != "formal":
-        raise ValueError("validation freeze requires completed formal jobs")
+def _selected_checkpoint(
+    job: JobRecord, *, execution_profile: str,
+) -> dict[str, object]:
+    if job.status != "completed" or job.identity.execution_profile != execution_profile:
+        raise ValueError(f"validation freeze requires completed {execution_profile} jobs")
     if job.identity.git_dirty or not job.identity.source_tree_hash:
         raise ValueError("validation freeze rejects dirty or unidentified source trees")
     if job.checkpoint_path is None or not job.checkpoint_path.is_file():
@@ -202,10 +204,13 @@ def create_validation_freeze(
     expected_job_ids: Sequence[str],
     validation_paths: Sequence[str | Path],
     validation_scenarios_by_scale: Mapping[str, Sequence[str]],
+    execution_profile: str = "formal",
 ) -> dict[str, object]:
     """Freeze validation completion and one final checkpoint per immutable job."""
 
     destination = Path(path).resolve()
+    if execution_profile not in {"formal", "simulation"}:
+        raise ValueError("validation freeze execution_profile must be formal or simulation")
     if destination.exists():
         raise FileExistsError(f"validation freeze already exists: {destination}")
     if not jobs:
@@ -220,7 +225,10 @@ def create_validation_freeze(
             f"missing={len(set(expected_ids) - set(observed_ids))}, "
             f"extra={len(set(observed_ids) - set(expected_ids))}"
         )
-    selected = [_selected_checkpoint(job) for job in jobs]
+    selected = [
+        _selected_checkpoint(job, execution_profile=execution_profile)
+        for job in jobs
+    ]
     if len({str(item["job_id"]) for item in selected}) != len(selected):
         raise ValueError("duplicate job in validation freeze")
     if any(item["config_hash"] != config_hash for item in selected):
@@ -254,7 +262,7 @@ def create_validation_freeze(
         for field in (
             "method", "scale", "training_seed", "config_hash", "git_commit",
             "family", "condition_id", "protocol_hash", "source_tree_hash",
-            "git_dirty", "checkpoint_sha256", "checkpoint_step",
+            "git_dirty", "execution_profile", "checkpoint_sha256", "checkpoint_step",
         ):
             if row.get(field) != checkpoint.get(field):
                 raise ValueError(f"validation evidence {field} mismatch")
@@ -268,6 +276,7 @@ def create_validation_freeze(
         "status": "frozen",
         "config_hash": str(config_hash),
         "protocol_hash": str(protocol_hash),
+        "execution_profile": execution_profile,
         "statistics": dict(statistics),
         "statistics_hash": _statistics_identity(statistics),
         "validation_inputs": [

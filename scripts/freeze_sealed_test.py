@@ -18,6 +18,7 @@ from problem2.experiments.orchestrator import Chapter45Orchestrator
 from problem2.experiments.readiness import audit_repository_readiness
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.specification import load_experiment_spec, protocol_identity
+from problem2.experiments.simulation_preflight import audit_simulation_preflight
 
 
 def _emit(payload: dict[str, object]) -> None:
@@ -53,6 +54,7 @@ def main(argv: list[str] | None = None) -> int:
     freeze.add_argument("--validation", type=Path, nargs="+", required=True)
     freeze.add_argument("--output", type=Path, required=True)
     freeze.add_argument("--readiness-report", type=Path)
+    freeze.add_argument("--simulation", action="store_true")
 
     unlock = subparsers.add_parser("unlock")
     unlock.add_argument("--freeze", type=Path, required=True)
@@ -78,14 +80,22 @@ def main(argv: list[str] | None = None) -> int:
         config = load_config_bundle(args.config_dir)
         protocol_path = args.protocol or (args.config_dir / "experiments" / "chapter4_5.yaml")
         spec = load_experiment_spec(protocol_path, config)
-        if args.readiness_report is not None:
-            readiness_payload = json.loads(args.readiness_report.read_text(encoding="utf-8"))
-            if not bool(readiness_payload.get("formal_ready")):
-                raise ValueError("validation freeze requires a passing readiness report")
-            readiness = type("Readiness", (), {"formal_ready": True})()
+        execution_profile = "simulation" if args.simulation else "formal"
+        preflight_payload = None
+        if args.simulation:
+            preflight = audit_simulation_preflight(args.config_dir)
+            preflight_payload = preflight.to_dict()
+            if not preflight.ready:
+                raise ValueError("simulation validation freeze requires a passing technical preflight")
         else:
-            readiness = audit_repository_readiness(args.config_dir)
-        _formal_config_ready(config, spec, readiness)
+            if args.readiness_report is not None:
+                readiness_payload = json.loads(args.readiness_report.read_text(encoding="utf-8"))
+                if not bool(readiness_payload.get("formal_ready")):
+                    raise ValueError("validation freeze requires a passing readiness report")
+                readiness = type("Readiness", (), {"formal_ready": True})()
+            else:
+                readiness = audit_repository_readiness(args.config_dir)
+            _formal_config_ready(config, spec, readiness)
         jobs = [load_job_record(path) for path in args.job_file]
         orchestrator = Chapter45Orchestrator(
             args.config_dir,
@@ -95,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         expected_job_ids = tuple(
             planned.identity.job_id
             for family in spec.families
-            for planned in orchestrator.plan(family, execution_profile="formal")
+            for planned in orchestrator.plan(family, execution_profile=execution_profile)
         )
         scenarios_by_scale = {
             str(scale): tuple(
@@ -114,12 +124,15 @@ def main(argv: list[str] | None = None) -> int:
             expected_job_ids=expected_job_ids,
             validation_paths=args.validation,
             validation_scenarios_by_scale=scenarios_by_scale,
+            execution_profile=execution_profile,
         )
         _emit({
             "status": "completed",
             "command": "freeze",
             "output": str(args.output.resolve()),
             "freeze_hash": manifest["freeze_hash"],
+            "execution_profile": execution_profile,
+            "preflight": preflight_payload,
         })
         return 0
     except Exception as exc:  # noqa: BLE001 - preserve machine-readable CLI diagnostics
