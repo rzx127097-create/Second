@@ -129,7 +129,10 @@ to a validation-selected checkpoint requires a new frozen protocol and code
 revision before sealed-test access.
 
 Deterministic evaluation freezes actor normalization, return normalization,
-optimizer state, and RNG state. Evaluation does not update learning state. A
+optimizer state, and RNG state. Evaluation does not update learning state.
+Wall-clock decision timing is an opt-in diagnostic
+(`evaluate_policy(..., measure_decision_time=True)`); it is disabled by
+default so repeated deterministic records remain byte-stable. A
 `sealed_test` call is rejected until the parameter status and policy freeze
 gate are verified; it must never fall back to a smoke or validation scenario.
 

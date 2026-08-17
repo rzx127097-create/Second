@@ -75,6 +75,16 @@ def test_simulation_evaluation_uses_simulation_readiness_and_records_profile_met
     assert isinstance(row["preflight_warnings"], list)
 
 
+def test_deterministic_validation_evaluation_excludes_wall_clock_runtime_by_default():
+    bundle = _factory("s1")
+    records = evaluate_policy(
+        HoldPolicy(), {"s1": bundle}, scenarios=["s1"], split="validation",
+        deterministic=True, evidence_mode="simulation",
+    )
+
+    assert records[0].to_row()["decision_time_mean_ms"] == 0.0
+
+
 def test_numeric_policy_action_is_converted_and_invalid_index_rejected():
     from problem2.experiments.policy_protocol import actions_to_environment
 

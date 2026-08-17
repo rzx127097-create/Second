@@ -35,13 +35,18 @@ def evaluate_policy(
     measure_decision_time: bool | None = None,
     evidence_mode: str = "formal",
 ) -> list[EpisodeRecord]:
-    """Evaluate a policy on exact, resettable ScenarioBundle scenarios."""
+    """Evaluate a policy on exact, resettable ScenarioBundle scenarios.
+
+    Wall-clock decision timing is intentionally opt-in.  It is a useful
+    operational diagnostic, but it is not deterministic evidence and must not
+    change a repeatable validation or sealed-test record by default.
+    """
     if split not in {"smoke", "train", "validation", "sealed_test"}:
         raise ValueError("unknown evaluation split")
     if evidence_mode not in {"formal", "simulation"}:
         raise ValueError("evidence_mode must be formal or simulation")
     if measure_decision_time is None:
-        measure_decision_time = split != "smoke"
+        measure_decision_time = False
     if split == "sealed_test":
         if not deterministic:
             raise ValueError("sealed_test requires deterministic=True")
