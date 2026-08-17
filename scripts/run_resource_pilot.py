@@ -14,6 +14,9 @@ if str(ROOT / "src") not in sys.path:
 
 from problem2.experiments.metrics import episode_record_from_bundle
 from problem2.experiments.resource_activation import audit_resource_activation
+from problem2.experiments.simulation_preflight import load_simulation_profile
+from problem2.config import config_identity, load_config_bundle
+from problem2.experiments.job_identity import capture_git_provenance
 from problem2.scenarios.factory import build_synthetic_scenario
 from problem2.scenarios.interventions import ScenarioIntervention
 
@@ -119,7 +122,18 @@ def main(argv: list[str] | None = None) -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
     activation = audit_resource_activation(rows)
-    report = {**activation.to_dict(), "raw_path": str(args.output.resolve()), "provisional": True}
+    config = load_config_bundle(args.config_dir)
+    profile = load_simulation_profile(args.config_dir)
+    provenance = capture_git_provenance(str(ROOT))
+    report = {
+        **activation.to_dict(),
+        "raw_path": str(args.output.resolve()),
+        "provisional": True,
+        "config_hash": config_identity(config),
+        "simulation_profile_sha256": profile.sha256,
+        "git_commit": provenance.commit,
+        "source_tree_hash": provenance.source_tree_hash,
+    }
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))

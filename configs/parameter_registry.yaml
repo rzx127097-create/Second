@@ -47,6 +47,11 @@ parameters:
     source_value: null
     source_unit: null
     conversion: null
+    simulation_source_id: "controlled-scene-assumption-uav-usable-fraction-v1"
+    reference_range: [0.5, 1.0]
+    assumption_rationale: "A conservative 80% usable fraction leaves reserve for pump dead volume and operational cutoff in the controlled scene."
+    selection_rule: "Use the midpoint of the declared sensitivity range for the main run; vary 0.6, 0.8 and 1.0 in sensitivity."
+    sensitivity_levels: [0.6, 0.8, 1.0]
     status: provisional
     scope: main
   uav_speed:
@@ -94,7 +99,7 @@ parameters:
   vehicle_service_capacity:
     symbol: q_svc_max
     meaning: "maximum pesticide volume transferred in one service batch"
-    value: 5.0
+    value: 0.8
     unit: L
     min: 0.1
     max: 20.0
@@ -102,7 +107,7 @@ parameters:
     source_id: "DigitalAgro-DroneFiller-public-spec"
     source_value: 500.0
     source_unit: L
-    conversion: "value = source_value * 0.01 scene_liquid_scale; per-service transfer remains capped by UAV free capacity and must be vehicle-matched"
+    conversion: "value = min(source_value * 0.01 scene_liquid_scale, uav_onboard_pesticide * uav_usable_fraction); one service batch fills at most one UAV"
     status: provisional_reference_range
     scope: main
   service_setup_time:
@@ -117,6 +122,11 @@ parameters:
     source_value: null
     source_unit: null
     conversion: null
+    simulation_source_id: "controlled-scene-assumption-service-setup-v1"
+    reference_range: [1.0, 120.0]
+    assumption_rationale: "Ten seconds represents a short but nonzero connection and preparation interval in a discrete service model."
+    selection_rule: "Use the lower-middle operating point and vary 5, 10 and 20 seconds in sensitivity."
+    sensitivity_levels: [5.0, 10.0, 20.0]
     status: provisional
     scope: main
   rendezvous_radius:
@@ -131,6 +141,11 @@ parameters:
     source_value: null
     source_unit: null
     conversion: null
+    simulation_source_id: "controlled-scene-assumption-rendezvous-radius-v1"
+    reference_range: [1.0, 30.0]
+    assumption_rationale: "Five metres represents a bounded ground-to-air service envelope while keeping the vehicle on the road graph."
+    selection_rule: "Use the central operating point and vary 3, 5 and 10 metres in sensitivity."
+    sensitivity_levels: [3.0, 5.0, 10.0]
     status: provisional
     scope: main
   vehicle_speed:
@@ -145,6 +160,11 @@ parameters:
     source_value: null
     source_unit: null
     conversion: null
+    simulation_source_id: "controlled-scene-assumption-vehicle-speed-v1"
+    reference_range: [0.2, 10.0]
+    assumption_rationale: "One metre per second is a conservative effective speed after road curvature and low-speed rendezvous control."
+    selection_rule: "Use the central operating point and vary 0.5, 1.0 and 2.0 metres per second in sensitivity."
+    sensitivity_levels: [0.5, 1.0, 2.0]
     status: provisional
     scope: main
   decision_dt:
@@ -159,5 +179,10 @@ parameters:
     source_value: null
     source_unit: null
     conversion: null
+    simulation_source_id: "controlled-scene-assumption-decision-step-v1"
+    reference_range: [0.1, 10.0]
+    assumption_rationale: "One second resolves service setup, transfer and road travel while keeping the explicit field update stable at all scales."
+    selection_rule: "Use one second as the common decision interval; do not vary it in the main causal experiments."
+    sensitivity_levels: [0.5, 1.0, 2.0]
     status: provisional
     scope: main

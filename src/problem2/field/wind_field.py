@@ -20,6 +20,7 @@ class WindField:
         dt_s: float,
         *,
         cell_size_m: tuple[float, float] = (1.0, 1.0),
+        boundary: str = "open",
     ) -> np.ndarray:
         """Advance a scalar field with a conservative first-order upwind step.
 
@@ -29,6 +30,8 @@ class WindField:
         """
         if dt_s < 0:
             raise ValueError("dt_s must be non-negative")
+        if boundary not in {"open", "closed"}:
+            raise ValueError("boundary must be open or closed")
         result = np.asarray(values, dtype=float).copy()
         if result.ndim != 2:
             raise ValueError("values must be two-dimensional")
@@ -41,29 +44,57 @@ class WindField:
         c_y = abs(float(self.vy_m_s)) * dt_s / dy
         if c_x > 1.0 + 1e-12 or c_y > 1.0 + 1e-12:
             raise ValueError("wind advection violates the CFL condition")
-        if self.vx_m_s > 0:
+        if result.shape[1] == 1:
+            # A degenerate column has no internal x-face.  A closed boundary
+            # therefore has zero net x-flux and must leave the column intact.
+            pass
+        elif self.vx_m_s > 0:
             c = float(self.vx_m_s) * dt_s / dx
             out = result.copy()
             out[:, 0] = (1.0 - c) * result[:, 0]
-            out[:, 1:] = (1.0 - c) * result[:, 1:] + c * result[:, :-1]
+            if result.shape[1] > 1:
+                out[:, 1:-1] = (1.0 - c) * result[:, 1:-1] + c * result[:, :-2]
+                if boundary == "open":
+                    out[:, -1] = (1.0 - c) * result[:, -1] + c * result[:, -2]
+                else:
+                    out[:, -1] = result[:, -1] + c * result[:, -2]
             result = out
         elif self.vx_m_s < 0:
             c = -float(self.vx_m_s) * dt_s / dx
             out = result.copy()
             out[:, -1] = (1.0 - c) * result[:, -1]
-            out[:, :-1] = (1.0 - c) * result[:, :-1] + c * result[:, 1:]
+            if result.shape[1] > 1:
+                out[:, 1:-1] = (1.0 - c) * result[:, 1:-1] + c * result[:, 2:]
+                if boundary == "open":
+                    out[:, 0] = (1.0 - c) * result[:, 0] + c * result[:, 1]
+                else:
+                    out[:, 0] = result[:, 0] + c * result[:, 1]
             result = out
-        if self.vy_m_s > 0:
+        if result.shape[0] == 1:
+            # A degenerate row has no internal y-face; closed boundaries keep
+            # its mass unchanged rather than applying a phantom outflow.
+            pass
+        elif self.vy_m_s > 0:
             c = float(self.vy_m_s) * dt_s / dy
             out = result.copy()
             out[0, :] = (1.0 - c) * result[0, :]
-            out[1:, :] = (1.0 - c) * result[1:, :] + c * result[:-1, :]
+            if result.shape[0] > 1:
+                out[1:-1, :] = (1.0 - c) * result[1:-1, :] + c * result[:-2, :]
+                if boundary == "open":
+                    out[-1, :] = (1.0 - c) * result[-1, :] + c * result[-2, :]
+                else:
+                    out[-1, :] = result[-1, :] + c * result[-2, :]
             result = out
         elif self.vy_m_s < 0:
             c = -float(self.vy_m_s) * dt_s / dy
             out = result.copy()
             out[-1, :] = (1.0 - c) * result[-1, :]
-            out[:-1, :] = (1.0 - c) * result[:-1, :] + c * result[1:, :]
+            if result.shape[0] > 1:
+                out[1:-1, :] = (1.0 - c) * result[1:-1, :] + c * result[2:, :]
+                if boundary == "open":
+                    out[0, :] = (1.0 - c) * result[0, :] + c * result[1, :]
+                else:
+                    out[0, :] = result[0, :] + c * result[1, :]
             result = out
         return np.maximum(result, 0.0)
 

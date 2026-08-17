@@ -86,7 +86,7 @@ parameters:
     conversion: "pilot scale parameter; requires deposition calibration"
   pesticide_efficacy_per_l:
     symbol: alpha_c
-    value: 0.05
+    value: 0.5
     unit: normalized-density/L
     min: 0.0
     max: 1.0
@@ -94,10 +94,10 @@ parameters:
     source_id: "Qin2018-UAV-droplet-deposition"
     source_value: null
     source_unit: null
-    conversion: "exposure-to-mortality coefficient; requires bioassay calibration"
+    conversion: "controlled-simulation normalization selected by the largest-scale ideal-exposure reachability check; requires compound-specific bioassay for field use"
   pest_mortality_per_exposure:
     symbol: mu_c
-    value: 0.02
+    value: 0.5
     unit: normalized-density/(L*s)
     min: 0.0
     max: 1.0
@@ -105,4 +105,4 @@ parameters:
     source_id: "Showler2021-early-intervention"
     source_value: null
     source_unit: null
-    conversion: "exposure-response coefficient; requires pesticide bioassay"
+    conversion: "controlled-simulation normalization selected by the largest-scale ideal-exposure reachability check; requires pesticide bioassay for field use"

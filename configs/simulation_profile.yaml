@@ -1,0 +1,298 @@
+schema_version: 1
+status: frozen_for_controlled_simulation
+evidence_mode: controlled_simulation
+claim_boundary: >-
+  Results are produced in a controlled simulation and do not constitute field
+  validation or measured deployment effectiveness.
+physical_extent_m: [300.0, 500.0]
+
+engineering_parameters:
+  uav_onboard_pesticide:
+    runtime_path: parameter_registry.parameters.uav_onboard_pesticide
+    value: 1.0
+    unit: L
+    min: 0.1
+    max: 5.0
+    source_type: manual
+    source_id: DJI-T40-official-spec
+    reference_range: [40.0, 40.0]
+    conversion: value = 40.0 L * 0.025 scene_liquid_scale
+    assumption_rationale: Scene scaling preserves a finite resource bottleneck within the modeled horizon.
+    selection_rule: Keep rated scene capacity fixed and vary initial fill ratio.
+    sensitivity_required: true
+    sensitivity_levels: [0.5, 0.75, 1.0]
+  uav_spray_flow:
+    runtime_path: parameter_registry.parameters.uav_spray_flow
+    value: 0.01
+    unit: L/s
+    min: 0.001
+    max: 0.1
+    source_type: manual
+    source_id: DJI-T40-official-spec
+    reference_range: [0.2, 0.2]
+    conversion: value = 0.2 L/s * 0.05 scene_flow_scale
+    assumption_rationale: Flow is scaled with tank capacity to preserve a finite spray endurance.
+    selection_rule: Keep main flow fixed and vary the initial fill ratio.
+    sensitivity_required: true
+    sensitivity_levels: [0.005, 0.01, 0.02]
+  uav_usable_fraction:
+    runtime_path: parameter_registry.parameters.uav_usable_fraction
+    value: 0.8
+    unit: '1'
+    min: 0.5
+    max: 1.0
+    source_type: assumption
+    source_id: controlled-scene-assumption-uav-usable-fraction-v1
+    reference_range: [0.5, 1.0]
+    conversion: usable_capacity = rated_capacity * usable_fraction
+    assumption_rationale: Retained as an explicit controlled-simulation assumption.
+    selection_rule: Use 0.8 in the main run and vary 0.6, 0.8 and 1.0.
+    sensitivity_required: true
+    sensitivity_levels: [0.6, 0.8, 1.0]
+  uav_speed:
+    runtime_path: parameter_registry.parameters.uav_speed
+    value: 1.0
+    unit: m/s
+    min: 0.2
+    max: 10.0
+    source_type: manual
+    source_id: DJI-T40-official-spec
+    reference_range: [3.0, 7.0]
+    conversion: value = 7.0 m/s / 7 scene_speed_scale
+    assumption_rationale: The scene uses a conservative effective speed after discretization and spraying.
+    selection_rule: Hold UAV speed fixed to isolate support-vehicle effects.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: UAV speed is not a support intervention.
+  vehicle_inventory:
+    runtime_path: parameter_registry.parameters.vehicle_inventory
+    value: 5.0
+    unit: L
+    min: 0.5
+    max: 20.0
+    source_type: manual
+    source_id: DigitalAgro-DroneFiller-public-spec
+    reference_range: [150.0, 500.0]
+    conversion: value = 500.0 L * 0.01 scene_liquid_scale
+    assumption_rationale: Total stock supports several refills while preserving scarcity at larger scales.
+    selection_rule: Match inventory across mobile and fixed conditions.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: Inventory is fixed for the causal mobility comparison.
+  vehicle_transfer_rate:
+    runtime_path: parameter_registry.parameters.vehicle_transfer_rate
+    value: 0.02
+    unit: L/s
+    min: 0.005
+    max: 0.2
+    source_type: manual
+    source_id: Frost-DroneMAX-public-spec
+    reference_range: [0.1892, 0.7568]
+    conversion: value = 0.7568 L/s * 0.02643 scene_flow_scale
+    assumption_rationale: Transfer is faster than spray use but remains noninstantaneous.
+    selection_rule: Match transfer rate across support conditions.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: Transfer capability is fixed to isolate mobility.
+  vehicle_service_capacity:
+    runtime_path: parameter_registry.parameters.vehicle_service_capacity
+    value: 0.8
+    unit: L
+    min: 0.1
+    max: 5.0
+    source_type: manual
+    source_id: DigitalAgro-DroneFiller-public-spec
+    reference_range: [150.0, 500.0]
+    conversion: value = min(5.0 L scene stock, 1.0 L * 0.8 usable fraction)
+    assumption_rationale: One service batch fills at most one UAV; total vehicle stock is separate.
+    selection_rule: Equal the cap to one UAV usable capacity.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: Batch capacity is matched across support conditions.
+  service_setup_time:
+    runtime_path: parameter_registry.parameters.service_setup_time
+    value: 10.0
+    unit: s
+    min: 1.0
+    max: 120.0
+    source_type: assumption
+    source_id: controlled-scene-assumption-service-setup-v1
+    reference_range: [1.0, 120.0]
+    conversion: value = explicit preparation interval in seconds
+    assumption_rationale: A short nonzero connection interval represents preparation before transfer.
+    selection_rule: Use 10 s and vary 5, 10 and 20 s.
+    sensitivity_required: true
+    sensitivity_levels: [5.0, 10.0, 20.0]
+  rendezvous_radius:
+    runtime_path: parameter_registry.parameters.rendezvous_radius
+    value: 5.0
+    unit: m
+    min: 1.0
+    max: 30.0
+    source_type: assumption
+    source_id: controlled-scene-assumption-rendezvous-radius-v1
+    reference_range: [1.0, 30.0]
+    conversion: value = maximum service separation in metres
+    assumption_rationale: Five metres is a bounded ground-to-air service envelope.
+    selection_rule: Use 5 m and vary 3, 5 and 10 m.
+    sensitivity_required: true
+    sensitivity_levels: [3.0, 5.0, 10.0]
+  vehicle_speed:
+    runtime_path: parameter_registry.parameters.vehicle_speed
+    value: 1.0
+    unit: m/s
+    min: 0.2
+    max: 10.0
+    source_type: assumption
+    source_id: controlled-scene-assumption-vehicle-speed-v1
+    reference_range: [0.2, 10.0]
+    conversion: value = effective road speed after curvature and rendezvous control
+    assumption_rationale: One metre per second is a conservative effective support speed.
+    selection_rule: Use 1 m/s and vary 0.5, 1 and 2 m/s.
+    sensitivity_required: true
+    sensitivity_levels: [0.5, 1.0, 2.0]
+  decision_dt:
+    runtime_path: parameter_registry.parameters.decision_dt
+    value: 1.0
+    unit: s
+    min: 0.1
+    max: 10.0
+    source_type: assumption
+    source_id: controlled-scene-assumption-decision-step-v1
+    reference_range: [0.1, 10.0]
+    conversion: value = one environment decision interval in seconds
+    assumption_rationale: One second resolves service and travel while satisfying numerical stability.
+    selection_rule: Hold the decision interval fixed across all scales.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: A common time step preserves cross-scale comparability.
+
+field_parameters:
+  pest_growth_rate_s:
+    runtime_path: field_dynamics.parameters.pest_growth_rate_s
+    value: 0.0002
+    unit: s^-1
+    min: 0.0
+    max: 0.01
+    source_type: peer-reviewed-study
+    source_id: Ariel2015-collective-motion-review
+    reference_range: [0.0, 0.01]
+    conversion: controlled-scene rate in SI units
+    assumption_rationale: Slow positive growth keeps pest dynamics active over the episode.
+    selection_rule: Use the main value and vary it only in ecological sensitivity.
+    sensitivity_required: true
+    sensitivity_levels: [0.0001, 0.0002, 0.0004]
+  pest_carrying_capacity:
+    runtime_path: field_dynamics.parameters.pest_carrying_capacity
+    value: 1.0
+    unit: normalized-density
+    min: 0.1
+    max: 10.0
+    source_type: manual
+    source_id: model-normalization
+    reference_range: [1.0, 1.0]
+    conversion: value = normalized source value
+    assumption_rationale: Density is normalized to unit carrying capacity.
+    selection_rule: Keep the normalization fixed across methods and scales.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: Changing normalization changes the endpoint definition.
+  pest_diffusion_rate_m2_s:
+    runtime_path: field_dynamics.parameters.pest_diffusion_rate_m2_s
+    value: 0.5
+    unit: m^2/s
+    min: 0.0
+    max: 100.0
+    source_type: peer-reviewed-study
+    source_id: Ariel2015-collective-motion-review
+    reference_range: [0.0, 100.0]
+    conversion: controlled-scene diffusion in SI units
+    assumption_rationale: The value redistributes density without violating explicit stability.
+    selection_rule: Enforce stability and vary 0.25, 0.5 and 1.0.
+    sensitivity_required: true
+    sensitivity_levels: [0.25, 0.5, 1.0]
+  wind_vx_m_s:
+    runtime_path: field_dynamics.parameters.wind_vx_m_s
+    value: 1.5
+    unit: m/s
+    min: -6.0
+    max: 6.0
+    source_type: peer-reviewed-study
+    source_id: Lan2021-downwash-wind-field
+    reference_range: [-6.0, 6.0]
+    conversion: controlled-scene wind component in SI units
+    assumption_rationale: Moderate advection remains within the upwind CFL limit.
+    selection_rule: Keep the wind vector fixed across methods.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: Wind is shared environmental context.
+  wind_vy_m_s:
+    runtime_path: field_dynamics.parameters.wind_vy_m_s
+    value: 0.5
+    unit: m/s
+    min: -6.0
+    max: 6.0
+    source_type: peer-reviewed-study
+    source_id: Lan2021-downwash-wind-field
+    reference_range: [-6.0, 6.0]
+    conversion: controlled-scene wind component in SI units
+    assumption_rationale: The cross-field component is smaller than the primary wind direction.
+    selection_rule: Keep the wind vector fixed across methods.
+    sensitivity_required: false
+    sensitivity_exclusion_rationale: Wind is shared environmental context.
+  pesticide_decay_rate_s:
+    runtime_path: field_dynamics.parameters.pesticide_decay_rate_s
+    value: 0.001155
+    unit: s^-1
+    min: 0.0
+    max: 0.1
+    source_type: peer-reviewed-study
+    source_id: Tudi2022-pymetrozine-residue-dynamics
+    reference_range: [0.0, 0.1]
+    conversion: first-order rate for a 600 s reference half-life
+    assumption_rationale: Finite exposure lifetime makes service timing operationally relevant.
+    selection_rule: Use the main rate and vary half and double rates.
+    sensitivity_required: true
+    sensitivity_levels: [0.0005775, 0.001155, 0.00231]
+  pesticide_diffusion_rate_m2_s:
+    runtime_path: field_dynamics.parameters.pesticide_diffusion_rate_m2_s
+    value: 0.5
+    unit: m^2/s
+    min: 0.0
+    max: 100.0
+    source_type: peer-reviewed-study
+    source_id: Grella2017-ground-deposition-drift
+    reference_range: [0.0, 100.0]
+    conversion: controlled-scene diffusion in SI units
+    assumption_rationale: The value disperses exposure without violating explicit stability.
+    selection_rule: Enforce stability and vary 0.25, 0.5 and 1.0.
+    sensitivity_required: true
+    sensitivity_levels: [0.25, 0.5, 1.0]
+  pesticide_efficacy_per_l:
+    runtime_path: field_dynamics.parameters.pesticide_efficacy_per_l
+    value: 0.5
+    unit: normalized-density/L
+    min: 0.0
+    max: 1.0
+    source_type: assumption
+    source_id: controlled-reachability-normalization-v1
+    reference_range: [0.0, 1.0]
+    conversion: normalized exposure per litre selected by ideal-exposure reachability
+    assumption_rationale: The coefficient is fixed before training so the largest-scale 85 percent endpoint is not analytically impossible.
+    selection_rule: Use the lowest tested pair above the largest-scale reachability threshold.
+    sensitivity_required: true
+    sensitivity_levels: [0.25, 0.5, 0.75]
+  pest_mortality_per_exposure:
+    runtime_path: field_dynamics.parameters.pest_mortality_per_exposure
+    value: 0.5
+    unit: normalized-density/(L*s)
+    min: 0.0
+    max: 1.0
+    source_type: assumption
+    source_id: controlled-reachability-normalization-v1
+    reference_range: [0.0, 1.0]
+    conversion: normalized mortality selected by ideal-exposure reachability
+    assumption_rationale: The coefficient is a controlled response parameter, not a field bioassay estimate.
+    selection_rule: Pair with efficacy before policy training and vary 0.25, 0.5 and 0.75.
+    sensitivity_required: true
+    sensitivity_levels: [0.25, 0.5, 0.75]
+
+derived_regimes:
+  max_wind_courant: 1.0
+  max_diffusion_number: 0.5
+  initial_density_reference_mean: 0.8
+  success_reduction_threshold: 0.85
+  treatment_reachability_warning_ratio: 0.85

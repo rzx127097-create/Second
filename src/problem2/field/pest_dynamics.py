@@ -43,5 +43,10 @@ class PestDynamics:
             dt_s,
             cell_size_m=cell_size_m,
         )
-        updated = self.wind.advect(updated, dt_s, cell_size_m=cell_size_m)
+        # Pest migration is reflected at the modeled field boundary.  Using
+        # an open boundary here would remove pests from the denominator and
+        # falsely report wind-driven outflow as pesticide control.
+        updated = self.wind.advect(
+            updated, dt_s, cell_size_m=cell_size_m, boundary="closed"
+        )
         return np.clip(updated, 0.0, capacity)

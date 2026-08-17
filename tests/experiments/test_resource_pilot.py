@@ -30,4 +30,7 @@ def test_resource_pilot_writes_event_derived_rows_and_activation_report(tmp_path
     payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["record_count"] == 5
     assert payload["activated"] is False
-
+    assert len(payload["config_hash"]) == 64
+    assert len(payload["simulation_profile_sha256"]) == 64
+    assert len(payload["git_commit"]) == 40
+    assert len(payload["source_tree_hash"]) == 64

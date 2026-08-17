@@ -28,6 +28,11 @@
 - Create: `configs/simulation_profile.yaml`
 - Create: `tests/experiments/test_simulation_preflight.py`
 - Create: `src/problem2/experiments/simulation_preflight.py`
+- Modify: `src/problem2/field/wind_field.py`
+- Modify: `src/problem2/field/pest_dynamics.py`
+- Modify: `configs/field_dynamics.yaml`
+- Modify: `configs/parameter_registry.yaml`
+- Test: `tests/unit/test_field_dynamics.py`
 
 **Interfaces:**
 - `load_simulation_profile(config_dir: str | Path) -> SimulationProfile`
@@ -48,6 +53,9 @@
   using each scale's metric cell size. Do not silently amplify efficacy or
   mortality to force the 85% threshold; emit a treatment-capacity warning when
   the deterministic upper-bound diagnostic shows the endpoint is unreachable.
+- Use a mass-conserving closed boundary for pest advection. Keep the existing
+  open boundary for pesticide exposure so spray drift can leave the field. A
+  pest leaving the grid must not be counted as pesticide control.
 - Add explicit rationale, selection rule, sensitivity policy, and reference or
   scene-scale conversion metadata for all 11 engineering records and all
   field-dynamics records.
@@ -60,6 +68,8 @@
   inactive resource report produces a warning; a malformed conservation report
   produces an error; and `field_calibrated_ready` is absent from the execution
   decision because simulation preflight has no field-calibration gate.
+  Add a field-dynamics test that a pest-only wind update conserves total density
+  while the existing pesticide advection test retains open-boundary loss.
 
 - [ ] **Step 2: Run the tests and verify the expected failure**
 
@@ -78,7 +88,12 @@
   path lookup, finite-range/unit checks, derived regime calculations, road and
   scenario checks, stability checks, optional resource-report classification,
   and the treatment-capacity diagnostic warning. Use `error` and `warning`
-  lists rather than a boolean formal gate.
+  lists rather than a boolean formal gate. Implement
+  `WindField.advect(..., boundary="open"|"closed")`; make `PestDynamics`
+  call the closed mode and keep `PesticideField` on the open default. Change
+  the normalized efficacy/mortality pair only after the analytical
+  reachability diagnostic demonstrates that the old pair cannot reach the
+  declared endpoint; record the new pair and levels in the profile.
 
 - [ ] **Step 4: Run targeted tests and inspect numerical diagnostics**
 
@@ -91,9 +106,10 @@
 
   Confirm the report contains the 11 engineering values, field parameters,
   cell sizes, spray endurance, nominal service time, CFL/diffusion numbers and
-  explicit warnings. If the treatment-capacity warning is emitted, preserve it
-  and resolve it through the later pilot/sensitivity task rather than changing
-  coefficients for a desired result.
+  explicit warnings. If the treatment-capacity diagnostic shows the old
+  efficacy/mortality pair is analytically incapable of reaching 85% even with
+  ideal exposure, update that pair using the pre-registered reachability rule
+  and rerun the diagnostic; do not choose it from policy outcomes.
 
 - [ ] **Step 5: Commit**
 

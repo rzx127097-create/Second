@@ -43,7 +43,7 @@ def test_parameter_intervention_is_typed_bounded_and_recorded() -> None:
 
 def test_vehicle_service_capacity_is_explicitly_separate_from_inventory() -> None:
     bundle = build_synthetic_scenario("s1", 5, config_dir=CONFIG_DIR)
-    assert bundle.resources.vehicle("vehicle-1").service_cap_l == 5.0
+    assert bundle.resources.vehicle("vehicle-1").service_cap_l == 0.8
     assert bundle.resources.vehicle("vehicle-1").service_cap_l <= (
         bundle.resources.vehicle("vehicle-1").capacity_l
     )
