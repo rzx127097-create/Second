@@ -14,7 +14,7 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from problem2.config import load_config_bundle
+from problem2.config import config_identity, load_config_bundle
 from problem2.domain.resources import PesticideResources
 from problem2.domain.state import UAVState, VehicleState
 from problem2.environment.action_masks import ActionMask
@@ -32,6 +32,7 @@ from problem2.road.graph import RoadGraph
 from problem2.road.graphml import load_graphml
 from problem2.section4_2.adapter import HeterogeneousDecisionAdapter
 from problem2.scenarios.interventions import ScenarioIntervention, baseline_intervention
+from problem2.experiments.simulation_preflight import audit_simulation_preflight, load_simulation_profile
 
 
 NORMALIZATION_VERSION = "provisional-v1"
@@ -93,6 +94,11 @@ class ScenarioBundle:
     scenario_source_kind: str = "synthetic_smoke"
     dynamics_kind: str = "smoke_local_removal"
     source_metadata_hash: str = ""
+    config_hash: str = ""
+    simulation_profile_sha256: str = ""
+    simulation_preflight_ready: bool = True
+    simulation_preflight_errors: tuple[dict[str, object], ...] = ()
+    simulation_preflight_warnings: tuple[dict[str, object], ...] = ()
     step_count: int = 0
     last_termination_reason: str | None = None
     _slot_mapping: SlotMapping | None = field(default=None, init=False, repr=False)
@@ -132,6 +138,37 @@ class ScenarioBundle:
             )
         if len(self.source_metadata_hash) != 64:
             raise ValueError("formal scenario source metadata must have a SHA-256 identity")
+
+    def assert_simulation_ready(self) -> None:
+        """Guard controlled-simulation evidence against technical drift.
+
+        Provisional engineering and ecological values are allowed here, but
+        the mechanistic model, frozen road identity, and preflight result must
+        still be internally consistent.
+        """
+
+        if self.simulation_preflight_ready is not True:
+            details = "; ".join(
+                str(issue.get("message", issue))
+                for issue in self.simulation_preflight_errors
+            )
+            raise ValueError(f"simulation preflight failed: {details or 'technical error'}")
+        if self.scenario_source_kind != "frozen_gis":
+            raise ValueError(
+                f"simulation scenario source {self.scenario_source_kind!r} is not frozen GIS"
+            )
+        if self.dynamics_kind != "reaction_diffusion_advection_exposure":
+            raise ValueError(
+                f"simulation dynamics {self.dynamics_kind!r} are not mechanistic"
+            )
+        if len(self.source_metadata_hash) != 64:
+            raise ValueError("simulation scenario source metadata must have a SHA-256 identity")
+        if len(self.config_hash) != 64:
+            raise ValueError("simulation scenario configuration must have a SHA-256 identity")
+        if len(self.simulation_profile_sha256) != 64:
+            raise ValueError("simulation profile must have a SHA-256 identity")
+        if not self.road_graph.nodes or not self.road_graph.adjacency:
+            raise ValueError("simulation road graph must contain nodes and adjacency")
 
     def step(self, actions: Mapping[str, str]) -> StepSnapshot:
         """Apply one validated joint action and update the pest field."""
@@ -285,6 +322,8 @@ def build_synthetic_scenario(
     """
 
     config = load_config_bundle(config_dir)
+    simulation_profile = load_simulation_profile(config_dir)
+    simulation_preflight = audit_simulation_preflight(config_dir)
     intervention = intervention or baseline_intervention()
     scenario_registry = config.scenarios
     requested_id = str(scenario_id or scale_id)
@@ -493,6 +532,11 @@ def build_synthetic_scenario(
         scenario_source_kind=config.scenario_source_kind or "synthetic_smoke",
         dynamics_kind=config.scenario_dynamics_kind or "smoke_local_removal",
         source_metadata_hash=config.source_metadata_hash or str(road_metadata.get("source_sha256", "")),
+        config_hash=config_identity(config),
+        simulation_profile_sha256=simulation_profile.sha256,
+        simulation_preflight_ready=simulation_preflight.ready,
+        simulation_preflight_errors=tuple(issue.to_dict() for issue in simulation_preflight.errors),
+        simulation_preflight_warnings=tuple(issue.to_dict() for issue in simulation_preflight.warnings),
     )
     bundle.reset()
     return bundle

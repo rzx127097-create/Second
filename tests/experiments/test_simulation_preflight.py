@@ -183,3 +183,41 @@ def test_resource_report_with_current_identity_is_current_evidence(tmp_path: Pat
     assert report.ready is True
     assert report.errors == ()
     assert not any(issue.code == "resource_report_identity_missing" for issue in report.warnings)
+
+
+def test_simulation_preflight_cli_is_deterministic_and_warning_tolerant(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from scripts.audit_simulation_preflight import main
+
+    report_path = tmp_path / "preflight.json"
+    arguments = ["--config-dir", str(CONFIGS), "--report", str(report_path)]
+    assert main(arguments) == 0
+    first = capsys.readouterr().out
+    assert main(arguments) == 0
+    second = capsys.readouterr().out
+
+    assert json.loads(first) == json.loads(second)
+    assert json.loads(first)["ready"] is True
+    assert json.loads(first)["warnings"]
+
+
+def test_simulation_preflight_cli_rejects_corrupted_road_hash(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    config_dir = _config_copy(tmp_path)
+    environment = config_dir / "environment.yaml"
+    environment.write_text(
+        environment.read_text(encoding="utf-8").replace(
+            "source_sha256: 62bfda5137bb5e29b46084fe00176313febc4c8d45fffca112c3c8ff3c2fab05",
+            "source_sha256: " + "0" * 64,
+            1,
+        ),
+        encoding="utf-8",
+    )
+    from scripts.audit_simulation_preflight import main
+
+    assert main([
+        "--config-dir", str(config_dir),
+        "--report", str(tmp_path / "preflight.json"),
+        "--strict",
+    ]) == 2
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ready"] is False
+    assert any(issue["code"] == "road_hash_mismatch" for issue in payload["errors"])

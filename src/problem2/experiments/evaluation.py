@@ -33,10 +33,13 @@ def evaluate_policy(
     split: str,
     deterministic: bool,
     measure_decision_time: bool | None = None,
+    evidence_mode: str = "formal",
 ) -> list[EpisodeRecord]:
     """Evaluate a policy on exact, resettable ScenarioBundle scenarios."""
     if split not in {"smoke", "train", "validation", "sealed_test"}:
         raise ValueError("unknown evaluation split")
+    if evidence_mode not in {"formal", "simulation"}:
+        raise ValueError("evidence_mode must be formal or simulation")
     if measure_decision_time is None:
         measure_decision_time = split != "smoke"
     if split == "sealed_test":
@@ -54,7 +57,9 @@ def evaluate_policy(
         bundle = scenario_factory(scenario_key) if not isinstance(scenario_factory, Mapping) else scenario_factory[scenario_key]
         if str(getattr(bundle, "scenario_id", getattr(bundle, "scale_id", scenario_key))) != scenario_key:
             raise ValueError(f"scenario factory returned mismatched scenario: {scenario_key}")
-        if split != "smoke":
+        if evidence_mode == "simulation":
+            bundle.assert_simulation_ready()
+        elif split != "smoke":
             bundle.assert_formal_ready()
         was_training = getattr(policy, "training", None)
         if hasattr(policy, "eval"):
@@ -108,6 +113,14 @@ def evaluate_policy(
             split=split,
             scenario_id=scenario_key,
             decision_times_s=decision_times_s,
+            evidence_mode=evidence_mode,
+            simulation_profile_sha256=str(
+                getattr(bundle, "simulation_profile_sha256", "")
+            ) if evidence_mode == "simulation" else "",
+            preflight_warnings=(
+                getattr(bundle, "simulation_preflight_warnings", ())
+                if evidence_mode == "simulation" else ()
+            ),
         ))
     return records
 

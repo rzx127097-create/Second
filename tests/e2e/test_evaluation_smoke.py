@@ -53,6 +53,28 @@ def test_formal_split_rejects_provisional_scenario():
         evaluate_policy(HoldPolicy(), _factory, scenarios=["s1"], split="validation", deterministic=True)
 
 
+def test_simulation_evaluation_uses_simulation_readiness_and_records_profile_metadata():
+    bundle = _factory("s1")
+    formal_called = False
+
+    def fail_formal_ready():
+        nonlocal formal_called
+        formal_called = True
+        raise AssertionError("simulation evaluation must not call the formal gate")
+
+    bundle.assert_formal_ready = fail_formal_ready
+    records = evaluate_policy(
+        HoldPolicy(), {"s1": bundle}, scenarios=["s1"],
+        split="validation", deterministic=True, evidence_mode="simulation",
+    )
+
+    assert formal_called is False
+    row = records[0].to_row()
+    assert row["evidence_mode"] == "simulation"
+    assert len(row["simulation_profile_sha256"]) == 64
+    assert isinstance(row["preflight_warnings"], list)
+
+
 def test_numeric_policy_action_is_converted_and_invalid_index_rejected():
     from problem2.experiments.policy_protocol import actions_to_environment
 

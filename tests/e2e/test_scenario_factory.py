@@ -79,6 +79,14 @@ def test_provisional_scenario_blocks_formal_use_and_reset_restores_spray_state()
         raise AssertionError("provisional scenario must not be accepted as formal evidence")
 
 
+def test_controlled_simulation_readiness_allows_provisional_mechanistic_scenario() -> None:
+    bundle = build_synthetic_scenario("s1", seed=3, config_dir=CONFIG_DIR)
+
+    bundle.assert_simulation_ready()
+    with pytest.raises(ValueError, match="provisional"):
+        bundle.assert_formal_ready()
+
+
 def test_verified_status_cannot_promote_provisional_mechanistic_scenario_to_formal() -> None:
     bundle = build_synthetic_scenario("s1", seed=3, config_dir=CONFIG_DIR)
     bundle.parameter_status = "verified"

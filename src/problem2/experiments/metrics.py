@@ -121,6 +121,9 @@ class EpisodeRecord:
     intervention_id: str = "baseline"
     intervention_hash: str = ""
     support_mode: str = "mobile"
+    evidence_mode: str = "formal"
+    simulation_profile_sha256: str = ""
+    preflight_warnings: list[dict[str, object]] = field(default_factory=list)
 
     @property
     def reduction_rate(self) -> float:
@@ -144,6 +147,9 @@ class EpisodeRecord:
             "intervention_id": self.intervention_id,
             "intervention_hash": self.intervention_hash,
             "support_mode": self.support_mode,
+            "evidence_mode": self.evidence_mode,
+            "simulation_profile_sha256": self.simulation_profile_sha256,
+            "preflight_warnings": list(self.preflight_warnings),
             "scale_id": self.scale_id,
             "parameter_status": self.parameter_status,
             "steps": self.steps,
@@ -202,6 +208,9 @@ def episode_record_from_bundle(
     split: str = "",
     scenario_id: str = "",
     decision_times_s: Iterable[float] = (),
+    evidence_mode: str = "formal",
+    simulation_profile_sha256: str = "",
+    preflight_warnings: Iterable[Mapping[str, object]] = (),
 ) -> EpisodeRecord:
     """Materialize metrics solely from final physical state and emitted events."""
 
@@ -280,6 +289,12 @@ def episode_record_from_bundle(
         intervention_id=str(getattr(bundle, "intervention_id", "baseline")),
         intervention_hash=str(getattr(bundle, "intervention_hash", "")),
         support_mode=str(getattr(bundle, "support_mode", "mobile")),
+        evidence_mode=str(evidence_mode),
+        simulation_profile_sha256=str(
+            simulation_profile_sha256
+            or getattr(bundle, "simulation_profile_sha256", "")
+        ),
+        preflight_warnings=[dict(item) for item in preflight_warnings],
     )
 
 
