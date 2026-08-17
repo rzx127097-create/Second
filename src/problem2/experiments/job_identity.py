@@ -78,8 +78,8 @@ def make_job_identity(
     digest = str(config_hash) if config_hash is not None else hashlib.sha256(payload).hexdigest()
     if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest.lower()):
         raise ValueError("config_hash must be a SHA-256 hexadecimal digest")
-    if execution_profile not in {"formal", "smoke"}:
-        raise ValueError("execution_profile must be formal or smoke")
+    if execution_profile not in {"formal", "simulation", "smoke"}:
+        raise ValueError("execution_profile must be formal, simulation or smoke")
     if int(target_updates) < 0 or int(rollout_horizon) < 0:
         raise ValueError("target_updates and rollout_horizon must be non-negative")
     if scenario_split not in {"train", "validation", "sealed_test"}:

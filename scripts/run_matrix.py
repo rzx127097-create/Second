@@ -15,6 +15,7 @@ if str(ROOT / "src") not in sys.path:
 from problem2.experiments.orchestrator import Chapter45Orchestrator
 from problem2.experiments.process import run_utf8_json_child
 from problem2.experiments.readiness import audit_repository_readiness
+from problem2.experiments.simulation_preflight import audit_simulation_preflight
 
 
 def _emit(payload: dict[str, Any]) -> None:
@@ -38,10 +39,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--simulation", action="store_true")
     parser.add_argument("--max-jobs", type=int, default=1)
     parser.add_argument("--resource-report", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.simulation and args.smoke:
+            raise ValueError("--simulation and --smoke cannot be combined")
         orchestrator = Chapter45Orchestrator(
             args.config_dir,
             args.output_root,
@@ -52,9 +56,19 @@ def main(argv: list[str] | None = None) -> int:
             resource_report = json.loads(args.resource_report.read_text(encoding="utf-8"))
         readiness = audit_repository_readiness(orchestrator.config_dir, resource_report=resource_report)
         provisional = (not readiness.formal_ready) if resource_report is not None else _is_provisional(orchestrator)
+        execution_profile = (
+            "smoke" if args.smoke else ("simulation" if args.simulation else "formal")
+        )
+        preflight = (
+            audit_simulation_preflight(
+                orchestrator.config_dir,
+                resource_report=args.resource_report,
+            )
+            if args.simulation else None
+        )
         jobs = orchestrator.plan(
             args.family,
-            execution_profile="smoke" if args.smoke else "formal",
+            execution_profile=execution_profile,
         )
         if args.dry_run:
             _emit({
@@ -62,18 +76,38 @@ def main(argv: list[str] | None = None) -> int:
                 "family": args.family,
                 "provisional": provisional,
                 "readiness": readiness.to_dict(),
+                "execution_profile": execution_profile,
+                "evidence_mode": (
+                    preflight.evidence_mode if preflight is not None else "formal"
+                ),
+                "preflight": preflight.to_dict() if preflight is not None else None,
                 "protocol_hash": orchestrator.protocol_hash,
                 "job_count": len(jobs),
                 "jobs": [job.to_dict() for job in jobs],
             })
             return 0
-        if provisional and not args.smoke:
+        if preflight is not None and not preflight.ready:
             _emit({
                 "status": "rejected",
-                "error": "formal matrix execution is blocked by the readiness gate; configuration or protocol status is provisional or unverified",
-                "readiness": readiness.to_dict(),
+                "error": "controlled-simulation matrix execution failed technical preflight",
+                "preflight": preflight.to_dict(),
             })
             return 2
+        if args.simulation and orchestrator.git_provenance.dirty:
+            _emit({
+                "status": "rejected",
+                "error": "controlled-simulation execution requires a clean Git worktree so the exact source identity is reproducible",
+                "preflight": preflight.to_dict() if preflight is not None else None,
+            })
+            return 2
+        if provisional and not args.smoke:
+            if not args.simulation:
+                _emit({
+                    "status": "rejected",
+                    "error": "formal matrix execution is blocked by the readiness gate; configuration or protocol status is provisional or unverified",
+                    "readiness": readiness.to_dict(),
+                })
+                return 2
         if args.max_jobs < 1:
             raise ValueError("max-jobs must be positive")
         selected = jobs[: args.max_jobs]
@@ -94,6 +128,7 @@ def main(argv: list[str] | None = None) -> int:
                     "--method", identity.method,
                     "--output-root", str(args.output_root),
                     *( ["--smoke"] if args.smoke else [] ),
+                    *( ["--simulation"] if args.simulation else [] ),
                 ],
                 cwd=ROOT,
             )
@@ -114,6 +149,10 @@ def main(argv: list[str] | None = None) -> int:
             "status": status,
             "family": args.family,
             "smoke": bool(args.smoke),
+            "simulation": bool(args.simulation),
+            "execution_profile": execution_profile,
+            "evidence_mode": preflight.evidence_mode if preflight is not None else "formal",
+            "preflight": preflight.to_dict() if preflight is not None else None,
             "protocol_hash": orchestrator.protocol_hash,
             "readiness": readiness.to_dict(),
             "selected_count": len(selected),

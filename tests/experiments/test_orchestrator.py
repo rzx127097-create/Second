@@ -43,6 +43,21 @@ def test_orchestrator_expands_all_families_with_protocol_bound_identities(tmp_pa
     assert list(tmp_path.iterdir()) == []
 
 
+def test_simulation_profile_uses_full_budget_and_differs_from_smoke(tmp_path: Path) -> None:
+    orchestrator = Chapter45Orchestrator(ROOT / "configs", tmp_path)
+    simulation = orchestrator.plan("main_comparison", execution_profile="simulation")
+    smoke = orchestrator.plan("main_comparison", execution_profile="smoke")
+
+    assert all(job.identity.execution_profile == "simulation" for job in simulation)
+    assert {job.identity.target_updates for job in simulation} == {
+        int(orchestrator.config.algorithm["total_updates"]),
+    }
+    assert {job.identity.rollout_horizon for job in simulation} == {
+        int(orchestrator.config.algorithm["rollout_horizon"]),
+    }
+    assert simulation[0].identity.job_id != smoke[0].identity.job_id
+
+
 def test_job_identity_changes_when_condition_or_protocol_changes(tmp_path: Path) -> None:
     orchestrator = Chapter45Orchestrator(ROOT / "configs", tmp_path)
     first = orchestrator.plan("sensitivity", execution_profile="smoke")[0].identity

@@ -119,8 +119,8 @@ class Chapter45Orchestrator:
         )
 
     def plan(self, family: str, *, execution_profile: str = "formal") -> tuple[PlannedJob, ...]:
-        if execution_profile not in {"formal", "smoke"}:
-            raise ValueError("execution_profile must be formal or smoke")
+        if execution_profile not in {"formal", "simulation", "smoke"}:
+            raise ValueError("execution_profile must be formal, simulation or smoke")
         family = str(family)
         conditions = self.spec.expand(family)
         jobs: list[PlannedJob] = []

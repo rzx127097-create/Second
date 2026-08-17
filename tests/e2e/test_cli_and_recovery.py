@@ -235,6 +235,63 @@ def test_matrix_dry_run_is_json_and_does_not_create_execution_outputs(tmp_path: 
     assert list(tmp_path.iterdir()) == []
 
 
+def test_matrix_simulation_dry_run_reports_controlled_evidence_and_warnings(tmp_path: Path) -> None:
+    result = _cli(
+        "run_matrix.py", "--config-dir", "configs", "--output-root", str(tmp_path),
+        "--simulation", "--dry-run",
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = _json_output(result)
+    assert payload["status"] == "dry_run"
+    assert payload["evidence_mode"] == "controlled_simulation"
+    assert payload["preflight"]["ready"] is True
+    assert payload["preflight"]["warnings"]
+    assert all(job["execution_profile"] == "simulation" for job in payload["jobs"])
+    assert {job["target_updates"] for job in payload["jobs"]} == {1000}
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_matrix_rejects_conflicting_simulation_and_smoke_flags(tmp_path: Path) -> None:
+    result = _cli(
+        "run_matrix.py", "--config-dir", "configs", "--output-root", str(tmp_path),
+        "--simulation", "--smoke", "--dry-run",
+    )
+
+    assert result.returncode != 0
+    assert "cannot be combined" in str(_json_output(result)["error"])
+
+
+def test_matrix_simulation_execution_rejects_dirty_source_before_child(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    from scripts import run_matrix
+
+    original_orchestrator = run_matrix.Chapter45Orchestrator
+
+    def dirty_orchestrator(*args, **kwargs):
+        orchestrator = original_orchestrator(*args, **kwargs)
+        orchestrator.git_provenance = GitProvenance(
+            orchestrator.git_commit, "d" * 64, True,
+        )
+        return orchestrator
+
+    monkeypatch.setattr(run_matrix, "Chapter45Orchestrator", dirty_orchestrator)
+    monkeypatch.setattr(
+        run_matrix,
+        "run_utf8_json_child",
+        lambda *_args, **_kwargs: pytest.fail("dirty simulation source must fail before child execution"),
+    )
+
+    assert run_matrix.main([
+        "--config-dir", str(ROOT / "configs"),
+        "--output-root", str(tmp_path),
+        "--simulation",
+    ]) == 2
+    payload = json.loads(capsys.readouterr().out)
+    assert "clean Git worktree" in str(payload["error"])
+
+
 def test_matrix_smoke_executes_each_registered_method(tmp_path: Path) -> None:
     result = _cli(
         "run_matrix.py", "--config-dir", "configs", "--output-root", str(tmp_path),
