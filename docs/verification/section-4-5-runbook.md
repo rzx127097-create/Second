@@ -100,6 +100,61 @@ python scripts/run_matrix.py --config-dir configs `
   --simulation --max-jobs 1
 ```
 
+### 3.1 Canonical M3 pilot (validation only)
+
+The following sequence freezes exactly 50 full-budget jobs (two scales, five
+methods and five training seeds) and their 100 shared validation evaluations.
+It never reads or writes the sealed-test split. Use the same selection array
+for training and evaluation so a repeated command resumes completed identities.
+
+```powershell
+$python = "C:\Users\RZX\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe"
+$runRoot = "runs\m3-pilot"
+$resourceRoot = "runs\m3-resource-pilot"
+$methods = @("sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar", "mappo_mobile", "sr_mappo_two_stage")
+$selection = @("--scale", "s1", "--scale", "s6")
+foreach ($method in $methods) { $selection += @("--method", $method) }
+foreach ($seed in 0..4) { $selection += @("--seed", "$seed") }
+
+& $python scripts/run_resource_pilot.py --config-dir configs `
+  --output "$resourceRoot\raw.jsonl" --report "$resourceRoot\activation.json" `
+  --scale s1 --scale s3 --scale s6 --episodes 3
+
+& $python scripts/run_matrix.py --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml --family main_comparison `
+  --output-root $runRoot --simulation --dry-run @selection
+
+& $python scripts/prepare_m3_pilot.py --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml --output-root $runRoot `
+  --resource-report "$resourceRoot\activation.json" `
+  --manifest "$runRoot\m3-pilot-manifest.json"
+
+& $python scripts/run_matrix.py --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml --family main_comparison `
+  --output-root $runRoot --simulation --max-jobs 50 @selection
+
+& $python scripts/evaluate_matrix.py --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml --family main_comparison `
+  --output-root $runRoot --split validation --simulation --max-jobs 50 @selection
+
+& $python scripts/audit_m3_pilot.py --manifest "$runRoot\m3-pilot-manifest.json" `
+  --output-root $runRoot --report "$runRoot\m3-pilot-readiness.json"
+
+& $python scripts/build_m3_pilot_artifacts.py `
+  --manifest "$runRoot\m3-pilot-manifest.json" `
+  --readiness "$runRoot\m3-pilot-readiness.json" --config-dir configs `
+  --protocol configs/experiments/chapter4_5.yaml `
+  --output "$runRoot\artifacts"
+```
+
+The dry-run must report 50 selected jobs and the preparation CLI must report
+100 evaluation keys. A single failed identity can be retried by adding one
+`--scale`, one `--method`, and one `--seed`; do not lower its update budget or
+change its configuration. M3 is reached only when the audit reports
+`m3_ready: true`, `highest_maturity: M3`, 50 completed jobs and 100 valid
+validation rows. The resulting language remains “pilot results indicate”; it
+is not a formal sealed-test or field-deployment result.
+
 ## 4. Shared validation and sealed-test rules
 
 Each checkpoint is evaluated on identical scenario IDs for paired comparisons:

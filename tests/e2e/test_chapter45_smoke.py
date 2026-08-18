@@ -227,6 +227,33 @@ def test_matrix_evaluation_runs_all_shared_scale_scenarios_and_reuses_outputs(
     assert all(item["reused"] is True for item in second["evaluations"])
 
 
+def test_filtered_smoke_job_and_validation_resume_by_identity(tmp_path: Path) -> None:
+    train_args = (
+        "--config-dir", "configs", "--protocol", "configs/experiments/chapter4_5.yaml",
+        "--family", "main_comparison", "--output-root", str(tmp_path),
+        "--smoke", "--scale", "s1", "--method", "sr_mappo_mobile",
+        "--seed", "0", "--max-jobs", "1",
+    )
+    first_result, first = _run(*train_args)
+    second_result, second = _run(*train_args)
+    assert first_result.returncode == second_result.returncode == 0
+    assert first["jobs"][0]["job_id"] == second["jobs"][0]["job_id"]
+    job_path = Path(first["jobs"][0]["output"]["job_file"])
+    assert json.loads(job_path.read_text(encoding="utf-8"))["attempts"] == 1
+
+    evaluate_args = (
+        "--config-dir", "configs", "--protocol", "configs/experiments/chapter4_5.yaml",
+        "--family", "main_comparison", "--output-root", str(tmp_path),
+        "--split", "validation", "--smoke", "--scale", "s1",
+        "--method", "sr_mappo_mobile", "--seed", "0", "--max-jobs", "1",
+    )
+    evaluated_first, payload_first = _run_script("evaluate_matrix.py", *evaluate_args)
+    evaluated_second, payload_second = _run_script("evaluate_matrix.py", *evaluate_args)
+    assert evaluated_first.returncode == evaluated_second.returncode == 0
+    assert len(payload_first["evaluations"]) == 2
+    assert all(item["reused"] is True for item in payload_second["evaluations"])
+
+
 def test_matrix_evaluation_rejects_conflicting_simulation_and_smoke(
     tmp_path: Path,
 ) -> None:
