@@ -11,10 +11,12 @@ from pathlib import Path
 from typing import Any
 
 from problem2.artifacts.validate_logs import validate_episode_records
+from problem2.config import config_identity, load_config_bundle
 
 from .m3_pilot import M3PilotProfile, load_m3_manifest
 from .recovery import load_job_record
 from .runner import JobRecord
+from .specification import load_experiment_spec, protocol_identity
 
 
 M3_REQUIRED_METRICS = (
@@ -93,6 +95,30 @@ def _relative_path(root: Path, value: object) -> Path:
     return resolved
 
 
+def _canonical_context(
+    manifest: Mapping[str, object],
+) -> tuple[Any | None, Any | None, list[str]]:
+    """Load the config/protocol named by the manifest for independent auditing."""
+
+    issues: list[str] = []
+    identity = manifest.get("identity")
+    if not isinstance(identity, Mapping):
+        return None, None, ["manifest identity is missing or malformed"]
+    try:
+        config_dir = Path(str(identity["config_dir"])).resolve()
+        config = load_config_bundle(config_dir)
+        if config_identity(config) != identity.get("config_hash"):
+            issues.append("manifest config hash does not match its config directory")
+        protocol_path = Path(str(identity["protocol_path"])).resolve()
+        if protocol_identity(protocol_path) != identity.get("protocol_hash"):
+            issues.append("manifest protocol hash does not match its protocol file")
+        spec = load_experiment_spec(protocol_path, config)
+        return config, spec, issues
+    except (KeyError, OSError, TypeError, ValueError) as exc:
+        issues.append(f"canonical config/protocol unavailable: {exc}")
+        return None, None, issues
+
+
 def _manifest_shape(
     manifest: Mapping[str, object],
     jobs: Sequence[Mapping[str, object]],
@@ -114,6 +140,37 @@ def _manifest_shape(
     for field, value in expected_profile.items():
         if profile.get(field) != value:
             issues.append(f"profile {field} mismatch")
+    config, spec, context_issues = _canonical_context(manifest)
+    issues.extend(context_issues)
+    expected_updates: int | None = None
+    expected_horizon: int | None = None
+    expected_rule: str | None = None
+    expected_scenarios: dict[str, list[str]] = {}
+    if config is not None and spec is not None:
+        try:
+            expected_updates = int(config.algorithm["total_updates"])
+            expected_horizon = int(config.algorithm["rollout_horizon"])
+            expected_rule = str(spec.execution["checkpoint_selection_rule"])
+            declared = tuple(
+                str(value) for value in config.experiments["validation_scenarios"]
+            )
+            for scale in expected.scales:
+                expected_scenarios[scale] = [
+                    scenario_id
+                    for scenario_id in declared
+                    if str(config.scenarios[scenario_id]["scale"]) == scale
+                    and str(config.scenarios[scenario_id]["split"]) == "validation"
+                ]
+        except (KeyError, TypeError, ValueError) as exc:
+            issues.append(f"canonical M3 contract is malformed: {exc}")
+    if expected_updates is not None:
+        if profile.get("target_updates") != expected_updates:
+            issues.append("profile target_updates is not the configured full budget")
+    if expected_rule is not None:
+        if profile.get("checkpoint_selection_rule") != expected_rule:
+            issues.append("profile checkpoint selection rule mismatch")
+    if expected_scenarios and profile.get("scenarios_by_scale") != expected_scenarios:
+        issues.append("profile validation scenario map does not match configuration")
     if len(jobs) != 50:
         issues.append(f"expected 50 jobs, found {len(jobs)}")
     if len(evaluations) != 100:
@@ -143,6 +200,31 @@ def _manifest_shape(
         issues.append("evaluation job set does not match the manifest job set")
     if any(sum(1 for key in evaluation_keys if key[0] == job_id) != 2 for job_id in job_ids):
         issues.append("each job must have exactly two validation evaluations")
+    if expected_updates is not None or expected_horizon is not None:
+        for row in jobs:
+            if row.get("family") != expected.family:
+                issues.append(f"job {row.get('job_id')}: family is not main_comparison")
+            if row.get("execution_profile") != expected.execution_profile:
+                issues.append(f"job {row.get('job_id')}: execution profile is not simulation")
+            if expected_updates is not None and row.get("target_updates") != expected_updates:
+                issues.append(f"job {row.get('job_id')}: target_updates is not full budget")
+            if expected_horizon is not None and row.get("rollout_horizon") != expected_horizon:
+                issues.append(f"job {row.get('job_id')}: rollout horizon mismatch")
+            if row.get("condition_id") == "direct":
+                issues.append(f"job {row.get('job_id')}: direct condition is not allowed")
+            if row.get("scenario_split") != "train":
+                issues.append(f"job {row.get('job_id')}: scenario split is not train")
+            if row.get("git_dirty") is not False:
+                issues.append(f"job {row.get('job_id')}: source is dirty")
+    if expected_scenarios:
+        scenario_sets = {scale: set(values) for scale, values in expected_scenarios.items()}
+        for row in evaluations:
+            scale = str(row.get("scale", ""))
+            scenario_id = str(row.get("scenario_id", ""))
+            if row.get("split") != expected.split:
+                issues.append(f"evaluation {row.get('job_id')}:{scenario_id}: split is not validation")
+            if scenario_id not in scenario_sets.get(scale, set()):
+                issues.append(f"evaluation {row.get('job_id')}:{scenario_id}: scenario is not registered validation")
     counts = manifest.get("counts")
     if counts != {"jobs": 50, "evaluations": 100}:
         issues.append("manifest counts do not match the canonical M3 shape")
@@ -336,9 +418,23 @@ def _sealed_test_exclusion(
     profile = manifest.get("profile")
     if not isinstance(profile, Mapping) or profile.get("split") != "validation":
         issues.append("manifest profile is not validation-only")
+    config, _spec, context_issues = _canonical_context(manifest)
+    issues.extend(context_issues)
+    validation_ids: set[str] = set()
+    if config is not None:
+        try:
+            validation_ids = {
+                str(value) for value in config.experiments["validation_scenarios"]
+            }
+        except (KeyError, TypeError, ValueError) as exc:
+            issues.append(f"validation scenario registry unavailable: {exc}")
     for source, values in (("manifest", evaluations), ("raw", rows)):
         if any(str(row.get("split", "")) != "validation" for row in values):
             issues.append(f"{source} evidence contains a non-validation split")
+        if validation_ids and any(
+            str(row.get("scenario_id", "")) not in validation_ids for row in values
+        ):
+            issues.append(f"{source} evidence contains an unregistered or sealed-test scenario identifier")
         if any("sealed" in str(row.get("scenario_id", "")).lower() for row in values):
             issues.append(f"{source} evidence contains a sealed-test scenario identifier")
     return _check("sealed_test_exclusion", issues)
@@ -372,7 +468,7 @@ def _provenance_chain(
 
 def _failure_report(manifest_path: Path, root: Path, detail: str) -> dict[str, object]:
     names = (
-        "manifest_shape", "resource_activation", "job_records", "checkpoint_integrity",
+        "output_root_binding", "manifest_shape", "resource_activation", "job_records", "checkpoint_integrity",
         "evaluation_identity", "metric_finiteness", "sealed_test_exclusion", "provenance_chain",
     )
     checks = [AuditCheck(name, False, detail).to_dict() for name in names]
@@ -410,6 +506,18 @@ def audit_m3_pilot(
         return _failure_report(source, root, f"manifest unavailable: {exc}")
 
     shape = _manifest_shape(manifest, jobs, evaluations)
+    identity = manifest.get("identity")
+    expected_root = (
+        Path(str(identity.get("output_root"))).resolve()
+        if isinstance(identity, Mapping) and identity.get("output_root")
+        else None
+    )
+    root_check = _check(
+        "output_root_binding",
+        [] if expected_root == root else [
+            f"audit output root {root} does not match manifest output root {expected_root}"
+        ],
+    )
     resource = _resource_activation(manifest)
     job_check, records = _job_records(root, jobs)
     checkpoint_check, checkpoint_hashes = _checkpoint_integrity(root, jobs, records)
@@ -420,7 +528,7 @@ def audit_m3_pilot(
     sealed_check = _sealed_test_exclusion(manifest, evaluations, rows)
     provenance_check = _provenance_chain(manifest, jobs, rows)
     checks = [
-        shape, resource, job_check, checkpoint_check, evaluation_check,
+        root_check, shape, resource, job_check, checkpoint_check, evaluation_check,
         metric_check, sealed_check, provenance_check,
     ]
     ready = all(check.passed for check in checks)

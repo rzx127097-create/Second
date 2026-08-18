@@ -88,6 +88,11 @@ def _validate_existing_evaluation(
         "source_tree_hash": identity.source_tree_hash,
         "checkpoint_sha256": job.checkpoint_sha256,
         "checkpoint_step": job.checkpoint_step,
+        "execution_profile": identity.execution_profile,
+        "target_updates": identity.target_updates,
+        "rollout_horizon": identity.rollout_horizon,
+        "scenario_split": identity.scenario_split,
+        "git_dirty": identity.git_dirty,
     }
     mismatches = {
         key: (row.get(key), value)

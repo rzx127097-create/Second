@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 from pathlib import Path
 
@@ -175,6 +176,24 @@ def _write_object(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _rehash_manifest(path: Path, manifest: dict[str, object]) -> None:
+    payload = {
+        key: value
+        for key, value in manifest.items()
+        if key not in {"created_at", "semantic_sha256"}
+    }
+    manifest["semantic_sha256"] = hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    _write_object(path, manifest)
+
+
 def test_m3_audit_accepts_complete_fifty_job_hundred_evaluation_evidence(
     tmp_path: Path,
 ) -> None:
@@ -191,6 +210,63 @@ def test_m3_audit_accepts_complete_fifty_job_hundred_evaluation_evidence(
         "valid_evaluations": 100,
     }
     assert all(check["passed"] for check in report["checks"])
+
+
+def test_m3_audit_rejects_output_root_substitution(tmp_path: Path) -> None:
+    manifest_path, run_root, _, _ = _complete_audit_fixture(tmp_path)
+
+    report = audit_m3_pilot(
+        manifest_path,
+        output_root=run_root / "copied-evidence",
+    )
+
+    checks = {check["name"]: check for check in report["checks"]}
+    assert report["m3_ready"] is False
+    assert checks["output_root_binding"]["passed"] is False
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("family", "mechanism"),
+        ("execution_profile", "smoke"),
+        ("target_updates", 1),
+        ("condition_id", "direct"),
+        ("scenario_split", "validation"),
+    ],
+)
+def test_m3_audit_rejects_noncanonical_job_contract(
+    tmp_path: Path, field: str, value: object,
+) -> None:
+    manifest_path, _, manifest, _ = _complete_audit_fixture(tmp_path)
+    manifest["jobs"][0][field] = value
+    _rehash_manifest(manifest_path, manifest)
+
+    report = audit_m3_pilot(
+        manifest_path,
+        output_root=Path(str(manifest["identity"]["output_root"])),
+    )
+
+    checks = {check["name"]: check for check in report["checks"]}
+    assert report["m3_ready"] is False
+    assert checks["manifest_shape"]["passed"] is False
+
+
+def test_m3_audit_rejects_real_sealed_scenario_id_even_if_split_is_relabelled(
+    tmp_path: Path,
+) -> None:
+    manifest_path, _, manifest, _ = _complete_audit_fixture(tmp_path)
+    manifest["evaluations"][0]["scenario_id"] = "test_001"
+    _rehash_manifest(manifest_path, manifest)
+
+    report = audit_m3_pilot(
+        manifest_path,
+        output_root=Path(str(manifest["identity"]["output_root"])),
+    )
+
+    checks = {check["name"]: check for check in report["checks"]}
+    assert report["m3_ready"] is False
+    assert checks["sealed_test_exclusion"]["passed"] is False
 
 
 @pytest.mark.parametrize(

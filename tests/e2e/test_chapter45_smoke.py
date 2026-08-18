@@ -254,6 +254,85 @@ def test_filtered_smoke_job_and_validation_resume_by_identity(tmp_path: Path) ->
     assert all(item["reused"] is True for item in payload_second["evaluations"])
 
 
+@pytest.mark.parametrize(
+    ("field", "bad_value"),
+    [
+        ("execution_profile", "smoke"),
+        ("target_updates", 1),
+        ("rollout_horizon", 3),
+        ("scenario_split", "validation"),
+        ("git_dirty", True),
+    ],
+)
+def test_existing_validation_reuse_checks_complete_identity(
+    tmp_path: Path, field: str, bad_value: object,
+) -> None:
+    source = ROOT / "scripts" / "evaluate_matrix.py"
+    module_spec = importlib.util.spec_from_file_location(
+        f"problem2_evaluation_reuse_{field}", source,
+    )
+    assert module_spec is not None and module_spec.loader is not None
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+
+    identity = SimpleNamespace(
+        job_id="job-1",
+        method="sr_mappo_mobile",
+        scale="s1",
+        training_seed=0,
+        config_hash="c" * 64,
+        git_commit="d" * 40,
+        family="main_comparison",
+        condition_id="sr_mappo_mobile__s1__seed-0",
+        protocol_hash="p" * 64,
+        source_tree_hash="s" * 64,
+        execution_profile="simulation",
+        target_updates=1000,
+        rollout_horizon=128,
+        scenario_split="train",
+        git_dirty=False,
+    )
+    planned = SimpleNamespace(identity=identity)
+    job = SimpleNamespace(
+        checkpoint_sha256="h" * 64,
+        checkpoint_step=1000,
+    )
+    row = {
+        "run_id": "job-1:0:val_001",
+        "method": identity.method,
+        "scale": identity.scale,
+        "training_seed": identity.training_seed,
+        "scenario_id": "val_001",
+        "split": "validation",
+        "config_hash": identity.config_hash,
+        "git_commit": identity.git_commit,
+        "family": identity.family,
+        "condition_id": identity.condition_id,
+        "protocol_hash": identity.protocol_hash,
+        "job_id": identity.job_id,
+        "source_tree_hash": identity.source_tree_hash,
+        "checkpoint_sha256": job.checkpoint_sha256,
+        "checkpoint_step": job.checkpoint_step,
+        "execution_profile": identity.execution_profile,
+        "target_updates": identity.target_updates,
+        "rollout_horizon": identity.rollout_horizon,
+        "scenario_split": identity.scenario_split,
+        "git_dirty": identity.git_dirty,
+    }
+    path = tmp_path / "evaluation.jsonl"
+    row[field] = bad_value
+    path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="identity mismatch"):
+        module._validate_existing_evaluation(
+            path,
+            planned=planned,
+            job=job,
+            split="validation",
+            scenario="val_001",
+        )
+
+
 def test_matrix_evaluation_rejects_conflicting_simulation_and_smoke(
     tmp_path: Path,
 ) -> None:
@@ -289,6 +368,11 @@ def test_sealed_matrix_reruns_evaluation_when_existing_raw_has_no_receipt(
         condition_id="direct",
         protocol_hash="p" * 64,
         source_tree_hash="s" * 64,
+        execution_profile="formal",
+        target_updates=10,
+        rollout_horizon=128,
+        scenario_split="train",
+        git_dirty=False,
     )
     planned = SimpleNamespace(identity=identity)
     job = SimpleNamespace(
@@ -333,6 +417,11 @@ def test_sealed_matrix_reruns_evaluation_when_existing_raw_has_no_receipt(
         "source_tree_hash": "s" * 64,
         "checkpoint_sha256": "h" * 64,
         "checkpoint_step": 10,
+        "execution_profile": "formal",
+        "target_updates": 10,
+        "rollout_horizon": 128,
+        "scenario_split": "train",
+        "git_dirty": False,
     }
     raw_path.write_text(json.dumps(row) + "\n", encoding="utf-8")
     verification_calls = 0

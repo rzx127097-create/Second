@@ -148,6 +148,26 @@ def test_m3_artifact_builder_rejects_manifest_hash_mismatch(tmp_path: Path) -> N
         )
 
 
+def test_m3_artifact_builder_rejects_readiness_output_root_substitution(
+    tmp_path: Path,
+) -> None:
+    manifest_path, readiness_path, run_root, _ = _fixture(tmp_path)
+    substitute = tmp_path / "substitute-run-root"
+    substitute.mkdir()
+    _rewrite_readiness(
+        readiness_path,
+        lambda payload: payload.update({"output_root": str(substitute)}),
+    )
+
+    with pytest.raises(ValueError, match="output root"):
+        build_m3_pilot_artifacts(
+            manifest_path, readiness_path, tmp_path / "artifacts",
+            config_dir=CONFIG_DIR, protocol_path=PROTOCOL,
+        )
+    assert run_root.is_dir()
+    assert not (tmp_path / "artifacts").exists()
+
+
 @pytest.mark.parametrize("case", ["missing", "mixed_checkpoint", "sealed_test"])
 def test_m3_artifact_builder_revalidates_every_raw_input(
     tmp_path: Path,

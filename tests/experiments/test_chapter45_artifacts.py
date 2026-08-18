@@ -235,6 +235,8 @@ def test_separate_shared_scenario_evaluations_receive_unique_run_ids() -> None:
 
     assert first["run_id"] != second["run_id"]
     assert str(first["run_id"]).startswith(f"{job.job_id}:0")
+    assert first["scenario_split"] == "train"
+    assert second["scenario_split"] == "train"
 
 
 def test_formal_artifact_build_is_blocked_while_protocol_is_provisional(tmp_path: Path) -> None:

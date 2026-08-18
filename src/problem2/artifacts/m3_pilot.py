@@ -90,6 +90,12 @@ def _validate_readiness(
     if Path(str(readiness.get("manifest", ""))).resolve() != manifest_path:
         raise ValueError("M3 readiness report references a different manifest path")
     output_root = Path(str(readiness.get("output_root", ""))).resolve()
+    identity = manifest.get("identity")
+    if not isinstance(identity, Mapping) or not identity.get("output_root"):
+        raise ValueError("M3 manifest identity output root is missing")
+    manifest_root = Path(str(identity["output_root"])).resolve()
+    if output_root != manifest_root:
+        raise ValueError("M3 readiness output root does not match the manifest output root")
     fresh = audit_m3_pilot(manifest_path, output_root=output_root)
     if fresh.get("m3_ready") is not True:
         failed = [
