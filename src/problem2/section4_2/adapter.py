@@ -699,13 +699,26 @@ class HeterogeneousDecisionAdapter:
             key=lambda item: (item.created_step, item.request_id),
         )
         for vehicle_id, executor in self.executors.items():
-            if not open_requests and self._candidate_routes.get(vehicle_id):
-                continue
             if executor.route_index < len(executor.route) - 1:
                 # Never overwrite a route while the executor is carrying
                 # residual edge distance; policies receive a locked mask.
                 continue
             if self.service.phase is not ServicePhase.IDLE:
+                continue
+            if not open_requests:
+                # Manual routes have no candidate records and remain a valid
+                # adapter test/control interface. Generated request routes
+                # expire as soon as their request leaves the open set.
+                if (
+                    self._candidate_routes.get(vehicle_id)
+                    and not self._candidate_records.get(vehicle_id)
+                ):
+                    continue
+                self._candidate_routes[vehicle_id] = {}
+                self._candidate_request_ids[vehicle_id] = {}
+                self._candidate_mapping_keys[vehicle_id] = {}
+                self._candidate_records[vehicle_id] = {}
+                self._candidate_target_cells[vehicle_id] = {}
                 continue
             self._candidate_request_ids[vehicle_id] = {}
             self._candidate_mapping_keys[vehicle_id] = {}

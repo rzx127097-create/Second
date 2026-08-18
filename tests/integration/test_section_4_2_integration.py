@@ -427,6 +427,41 @@ def test_service_lock_is_not_counted_as_empty_tank_disablement() -> None:
     )
 
 
+def test_completed_generated_rendezvous_route_is_removed_before_next_decision() -> None:
+    candidate_resources = PesticideResources(
+        uavs={"uav-1": UAVState("uav-1", 0.1, 1.0, 0.1)},
+        vehicles={"vehicle-1": VehicleState("vehicle-1", 1.0, 1.0, 1.0, 1.0)},
+    )
+    adapter = HeterogeneousDecisionAdapter(
+        candidate_resources,
+        graph(),
+        uav_slots=("uav-1",),
+        vehicle_slots=("vehicle-1",),
+        vehicle_speed_mps=3.0,
+        decision_dt_s=1.0,
+        uav_grid_shape=(1, 7),
+        uav_cell_size_m=(1.0, 1.0),
+        uav_speed_mps=1.0,
+        request_threshold_ratio=0.9,
+        service_setup_s=0.0,
+        rendezvous_radius_m=0.5,
+        max_candidate_slots=3,
+        initial_vehicle_nodes={"vehicle-1": "c"},
+    )
+    adapter.reset(seed=36)
+    requested = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+    assert requested.action_masks["vehicle-1"].valid_actions == ("hold", "slot-0")
+
+    adapter.step({"uav-1": "hold", "vehicle-1": "slot-0"})
+    adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+    adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+    completed = adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+    assert adapter.service.phase is ServicePhase.IDLE
+    assert completed.action_masks["vehicle-1"].valid_actions == ("hold",)
+    adapter.step({"uav-1": "hold", "vehicle-1": "hold"})
+
+
 def test_adapter_records_actual_spray_and_lock_blocks_spray() -> None:
     adapter = HeterogeneousDecisionAdapter(
         resources(), graph(), uav_slots=("uav-1",), vehicle_slots=("vehicle-1",),
