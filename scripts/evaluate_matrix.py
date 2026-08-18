@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from problem2.experiments.orchestrator import Chapter45Orchestrator
+from problem2.experiments.orchestrator import Chapter45Orchestrator, select_jobs
 from problem2.experiments.process import run_utf8_json_child
 from problem2.experiments.recovery import load_job_record
 from problem2.experiments.freeze import verify_sealed_evidence
@@ -136,6 +136,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--split", choices=["validation", "sealed_test"], required=True)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--simulation", action="store_true")
+    parser.add_argument("--scale", action="append", default=[])
+    parser.add_argument("--method", action="append", default=[])
+    parser.add_argument("--seed", action="append", type=int, default=[])
     parser.add_argument("--max-jobs", type=int, default=1)
     parser.add_argument("--max-scenarios", type=int)
     parser.add_argument("--freeze-manifest")
@@ -168,11 +171,18 @@ def main(argv: list[str] | None = None) -> int:
         if provisional and not args.smoke and not args.simulation:
             raise ValueError("formal matrix evaluation is blocked because configuration or protocol status is provisional")
 
-        jobs = orchestrator.plan(
+        execution_profile = (
+            "smoke" if args.smoke else ("simulation" if args.simulation else "formal")
+        )
+        family_jobs = orchestrator.plan(
             args.family,
-            execution_profile=(
-                "smoke" if args.smoke else ("simulation" if args.simulation else "formal")
-            ),
+            execution_profile=execution_profile,
+        )
+        jobs = select_jobs(
+            family_jobs,
+            scales=args.scale,
+            methods=args.method,
+            seeds=args.seed,
         )
         selected = jobs[: args.max_jobs]
         output_root = Path(args.output_root).resolve()
@@ -276,7 +286,9 @@ def main(argv: list[str] | None = None) -> int:
             "evidence_mode": preflight.evidence_mode if preflight is not None else "formal",
             "preflight": preflight.to_dict() if preflight is not None else None,
             "protocol_hash": orchestrator.protocol_hash,
-            "selected_job_count": len(selected),
+            "family_job_count": len(family_jobs),
+            "selected_job_count": len(jobs),
+            "executed_job_count": len(selected),
             "total_job_count": len(jobs),
             "evaluation_count": len(evaluations),
             "evaluations": evaluations,

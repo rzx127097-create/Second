@@ -145,6 +145,46 @@ def test_every_chapter45_family_dry_run_has_frozen_job_count(
     assert list(tmp_path.iterdir()) == []
 
 
+def test_m3_filters_select_exactly_fifty_canonical_jobs(tmp_path: Path) -> None:
+    arguments = [
+        "--config-dir", "configs",
+        "--protocol", "configs/experiments/chapter4_5.yaml",
+        "--family", "main_comparison",
+        "--output-root", str(tmp_path),
+        "--simulation", "--dry-run",
+        "--scale", "s1", "--scale", "s6",
+    ]
+    for method in (
+        "sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar",
+        "mappo_mobile", "sr_mappo_two_stage",
+    ):
+        arguments.extend(("--method", method))
+    for seed in range(5):
+        arguments.extend(("--seed", str(seed)))
+
+    result, payload = _run(*arguments)
+
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert payload["family_job_count"] == 150
+    assert payload["selected_job_count"] == 50
+    assert len(payload["jobs"]) == 50
+    assert not tmp_path.exists() or list(tmp_path.iterdir()) == []
+
+
+def test_matrix_filters_reject_unknown_values_before_writes(tmp_path: Path) -> None:
+    result, payload = _run(
+        "--config-dir", "configs",
+        "--family", "main_comparison",
+        "--output-root", str(tmp_path),
+        "--simulation", "--dry-run",
+        "--scale", "s9",
+    )
+
+    assert result.returncode != 0
+    assert "unknown scale" in str(payload["error"])
+    assert not tmp_path.exists() or list(tmp_path.iterdir()) == []
+
+
 def test_matrix_evaluation_runs_all_shared_scale_scenarios_and_reuses_outputs(
     tmp_path: Path,
 ) -> None:
@@ -153,7 +193,8 @@ def test_matrix_evaluation_runs_all_shared_scale_scenarios_and_reuses_outputs(
         "--protocol", "configs/experiments/chapter4_5.yaml",
         "--family", "main_comparison",
         "--output-root", str(tmp_path),
-        "--smoke", "--max-jobs", "1",
+        "--smoke", "--scale", "s1", "--method", "sr_mappo_mobile",
+        "--seed", "0", "--max-jobs", "1",
     )
     assert train_result.returncode == 0, train_result.stderr
     assert train_payload["jobs"][0]["status"] == "completed"
@@ -164,11 +205,13 @@ def test_matrix_evaluation_runs_all_shared_scale_scenarios_and_reuses_outputs(
         "--family", "main_comparison",
         "--output-root", str(tmp_path),
         "--split", "validation",
-        "--smoke", "--max-jobs", "1",
+        "--smoke", "--scale", "s1", "--method", "sr_mappo_mobile",
+        "--seed", "0", "--max-jobs", "1",
     )
     first_result, first = _run_script("evaluate_matrix.py", *arguments)
     assert first_result.returncode == 0, first_result.stderr or first_result.stdout
-    assert first["status"] == "partial"
+    assert first["status"] == "completed"
+    assert first["family_job_count"] == 150
     assert first["selected_job_count"] == 1
     assert first["evaluation_count"] == 2
     assert {item["scenario"] for item in first["evaluations"]} == {"val_001", "val_s1_002"}

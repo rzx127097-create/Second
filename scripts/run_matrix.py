@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from problem2.experiments.orchestrator import Chapter45Orchestrator
+from problem2.experiments.orchestrator import Chapter45Orchestrator, select_jobs
 from problem2.experiments.process import run_utf8_json_child
 from problem2.experiments.readiness import audit_repository_readiness
 from problem2.experiments.simulation_preflight import audit_simulation_preflight
@@ -40,6 +40,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--simulation", action="store_true")
+    parser.add_argument("--scale", action="append", default=[])
+    parser.add_argument("--method", action="append", default=[])
+    parser.add_argument("--seed", action="append", type=int, default=[])
     parser.add_argument("--max-jobs", type=int, default=1)
     parser.add_argument("--resource-report", type=Path)
     args = parser.parse_args(argv)
@@ -66,9 +69,15 @@ def main(argv: list[str] | None = None) -> int:
             )
             if args.simulation else None
         )
-        jobs = orchestrator.plan(
+        family_jobs = orchestrator.plan(
             args.family,
             execution_profile=execution_profile,
+        )
+        jobs = select_jobs(
+            family_jobs,
+            scales=args.scale,
+            methods=args.method,
+            seeds=args.seed,
         )
         if args.dry_run:
             _emit({
@@ -82,6 +91,9 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 "preflight": preflight.to_dict() if preflight is not None else None,
                 "protocol_hash": orchestrator.protocol_hash,
+                "family_job_count": len(family_jobs),
+                "selected_job_count": len(jobs),
+                "executed_job_count": 0,
                 "job_count": len(jobs),
                 "jobs": [job.to_dict() for job in jobs],
             })
@@ -155,6 +167,9 @@ def main(argv: list[str] | None = None) -> int:
             "preflight": preflight.to_dict() if preflight is not None else None,
             "protocol_hash": orchestrator.protocol_hash,
             "readiness": readiness.to_dict(),
+            "family_job_count": len(family_jobs),
+            "selected_job_count": len(jobs),
+            "executed_job_count": len(selected),
             "selected_count": len(selected),
             "total_count": len(jobs),
             "jobs": outputs,
