@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
 
 from problem2.experiments.job_identity import GitProvenance
+from problem2.experiments.m3_audit import audit_m3_pilot
 from problem2.experiments.m3_pilot import (
     build_m3_manifest,
     load_m3_manifest,
     write_m3_manifest,
 )
 from problem2.experiments.orchestrator import Chapter45Orchestrator
+from tests.m3_fixtures import materialize_complete_m3_evidence
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -147,3 +150,114 @@ def test_m3_manifest_rejects_conflicting_existing_file(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="conflicting M3 manifest"):
         write_m3_manifest(path, conflicting)
+
+
+def _complete_audit_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object], list[Path]]:
+    orchestrator = _orchestrator(tmp_path)
+    resource = _resource_report(orchestrator, tmp_path / "resource.json")
+    manifest = build_m3_manifest(
+        orchestrator,
+        resource_report_path=resource,
+        created_at="2026-08-18T00:00:00+00:00",
+    )
+    manifest_path = tmp_path / "m3.json"
+    write_m3_manifest(manifest_path, manifest)
+    run_root = tmp_path / "runs"
+    evaluations = materialize_complete_m3_evidence(manifest, run_root)
+    return manifest_path, run_root, manifest, evaluations
+
+
+def _read_object(path: Path) -> dict[str, object]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_object(path: Path, payload: dict[str, object]) -> None:
+    path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def test_m3_audit_accepts_complete_fifty_job_hundred_evaluation_evidence(
+    tmp_path: Path,
+) -> None:
+    manifest_path, run_root, _, _ = _complete_audit_fixture(tmp_path)
+
+    report = audit_m3_pilot(manifest_path, output_root=run_root)
+
+    assert report["m3_ready"] is True
+    assert report["highest_maturity"] == "M3"
+    assert report["counts"] == {
+        "expected_jobs": 50,
+        "completed_jobs": 50,
+        "expected_evaluations": 100,
+        "valid_evaluations": 100,
+    }
+    assert all(check["passed"] for check in report["checks"])
+
+
+@pytest.mark.parametrize(
+    ("case", "failed_check"),
+    [
+        ("missing_job", "job_records"),
+        ("failed_status", "job_records"),
+        ("checkpoint_sha_mismatch", "checkpoint_integrity"),
+        ("checkpoint_step", "checkpoint_integrity"),
+        ("duplicate_run_id", "evaluation_identity"),
+        ("nonfinite_metric", "metric_finiteness"),
+        ("stale_resource_hash", "resource_activation"),
+        ("identity_mismatch", "evaluation_identity"),
+        ("sealed_test", "sealed_test_exclusion"),
+    ],
+)
+def test_m3_audit_fails_closed_and_preserves_incomplete_evidence(
+    tmp_path: Path,
+    case: str,
+    failed_check: str,
+) -> None:
+    manifest_path, run_root, manifest, evaluations = _complete_audit_fixture(tmp_path)
+    first_job = run_root / str(manifest["jobs"][0]["job_record_path"])
+    first_checkpoint = run_root / str(manifest["jobs"][0]["checkpoint_path"])
+    if case == "missing_job":
+        first_job.unlink()
+    elif case == "failed_status":
+        payload = _read_object(first_job)
+        payload["status"] = "failed"
+        _write_object(first_job, payload)
+    elif case == "checkpoint_sha_mismatch":
+        first_checkpoint.write_bytes(b"tampered")
+    elif case == "checkpoint_step":
+        payload = _read_object(first_job)
+        payload["checkpoint_step"] = int(payload["target_updates"]) - 1
+        _write_object(first_job, payload)
+    elif case == "duplicate_run_id":
+        first = _read_object(evaluations[0])
+        second = _read_object(evaluations[1])
+        second["run_id"] = first["run_id"]
+        _write_object(evaluations[1], second)
+    elif case == "nonfinite_metric":
+        payload = _read_object(evaluations[0])
+        payload["reduction_rate"] = math.nan
+        _write_object(evaluations[0], payload)
+    elif case == "stale_resource_hash":
+        resource_path = Path(str(manifest["resource_activation"]["path"]))
+        payload = _read_object(resource_path)
+        payload["record_count"] = int(payload["record_count"]) + 1
+        _write_object(resource_path, payload)
+    elif case == "identity_mismatch":
+        payload = _read_object(evaluations[0])
+        payload["method"] = "mappo_mobile"
+        _write_object(evaluations[0], payload)
+    elif case == "sealed_test":
+        payload = _read_object(evaluations[0])
+        payload["split"] = "sealed_test"
+        _write_object(evaluations[0], payload)
+
+    source_snapshots = {
+        path: path.read_bytes()
+        for path in (manifest_path, *[value for value in evaluations if value.exists()])
+    }
+    report = audit_m3_pilot(manifest_path, output_root=run_root)
+
+    assert report["m3_ready"] is False
+    assert report["highest_maturity"] == "M2"
+    checks = {check["name"]: check for check in report["checks"]}
+    assert checks[failed_check]["passed"] is False
+    assert all(path.read_bytes() == value for path, value in source_snapshots.items())
