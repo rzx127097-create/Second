@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Collection
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,35 @@ class PlannedJob:
             "intervention": self.intervention.to_dict(),
             "intervention_hash": self.intervention.identity_hash,
         }
+
+
+def select_jobs(
+    jobs: tuple[PlannedJob, ...],
+    *,
+    scales: Collection[str] = (),
+    methods: Collection[str] = (),
+    seeds: Collection[int] = (),
+) -> tuple[PlannedJob, ...]:
+    requested_scales = tuple(dict.fromkeys(str(value) for value in scales))
+    requested_methods = tuple(dict.fromkeys(str(value) for value in methods))
+    requested_seeds = tuple(dict.fromkeys(int(value) for value in seeds))
+    available_scales = {job.identity.scale for job in jobs}
+    available_methods = {job.identity.method for job in jobs}
+    available_seeds = {job.identity.training_seed for job in jobs}
+    for kind, requested, available in (
+        ("scale", requested_scales, available_scales),
+        ("method", requested_methods, available_methods),
+        ("seed", requested_seeds, available_seeds),
+    ):
+        unknown = [value for value in requested if value not in available]
+        if unknown:
+            raise ValueError(f"unknown {kind} filter values: {unknown}")
+    return tuple(
+        job for job in jobs
+        if (not requested_scales or job.identity.scale in requested_scales)
+        and (not requested_methods or job.identity.method in requested_methods)
+        and (not requested_seeds or job.identity.training_seed in requested_seeds)
+    )
 
 
 def resolve_condition_intervention(
@@ -166,4 +196,4 @@ class Chapter45Orchestrator:
         return tuple(jobs)
 
 
-__all__ = ["Chapter45Orchestrator", "PlannedJob", "resolve_condition_intervention"]
+__all__ = ["Chapter45Orchestrator", "PlannedJob", "resolve_condition_intervention", "select_jobs"]
