@@ -257,6 +257,8 @@ def _evaluation_identity(
             if job is None:
                 raise ValueError("evaluation references an unknown job")
             path = _relative_path(root, expected.get("raw_path"))
+            if not path.is_file():
+                raise ValueError(f"missing evaluation file: {path}")
             lines = path.read_text(encoding="utf-8").splitlines()
             if len(lines) != 1 or not lines[0].strip():
                 raise ValueError("expected exactly one JSON object in the evaluation file")

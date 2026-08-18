@@ -13,6 +13,7 @@ from .summarize import hierarchical_paired_summary, paired_differences, summariz
 from .tables import write_table
 from .validate_logs import read_jsonl
 from .chapter45 import Chapter45ArtifactBundle, build_chapter45_artifacts
+from .m3_pilot import M3ArtifactBundle, build_m3_pilot_artifacts
 
 
 @dataclass(frozen=True)
