@@ -148,8 +148,8 @@ G0 persistence record:
 - Verification: `python -m pytest tests\test_section_4_2_artifacts.py -q`
   returned `7 passed`; required-field scan returned `PASS`; `git diff --check`
   returned no errors; `.gitignore` matched both generated Python cache files.
-- The follow-up commit containing this persistence record will be pushed before
-  G1 begins.
+- Persistence-record commit: `9fdd560`
+  (`docs: record g0 verification and push`), pushed to the same branch.
 
 ## Completed Tasks
 
