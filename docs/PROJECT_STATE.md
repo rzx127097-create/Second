@@ -190,8 +190,10 @@ G1 persistence record:
 - Pushed-hash verification: `git rev-parse HEAD` and
   `git ls-remote origin refs/heads/codex/problem2-g0-orchestration` both
   returned `03fa12329f75db9e2a06dae1e01b7242ebedadf6`.
-- Persistence-record commit for this hash is the next non-rewriting commit
-  and will be pushed before G2 begins.
+- Persistence-record commit: `92da39d2a769ce7d164f9996de28a97fcdf095a0`
+  (`docs: persist g1 pushed hash`), pushed to
+  `origin/codex/problem2-g0-orchestration`; local and remote hashes matched
+  after the push.
 
 ## Completed Tasks
 
