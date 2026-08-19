@@ -1,6 +1,11 @@
 from pathlib import Path
+import copy
+import json
+import shutil
 
 import yaml
+
+from scripts.audit_g1_registries import build_job_identity, validate_registries
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,3 +81,67 @@ def test_sealed_test_is_locked_once_at_g7() -> None:
     assert lock["unlock_gate"] == "G7"
     assert lock["unlock_count"] == 1
     assert lock["tuning_allowed_before_unlock"] is False
+
+
+def copy_registry_tree(tmp_path: Path) -> Path:
+    destination = tmp_path / "g1"
+    shutil.copytree(REGISTRY_ROOT, destination)
+    return destination
+
+
+def test_job_identity_is_canonical_and_ordered() -> None:
+    assert build_job_identity(
+        "sr_mappo_mobile", "g20x20_d2", 42, "abc123", "deadbeef"
+    ) == "sr_mappo_mobile|g20x20_d2|42|abc123|deadbeef"
+
+
+def test_validator_accepts_frozen_g1_registries() -> None:
+    result = validate_registries(REGISTRY_ROOT)
+    assert result["status"] == "pass"
+    assert result["errors"] == []
+
+
+def test_validator_rejects_forbidden_algorithm_name(tmp_path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    path = candidate / "experiment_matrix.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["methods"].append("happpo")
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    result = validate_registries(candidate)
+    assert any("forbidden algorithm" in error for error in result["errors"])
+
+
+def test_validator_rejects_sealed_test_tuning(tmp_path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    path = candidate / "sealed_test_lock.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["tuning_allowed_before_unlock"] = True
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    result = validate_registries(candidate)
+    assert any("sealed-test tuning" in error for error in result["errors"])
+
+
+def test_validator_rejects_battery_activation_and_wrong_output_root(tmp_path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    lock_path = candidate / "sealed_test_lock.yaml"
+    lock = yaml.safe_load(lock_path.read_text(encoding="utf-8"))
+    lock["battery_replenishment"] = "active"
+    lock_path.write_text(yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
+    output_path = candidate / "output_root_contract.yaml"
+    output = yaml.safe_load(output_path.read_text(encoding="utf-8"))
+    output["root"] = "outputs/sr_mappo_paper_v1"
+    output_path.write_text(yaml.safe_dump(output, sort_keys=False), encoding="utf-8")
+    result = validate_registries(candidate)
+    assert any("battery replenishment" in error for error in result["errors"])
+    assert any("output root" in error for error in result["errors"])
+
+
+def test_validator_fails_closed_for_malformed_scale_record(tmp_path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    path = candidate / "experiment_matrix.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["scales"]["g20x20_d2"] = "malformed"
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    result = validate_registries(candidate)
+    assert result["status"] == "fail"
+    assert result["errors"]

@@ -1,0 +1,22 @@
+{
+  "checked_files": [
+    "parameter_registry.yaml",
+    "literature_source_ledger.yaml",
+    "experiment_matrix.yaml",
+    "scenario_seed_manifest.yaml",
+    "job_identity_contract.yaml",
+    "raw_episode_schema.yaml",
+    "validated_long_table_schema.yaml",
+    "artifact_manifest_schema.yaml",
+    "sealed_test_lock.yaml",
+    "output_root_contract.yaml"
+  ],
+  "counts": {
+    "checked_files": 10,
+    "errors": 0,
+    "expected_files": 10
+  },
+  "errors": [],
+  "status": "pass",
+  "warnings": []
+}
