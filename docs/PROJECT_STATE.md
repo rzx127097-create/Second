@@ -184,6 +184,14 @@ G1 persistence record:
   its pre-existing dirty files unchanged.
 - G1 status: verification passed locally; pushed commit hash is recorded in
   the follow-up persistence commit after the required push.
+- Persistence candidate commit: `03fa12329f75db9e2a06dae1e01b7242ebedadf6`
+  (`docs: record g1 evidence registration and audit`), pushed to
+  `origin/codex/problem2-g0-orchestration`.
+- Pushed-hash verification: `git rev-parse HEAD` and
+  `git ls-remote origin refs/heads/codex/problem2-g0-orchestration` both
+  returned `03fa12329f75db9e2a06dae1e01b7242ebedadf6`.
+- Persistence-record commit for this hash is the next non-rewriting commit
+  and will be pushed before G2 begins.
 
 ## Completed Tasks
 
