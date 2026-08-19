@@ -1,0 +1,49 @@
+schema_version: g1.v1
+registry_id: G1-EXPERIMENT-MATRIX
+status: design_frozen
+methods:
+  - sr_mappo_mobile
+  - sr_mappo_fixed
+  - sr_mappo_astar
+  - mappo_mobile
+  - sr_mappo_two_stage
+scales:
+  g20x20_d2:
+    max_physical_decision_steps: 150
+  g20x30_d3:
+    max_physical_decision_steps: 180
+  g20x40_d3:
+    max_physical_decision_steps: 220
+  g30x30_d3:
+    max_physical_decision_steps: 220
+  g30x40_d4:
+    max_physical_decision_steps: 280
+  g30x50_d4:
+    max_physical_decision_steps: 350
+evaluation:
+  primary_outcomes:
+    - reduction_rate
+    - success_at_0_85
+  mechanism_metrics:
+    - rendezvous_distance
+    - waiting_steps
+    - pesticide_disabled_steps
+    - return_steps
+    - effective_spray_time
+    - transferred_pesticide_l
+  operational_metrics:
+    - vehicle_travel_time
+    - vehicle_idle_time
+    - vehicle_stranded_inventory_l
+    - decision_runtime
+  success_threshold:
+    metric: reduction_rate
+    value: 0.85
+  training_reward_is_diagnostic_only: true
+protocol:
+  same_environment: true
+  same_pesticide_budget: true
+  same_horizon: true
+  same_scenario_ids: true
+  same_information_conditions: true
+  exception_status: none_frozen

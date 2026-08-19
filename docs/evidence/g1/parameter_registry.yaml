@@ -1,0 +1,154 @@
+schema_version: g1.v1
+registry_id: G1-PARAMETERS
+status: design_frozen
+parameters:
+  - id: uav.pesticide_capacity
+    name: onboard_pesticide_capacity
+    symbol: C_uav
+    meaning: Nominal onboard pesticide capacity
+    value: 1.2
+    unit: L
+    min: 0.8
+    max: 1.6
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.2
+    source_unit: L
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: uav.usable_fraction
+    name: usable_pesticide_fraction
+    symbol: f_uav
+    meaning: Fraction of nominal onboard pesticide available to the policy
+    value: 0.9
+    unit: "1"
+    min: 0.7
+    max: 1.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 0.9
+    source_unit: "1"
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: uav.spray_flow
+    name: spray_flow
+    symbol: q_spray
+    meaning: Pesticide spray flow
+    value: 1.2
+    unit: L/min
+    min: 0.6
+    max: 2.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.2
+    source_unit: L/min
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: uav.speed
+    name: uav_speed
+    symbol: v_uav
+    meaning: UAV translational speed
+    value: 5.0
+    unit: m/s
+    min: 3.0
+    max: 8.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 5.0
+    source_unit: m/s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: vehicle.inventory
+    name: vehicle_pesticide_inventory
+    symbol: C_vehicle
+    meaning: Initial mobile support pesticide inventory
+    value: 20.0
+    unit: L
+    min: 10.0
+    max: 40.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 20.0
+    source_unit: L
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: vehicle.speed
+    name: vehicle_speed
+    symbol: v_vehicle
+    meaning: Road-constrained vehicle speed
+    value: 8.0
+    unit: m/s
+    min: 4.0
+    max: 12.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 8.0
+    source_unit: m/s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: vehicle.transfer_rate
+    name: pesticide_transfer_rate
+    symbol: q_transfer
+    meaning: Transfer flow during a service event
+    value: 4.0
+    unit: L/min
+    min: 2.0
+    max: 8.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 4.0
+    source_unit: L/min
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: service.setup_time
+    name: service_setup_time
+    symbol: t_setup
+    meaning: Fixed setup time before transfer
+    value: 10.0
+    unit: s
+    min: 5.0
+    max: 30.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 10.0
+    source_unit: s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: service.rendezvous_radius
+    name: rendezvous_radius
+    symbol: r_service
+    meaning: Maximum air-ground service rendezvous distance
+    value: 15.0
+    unit: m
+    min: 5.0
+    max: 30.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 15.0
+    source_unit: m
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: simulation.dt
+    name: physical_decision_step
+    symbol: Delta_t
+    meaning: Physical duration represented by one decision step
+    value: 1.0
+    unit: s
+    min: 0.5
+    max: 2.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.0
+    source_unit: s
+    conversion: identity
+    status: provisional
+    scope: all_simulation

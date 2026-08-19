@@ -1,0 +1,25 @@
+schema_version: g1.v1
+registry_id: G1-RAW-EPISODE
+status: design_frozen
+format: long_format_episode_record
+fields:
+  - {name: run_id, type: string, required: true}
+  - {name: method, type: string, required: true}
+  - {name: scale, type: string, required: true}
+  - {name: training_seed, type: integer, required: true}
+  - {name: scenario_id, type: string, required: true}
+  - {name: config_hash, type: string, required: true}
+  - {name: git_commit, type: string, required: true}
+  - {name: termination_reason, type: string, required: true}
+  - {name: reduction_rate, type: number, unit: "1", required: true}
+  - {name: success_at_0_85, type: boolean, required: true}
+  - {name: request_count, type: integer, unit: count, required: true}
+  - {name: request_completed_count, type: integer, unit: count, required: true}
+  - {name: waiting_steps, type: integer, unit: step, required: true}
+  - {name: pesticide_disabled_steps, type: integer, unit: step, required: true}
+  - {name: return_steps, type: integer, unit: step, required: true}
+  - {name: effective_spray_steps, type: integer, unit: step, required: true}
+  - {name: transferred_pesticide_l, type: number, unit: L, required: true}
+  - {name: vehicle_travel_steps, type: integer, unit: step, required: true}
+  - {name: vehicle_idle_steps, type: integer, unit: step, required: true}
+  - {name: vehicle_stranded_inventory_l, type: number, unit: L, required: true}
