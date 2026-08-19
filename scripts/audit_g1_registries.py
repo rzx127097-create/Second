@@ -132,7 +132,10 @@ def _check_parameters(data: dict[str, Any], errors: list[str]) -> None:
 
 def _check_sources(data: dict[str, Any], errors: list[str]) -> None:
     _check_records(data, "sources", ("id", "source_type", "title", "authority", "verification_status"), errors)
-    for source in data.get("sources", []):
+    sources = data.get("sources", [])
+    if not isinstance(sources, list):
+        return
+    for source in sources:
         if isinstance(source, dict) and source.get("verification_status") == "pending":
             _required(source, ("database", "authoritative_page"), "pending source", errors)
 
@@ -159,18 +162,32 @@ def _check_seeds(data: dict[str, Any], errors: list[str]) -> None:
     training = partitions.get("training", {})
     validation = partitions.get("validation", {})
     sealed = partitions.get("sealed_test", {})
+    for label, record in (("training", training), ("validation", validation), ("sealed_test", sealed)):
+        if not isinstance(record, dict):
+            errors.append(f"{label} partition must be a mapping")
+    if not isinstance(training, dict):
+        training = {}
+    if not isinstance(validation, dict):
+        validation = {}
+    if not isinstance(sealed, dict):
+        sealed = {}
     if training.get("seeds") != TRAINING_SEEDS:
         errors.append("training seeds do not match the exact protocol")
     ranges = [("validation", validation, 20000, 20049), ("sealed_test", sealed, 30000, 30099)]
     sets: list[set[int]] = []
     for label, record, start, end in ranges:
         if not isinstance(record, dict):
-            errors.append(f"{label} partition must be a mapping")
             record = {}
-        if record.get("start") != start or record.get("end") != end:
+        actual_start = record.get("start")
+        actual_end = record.get("end")
+        if actual_start != start or actual_end != end:
             errors.append(f"{label} seed range is not exact")
-        sets.append(set(range(record.get("start", start), record.get("end", end) + 1)))
-    sets.insert(0, set(training.get("seeds", [])))
+        if isinstance(actual_start, int) and isinstance(actual_end, int) and actual_start <= actual_end:
+            sets.append(set(range(actual_start, actual_end + 1)))
+        else:
+            sets.append(set())
+    training_seeds = training.get("seeds") if isinstance(training, dict) else []
+    sets.insert(0, set(training_seeds) if isinstance(training_seeds, list) else set())
     if any(left & right for index, left in enumerate(sets) for right in sets[index + 1:]):
         errors.append("seed partitions overlap")
 
@@ -179,6 +196,9 @@ def _check_identity(data: dict[str, Any], errors: list[str]) -> None:
     if data.get("identity_fields") != ["method", "scale", "training_seed", "config_hash", "git_commit"]:
         errors.append("job identity fields are not exact")
     serialization = data.get("serialization", {})
+    if not isinstance(serialization, dict):
+        errors.append("job identity serialization must be a mapping")
+        serialization = {}
     if serialization.get("separator") != "|" or serialization.get("format") != "method|scale|training_seed|config_hash|git_commit":
         errors.append("job identity serialization is not exact")
     _required(data, ("identity_fields", "serialization", "states", "required_recovery_fields", "sealed_test_creation_gate"), "job_identity_contract.yaml", errors)
@@ -199,6 +219,9 @@ def _check_fields_schema(data: dict[str, Any], key: str, errors: list[str]) -> N
 def _check_sealed(data: dict[str, Any], errors: list[str]) -> None:
     _required(data, ("scenario_range", "unlock_gate", "unlock_count", "tuning_allowed_before_unlock", "resource_replenishment", "battery_replenishment"), "sealed_test_lock.yaml", errors)
     scenario = data.get("scenario_range", {})
+    if not isinstance(scenario, dict):
+        errors.append("sealed-test scenario_range must be a mapping")
+        scenario = {}
     if scenario.get("start") != 30000 or scenario.get("end") != 30099:
         errors.append("sealed-test scenario range is not exact")
     if data.get("unlock_gate") != "G7" or data.get("unlock_count") != 1:

@@ -1,6 +1,4 @@
 from pathlib import Path
-import copy
-import json
 import shutil
 
 import yaml
@@ -145,3 +143,36 @@ def test_validator_fails_closed_for_malformed_scale_record(tmp_path) -> None:
     result = validate_registries(candidate)
     assert result["status"] == "fail"
     assert result["errors"]
+
+
+def test_validator_fails_closed_for_malformed_validation_seed_bounds(tmp_path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    path = candidate / "scenario_seed_manifest.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["partitions"]["validation"] = "malformed"
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    result = validate_registries(candidate)
+    assert result["status"] == "fail"
+    assert any("validation partition must be a mapping" in error for error in result["errors"])
+
+
+def test_validator_fails_closed_for_malformed_job_serialization(tmp_path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    path = candidate / "job_identity_contract.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["serialization"] = "malformed"
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    result = validate_registries(candidate)
+    assert result["status"] == "fail"
+    assert any("serialization must be a mapping" in error for error in result["errors"])
+
+
+def test_validator_fails_closed_for_malformed_sealed_scenario_range(tmp_path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    path = candidate / "sealed_test_lock.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["scenario_range"] = "malformed"
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    result = validate_registries(candidate)
+    assert result["status"] == "fail"
+    assert any("scenario_range must be a mapping" in error for error in result["errors"])
