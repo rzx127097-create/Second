@@ -28,7 +28,7 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
-- Current gate: `G0` isolation and project-state registration.
+- Current gate: `G0` passed; `G1` registration and asset audit is next.
 - Sealed-test status: locked; no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
@@ -140,8 +140,16 @@ For every important phase `G0` through `G8`, the controller must:
 5. record the pushed commit hash, verification command, and result here before
    moving to the next phase.
 
-Current G0 persistence status: documents are prepared and verified locally;
-the commit and push record remains pending until the final G0 checks complete.
+G0 persistence record:
+
+- Content commit: `7731d37`
+  (`chore: register problem2 orchestration state`).
+- Branch pushed: `origin/codex/problem2-g0-orchestration`.
+- Verification: `python -m pytest tests\test_section_4_2_artifacts.py -q`
+  returned `7 passed`; required-field scan returned `PASS`; `git diff --check`
+  returned no errors; `.gitignore` matched both generated Python cache files.
+- The follow-up commit containing this persistence record will be pushed before
+  G1 begins.
 
 ## Completed Tasks
 
@@ -160,11 +168,13 @@ the commit and push record remains pending until the final G0 checks complete.
 - Recorded hashes for planning documents and OSM inputs.
 - Confirmed the two G0-generated Python cache files are excluded by the
   repository `.gitignore` and cannot enter the evidence history.
+- Committed and pushed G0 content as `7731d37` on
+  `codex/problem2-g0-orchestration`.
 
 ## Pending Tasks
 
-- Finish G0 by committing and pushing `.gitignore`, `AGENTS.md`, and this project
-  state file, then record the resulting commit hash and verification output.
+- Begin G1 by auditing `origin/feature/problem2-code-framework` and creating the
+  parameter, literature, experiment, sealed-test, and artifact registries.
 - Audit `origin/feature/problem2-code-framework` before deciding whether to
   merge, cherry-pick, or rebuild selected assets.
 - Establish G1 registries:
@@ -227,8 +237,7 @@ the commit and push record remains pending until the final G0 checks complete.
 
 ## Next Step
 
-Complete G0 verification, commit and push this state update to the `Second`
-repository, and record the resulting commit hash here.
-After G0, the recommended next phase is G1: audit existing remote feature-branch
-assets, then establish the parameter, literature, experiment, sealed-test, and
-artifact registries before touching the deterministic environment or MARL code.
+G0 has passed after its content commit and verification record were pushed.
+The next gate is G1: audit the existing remote feature-branch assets, then
+establish the parameter, literature, experiment, sealed-test, and artifact
+registries before touching the deterministic environment or MARL code.
