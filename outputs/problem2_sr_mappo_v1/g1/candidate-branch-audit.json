@@ -1,0 +1,1302 @@
+{
+  "asset_classification_policy": {
+    "admissible_design_input": "M1 specification or design assets only",
+    "not_admissible_as_evidence": "candidate maturity claims and untraceable outputs",
+    "protected_or_out_of_scope": "external first-problem assets and source OSM inputs",
+    "requires_independent_reverification": "candidate source, tests, configs, and reports"
+  },
+  "base_commit": "2643753855c385253951dfad2c225be0b09b7e00",
+  "base_ref": "origin/main",
+  "candidate_commit": "52a92c00467fbc3fa6a81e0fcb43469b2f8d1940",
+  "candidate_ref": "origin/feature/problem2-code-framework",
+  "candidate_top_level_directories": [
+    "\"artifacts",
+    ".superpowers",
+    "artifacts",
+    "configs",
+    "data",
+    "docs",
+    "scripts",
+    "src",
+    "tests"
+  ],
+  "candidate_tree_path_count": 239,
+  "changed_class_counts": {
+    "configuration": 9,
+    "documentation": 43,
+    "report": 20,
+    "source": 90,
+    "test": 48
+  },
+  "changed_path_count": 210,
+  "changed_paths": [
+    {
+      "class": "documentation",
+      "path": ".gitignore",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": ".superpowers/sdd/2026-08-14-complete-problem2-project/task-1-report.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": ".superpowers/sdd/2026-08-14-complete-problem2-project/task-3-report.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": ".superpowers/sdd/2026-08-14-complete-problem2-project/task-4-report.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": ".superpowers/sdd/2026-08-14-complete-problem2-project/task-5-report.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "README.md",
+      "status": "M"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/algorithms/sr_mappo.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/environment.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/experiments/chapter4_5.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/experiments/formal_matrix.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/field_dynamics.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/parameter_registry.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/scales.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/scenarios.yaml",
+      "status": "A"
+    },
+    {
+      "class": "configuration",
+      "path": "configs/simulation_profile.yaml",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "data/roads/jodhpur_cropped_metric.graphml",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/evidence/field-dynamics-calibration-plan.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/evidence/parameter-source-ledger.yaml",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/evidence/search-log-2026-08-15.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/plans/2026-08-14-problem2-code-framework.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/plans/2026-08-14-section-4-2-integration.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/plans/2026-08-14-section-4-3-demand-rendezvous.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/plans/2026-08-14-section-4-4-sr-mappo.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/plans/2026-08-14-section-4-5-experiment-system.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/superpowers/plans/2026-08-14-complete-problem2-project.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/superpowers/plans/2026-08-14-section-4-4-integration.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/superpowers/plans/2026-08-15-formal-readiness.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/superpowers/plans/2026-08-17-simulation-preflight-implementation.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/superpowers/specs/2026-08-17-simulation-preflight-design.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/complete-project-runbook.md",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/field-dynamics-hash.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/formal-readiness-after-fixes.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/formal-readiness-final.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/formal-readiness-report.md",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/formal-readiness-web-evidence.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/formal-readiness-with-pilot.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/frozen-road-jodhpur.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/parameter-audit-after-fixes.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/parameter-audit-web-evidence.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/parameter-audit.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/readiness-with-resource.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/readiness-without-resource.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/resource-pilot-frozen.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/road-audit-frozen.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/road-audit-jodhpur.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/scenario-audit-after-fixes.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/scenario-audit.json",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/section-4-5-runbook.md",
+      "status": "A"
+    },
+    {
+      "class": "report",
+      "path": "docs/verification/step4-shared-validation-report.md",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "pyproject.toml",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/analyze_paired_results.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/audit_m3_pilot.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/audit_parameters.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/audit_readiness.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/audit_resource_activation.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/audit_road_source.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/audit_scenarios.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/audit_simulation_preflight.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/build_artifacts.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/build_chapter45_artifacts.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/build_frozen_road.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/build_m3_pilot_artifacts.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/evaluate.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/evaluate_matrix.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/freeze_sealed_test.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/prepare_m3_pilot.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/run_matrix.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/run_resource_pilot.py",
+      "status": "A"
+    },
+    {
+      "class": "documentation",
+      "path": "scripts/train.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/common/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/common/checkpoint.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/common/gae.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/common/masked_distribution.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/common/normalization.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/sr_mappo/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/sr_mappo/actors.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/sr_mappo/algorithm.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/sr_mappo/critic.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/sr_mappo/losses.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/sr_mappo/rollout.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/algorithms/sr_mappo/trainer.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/chapter45.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/evidence_manifest.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/figures.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/m3_pilot.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/statistics.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/summarize.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/tables.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/artifacts/validate_logs.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/baselines/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/baselines/fixed_support.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/baselines/policies.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/baselines/priority_dispatch.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/baselines/rolling_astar.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/baselines/teleport_service.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/baselines/unlimited_supply.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/config.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/candidate_slots.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/endurance.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/eta.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/feasibility.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/planning.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/rendezvous.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/demand/urgency.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/domain/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/domain/events.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/domain/requests.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/domain/resources.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/domain/state.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/domain/types.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/domain/units.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/action_masks.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/air_ground_env.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/movement.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/observations.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/rewards.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/service_state_machine.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/environment/transition.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/evaluation.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/freeze.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/job_identity.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/m3_audit.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/m3_pilot.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/methods.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/metrics.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/orchestrator.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/policy_protocol.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/process.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/process_liveness.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/readiness.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/recovery.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/resource_activation.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/rollout_runner.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/runner.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/simulation_preflight.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/experiments/specification.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/field/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/field/pest_dynamics.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/field/pesticide_field.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/field/wind_field.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/road/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/road/graph.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/road/graphml.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/road/projection.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/road/shortest_path.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/road/topology.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/scenarios/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/scenarios/factory.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/scenarios/interventions.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/section4_2/__init__.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/section4_2/adapter.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/section4_2/audit.py",
+      "status": "A"
+    },
+    {
+      "class": "source",
+      "path": "src/problem2/section4_2/road_executor.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/artifacts/test_traceability.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/baselines/test_baselines.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_artifact_pipeline.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_baseline_protocol.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_chapter45_smoke.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_cli_and_recovery.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_complete_project.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_evaluation_smoke.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_frozen_gis_factory.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_review_fixes.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_scenario_factory.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_training_methods.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/e2e/test_training_smoke.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_chapter45_artifacts.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_experiment_specification.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_m3_artifacts.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_m3_pilot.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_method_profiles.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_metrics_and_activation.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_orchestrator.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_parameter_audit.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_readiness_gate.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_resource_pilot.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_scenario_audit.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_scenario_interventions.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_sealed_freeze.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_simulation_preflight.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/experiments/test_statistics.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/integration/test_environment_step.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/integration/test_job_recovery.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/integration/test_section_4_2_integration.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/m3_fixtures.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/marl/test_checkpoint_roundtrip.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/marl/test_masks_and_gae.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/marl/test_role_gradient_isolation.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/marl/test_sr_mappo_contract.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_config.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_conservation.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_field_dynamics.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_graphml_audit.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_observations_masks.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_rendezvous.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_requests.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_resources.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_rewards.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_road_demand_helpers.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_road_graph.py",
+      "status": "A"
+    },
+    {
+      "class": "test",
+      "path": "tests/unit/test_section_4_3_demand.py",
+      "status": "A"
+    }
+  ],
+  "commands": [
+    "git rev-parse <ref>",
+    "git diff --name-status <base>...<candidate>",
+    "git ls-tree -r --name-only <candidate>",
+    "git grep -n -I -E <pattern> <candidate>"
+  ],
+  "current_branch_maturity": "M1",
+  "current_gate": "G1",
+  "forbidden_name_matches": {
+    "AG-SR-MAPPO": [
+      "origin/feature/problem2-code-framework:README.md:65:`SR-MAPPO` is the flagship algorithm name. HAPPO and `AG-SR-MAPPO` are not",
+      "origin/feature/problem2-code-framework:docs/design/section-4.2-design-contract.md:159:\u8be5\u65b9\u6cd5\u7ee7\u7eed\u547d\u540d\u4e3aSR-MAPPO\uff0c\u5e76\u8868\u8ff0\u4e3a\u7a7a\u5730\u5f02\u6784\u4efb\u52a1\u4e0b\u7684\u89d2\u8272\u5316\u6269\u5c55\uff0c\u4e0d\u5f15\u5165HAPPO\uff0c\u4e5f\u4e0d\u6539\u540d\u4e3aAG-SR-MAPPO\u3002",
+      "origin/feature/problem2-code-framework:docs/plans/2026-08-14-problem2-code-framework.md:15:- Keep the flagship algorithm name `SR-MAPPO`; do not introduce HAPPO or rename it `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/plans/2026-08-14-section-4-5-experiment-system.md:15:- Keep the public algorithm name `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-13-section-4.2-v2-word-delivery.md:15:- Keep the flagship algorithm name `SR-MAPPO`; do not introduce HAPPO or rename it `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-14-section-4-4-integration.md:15:- The public algorithm name remains `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-15-formal-readiness.md:15:- The flagship algorithm remains `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-17-simulation-preflight-implementation.md:15:- Keep the public algorithm name `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:15:- Keep the public algorithm name `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:325:- No HAPPO or AG-SR-MAPPO implementation.",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:161:`HAPPO` and `AG-SR-MAPPO` are forbidden names for this project and must not",
+      "origin/feature/problem2-code-framework:docs/verification/formal-readiness-report.md:116:`AG-SR-MAPPO` are neither implemented nor registered.",
+      "origin/feature/problem2-code-framework:src/problem2/config.py:105:        forbidden = {\"happo\", \"ag-sr-mappo\", \"AG-SR-MAPPO\"}",
+      "origin/feature/problem2-code-framework:src/problem2/config.py:107:            raise ValueError(\"HAPPO and AG-SR-MAPPO are forbidden method names\")"
+    ],
+    "HAPPO": [
+      "origin/feature/problem2-code-framework:README.md:65:`SR-MAPPO` is the flagship algorithm name. HAPPO and `AG-SR-MAPPO` are not",
+      "origin/feature/problem2-code-framework:docs/artifacts/section-4.1-artifact-ledger.md:7:- Canonical method identity: SR-MAPPO with a road-constrained mobile pesticide-supply vehicle. No HAPPO or renamed algorithm is introduced.",
+      "origin/feature/problem2-code-framework:docs/design/section-4.2-design-contract.md:159:\u8be5\u65b9\u6cd5\u7ee7\u7eed\u547d\u540d\u4e3aSR-MAPPO\uff0c\u5e76\u8868\u8ff0\u4e3a\u7a7a\u5730\u5f02\u6784\u4efb\u52a1\u4e0b\u7684\u89d2\u8272\u5316\u6269\u5c55\uff0c\u4e0d\u5f15\u5165HAPPO\uff0c\u4e5f\u4e0d\u6539\u540d\u4e3aAG-SR-MAPPO\u3002",
+      "origin/feature/problem2-code-framework:docs/plans/2026-08-14-problem2-code-framework.md:15:- Keep the flagship algorithm name `SR-MAPPO`; do not introduce HAPPO or rename it `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/plans/2026-08-14-section-4-5-experiment-system.md:15:- Keep the public algorithm name `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-13-section-4.2-v2-word-delivery.md:15:- Keep the flagship algorithm name `SR-MAPPO`; do not introduce HAPPO or rename it `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-14-complete-problem2-project.md:15:- Keep the flagship algorithm name `SR-MAPPO`; do not add HAPPO or rename the method.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-14-section-4-4-integration.md:15:- The public algorithm name remains `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-15-formal-readiness.md:15:- The flagship algorithm remains `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-17-simulation-preflight-implementation.md:15:- Keep the public algorithm name `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:15:- Keep the public algorithm name `SR-MAPPO`; do not add HAPPO or `AG-SR-MAPPO`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-17-simulation-preflight-design.md:11:The flagship algorithm remains **SR-MAPPO**. No HAPPO implementation and no",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:325:- No HAPPO or AG-SR-MAPPO implementation.",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:161:`HAPPO` and `AG-SR-MAPPO` are forbidden names for this project and must not",
+      "origin/feature/problem2-code-framework:docs/verification/formal-readiness-report.md:115:`SR-MAPPO` remains the only flagship algorithm name. HAPPO and",
+      "origin/feature/problem2-code-framework:src/problem2/config.py:107:            raise ValueError(\"HAPPO and AG-SR-MAPPO are forbidden method names\")"
+    ],
+    "happpo": [
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:92:    with pytest.raises(ValueError, match=\"unknown method.*happpo\"):",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:93:        select_jobs(planned, methods=(\"happpo\",))",
+      "origin/feature/problem2-code-framework:tests/experiments/test_orchestrator.py:101:    with pytest.raises(ValueError, match=\"unknown method.*happpo\"):",
+      "origin/feature/problem2-code-framework:tests/experiments/test_orchestrator.py:102:        select_jobs(planned, methods=(\"happpo\",))"
+    ]
+  },
+  "maturity_matches": {
+    "\\bM[234]\\b": [
+      "origin/feature/problem2-code-framework:.superpowers/sdd/2026-08-14-complete-problem2-project/task-5-report.md:44:This task reaches M2 implementation verification only. The configurations and",
+      "origin/feature/problem2-code-framework:.superpowers/sdd/2026-08-14-complete-problem2-project/task-5-report.md:46:or deployment evidence. M3/M4 still require verified engineering parameters,",
+      "origin/feature/problem2-code-framework:README.md:9:The implementation and deterministic invariants are at maturity M2. Smoke runs",
+      "origin/feature/problem2-code-framework:docs/artifacts/section-4.1-artifact-ledger.md:16:| CH4-FIG-02 | figure | 4.1.2-4.1.3 | `docs/design/section-4.1-design-contract.md`; no experiment data | `python scripts/figures/generate_section_4_1_figures.py` | `section-4.1-M1` | delivery commit in repository history | `sr_mappo_mobile`; shared service interface for rolling A* | not applicable | conceptual request/service sequence | request trigger, inventory/feasibility check, parallel travel, conditional waiting, co-arrival, service lock, stepwise transfer, inventory update | descriptive only | `artifacts/figures/chapter4/fig4-2_service_process.{svg,pdf,png,tiff}` | Replenishment follows an auditable discrete-event sequence with deterministic road execution, conditional waiting, service locking, partial refill, and explicit exception branches. | thesis-ready | State-machine implementation and deterministic tests remain for M2. |",
+      "origin/feature/problem2-code-framework:docs/evidence/search-log-2026-08-15.md:67:Until these records are attached, the repository remains at M2 and the wording",
+      "origin/feature/problem2-code-framework:docs/plans/2026-08-14-problem2-code-framework.md:159:- Gate M3: pilot on independent validation scenes and multiple seeds.",
+      "origin/feature/problem2-code-framework:docs/plans/2026-08-14-problem2-code-framework.md:160:- Gate M4: frozen formal matrix, sealed test and traceable evidence artifacts.",
+      "origin/feature/problem2-code-framework:docs/plans/2026-08-14-section-4-4-sr-mappo.md:44:component ablation and full checkpoint round-trip. This establishes M2 code and",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-13-section-4.2-v2-word-delivery.md:114:- [x] **Step 6: Report the final local Word path, Git commit and remaining M2 blockers**",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-14-complete-problem2-project.md:165:- [ ] Document exact commands, provisional-parameter boundary, output schema, recovery behavior and claims that are not permitted before M3/M4.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-14-complete-problem2-project.md:171:- M2 complete project code: all Tasks 1-7 pass tests and CPU smoke commands.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-14-complete-problem2-project.md:172:- M3 pilot remains pending until engineering parameter evidence and independent validation scenarios are frozen.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-14-complete-problem2-project.md:173:- M4 formal evidence remains pending until the full matrix, sealed test and artifact manifests are produced.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:1:# M3 Pilot Pipeline Implementation Plan",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:5:**Goal:** Build and run an auditable 50-job, 100-validation-row controlled-simulation pilot that can advance problem 2 from M2 to M3 without accessing the sealed test set.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:7:**Architecture:** Select a canonical `s1`/`s6` subset from the existing Chapter 4.5 matrix, preserve its immutable job identities, freeze the selection in an M3 manifest, and validate every job/checkpoint/evaluation link before producing pilot-only statistics and artifacts. The full Chapter 4.5 completeness rules remain unchanged; M3 receives a separate strict subset contract.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:16:- Use `configs/experiments/chapter4_5.yaml`; do not create a second M3 experiment protocol.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:18:- Evaluate validation scenarios only; reject and never read the sealed-test split in the M3 audit/artifact path.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:20:- Require current resource-service activation evidence before freezing an M3 manifest.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:35:| `src/problem2/experiments/m3_pilot.py` | Fixed M3 profile, manifest creation/loading, expected evaluation identities, and atomic manifest persistence. |",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:36:| `scripts/prepare_m3_pilot.py` | Machine-readable CLI that freezes the current canonical M3 manifest. |",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:39:| `src/problem2/artifacts/m3_pilot.py` | Manifest-bound M3 statistics, pilot figures/tables, and evidence manifest. |",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:62:Add tests that assert the exact M3 shape, original plan ordering, duplicate-filter normalization, and fail-fast unknown values:",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:274:### Task 3: Frozen M3 Pilot Manifest",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:414:git commit -m \"feat: freeze canonical M3 pilot manifests\"",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:419:### Task 4: M3 Readiness Audit",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:428:- Consumes: one frozen M3 manifest, its output root, job records, checkpoints, validation JSONL files, and the manifest-bound resource report.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:456:assert report[\"highest_maturity\"] == \"M3\"",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:522:`highest_maturity` to `M3` only when all checks pass; otherwise set it to `M2`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:554:git commit -m \"feat: audit M3 pilot readiness\"",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:559:### Task 5: Manifest-Bound M3 Evidence Package",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:654:Build a locked summary with only the complete M3 main-comparison family:",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:684:hash the M3 manifest, readiness report, resource report, every raw evaluation,",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:716:git commit -m \"feat: build traceable M3 pilot evidence\"",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:772:- [ ] **Step 3: Add exact M3 commands to the runbook**",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:818:seed. State that M3 is not reached until the audit returns `m3_ready: true`.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:833:git commit -m \"docs: add M3 pilot execution runbook\"",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:838:### Task 7: Full Verification, Push, and M3 Execution",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:846:- Produces: pushed implementation, current activation evidence, 50 jobs, 100 validation rows, `m3_ready: true`, and the M3 evidence package.",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:895:If activation fails, stop at M2, preserve the report, diagnose the state",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:899:- [ ] **Step 5: Freeze and inspect the M3 manifest**",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:906:- [ ] **Step 6: Run the full M3 training subset with recovery**",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:922:- [ ] **Step 8: Audit and build the M3 evidence package**",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:928:highest_maturity = M3",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:941:check remains false, report M2 and the exact failed evidence link rather than",
+      "origin/feature/problem2-code-framework:docs/superpowers/plans/2026-08-18-m3-pilot-pipeline.md:942:claiming M3.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:1:# M3 Pilot Pipeline Design",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:7:This design moves the problem-2 project from M2 (implemented and tested) to",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:8:M3 (multi-seed pilot evidence on independent validation scenarios). It adds a",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:12:M3 is reached only after the code is implemented and the registered pilot has",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:13:finished successfully. Passing tests alone leaves the project at M2.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:20:The M3 pilot is a canonical subset of the existing",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:39:the registered protocol/configuration and then assert the fixed M3 shape. It",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:51:### 3.2 Separate M3 protocol (rejected)",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:55:to M4.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:61:tests but is not sufficient M3 evidence.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:76:M3 pilot manifest + resource-activation report",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:97:The M3 layer selects and validates canonical jobs; it does not define an",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:147:### 5.3 Frozen M3 pilot manifest",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:153:- M3 profile version;",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:169:### 5.4 M3 readiness audit",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:196:### 5.5 M3 pilot artifact builder",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:199:`scripts/build_m3_pilot_artifacts.py`. This builder validates against the M3",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:220:1. Commit and push the tested M3 pipeline so the worktree is clean.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:221:2. Run technical dry-run selection and prepare the immutable M3 manifest.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:226:5. Run the M3 audit. Failure preserves all raw jobs and rows and identifies the",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:245:- Sealed-test input is explicitly rejected by the M3 auditor and builder.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:255:- exact M3 manifest counts and hash stability;",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:306:- a dry run proves that the current protocol selects exactly 50 canonical M3",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:309:The project reaches M3 only when, in addition:",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:315:- the M3 evidence package is built from the audited inputs.",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:317:At M3, permitted wording is limited to \"pilot results indicate\" or equivalent",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:318:provisional language. Formal Chapter 4.5 claims require the later frozen M4",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:5:This runbook covers two distinct M2 paths: a reduced CPU smoke check and a",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:11:M3 is blocked until engineering parameter sources and independent validation",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:12:scenarios with multiple training seeds are documented and frozen. M4 is blocked",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:21:exchange are outside this problem. M2 code evidence is limited to the scenario,",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:154:are provisional. Before M3/M4, do not claim a",
+      "origin/feature/problem2-code-framework:docs/verification/complete-project-runbook.md:174:available, with provisional wording retained until the M3/M4 gates pass.",
+      "origin/feature/problem2-code-framework:docs/verification/formal-readiness-after-fixes.json:335:  \"highest_gate\": \"M2\"",
+      "origin/feature/problem2-code-framework:docs/verification/formal-readiness-final.json:311:  \"highest_gate\": \"M2\"",
+      "origin/feature/problem2-code-framework:docs/verification/formal-readiness-report.md:10:preflight is regenerated. The highest supported maturity remains **M2**:",
+      "origin/feature/problem2-code-framework:docs/verification/formal-readiness-web-evidence.json:311:  \"highest_gate\": \"M2\"",
+      "origin/feature/problem2-code-framework:docs/verification/formal-readiness-with-pilot.json:329:  \"highest_gate\": \"M2\"",
+      "origin/feature/problem2-code-framework:docs/verification/readiness-with-resource.json:329:  \"highest_gate\": \"M2\"",
+      "origin/feature/problem2-code-framework:docs/verification/readiness-without-resource.json:335:  \"highest_gate\": \"M2\"",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:103:### 3.1 Canonical M3 pilot (validation only)",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:153:change its configuration. M3 is reached only when the audit reports",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:154:`m3_ready: true`, `highest_maturity: M3`, 50 completed jobs and 100 valid",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:341:- **M2 (current):** implementation tests verify interfaces, masks, event order,",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:343:- **M3:** multi-seed pilot on independent validation scenarios; use pilot",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:345:- **M4:** frozen formal matrix plus one deterministic sealed-test evaluation and",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:353:reaction-diffusion-advection-exposure model. M3 requires current resource",
+      "origin/feature/problem2-code-framework:docs/verification/section-4-5-runbook.md:354:activation evidence and multi-seed validation pilots. M4 requires a frozen",
+      "origin/feature/problem2-code-framework:docs/verification/step4-shared-validation-report.md:71:The implementation and Step 4 guardrails remain at M2. Permitted wording is",
+      "origin/feature/problem2-code-framework:scripts/audit_m3_pilot.py:1:\"\"\"Audit the canonical M3 pilot and atomically persist the readiness report.\"\"\"",
+      "origin/feature/problem2-code-framework:scripts/build_m3_pilot_artifacts.py:1:\"\"\"Build a traceable validation-only M3 pilot evidence package.\"\"\"",
+      "origin/feature/problem2-code-framework:scripts/prepare_m3_pilot.py:1:\"\"\"Freeze the canonical controlled-simulation M3 pilot selection.\"\"\"",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:1:\"\"\"Manifest-bound evidence package for the validation-only M3 pilot.\"\"\"",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:77:    readiness = _read_object(readiness_path, \"M3 readiness report\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:83:        raise ValueError(\"M3 readiness report semantic SHA-256 mismatch\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:85:        raise ValueError(\"M3 artifact build requires m3_ready=true\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:86:    if readiness.get(\"highest_maturity\") != \"M3\":",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:87:        raise ValueError(\"M3 readiness report does not declare maturity M3\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:89:        raise ValueError(\"M3 readiness manifest SHA-256 mismatch\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:91:        raise ValueError(\"M3 readiness report references a different manifest path\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:95:        raise ValueError(\"M3 manifest identity output root is missing\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:98:        raise ValueError(\"M3 readiness output root does not match the manifest output root\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:106:        raise ValueError(\"M3 evidence is no longer audit-ready: \" + \"; \".join(failed))",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:108:        raise ValueError(\"M3 readiness report no longer matches current evidence\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:118:        raise ValueError(\"M3 manifest profile is malformed\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:127:        raise ValueError(\"M3 manifest profile differs from the fixed pilot\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:129:        raise ValueError(\"M3 artifact build requires exactly 50 jobs\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:131:        raise ValueError(\"M3 artifact build requires exactly 100 evaluations\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:133:        raise ValueError(\"M3 manifest count declaration is inconsistent\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:163:            raise ValueError(\"evaluation references a job absent from the M3 manifest\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:281:        raise ValueError(\"M3 manifest identity is malformed\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:283:        raise ValueError(\"M3 manifest does not match the supplied configuration\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:285:        raise ValueError(\"M3 manifest does not match the supplied protocol\")",
+      "origin/feature/problem2-code-framework:src/problem2/artifacts/m3_pilot.py:287:        raise ValueError(\"supplied protocol methods do not match the M3 profile\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_audit.py:1:\"\"\"Read-only readiness audit for the canonical controlled-simulation M3 pilot.\"\"\"",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_audit.py:165:            issues.append(f\"canonical M3 contract is malformed: {exc}\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_audit.py:230:        issues.append(\"manifest counts do not match the canonical M3 shape\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_audit.py:395:        issues.append(f\"required M3 metrics missing from {len(missing)} rows\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_audit.py:481:        \"highest_maturity\": \"M2\",",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_audit.py:543:        \"highest_maturity\": \"M3\" if ready else \"M2\",",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:1:\"\"\"Frozen canonical selection for the controlled-simulation M3 pilot.\"\"\"",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:79:        raise ValueError(\"resource activation config hash does not match the M3 configuration\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:81:        raise ValueError(\"resource activation Git commit does not match the M3 source\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:83:        raise ValueError(\"resource activation source-tree hash does not match the M3 source\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:109:                f\"M3 requires exactly two validation scenarios for {scale}; found {len(scenarios)}\"",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:121:    \"\"\"Build, but do not persist, the immutable M3 pilot selection.\"\"\"",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:126:        raise ValueError(\"M3 manifest preparation requires a clean Git worktree\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:128:        raise ValueError(\"M3 methods do not match the registered Chapter 4.5 protocol\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:130:        raise ValueError(\"M3 training seeds do not match the registered Chapter 4.5 protocol\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:132:        raise ValueError(\"M3 scales are not registered in the Chapter 4.5 protocol\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:148:        raise ValueError(f\"M3 canonical selection must contain 50 jobs; found {len(selected)}\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:156:        raise ValueError(\"M3 selected jobs do not have canonical full-budget identities\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:184:            f\"M3 canonical selection must contain 100 evaluations; found {len(evaluations)}\"",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:240:        raise FileNotFoundError(f\"M3 manifest does not exist: {source}\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:244:        raise ValueError(f\"M3 manifest is invalid JSON: {source}\") from exc",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:246:        raise ValueError(\"unsupported M3 manifest schema\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:250:        raise ValueError(\"M3 manifest semantic SHA-256 mismatch\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:260:        raise ValueError(\"cannot write an invalid M3 manifest\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/m3_pilot.py:265:        raise ValueError(f\"conflicting M3 manifest already exists: {target}\")",
+      "origin/feature/problem2-code-framework:src/problem2/experiments/readiness.py:443:        highest_gate=\"M2\",",
+      "origin/feature/problem2-code-framework:tests/experiments/test_m3_artifacts.py:128:    readiness[\"highest_maturity\"] = \"M2\"",
+      "origin/feature/problem2-code-framework:tests/experiments/test_m3_pilot.py:152:    with pytest.raises(ValueError, match=\"conflicting M3 manifest\"):",
+      "origin/feature/problem2-code-framework:tests/experiments/test_m3_pilot.py:205:    assert report[\"highest_maturity\"] == \"M3\"",
+      "origin/feature/problem2-code-framework:tests/experiments/test_m3_pilot.py:336:    assert report[\"highest_maturity\"] == \"M2\"",
+      "origin/feature/problem2-code-framework:tests/experiments/test_readiness_gate.py:15:    assert report.highest_gate == \"M2\"",
+      "origin/feature/problem2-code-framework:tests/experiments/test_readiness_gate.py:39:    assert payload[\"highest_gate\"] == \"M2\""
+    ],
+    "\\bproves?\\b": [
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-17-simulation-preflight-design.md:223:It does not itself prove algorithm performance. The evidence sequence is:",
+      "origin/feature/problem2-code-framework:docs/superpowers/specs/2026-08-18-m3-pilot-pipeline-design.md:306:- a dry run proves that the current protocol selects exactly 50 canonical M3"
+    ],
+    "formal experiments show": [],
+    "real deployment verified": [],
+    "significantly outperforms": [],
+    "universally optimal": []
+  },
+  "read_only": true,
+  "sealed_test_accessed": false,
+  "status": "pass",
+  "training_executed": false
+}
