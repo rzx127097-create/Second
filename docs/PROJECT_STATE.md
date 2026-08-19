@@ -28,7 +28,7 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
-- Current gate: `G0` passed; `G1` registration and asset audit is next.
+- Current gate: `G1` registration and asset audit passed; `G2` deterministic-model validation is next.
 - Sealed-test status: locked; no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
@@ -37,9 +37,9 @@ real deployment evidence.
 The repository already contains chapter 4.1/4.2 design, figure, document, and
 artifact-ledger assets on `origin/main`. The remote branch
 `origin/feature/problem2-code-framework` contains extensive problem-2 code,
-configuration, test, verification, and planning assets; these are not yet
-integrated into this G0 branch and must be audited before any maturity claim is
-accepted in the current workflow.
+configuration, test, verification, and planning assets. G1 audited those Git
+objects read-only; they remain candidate inputs and are not integrated or
+accepted as current M2/M3/M4 evidence.
 
 ## Source Documents And Inputs
 
@@ -151,6 +151,40 @@ G0 persistence record:
 - Persistence-record commit: `9fdd560`
   (`docs: record g0 verification and push`), pushed to the same branch.
 
+G1 persistence record:
+
+- Local implementation commits: `03f56e9`, `e63a85b`, `b0bfbad`, `d93fd1f`,
+  and `267e715`.
+- Registry paths:
+  `docs/evidence/g1/parameter_registry.yaml`,
+  `docs/evidence/g1/literature_source_ledger.yaml`,
+  `docs/evidence/g1/experiment_matrix.yaml`,
+  `docs/evidence/g1/scenario_seed_manifest.yaml`,
+  `docs/evidence/g1/job_identity_contract.yaml`,
+  `docs/evidence/g1/raw_episode_schema.yaml`,
+  `docs/evidence/g1/validated_long_table_schema.yaml`,
+  `docs/evidence/g1/artifact_manifest_schema.yaml`,
+  `docs/evidence/g1/sealed_test_lock.yaml`,
+  `docs/evidence/g1/output_root_contract.yaml`.
+- Registry validator:
+  `python scripts/audit_g1_registries.py --root docs/evidence/g1 --report outputs/problem2_sr_mappo_v1/g1/registry-audit.json`
+  returned `status=pass`, `10` files checked, and `0` errors.
+- Candidate audit:
+  `python scripts/audit_g1_feature_branch.py --base origin/main --candidate origin/feature/problem2-code-framework --markdown docs/audits/g1-feature-branch-audit.md --json outputs/problem2_sr_mappo_v1/g1/candidate-branch-audit.json`
+  returned `status=pass`, base `2643753855c385253951dfad2c225be0b09b7e00`,
+  candidate `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`, and `210` changed paths.
+- Focused verification:
+  `python -m pytest tests/test_g1_registries.py tests/test_g1_feature_branch_audit.py -q`
+  returned `16 passed`.
+- G0 regression verification:
+  `python -m pytest tests/test_section_4_2_artifacts.py -q`
+  returned `7 passed`.
+- `git diff --check` returned no errors; the protected first-problem
+  repository remained at HEAD `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with
+  its pre-existing dirty files unchanged.
+- G1 status: verification passed locally; pushed commit hash is recorded in
+  the follow-up persistence commit after the required push.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:
@@ -173,13 +207,12 @@ G0 persistence record:
 
 ## Pending Tasks
 
-- Begin G1 by auditing `origin/feature/problem2-code-framework` and creating the
-  parameter, literature, experiment, sealed-test, and artifact registries.
-- Audit `origin/feature/problem2-code-framework` before deciding whether to
-  merge, cherry-pick, or rebuild selected assets.
-- Establish G1 registries:
-  parameter registry, literature/source ledger, experiment matrix manifest,
-  artifact manifest schema, sealed-test lock record, and output-root contract.
+- Complete G2 deterministic-model validation:
+  offline road ingestion, projection, topology, physical motion, service state
+  machine, request lifecycle, and conservation tests.
+- Decide whether selected candidate-branch assets can be independently
+  reverified, copied into controlled modules, or must be rebuilt; no merge is
+  implied by the G1 audit.
 - Build or verify deterministic G2 components:
   offline road ingestion, projection, topology, physical motion, service state
   machine, request lifecycle, and conservation tests.
@@ -197,9 +230,11 @@ G0 persistence record:
 
 - `Second` is now the authoritative repository for all future second-problem
   code and documentation records.
-- The current G0 branch is `codex/problem2-g0-orchestration`; no extra Git
-  worktree was created because the branch is already isolated from `origin/main`
-  and this G0 step only writes project-state documents.
+- The current working branch is `codex/problem2-g0-orchestration`; no extra Git
+  worktree was created because the branch is already isolated from `origin/main`.
+- G1 registry and audit artifacts are authoritative design/audit records for
+  this branch; candidate-branch reports remain untrusted until later
+  branch-local verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -219,14 +254,16 @@ G0 persistence record:
 
 ## Known Issues
 
-- Current G0 branch does not yet include the extensive code framework from
+- Current G1 branch does not include the extensive code framework from
   `origin/feature/problem2-code-framework`.
-- The maturity of that feature branch is unverified in this G0 workflow.
+- The candidate branch contains M2/M3/M4 wording and forbidden-name mentions in
+  its own docs/tests; the G1 audit records these as candidate-branch signals,
+  not accepted maturity or implementation claims.
 - `D:/Pycharm/Locust_rl` lacks Git history, so it cannot by itself provide a
   formal commit-level evidence chain.
 - Engineering parameter sources remain incomplete: device manuals, field
-  studies, expert confirmation, and source-value conversions still need G1
-  registration.
+  studies, expert confirmation, and source-value conversions are registered as
+  pending G1 source records and still require independent verification.
 - Resource activation has not been demonstrated in the current G0 branch.
 - No formal second-problem raw logs, validated tables, paired statistics, or
   locked figures exist in the current G0 branch.
@@ -237,7 +274,8 @@ G0 persistence record:
 
 ## Next Step
 
-G0 has passed after its content commit and verification record were pushed.
-The next gate is G1: audit the existing remote feature-branch assets, then
-establish the parameter, literature, experiment, sealed-test, and artifact
-registries before touching the deterministic environment or MARL code.
+G1 evidence registries and the candidate-branch audit have passed fresh local
+verification, with persistence push completion recorded in the follow-up
+commit. The highest maturity remains M1. G2 deterministic-model validation may
+begin; no training, formal experiment, or sealed-test evaluation is authorized
+by G1 alone.
