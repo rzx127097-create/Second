@@ -58,6 +58,18 @@ def test_seed_partitions_do_not_overlap() -> None:
     assert not validation & sealed
 
 
+def test_pending_external_sources_expose_lookup_fields() -> None:
+    ledger = load("literature_source_ledger.yaml")
+    pending_sources = [
+        source for source in ledger["sources"]
+        if source["verification_status"] == "pending"
+    ]
+    assert pending_sources
+    for source in pending_sources:
+        assert "database" in source
+        assert "authoritative_page" in source
+
+
 def test_sealed_test_is_locked_once_at_g7() -> None:
     lock = load("sealed_test_lock.yaml")
     assert lock["status"] == "locked"

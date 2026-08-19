@@ -52,6 +52,8 @@ sources:
     year: null
     locator: null
     authority: manufacturer_documentation
+    database: null
+    authoritative_page: null
     access_status: pending
     full_text_status: pending
     verification_status: pending
@@ -65,6 +67,8 @@ sources:
     year: null
     locator: null
     authority: peer_reviewed_field_evidence
+    database: null
+    authoritative_page: null
     access_status: pending
     full_text_status: pending
     verification_status: pending
@@ -78,6 +82,8 @@ sources:
     year: null
     locator: null
     authority: documented_expert_confirmation
+    database: null
+    authoritative_page: null
     access_status: pending
     full_text_status: pending
     verification_status: pending
@@ -91,6 +97,8 @@ sources:
     year: null
     locator: null
     authority: reproducible_conversion_record
+    database: null
+    authoritative_page: null
     access_status: pending
     full_text_status: pending
     verification_status: pending
