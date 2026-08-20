@@ -320,7 +320,7 @@ git commit -m "feat: build audited four-connected road caches"
 - Produces: `uav_action_mask`, `move_uav`, `vehicle_action_mask`, and `move_vehicle`.
 - Every move returns a new immutable state and an `Event`; invalid input raises before returning either.
 
-- [ ] **Step 1: Write failing hand-derived shortest-path tests**
+- [x] **Step 1: Write failing hand-derived shortest-path tests**
 
 ```python
 def test_astar_uses_anisotropic_metric_weights(hand_graph):
@@ -333,19 +333,19 @@ def test_astar_matches_independent_dijkstra_on_sampled_pairs(real_cache):
         )
 ```
 
-- [ ] **Step 2: Run shortest-path tests and observe the intended failure**
+- [x] **Step 2: Run shortest-path tests and observe the intended failure**
 
 Run: `python -m pytest tests/g2/test_shortest_path.py -q`
 
 Expected: collection fails because `problem2.road.search` does not exist.
 
-- [ ] **Step 3: Implement A* and an independent NetworkX Dijkstra oracle**
+- [x] **Step 3: Implement A* and an independent NetworkX Dijkstra oracle**
 
 Use a heap-based A* with anisotropic Manhattan lower bound and stable node-ID
 tie-breaking. Build the NetworkX oracle directly from canonical cached edges;
 do not call A* helpers from the oracle.
 
-- [ ] **Step 4: Write failing UAV/vehicle motion and mask tests**
+- [x] **Step 4: Write failing UAV/vehicle motion and mask tests**
 
 ```python
 @pytest.mark.parametrize("scale_id", ALL_SCALE_IDS)
@@ -372,20 +372,20 @@ Cover same-direction multi-edge continuation, branch stop, dead end, stay,
 boundary clipping, transit masks, service locks, and zero illegal-action
 probability after masked categorical normalization.
 
-- [ ] **Step 5: Run motion tests and observe the intended missing-symbol failures**
+- [x] **Step 5: Run motion tests and observe the intended missing-symbol failures**
 
 Run: `python -m pytest tests/g2/test_motion.py -q`
 
 Expected: collection fails because movement functions do not exist.
 
-- [ ] **Step 6: Implement pure metric movement functions and fail-closed masks**
+- [x] **Step 6: Implement pure metric movement functions and fail-closed masks**
 
 UAV movement uses projected continuous coordinates. Vehicle movement consumes
 at most `vehicle_speed_mps * dt_s`, interpolates on canonical road edges, and
 uses the stored direction while transit. It drops unused within-step distance
 at decision-required stops and never accrues distance during stay/service.
 
-- [ ] **Step 7: Run Task 4 and full tests**
+- [x] **Step 7: Run Task 4 and full tests**
 
 Run: `python -m pytest tests/g2/test_shortest_path.py tests/g2/test_motion.py -q`
 
@@ -395,7 +395,7 @@ Run: `python -m pytest -q`
 
 Expected: the full suite passes.
 
-- [ ] **Step 8: Commit Task 4**
+- [x] **Step 8: Commit Task 4**
 
 ```powershell
 git add src/problem2/road/search.py src/problem2/dynamics tests/g2/test_shortest_path.py tests/g2/test_motion.py
