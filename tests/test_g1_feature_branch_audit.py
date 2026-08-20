@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import re
+import subprocess
+
+import pytest
 
 from scripts.audit_g1_feature_branch import (
     ADMISSIBILITY_CLASSES,
+    _git_grep,
     _markdown_report,
     _parse_changed_paths,
     audit_candidate_branch,
@@ -13,6 +17,28 @@ from scripts.audit_g1_feature_branch import (
 
 BASE = "origin/main"
 CANDIDATE = "origin/feature/problem2-code-framework"
+
+
+def test_git_grep_rejects_execution_error_and_preserves_command_record(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail_git(argv: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        return subprocess.CompletedProcess(
+            argv,
+            2,
+            stdout=b"",
+            stderr=b"fatal: simulated grep failure",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fail_git)
+    commands: list[dict[str, object]] = []
+
+    with pytest.raises(RuntimeError, match="git grep failed"):
+        _git_grep("M2", CANDIDATE, commands)
+
+    assert commands[-1]["returncode"] == 2
+    assert commands[-1]["status"] == "error"
+    assert commands[-1]["stderr"] == "fatal: simulated grep failure"
 
 
 def test_candidate_path_classes_cover_all_asset_types() -> None:

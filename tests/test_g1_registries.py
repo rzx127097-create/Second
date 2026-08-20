@@ -361,6 +361,47 @@ def test_validator_rejects_cross_file_sealed_range_mismatch(tmp_path: Path) -> N
     assert any("sealed" in error.lower() and "range" in error.lower() for error in result["errors"])
 
 
+@pytest.mark.parametrize(
+    ("field", "value", "expected_error"),
+    (
+        ("battery_activation", True, "battery activation"),
+        ("battery_replenishment_enabled", True, "battery activation"),
+        ("battery_replenishment", "active", "battery replenishment"),
+        ("resource_replenishment", "battery_and_pesticide", "resource replenishment"),
+    ),
+)
+def test_validator_rejects_resource_activation_keys_in_any_registry_record(
+    tmp_path: Path,
+    field: str,
+    value: object,
+    expected_error: str,
+) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    data = load("parameter_registry.yaml", candidate)
+    data["parameters"][0][field] = value
+    write("parameter_registry.yaml", candidate, data)
+
+    result = validate_registries(candidate)
+
+    assert result["status"] == "fail"
+    assert any(expected_error in error.lower() for error in result["errors"])
+
+
+def test_validator_allows_legitimate_battery_retention_wording(tmp_path: Path) -> None:
+    candidate = copy_registry_tree(tmp_path)
+    data = load("parameter_registry.yaml", candidate)
+    data["parameters"][0]["meaning"] = (
+        "Battery state is retained for observation only; pesticide is the only "
+        "replenished resource."
+    )
+    write("parameter_registry.yaml", candidate, data)
+
+    result = validate_registries(candidate)
+
+    assert result["status"] == "pass"
+    assert result["errors"] == []
+
+
 def test_validator_report_binds_inputs_validator_time_and_commit() -> None:
     result = validate_registries(REGISTRY_ROOT)
     assert result["status"] == "pass"

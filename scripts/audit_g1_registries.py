@@ -250,6 +250,29 @@ def _check_common(name: str, data: dict[str, Any], errors: list[str]) -> None:
         errors.append(f"{name} contains forbidden maturity or premature result/deployment wording")
 
 
+def _check_resource_scope(data: dict[str, Any], name: str, errors: list[str]) -> None:
+    def visit(value: object, path: str) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                child_path = f"{path}.{key}"
+                if key == "resource_replenishment" and child != "pesticide_only":
+                    errors.append(
+                        f"{child_path} resource replenishment must be pesticide-only"
+                    )
+                if key == "battery_replenishment" and child != "inactive":
+                    errors.append(
+                        f"{child_path} battery replenishment must remain inactive"
+                    )
+                if key in {"battery_activation", "battery_replenishment_enabled"} and child is not False:
+                    errors.append(f"{child_path} battery activation is forbidden")
+                visit(child, child_path)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                visit(child, f"{path}[{index}]")
+
+    visit(data, name)
+
+
 def _check_parameters(data: dict[str, Any], errors: list[str]) -> dict[str, dict[str, Any]]:
     records = _list(data.get("parameters"), "parameters", errors)
     if records is None:
@@ -739,6 +762,7 @@ def validate_registries(registry_root: Path) -> dict[str, Any]:
             continue
         registries[name] = data
         _check_common(name, data, errors)
+        _check_resource_scope(data, name, errors)
 
     parameters: dict[str, dict[str, Any]] = {}
     sources: dict[str, dict[str, Any]] = {}

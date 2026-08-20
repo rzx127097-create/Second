@@ -171,6 +171,13 @@ def _git_grep(
         check=False,
         command_records=command_records,
     )
+    command = command_records[-1]
+    returncode = command["returncode"]
+    if returncode not in (0, 1):
+        detail = command["stderr"] or "no stderr"
+        raise RuntimeError(
+            f"git grep failed with return code {returncode} for {pattern!r}: {detail}"
+        )
     return [line for line in _decode(output).splitlines() if line.strip()]
 
 
