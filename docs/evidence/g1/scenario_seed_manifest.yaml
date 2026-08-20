@@ -9,8 +9,8 @@ partitions:
   validation:
     start: 20000
     end: 20049
-    purpose: fixed_scenario_validation
-    tuning_allowed: false
+    purpose: checkpoint_selection_and_algorithm_tuning
+    tuning_allowed: true
   sealed_test:
     start: 30000
     end: 30099

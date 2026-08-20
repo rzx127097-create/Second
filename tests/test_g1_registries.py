@@ -159,6 +159,13 @@ def test_primary_method_family_scale_and_seed_protocol_are_exact() -> None:
     }
     manifest = load("scenario_seed_manifest.yaml")
     assert manifest["partitions"]["training"]["seeds"] == [42, 123, 2024, 3407, 7919]
+    assert manifest["partitions"]["validation"] == {
+        "start": 20000,
+        "end": 20049,
+        "purpose": "checkpoint_selection_and_algorithm_tuning",
+        "tuning_allowed": True,
+    }
+    assert manifest["partitions"]["sealed_test"]["tuning_allowed"] is False
 
 
 def test_pending_external_sources_expose_lookup_fields() -> None:
@@ -177,8 +184,80 @@ def test_sealed_test_is_locked_once_at_g7() -> None:
     lock = load("sealed_test_lock.yaml")
     assert lock["status"] == "locked"
     assert lock["unlock_gate"] == "G7"
-    assert lock["unlock_count"] == 1
+    assert lock.get("maximum_unlock_count") == 1
+    assert lock.get("actual_unlock_count") == 0
+    assert "unlock_count" not in lock
     assert lock["tuning_allowed_before_unlock"] is False
+
+
+def test_parameter_registry_defines_executable_service_and_request_contracts() -> None:
+    registry = load("parameter_registry.yaml")
+    parameters = {record["id"]: record for record in registry["parameters"]}
+    parameter_ids = set(parameters)
+    assert "service.transfer_cap" in parameter_ids
+    assert "service.request_safety_margin" in parameter_ids
+    assert parameters["service.transfer_cap"]["unit"] == "L"
+    assert parameters["service.transfer_cap"]["value"] > 0
+    assert parameters["service.request_safety_margin"]["unit"] == "s"
+    assert parameters["service.request_safety_margin"]["value"] >= 0
+    assert registry.get("service_transfer_contract") == {
+        "service_cap_parameter_id": "service.transfer_cap",
+        "transfer_volume_l": {
+            "operation": "minimum",
+            "operands": [
+                "uav_free_capacity_l",
+                "service_cap_l",
+                "vehicle_remaining_inventory_l",
+            ],
+        },
+        "accounting_boundary": "service_completion",
+    }
+    assert registry.get("request_trigger_contract") == {
+        "safety_margin_parameter_id": "service.request_safety_margin",
+        "remaining_spray_endurance_s": {
+            "operation": "divide",
+            "numerator": "uav_remaining_pesticide_l",
+            "denominator": "spray_flow_l_per_s",
+        },
+        "spray_flow_conversion": {
+            "source_parameter_id": "uav.spray_flow",
+            "from_unit": "L/min",
+            "to_unit": "L/s",
+            "operation": "divide_by_60",
+        },
+        "request_when": {
+            "left": "remaining_spray_endurance_s",
+            "operator": "less_than_or_equal",
+            "right": {
+                "operation": "sum",
+                "operands": [
+                    "estimated_time_to_service_s",
+                    "request_safety_margin_s",
+                ],
+            },
+        },
+        "zero_spray_flow_policy": "do_not_trigger_from_endurance_rule",
+        "active_request_policy": "at_most_one_active_request_per_uav",
+    }
+
+
+def test_artifact_schema_requires_non_null_execution_provenance_for_results() -> None:
+    schema = load("artifact_manifest_schema.yaml")
+    result_statuses = ["validated", "locked_summary"]
+    provenance_types = {
+        "generator_commit": "git_commit_or_null",
+        "created_at": "utc_datetime_or_null",
+        "generator_sha256": "sha256_or_null",
+        "generator_version": "string_or_null",
+        "output_sha256": "sha256_or_null",
+    }
+    for field, field_type in provenance_types.items():
+        assert field in schema["required_fields"]
+        assert schema["record_schema"].get(field) == {
+            "type": field_type,
+            "required": True,
+            "non_null_when": result_statuses,
+        }
 
 
 def test_job_identity_is_canonical_and_ordered() -> None:
@@ -288,6 +367,86 @@ def _mutate_artifact_schema(root: Path) -> None:
     write("artifact_manifest_schema.yaml", root, data)
 
 
+def _mutate_missing_service_cap_contract(root: Path) -> None:
+    data = load("parameter_registry.yaml", root)
+    data["parameters"] = [
+        record for record in data["parameters"]
+        if record["id"] != "service.transfer_cap"
+    ]
+    data.pop("service_transfer_contract", None)
+    write("parameter_registry.yaml", root, data)
+
+    ledger = load("literature_source_ledger.yaml", root)
+    for source in ledger["sources"]:
+        source["supports"] = [
+            support for support in source["supports"]
+            if support["parameter_id"] != "service.transfer_cap"
+        ]
+    write("literature_source_ledger.yaml", root, ledger)
+
+
+def _mutate_missing_request_trigger_contract(root: Path) -> None:
+    data = load("parameter_registry.yaml", root)
+    data.pop("request_trigger_contract", None)
+    write("parameter_registry.yaml", root, data)
+
+
+def _mutate_ambiguous_sealed_unlock_state(root: Path) -> None:
+    data = load("sealed_test_lock.yaml", root)
+    data.pop("maximum_unlock_count", None)
+    data.pop("actual_unlock_count", None)
+    data["unlock_count"] = 1
+    write("sealed_test_lock.yaml", root, data)
+
+
+def _mutate_result_artifact_provenance_to_nullable(root: Path) -> None:
+    data = load("artifact_manifest_schema.yaml", root)
+    for field in (
+        "generator_commit",
+        "created_at",
+        "generator_sha256",
+        "generator_version",
+        "output_sha256",
+    ):
+        record = data["record_schema"].get(field)
+        if isinstance(record, dict):
+            record.pop("non_null_when", None)
+    write("artifact_manifest_schema.yaml", root, data)
+
+
+def _mutate_validation_tuning_to_forbidden(root: Path) -> None:
+    data = load("scenario_seed_manifest.yaml", root)
+    data["partitions"]["validation"] = {
+        "start": 20000,
+        "end": 20049,
+        "purpose": "fixed_scenario_validation",
+        "tuning_allowed": False,
+    }
+    write("scenario_seed_manifest.yaml", root, data)
+
+
+def _mutate_nonpositive_service_cap(root: Path) -> None:
+    data = load("parameter_registry.yaml", root)
+    record = next(
+        item for item in data["parameters"]
+        if item["id"] == "service.transfer_cap"
+    )
+    record["min"] = 0.0
+    record["value"] = 0.0
+    write("parameter_registry.yaml", root, data)
+
+
+def _mutate_negative_request_safety_margin(root: Path) -> None:
+    data = load("parameter_registry.yaml", root)
+    record = next(
+        item for item in data["parameters"]
+        if item["id"] == "service.request_safety_margin"
+    )
+    record["min"] = -1.0
+    record["value"] = -1.0
+    write("parameter_registry.yaml", root, data)
+
+
 NEGATIVE_CASES: tuple[tuple[str, Callable[[Path], None], str], ...] = (
     ("unknown source ID", _mutate_unknown_source, "unknown source"),
     ("inverted parameter range", _mutate_inverted_range, "range"),
@@ -305,6 +464,21 @@ NEGATIVE_CASES: tuple[tuple[str, Callable[[Path], None], str], ...] = (
     ("two-way support mismatch", _mutate_support_mismatch, "support"),
     ("duplicate schema field", _mutate_duplicate_schema_field, "duplicate"),
     ("incomplete artifact schema", _mutate_artifact_schema, "artifact schema"),
+    ("missing service-cap contract", _mutate_missing_service_cap_contract, "service cap"),
+    ("missing request-trigger contract", _mutate_missing_request_trigger_contract, "request trigger"),
+    ("ambiguous sealed unlock state", _mutate_ambiguous_sealed_unlock_state, "unlock"),
+    (
+        "nullable result-artifact provenance",
+        _mutate_result_artifact_provenance_to_nullable,
+        "provenance",
+    ),
+    ("validation tuning forbidden", _mutate_validation_tuning_to_forbidden, "validation"),
+    ("nonpositive service cap", _mutate_nonpositive_service_cap, "service cap"),
+    (
+        "negative request safety margin",
+        _mutate_negative_request_safety_margin,
+        "safety-margin",
+    ),
 )
 
 

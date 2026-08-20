@@ -122,6 +122,36 @@ parameters:
     conversion: identity
     status: provisional
     scope: development_and_pilot
+  - id: service.transfer_cap
+    name: pesticide_transfer_cap_per_service
+    symbol: C_service
+    meaning: Maximum pesticide volume transferred in one completed service event
+    value: 1.08
+    unit: L
+    min: 0.56
+    max: 1.6
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.08
+    source_unit: L
+    conversion: uav.pesticide_capacity * uav.usable_fraction = 1.2 L * 0.9
+    status: provisional
+    scope: development_and_pilot
+  - id: service.request_safety_margin
+    name: request_safety_margin
+    symbol: t_request_margin
+    meaning: Time margin added to estimated service delay when triggering a request
+    value: 10.0
+    unit: s
+    min: 0.0
+    max: 60.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 10.0
+    source_unit: s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
   - id: service.rendezvous_radius
     name: rendezvous_radius
     symbol: r_service
@@ -152,3 +182,33 @@ parameters:
     conversion: identity
     status: provisional
     scope: all_simulation
+service_transfer_contract:
+  service_cap_parameter_id: service.transfer_cap
+  transfer_volume_l:
+    operation: minimum
+    operands:
+      - uav_free_capacity_l
+      - service_cap_l
+      - vehicle_remaining_inventory_l
+  accounting_boundary: service_completion
+request_trigger_contract:
+  safety_margin_parameter_id: service.request_safety_margin
+  remaining_spray_endurance_s:
+    operation: divide
+    numerator: uav_remaining_pesticide_l
+    denominator: spray_flow_l_per_s
+  spray_flow_conversion:
+    source_parameter_id: uav.spray_flow
+    from_unit: L/min
+    to_unit: L/s
+    operation: divide_by_60
+  request_when:
+    left: remaining_spray_endurance_s
+    operator: less_than_or_equal
+    right:
+      operation: sum
+      operands:
+        - estimated_time_to_service_s
+        - request_safety_margin_s
+  zero_spray_flow_policy: do_not_trigger_from_endurance_rule
+  active_request_policy: at_most_one_active_request_per_uav

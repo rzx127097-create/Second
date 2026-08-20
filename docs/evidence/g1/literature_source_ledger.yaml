@@ -38,6 +38,12 @@ sources:
       - parameter_id: service.setup_time
         claim: Development value selected for specification and later sensitivity audit
         applicability_limit: Not field-service evidence
+      - parameter_id: service.transfer_cap
+        claim: Development cap derived from provisional onboard usable capacity
+        applicability_limit: Not empirical equipment evidence
+      - parameter_id: service.request_safety_margin
+        claim: Development time margin selected for later sensitivity audit
+        applicability_limit: Not field-service evidence
       - parameter_id: service.rendezvous_radius
         claim: Development value selected for specification and later sensitivity audit
         applicability_limit: Not field-deployment evidence

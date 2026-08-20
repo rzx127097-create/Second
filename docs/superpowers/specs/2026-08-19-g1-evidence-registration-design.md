@@ -116,7 +116,12 @@ scope: development_and_pilot
 
 Required parameter coverage includes onboard pesticide capacity and usable
 fraction, spray flow, UAV speed, vehicle inventory and speed, transfer rate,
-setup/service time, rendezvous radius, and physical decision-step duration.
+setup/service time, per-service transfer cap, request safety margin, rendezvous
+radius, and physical decision-step duration. The registry also freezes a
+machine-readable transfer rule,
+`min(UAV free capacity, service cap, vehicle inventory)`, and triggers a request
+when remaining spray endurance is no greater than estimated service delay plus
+the safety margin.
 Each critical value must state whether it is verified or provisional. A source
 record cannot be omitted merely because the value is an assumption.
 
@@ -153,7 +158,8 @@ step limits, resource/information matching rules, outcome metrics, and
 development/validation/sealed split. The scenario manifest records:
 
 - training seeds: `42`, `123`, `2024`, `3407`, `7919`;
-- validation scenario seeds: `20000-20049`;
+- validation scenario seeds: `20000-20049`, used for checkpoint selection and
+  algorithm tuning;
 - sealed-test scenario seeds: `30000-30099`;
 - the fact that sealed IDs are locked and excluded from tuning.
 
@@ -196,17 +202,23 @@ source_paths: []
 source_hashes: []
 generator: scripts/figures/example.py
 generator_commit: null
+generator_sha256: null
+generator_version: null
 output_path: outputs/problem2_sr_mappo_v1/artifacts/example.png
+output_sha256: null
 created_at: null
 data_status: design_only
 ```
 
-G1 registers the schema only. It does not create formal result artifacts.
+G1 registers the schema only. It does not create formal result artifacts. For
+`validated` and `locked_summary` records, generator commit, generator SHA-256,
+generator version, output SHA-256, and UTC creation time are all non-null.
 
 ### Sealed-Test Lock and Output-Root Contracts
 
 The sealed-test lock records the exact scenario range, lock status, allowed
-unlock gate (`G7`), one-time unlock rule, and prohibition on tuning. The
+unlock gate (`G7`), maximum unlock count (`1`), actual unlock count (`0` while
+locked), and prohibition on tuning. The
 output-root contract fixes all second-problem evidence under
 `outputs/problem2_sr_mappo_v1` or a documented descendant. It records that
 first-problem roots and source OSM files are read-only and that derived road

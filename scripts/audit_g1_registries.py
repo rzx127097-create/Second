@@ -15,7 +15,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VALIDATOR_VERSION = "g1-final-review-remediation.v1"
+VALIDATOR_VERSION = "g1.1-contract-remediation.v1"
 REGISTRY_IDS = {
     "parameter_registry.yaml": "G1-PARAMETERS",
     "literature_source_ledger.yaml": "G1-SOURCES",
@@ -110,7 +110,11 @@ ARTIFACT_REQUIRED_FIELDS = [
     "source_hashes",
     "generator",
     "generator_commit",
+    "generator_sha256",
+    "generator_version",
     "output_path",
+    "output_sha256",
+    "created_at",
     "data_status",
 ]
 ARTIFACT_SCHEMA_FIELDS = [
@@ -120,10 +124,53 @@ ARTIFACT_SCHEMA_FIELDS = [
     "source_hashes",
     "generator",
     "generator_commit",
+    "generator_sha256",
+    "generator_version",
     "output_path",
+    "output_sha256",
     "created_at",
     "data_status",
 ]
+RESULT_ARTIFACT_STATUSES = ["validated", "locked_summary"]
+SERVICE_TRANSFER_CONTRACT = {
+    "service_cap_parameter_id": "service.transfer_cap",
+    "transfer_volume_l": {
+        "operation": "minimum",
+        "operands": [
+            "uav_free_capacity_l",
+            "service_cap_l",
+            "vehicle_remaining_inventory_l",
+        ],
+    },
+    "accounting_boundary": "service_completion",
+}
+REQUEST_TRIGGER_CONTRACT = {
+    "safety_margin_parameter_id": "service.request_safety_margin",
+    "remaining_spray_endurance_s": {
+        "operation": "divide",
+        "numerator": "uav_remaining_pesticide_l",
+        "denominator": "spray_flow_l_per_s",
+    },
+    "spray_flow_conversion": {
+        "source_parameter_id": "uav.spray_flow",
+        "from_unit": "L/min",
+        "to_unit": "L/s",
+        "operation": "divide_by_60",
+    },
+    "request_when": {
+        "left": "remaining_spray_endurance_s",
+        "operator": "less_than_or_equal",
+        "right": {
+            "operation": "sum",
+            "operands": [
+                "estimated_time_to_service_s",
+                "request_safety_margin_s",
+            ],
+        },
+    },
+    "zero_spray_flow_policy": "do_not_trigger_from_endurance_rule",
+    "active_request_policy": "at_most_one_active_request_per_uav",
+}
 FORBIDDEN_ROOTS = [
     "outputs/sr_mappo_paper_v1",
     "C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper",
@@ -307,6 +354,32 @@ def _check_parameters(data: dict[str, Any], errors: list[str]) -> dict[str, dict
         _number(record.get("source_value"), f"{label}.source_value", errors)
         if None not in (minimum, current, maximum) and not minimum <= current <= maximum:
             errors.append(f"{label} range must satisfy min <= value <= max")
+    service_cap = result.get("service.transfer_cap")
+    if service_cap is None:
+        errors.append("parameter registry missing required service cap parameter")
+    elif service_cap.get("unit") != "L":
+        errors.append("service cap parameter must use L")
+    else:
+        service_cap_value = _number(
+            service_cap.get("value"), "service cap parameter value", errors
+        )
+        if service_cap_value is not None and service_cap_value <= 0:
+            errors.append("service cap parameter must be positive")
+    request_margin = result.get("service.request_safety_margin")
+    if request_margin is None:
+        errors.append("parameter registry missing required request safety-margin parameter")
+    elif request_margin.get("unit") != "s":
+        errors.append("request safety-margin parameter must use s")
+    else:
+        request_margin_value = _number(
+            request_margin.get("value"), "request safety-margin parameter value", errors
+        )
+        if request_margin_value is not None and request_margin_value < 0:
+            errors.append("request safety-margin parameter cannot be negative")
+    if data.get("service_transfer_contract") != SERVICE_TRANSFER_CONTRACT:
+        errors.append("service cap transfer contract is missing or not exact")
+    if data.get("request_trigger_contract") != REQUEST_TRIGGER_CONTRACT:
+        errors.append("request trigger contract is missing or not exact")
     return result
 
 
@@ -494,8 +567,8 @@ def _check_seeds(data: dict[str, Any], errors: list[str]) -> tuple[int | None, i
         "validation": {
             "start": 20000,
             "end": 20049,
-            "purpose": "fixed_scenario_validation",
-            "tuning_allowed": False,
+            "purpose": "checkpoint_selection_and_algorithm_tuning",
+            "tuning_allowed": True,
         },
         "sealed_test": {
             "start": 30000,
@@ -613,31 +686,37 @@ def _check_artifact(data: dict[str, Any], errors: list[str]) -> None:
         return
     if list(schema) != ARTIFACT_SCHEMA_FIELDS:
         errors.append("artifact schema record fields are not exact")
-    expected_types = {
-        "artifact_id": "string",
-        "artifact_type": "string",
-        "source_paths": "list",
-        "source_hashes": "list",
-        "generator": "string",
-        "generator_commit": "string_or_null",
-        "output_path": "string",
-        "data_status": "string",
-        "created_at": "string_or_null",
+    def result_provenance(field_type: str) -> dict[str, object]:
+        return {
+            "type": field_type,
+            "required": True,
+            "non_null_when": RESULT_ARTIFACT_STATUSES,
+        }
+
+    expected_schema = {
+        "artifact_id": {"type": "string", "required": True},
+        "artifact_type": {
+            "type": "string",
+            "allowed": ["figure", "table", "text_block"],
+            "required": True,
+        },
+        "source_paths": {"type": "list", "required": True},
+        "source_hashes": {"type": "list", "required": True},
+        "generator": {"type": "string", "required": True},
+        "generator_commit": result_provenance("git_commit_or_null"),
+        "generator_sha256": result_provenance("sha256_or_null"),
+        "generator_version": result_provenance("string_or_null"),
+        "output_path": {"type": "string", "required": True},
+        "output_sha256": result_provenance("sha256_or_null"),
+        "created_at": result_provenance("utc_datetime_or_null"),
+        "data_status": {
+            "type": "string",
+            "allowed": ["design_only", "validated", "locked_summary"],
+            "required": True,
+        },
     }
-    for name, expected_type in expected_types.items():
-        record = _mapping(schema.get(name), f"artifact schema {name}", errors)
-        if record is None:
-            continue
-        if record.get("type") != expected_type:
-            errors.append(f"artifact schema {name} has wrong type")
-        expected_required = name in ARTIFACT_REQUIRED_FIELDS
-        _strict_bool(record.get("required"), f"artifact schema {name}.required", errors, expected_required)
-    artifact_type = schema.get("artifact_type")
-    if isinstance(artifact_type, dict) and artifact_type.get("allowed") != ["figure", "table", "text_block"]:
-        errors.append("artifact schema artifact_type enum is not exact")
-    data_status = schema.get("data_status")
-    if isinstance(data_status, dict) and data_status.get("allowed") != ["design_only", "validated", "locked_summary"]:
-        errors.append("artifact schema data_status enum is not exact")
+    if schema != expected_schema:
+        errors.append("artifact schema execution provenance contract is not exact")
 
 
 def _check_sealed(
@@ -647,8 +726,8 @@ def _check_sealed(
 ) -> None:
     expected_keys = {
         "schema_version", "registry_id", "status", "scenario_range", "unlock_gate",
-        "unlock_count", "tuning_allowed_before_unlock", "resource_replenishment",
-        "battery_replenishment",
+        "maximum_unlock_count", "actual_unlock_count", "tuning_allowed_before_unlock",
+        "resource_replenishment", "battery_replenishment",
     }
     if set(data) != expected_keys:
         errors.append("sealed-test lock policy fields are not exact")
@@ -660,8 +739,14 @@ def _check_sealed(
             errors.append("sealed-test scenario range is not exact")
     if lock_range != manifest_range:
         errors.append("sealed-test range conflicts across lock and seed manifest")
-    if data.get("unlock_gate") != "G7" or data.get("unlock_count") != 1:
-        errors.append("sealed-test unlock policy must be one-time at G7")
+    maximum_unlock_count = data.get("maximum_unlock_count")
+    actual_unlock_count = data.get("actual_unlock_count")
+    if data.get("unlock_gate") != "G7":
+        errors.append("sealed-test unlock gate must be G7")
+    if type(maximum_unlock_count) is not int or maximum_unlock_count != 1:
+        errors.append("sealed-test maximum unlock count must be exactly one")
+    if type(actual_unlock_count) is not int or actual_unlock_count != 0:
+        errors.append("sealed-test actual unlock count must be zero while locked")
     _strict_bool(data.get("tuning_allowed_before_unlock"), "sealed-test tuning policy", errors, False)
     if data.get("resource_replenishment") != "pesticide_only":
         errors.append("sealed-test resource replenishment must be pesticide-only")

@@ -5,7 +5,8 @@ scenario_range:
   start: 30000
   end: 30099
 unlock_gate: G7
-unlock_count: 1
+maximum_unlock_count: 1
+actual_unlock_count: 0
 tuning_allowed_before_unlock: false
 resource_replenishment: pesticide_only
 battery_replenishment: inactive
