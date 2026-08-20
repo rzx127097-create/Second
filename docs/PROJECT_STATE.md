@@ -28,11 +28,12 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
-- Current gate: `G1` was accepted at `0719483`, then reopened by the independent
-  G1 handoff audit after four previously missed contract gaps were verified in
-  the tracked registries and validator. A bounded G1.1 remediation is required
-  before `G2` deterministic-model validation may begin.
-- Sealed-test status: locked; no sealed-test result may be used for tuning.
+- Current gate: bounded `G1.1` remediation passed TDD, independent full-range
+  review, fresh controller verification, and GitHub persistence at `1b10457`.
+  `G2` deterministic-model specification and validation are the next authorized
+  work; no G2 implementation has started.
+- Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
+  is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
 - Frozen second-problem output root: `outputs/problem2_sr_mappo_v1`.
@@ -333,6 +334,54 @@ G1 handoff-audit reopening record:
   `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with the same 13 pre-existing
   modified/untracked paths recorded at G0.
 
+G1.1 bounded remediation persistence record:
+
+- Remediation base: `d5b2c26be017f7063ca71a2041a4ec8e8ef53d1b`.
+- Contract/schema/test commit:
+  `15f3eb882ba78597d1eb5cfecc2eda3cfb0efc6c`
+  (`fix: close g1.1 registry contract gaps`).
+- Initial regenerated-evidence commit:
+  `288498e7933ac83b5be8b45733b52120f91a2ec4`
+  (`docs: regenerate g1.1 audit evidence`).
+- Independent full-range review found two successive Important fail-open paths:
+  the service-cap/request-margin lower bounds were not independently constrained,
+  and non-finite YAML/Python values could create unbounded parameter ranges.
+- Lower-bound fix and evidence commits:
+  `667ffcf74d625261a0fb0970df1db0e5c0d13a34` and
+  `699f33a09906f2a24afa64f2c4d3aad6ab6d5c9a`.
+- Finite-number fix and final evidence commits:
+  `50a833468d58ba9c85c4588a8062db19a704152c` and
+  `1b10457f64316dbd56e2ec2bf64f67db215602b6`.
+- TDD RED evidence progressed through `9 failed, 32 passed`, then
+  `3 failed, 40 passed`, `2 failed, 41 passed`, and `2 failed, 43 passed` for
+  the four original gaps and two review-discovered fail-open paths.
+- The final registries define 12 parameters, including a positive per-service
+  transfer cap and nonnegative request safety margin, plus machine-readable
+  transfer and request-trigger contracts. The sealed lock separates maximum
+  (`1`) from actual (`0`) unlock count. Validated/locked artifacts require
+  non-null generator commit/time/hash/version and output hash. Validation scenes
+  permit checkpoint selection and algorithm tuning; sealed scenes remain locked
+  and excluded from tuning.
+- Final independent full-range review of `d5b2c26..1b10457` found no Critical,
+  Important, or Minor issue and marked the bounded remediation ready at M1.
+- Fresh controller verification on `1b10457`: `python -m pytest -q` returned
+  `56 passed`; the focused G1 suite returned `49 passed`; both G1 audit CLIs
+  returned `status=pass`; the registry audit reported 10 files, 21 metrics,
+  12 parameters, 5 sources, 0 errors, and one pending-source warning;
+  `git diff --check` returned no errors.
+- The final registry report binds generator commit `50a8334`, validator SHA-256
+  `0e07afbbe2e68e3a903e3416696c04fba0394ac41820d2e97d025e0029b847d4`,
+  and all 10 registry input hashes. The candidate audit remains execution-only,
+  inventories 210 paths, and does not accept candidate code or maturity claims.
+- Content/evidence head `1b10457f64316dbd56e2ec2bf64f67db215602b6`
+  was pushed to `origin/codex/problem2-g0-orchestration`; local HEAD, upstream,
+  and `git ls-remote` matched after the push.
+- No G2 implementation, training, formal experiment, sealed-test access,
+  protected external write, Word-file edit, merge, or force-push occurred.
+- The protected first-problem repository remained at
+  `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with the same 13 pre-existing
+  modified/untracked paths recorded at G0.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:
@@ -360,19 +409,15 @@ G1 handoff-audit reopening record:
   accepting candidate code, reports, outputs, or maturity claims.
 - Reopened G1 during handoff preparation after verifying four newly identified
   registry-contract gaps that the prior scoped reviews did not cover.
+- Completed and persisted the bounded G1.1 remediation with fail-closed tests,
+  regenerated reports, independent review, and a verified remote content head.
 
 ## Pending Tasks
 
-- Complete bounded G1.1 remediation before G2: register service-cap and request
-  threshold semantics; split sealed maximum/actual unlock state; make artifact
-  provenance conditional and fail-closed for validated/locked outputs; align
-  validation-scene tuning semantics with the experiment protocol; update
-  validators, negative tests, generated reports, independent review, push, and
-  persistence records.
 - Decide whether selected candidate-branch assets can be independently
   reverified, copied into controlled modules, or must be rebuilt; no merge is
   implied by the G1 audit.
-- After G1.1 persistence and independent re-review, build or verify
+- Prepare the G2 design/specification and TDD plan, then build or verify
   deterministic G2 components:
   offline road ingestion, projection, topology, physical motion, service state
   machine, request lifecycle, and conservation tests.
@@ -392,11 +437,9 @@ G1 handoff-audit reopening record:
   code and documentation records.
 - The current working branch is `codex/problem2-g0-orchestration`; no extra Git
   worktree was created because the branch is already isolated from `origin/main`.
-- The previously corrected G1 registry and audit artifacts remain historical
-  M1 design/audit records, but the G1 gate is not currently accepted until the
-  new G1.1 remediation passes independent review and is persisted;
-  candidate-branch reports remain untrusted until later branch-local
-  verification.
+- G1.1 is accepted at M1 after bounded remediation, independent full-range
+  review, fresh verification, and remote persistence. Candidate-branch reports
+  remain untrusted until later branch-local verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -416,8 +459,7 @@ G1 handoff-audit reopening record:
 
 ## Known Issues
 
-- G1 is reopened because the four handoff-audit contract gaps above remain
-  unresolved in the tracked YAML and validator at the current HEAD.
+- G2 deterministic-model implementation and evidence have not started.
 - The current M1 branch does not include the extensive code framework from
   `origin/feature/problem2-code-framework`.
 - The candidate branch contains M2/M3/M4 wording and forbidden-name mentions in
@@ -439,9 +481,9 @@ G1 handoff-audit reopening record:
 
 ## Next Step
 
-Run one bounded G1.1 remediation using TDD and independent review. Do not start
-G2 implementation or merge the current PR into `main` until the four newly
-verified contract gaps are fixed, the full G1 audit is regenerated from a
-committed generator, all tests pass, and the new pushed commit and verification
-record are persisted here. The highest maturity remains M1; training, formal
-experiments, and sealed-test evaluation remain unauthorized.
+Prepare the G2 deterministic-model design/specification and TDD plan from the
+accepted G1.1 head. Create or use a dedicated
+`codex/problem2-g2-deterministic-validation` branch/worktree before G2
+implementation, and stop at the first failed deterministic gate. The highest
+maturity remains M1; RL training, formal experiments, and sealed-test evaluation
+remain unauthorized.
