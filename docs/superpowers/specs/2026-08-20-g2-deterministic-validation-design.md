@@ -63,7 +63,8 @@ The implementation is split into focused packages:
 `configs/problem2/g2_deterministic.yaml` is the single frozen G2 configuration.
 `pyproject.toml` establishes the `src` package and declares Python 3.11 with
 NumPy, PyYAML, NetworkX, Shapely, and PyProj. Torch and other RL dependencies
-are outside the G2 dependency set.
+are outside the G2 dependency set. `requirements-g2.lock` records the exact
+versions used to generate the accepted G2 evidence.
 
 ## 4. GIS Source, Projection, And AOI
 
@@ -178,6 +179,10 @@ Metadata contains at least:
 - adjacency and canonical-array content checksums;
 - cache schema and preprocessing versions;
 - generator file SHA-256 and generator Git commit.
+
+The generator Git commit is the newest commit that changes the G2 package,
+configuration, dependency declarations, or G2 CLI scripts. Evidence-only and
+documentation-only commits do not change this provenance value.
 
 Cache loading recomputes and validates checksums and dimensions. A mismatch in
 source hash, CRS, AOI, grid shape, preprocessing version, generator hash, or
