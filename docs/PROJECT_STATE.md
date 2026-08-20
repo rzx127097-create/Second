@@ -229,6 +229,34 @@ G1 final-review remediation record:
 - The remediation report/state commit is local and will be recorded by the
   controller after independent re-review. No pushed hash is claimed here.
 
+Fix Round 1 remediation record:
+
+- Scoped re-review found two additional Important fail-open paths: candidate
+  `git grep` execution errors above return code 1 were recorded but ignored,
+  and resource activation keys outside the experiment/sealed registries were
+  not recursively rejected.
+- RED verification returned `1 failed, 3 passed` for the simulated Git grep
+  return-code-2 case and `4 failed, 30 passed` for cross-registry
+  `battery_activation`, `battery_replenishment_enabled`,
+  `battery_replenishment`, and `resource_replenishment` mutations.
+- Code/test fix commit:
+  `91466005f0927a14c408fe5f04da5a87dc78010c`
+  (`fix: close g1 audit validation gaps`).
+- The candidate audit now accepts only Git grep return codes 0/1 and preserves
+  the actual failed command record before raising. The registry validator now
+  applies pesticide-only and inactive-battery key checks recursively across
+  every loaded registry while allowing ordinary battery-retention prose.
+- Focused verification returned `38 passed`; full verification returned
+  `45 passed`; both audit CLIs returned `status=pass`; `git diff --check`
+  returned no errors.
+- Regenerated registry and candidate reports resolve their generator commit as
+  `91466005f0927a14c408fe5f04da5a87dc78010c`. The validator SHA-256 is
+  `3760676483932e0e9b649b59ec0c4ead277f1303fdd20ac3dc4ef91f7315a74c`;
+  the candidate auditor SHA-256 is
+  `1d05c29a1addf029d6040e41219bed7d2a0a6edc50adf885e7f6e9545ec4f72f`.
+- Maturity remains M1. No training, sealed-test access, external write, push,
+  merge, or pull request occurred in Fix Round 1.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:

@@ -22,7 +22,7 @@
   },
   "errors": [],
   "provenance": {
-    "generated_at_utc": "2026-08-20T08:29:05.678103+00:00",
+    "generated_at_utc": "2026-08-20T08:45:49.460556+00:00",
     "registry_sha256": {
       "artifact_manifest_schema.yaml": "c362253ee80ec4ce6da513f29d69a7a57435c43544c779311e5ad58673b0b449",
       "experiment_matrix.yaml": "1155c4efab9abbadbaa993d21e88d34ec60beab32c39e4ef46d613affa17f414",
@@ -35,10 +35,10 @@
       "sealed_test_lock.yaml": "0a78824bff8bb964498acc66abb0e15a40968a138272b2fb34ea09496fa8e153",
       "validated_long_table_schema.yaml": "43f557764e5e98a4db2a83a36e6653e4d34d5c5413f4fbb9c0509bcc55c549e7"
     },
-    "repository_commit": "ebada80f6aa95a9d8c2c321149ce45e33e106dcb",
+    "repository_commit": "91466005f0927a14c408fe5f04da5a87dc78010c",
     "validator": {
       "path": "scripts/audit_g1_registries.py",
-      "sha256": "94351669bf8a66374371de2b675e2fe871ea5067d1afc02ac68c3be338232846",
+      "sha256": "3760676483932e0e9b649b59ec0c4ead277f1303fdd20ac3dc4ef91f7315a74c",
       "version": "g1-final-review-remediation.v1"
     }
   },

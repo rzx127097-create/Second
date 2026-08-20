@@ -9,10 +9,10 @@
 - Base commit: `2643753855c385253951dfad2c225be0b09b7e00`
 - Candidate ref: `origin/feature/problem2-code-framework`
 - Candidate commit: `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`
-- Generator commit: `ebada80f6aa95a9d8c2c321149ce45e33e106dcb`
-- Auditor SHA-256: `a7fa89f7798c2dbf71d5c5a234a333ff03660445a56ccdb35850a6043dbb2179`
+- Generator commit: `91466005f0927a14c408fe5f04da5a87dc78010c`
+- Auditor SHA-256: `1d05c29a1addf029d6040e41219bed7d2a0a6edc50adf885e7f6e9545ec4f72f`
 - Auditor version: `g1-candidate-final-review-remediation.v1`
-- Generated UTC: `2026-08-20T08:29:09.513558+00:00`
+- Generated UTC: `2026-08-20T08:45:53.461605+00:00`
 - Read-only: `True`
 - Current maturity: `M1`
 - Current gate: `G1`
