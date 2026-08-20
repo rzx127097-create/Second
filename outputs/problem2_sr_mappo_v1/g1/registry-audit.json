@@ -16,30 +16,30 @@
     "errors": 0,
     "expected_files": 10,
     "metrics": 21,
-    "parameters": 10,
+    "parameters": 12,
     "sources": 5,
     "warnings": 1
   },
   "errors": [],
   "provenance": {
-    "generated_at_utc": "2026-08-20T08:45:49.460556+00:00",
+    "generated_at_utc": "2026-08-20T10:28:12.187833+00:00",
     "registry_sha256": {
-      "artifact_manifest_schema.yaml": "c362253ee80ec4ce6da513f29d69a7a57435c43544c779311e5ad58673b0b449",
+      "artifact_manifest_schema.yaml": "2d1c1dd6ffabb36822c926e0685c3fc163957ce739563b48079db4e47c483ebe",
       "experiment_matrix.yaml": "1155c4efab9abbadbaa993d21e88d34ec60beab32c39e4ef46d613affa17f414",
       "job_identity_contract.yaml": "ee5375f03895c69ed003a0ab383dd487136568af77f4acb69bc070d070e0cafc",
-      "literature_source_ledger.yaml": "d31f88e710a13d672e55cf8fbac3dfe9d6c2e006194b2060c6ca2cd6452dc709",
+      "literature_source_ledger.yaml": "926c97b049e13fc2bc39b4e439fa19ba5d0b5eb3c65fbcb95dd3a58d53152e8e",
       "output_root_contract.yaml": "f7ad25b9905849b7cb753cd185d8210669bcf07275d9c92ec8bf8553d8dc0aca",
-      "parameter_registry.yaml": "ccc668c62646fe2d523c3e703b3ebb182c4fd1a1e516a36e9de78d61e5600a3c",
+      "parameter_registry.yaml": "403710e30ca7c5f7eab925742cf467a2a13b8619433fe51aee66969aa7e22b24",
       "raw_episode_schema.yaml": "12e2c0307de366ce2c8e379200546da2b3f49942a00cf185e31fe4256564762c",
-      "scenario_seed_manifest.yaml": "1c912996c7c09414774408e66e76b287d953affe74e7ca8ddcbb37d2030b37dd",
-      "sealed_test_lock.yaml": "0a78824bff8bb964498acc66abb0e15a40968a138272b2fb34ea09496fa8e153",
+      "scenario_seed_manifest.yaml": "ab993f19e1ae4cb9d7ba4f4f862639901581be057e0a251e5c113d957f6059ce",
+      "sealed_test_lock.yaml": "78c9caa7d432f56f91b67195eb413eddab4e9f84c9fd214eb7a9373f48a73226",
       "validated_long_table_schema.yaml": "43f557764e5e98a4db2a83a36e6653e4d34d5c5413f4fbb9c0509bcc55c549e7"
     },
-    "repository_commit": "91466005f0927a14c408fe5f04da5a87dc78010c",
+    "repository_commit": "15f3eb882ba78597d1eb5cfecc2eda3cfb0efc6c",
     "validator": {
       "path": "scripts/audit_g1_registries.py",
-      "sha256": "3760676483932e0e9b649b59ec0c4ead277f1303fdd20ac3dc4ef91f7315a74c",
-      "version": "g1-final-review-remediation.v1"
+      "sha256": "1a45bbc41cb85a9751a256e39284b0c06dc51b59c099e71f03012ab24ab2f17f",
+      "version": "g1.1-contract-remediation.v1"
     }
   },
   "status": "pass",

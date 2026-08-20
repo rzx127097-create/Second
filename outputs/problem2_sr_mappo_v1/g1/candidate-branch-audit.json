@@ -2168,7 +2168,7 @@
       "sha256": "1d05c29a1addf029d6040e41219bed7d2a0a6edc50adf885e7f6e9545ec4f72f",
       "version": "g1-candidate-final-review-remediation.v1"
     },
-    "generated_at_utc": "2026-08-20T08:45:53.461605+00:00",
+    "generated_at_utc": "2026-08-20T10:28:15.020120+00:00",
     "inspected_candidate_blobs": {
       "configs/experiments/formal_matrix.yaml": "905b9e15511e03d4d9b59ea8457ecb425c2e5ddd",
       "configs/parameter_registry.yaml": "db6257d4387afd443a173a204ea9b26b14d289ef",
@@ -2176,7 +2176,7 @@
       "src/problem2/artifacts/evidence_manifest.py": "eba995288a2d9896191d1a924d3c42380fd8f80b",
       "src/problem2/experiments/freeze.py": "3930e35178f182c8b1e4583fc93eeb5bdcfa896e"
     },
-    "repository_commit": "91466005f0927a14c408fe5f04da5a87dc78010c"
+    "repository_commit": "15f3eb882ba78597d1eb5cfecc2eda3cfb0efc6c"
   },
   "read_only": true,
   "sealed_test_accessed": false,
