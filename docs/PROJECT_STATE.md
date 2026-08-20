@@ -242,6 +242,14 @@ G1 final-review remediation record:
 - The protected first-problem repository remained at
   `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with the same 13 pre-existing
   modified/untracked paths recorded at G0.
+- Handoff content commit:
+  `ece353583fca5e222c405270c05110660cd416f1`
+  (`docs: add g1 handoff and reopen contract gaps`), pushed to
+  `origin/codex/problem2-g0-orchestration`. Local HEAD, upstream, and
+  `git ls-remote` matched that hash after the push.
+- PR #1 remained open and non-draft with head `ece3535...`; GitHub reported
+  mergeability as recalculating (`null`/`unknown`) immediately after the push.
+  G1.1 blocks merge regardless of that transient GitHub status.
 - Corrected G1 acceptance commit:
   `8969e5e9ab3b88d0851d2d7c0ae1292892dfc99e`
   (`docs: accept g1 audit remediation`), pushed to

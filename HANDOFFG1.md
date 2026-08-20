@@ -78,7 +78,7 @@ OSM 只能作为道路约束仿真的输入，绝不能被描述为真实田间�
 
 `codex/problem2-g0-orchestration`
 
-交接时本地与远端分支共同 HEAD：
+本次交接审计开始时的本地与远端分支共同 HEAD：
 
 `071948305a074d7de0e6d46f4ac591826cc57f0f`
 
@@ -90,6 +90,17 @@ OSM 只能作为道路约束仿真的输入，绝不能被描述为真实田间�
 `origin/codex/problem2-g0-orchestration` 同步。创建本文后工作树会包含本文和
 项目状态更新；接手者必须以本文最后的 GitHub 持久化记录和实际 `git status`
 为准，不能继续把 `0719483...` 当作交接文件本身的提交。
+
+交接内容提交：
+
+`ece353583fca5e222c405270c05110660cd416f1`
+
+提交信息：
+
+`docs: add g1 handoff and reopen contract gaps`
+
+该提交已推送；推送后本地 HEAD、upstream 和 `git ls-remote` 三者均为
+`ece3535...`。其后的 persistence-record 提交应通过实际 `git log -1` 核对。
 
 远端 `main`：
 
@@ -107,8 +118,10 @@ G0/G1 拉取请求：
 
 `https://github.com/rzx127097-create/Second/pull/1`
 
-交接时 PR #1 状态：`open`、非 draft、`mergeable=true`、
-`mergeable_state=clean`，目标为 `main`，源提交为 `0719483...`。
+交接内容推送后 PR #1 状态：`open`、非 draft，目标为 `main`，源提交为
+`ece3535...`。GitHub REST API 当时仍在重新计算合并状态，返回
+`mergeable=null`、`mergeable_state=unknown`；接手者必须重新查询，不能沿用
+推送前针对 `0719483...` 的 `clean` 结果。
 
 ### Git 上现在卡在哪里
 
