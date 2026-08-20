@@ -29,9 +29,9 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
 - Current gate: corrected `G1` evidence registration passed independent scoped
-  re-review and fresh controller verification; persistence commits and push
-  remain pending. `G2` is blocked until this corrected G1 record is persisted
-  to `origin`.
+  re-review and fresh controller verification; the acceptance commit is
+  pushed, and its persistence-record commit remains pending. `G2` is blocked
+  until the corrected G1 persistence record is pushed to `origin`.
 - Sealed-test status: locked; no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
@@ -242,8 +242,15 @@ G1 final-review remediation record:
 - The protected first-problem repository remained at
   `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with the same 13 pre-existing
   modified/untracked paths recorded at G0.
-- Corrected G1 acceptance and pushed-hash persistence commits remain to be
-  created by the controller. No pushed remediation hash is claimed yet.
+- Corrected G1 acceptance commit:
+  `8969e5e9ab3b88d0851d2d7c0ae1292892dfc99e`
+  (`docs: accept g1 audit remediation`), pushed to
+  `origin/codex/problem2-g0-orchestration`.
+- Pushed-hash verification: `git rev-parse HEAD` and
+  `git ls-remote origin refs/heads/codex/problem2-g0-orchestration` both
+  returned `8969e5e9ab3b88d0851d2d7c0ae1292892dfc99e`.
+- The persistence-record commit for this pushed hash is the next
+  non-rewriting commit and must be pushed before G2 begins.
 
 Fix Round 1 remediation record:
 
@@ -370,7 +377,7 @@ Fix Round 1 remediation record:
 
 The corrected G1 evidence registries and candidate-branch audit pass
 independent scoped re-review and fresh controller verification. The highest
-maturity remains M1. Controller persistence commits, push, and remote-hash
-recording are still required. Only after corrected G1 persistence may G2
-deterministic-model validation begin; no training, formal experiment, or
-sealed-test evaluation is authorized by G1 alone.
+maturity remains M1. The acceptance commit is pushed; its non-rewriting
+persistence-record commit and push are still required. Only after corrected G1
+persistence may G2 deterministic-model validation begin; no training, formal
+experiment, or sealed-test evaluation is authorized by G1 alone.
