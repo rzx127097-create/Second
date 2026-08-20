@@ -42,7 +42,7 @@
 - Produces: `Action`, `RequestStatus`, `VehicleMode`, `UavState`, `VehicleState`, `ServiceRequest`, `EpisodeState`, and `Event` immutable dataclasses/enums.
 - Consumes: the G1.1 values in `docs/evidence/g1/parameter_registry.yaml` and scale/horizon values in `docs/evidence/g1/experiment_matrix.yaml`.
 
-- [ ] **Step 1: Write failing configuration and state-invariant tests**
+- [x] **Step 1: Write failing configuration and state-invariant tests**
 
 ```python
 def test_loads_frozen_six_scale_metric_contract():
@@ -67,13 +67,13 @@ def test_rejects_nonfinite_and_non_pesticide_configuration(tmp_path):
     assert_load_error(payload, "battery replenishment")
 ```
 
-- [ ] **Step 2: Run the tests and verify the intended import failure**
+- [x] **Step 2: Run the tests and verify the intended import failure**
 
 Run: `python -m pytest tests/g2/test_config_and_domain.py -q`
 
 Expected: collection fails because `problem2.config` and `problem2.domain` do not exist.
 
-- [ ] **Step 3: Add minimal packaging, exact YAML values, strict parsing, and immutable domain types**
+- [x] **Step 3: Add minimal packaging, exact YAML values, strict parsing, and immutable domain types**
 
 ```python
 @dataclass(frozen=True)
@@ -103,7 +103,7 @@ Validate required keys, exact six scale IDs, finite positive physical values,
 the pesticide-only flag, source path, and allowed output root. Define states as
 frozen dataclasses so failed transactional steps cannot leak partial mutation.
 
-- [ ] **Step 4: Run focused and baseline tests**
+- [x] **Step 4: Run focused and baseline tests**
 
 Run: `python -m pytest tests/g2/test_config_and_domain.py -q`
 
@@ -113,7 +113,7 @@ Run: `python -m pytest -q`
 
 Expected: all existing G0/G1 tests and Task 1 tests pass.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```powershell
 git add pyproject.toml requirements-g2.lock configs/problem2/g2_deterministic.yaml src/problem2 tests/g2

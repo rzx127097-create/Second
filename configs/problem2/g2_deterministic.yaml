@@ -1,0 +1,41 @@
+schema_version: g2.v1
+source:
+  path: D:/Pycharm/Locust_rl/data/jodhpur_drive.graphml
+  sha256: B3AF36EFBFC87FFF30BD61D204283DC40C5B8C83A80BA0EE09F3DA5EF52A9462
+  crs: EPSG:4326
+projection:
+  target_crs: EPSG:32643
+  center_lonlat: [73.0351433, 26.2967719]
+  extent_m: [500.0, 300.0]
+road:
+  topology: four_connected_undirected
+  max_segment_m: 5.0
+  preprocess_version: g2-road-v1
+scales:
+  - {id: g20x20_d2, height: 20, width: 20, max_steps: 150}
+  - {id: g20x30_d3, height: 20, width: 30, max_steps: 180}
+  - {id: g20x40_d3, height: 20, width: 40, max_steps: 220}
+  - {id: g30x30_d3, height: 30, width: 30, max_steps: 220}
+  - {id: g30x40_d4, height: 30, width: 40, max_steps: 280}
+  - {id: g30x50_d4, height: 30, width: 50, max_steps: 350}
+physics:
+  dt_s: 1.0
+  uav_speed_mps: 5.0
+  vehicle_speed_mps: 8.0
+resources:
+  replenished_resource: pesticide
+  battery_replenishment_enabled: false
+  uav_nominal_capacity_l: 1.2
+  uav_usable_fraction: 0.9
+  spray_flow_lpm: 1.2
+  vehicle_inventory_l: 20.0
+service:
+  transfer_rate_lpm: 4.0
+  setup_time_s: 10.0
+  service_cap_l: 1.08
+  request_margin_s: 10.0
+  rendezvous_radius_m: 15.0
+audit:
+  seed: 42
+  tolerance: 1.0e-9
+  output_root: outputs/problem2_sr_mappo_v1/g2
