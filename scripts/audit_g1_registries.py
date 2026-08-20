@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 import subprocess
@@ -256,7 +257,11 @@ def _number(value: object, label: str, errors: list[str]) -> float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         errors.append(f"{label} must be numeric")
         return None
-    return float(value)
+    result = float(value)
+    if not math.isfinite(result):
+        errors.append(f"{label} must be finite")
+        return None
+    return result
 
 
 def _list(value: object, label: str, errors: list[str]) -> list[Any] | None:

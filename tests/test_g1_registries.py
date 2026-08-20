@@ -445,6 +445,26 @@ def _mutate_negative_request_safety_margin_lower_bound(root: Path) -> None:
     write("parameter_registry.yaml", root, data)
 
 
+def _mutate_infinite_service_cap_upper_bound(root: Path) -> None:
+    data = load("parameter_registry.yaml", root)
+    record = next(
+        item for item in data["parameters"]
+        if item["id"] == "service.transfer_cap"
+    )
+    record["max"] = float("inf")
+    write("parameter_registry.yaml", root, data)
+
+
+def _mutate_infinite_request_safety_margin_upper_bound(root: Path) -> None:
+    data = load("parameter_registry.yaml", root)
+    record = next(
+        item for item in data["parameters"]
+        if item["id"] == "service.request_safety_margin"
+    )
+    record["max"] = float("inf")
+    write("parameter_registry.yaml", root, data)
+
+
 NEGATIVE_CASES: tuple[tuple[str, Callable[[Path], None], str], ...] = (
     ("unknown source ID", _mutate_unknown_source, "unknown source"),
     ("inverted parameter range", _mutate_inverted_range, "range"),
@@ -480,6 +500,16 @@ NEGATIVE_CASES: tuple[tuple[str, Callable[[Path], None], str], ...] = (
         "negative request-safety-margin lower bound",
         _mutate_negative_request_safety_margin_lower_bound,
         "safety-margin",
+    ),
+    (
+        "infinite service-cap upper bound",
+        _mutate_infinite_service_cap_upper_bound,
+        "finite",
+    ),
+    (
+        "infinite request-safety-margin upper bound",
+        _mutate_infinite_request_safety_margin_upper_bound,
+        "finite",
     ),
 )
 
