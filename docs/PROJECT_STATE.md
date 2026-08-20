@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-20
+Last updated: 2026-08-21
 
 ## Final Goal
 
@@ -20,7 +20,7 @@ real deployment evidence.
 - Authoritative repository for future work:
   `C:/Users/RZX/Documents/ChatGPT/Second`.
 - GitHub remote: `https://github.com/rzx127097-create/Second.git`.
-- Current branch: `codex/problem2-g2-deterministic-validation`.
+- Current branch: `codex/problem2-g3-heterogeneous-marl`.
 - Current branch base at start of G0:
   `2643753855c385253951dfad2c225be0b09b7e00`
   (`origin/main`, commit message `docs: mark section 4.2 delivery complete`).
@@ -28,12 +28,9 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` deterministic implementation evidence.
-- Current gate: G2 deterministic road, physical-motion, service-state, pesticide
-  conservation, and replay validation passed its registered suite. The clean
-  implementation commit is `d4dc97d`; content commit
-  `c47f157225c0b362828478d6d2d244ed183218a4` and final persistence record
-  `ab31744515eec0135e55054f438a010cbaee8b46` are pushed and verified. G3 is
-  the next authorized gate.
+- Current gate: G3 Task 1 configuration/dependency contract is implemented and
+  pushed. The full G3 acceptance suite remains open; G4, formal experiments,
+  validation tuning, and sealed evaluation remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -75,6 +72,33 @@ and `git ls-remote` all matched this hash. Persistence record commit
 `ab31744515eec0135e55054f438a010cbaee8b46` was then pushed, and the final local,
 upstream, and remote hashes all match that record. The next authorized gate is
 G3; RL training remains prohibited until G3 passes.
+
+## G3 Task 1 Configuration Contract Record
+
+Task 1 freezes the development-only heterogeneous SR-MAPPO configuration in
+`configs/problem2/g3_heterogeneous_marl.yaml`, with evidence registered in
+`docs/evidence/g3/g3_contract.yaml`. The loader is in `src/problem2/config.py`
+and rejects validation or sealed-test training partitions, non-finite
+hyperparameters, battery replenishment, and any drift from the frozen role,
+action, dimension, stability-flag, or dependency contract. The canonical YAML
+SHA-256 is
+`0f1420311796fc0a70d65c421b53b0954db253d9c58024c7d656230b48a36d7e`.
+
+Verification before persistence:
+
+- `python -m pytest tests/g3/test_g3_config.py -q`: `10 passed`.
+- `python -m pytest tests/g3/test_g3_config.py tests/g2 -q`: `112 passed`.
+- `python -m compileall -q src`: exit 0.
+- `git diff --check`: exit 0.
+- The verified dependency environment is Python `3.11.15` and CPU-only PyTorch
+  `2.13.0+cpu`; `requirements-g2.lock` was unchanged.
+
+Persistence status: content commit
+`8822edad2f48fc468fc00271e88de8926897cba6` (`feat: freeze g3 heterogeneous
+marl contract`) was pushed to `origin/codex/problem2-g3-heterogeneous-marl`.
+The local HEAD, upstream HEAD, and `git ls-remote` matched this hash before
+this state record. This Task 1 record does not close G3 or authorize training
+on validation or sealed scenarios.
 
 Content-push verification:
 
@@ -475,9 +499,8 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Commit/push the G2 content and then persist the pushed hash in a separate
-  project-state commit; do not mark the gate final before remote hash agreement.
-- Build or verify G3 heterogeneous MARL components:
+- Complete and independently verify the remaining G3 heterogeneous MARL
+  components:
   role-local observations, action masks, saved masked log-prob replay,
   structured critic, team GAE, role gradient isolation, normalization freeze,
   and checkpoint round trip.
@@ -491,10 +514,13 @@ G1.1 bounded remediation persistence record:
 
 - `Second` is now the authoritative repository for all future second-problem
   code and documentation records.
-- The current working branch is `codex/problem2-g2-deterministic-validation`.
+- The current working branch is `codex/problem2-g3-heterogeneous-marl`.
 - G1.1 was accepted at M1; G2 deterministic implementation now passes at M2
   with content and persistence push records verified. Candidate-branch reports
   remain untrusted until later branch-local verification.
+- G3 Task 1 configuration/dependency contract is implemented at M2 on content
+  commit `8822edad2f48fc468fc00271e88de8926897cba6`; the full G3 gate remains
+  open until the role-learning acceptance tests and development smoke pass.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -535,6 +561,7 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Begin G3 only with fresh role-local heterogeneous-MARL contracts and tests. The
-highest maturity is M2 deterministic implementation evidence. RL training,
-formal experiments, and sealed-test evaluation remain unauthorized.
+Continue G3 with the role-local heterogeneous-MARL implementation and its
+acceptance tests. The highest maturity remains M2 deterministic/contract
+implementation evidence. Formal experiments and sealed-test evaluation remain
+unauthorized.
