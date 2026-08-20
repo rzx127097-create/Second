@@ -216,7 +216,7 @@ git commit -m "feat: project and clip offline g2 roads"
 - Produces: `write_road_cache(graph, source, config, root, generator_commit) -> tuple[Path, Path]`.
 - Produces: `load_road_cache(npz_path, metadata_path, expected) -> RasterRoadGraph`.
 
-- [ ] **Step 1: Write failing raster behavior tests**
+- [x] **Step 1: Write failing raster behavior tests**
 
 ```python
 def test_diagonal_source_segment_becomes_logged_four_connected_path():
@@ -237,13 +237,13 @@ def test_nearby_independent_components_are_not_repaired():
 Also assert the exact five-action order, primary-component tie-break, source
 node/edge mappings, all six output shapes, and anisotropic metric edge lengths.
 
-- [ ] **Step 2: Run raster tests and verify expected missing symbols**
+- [x] **Step 2: Run raster tests and verify expected missing symbols**
 
 Run: `python -m pytest tests/g2/test_road_raster.py -q`
 
 Expected: collection fails because the raster interfaces do not exist.
 
-- [ ] **Step 3: Implement deterministic densification, supercover mapping, four-connected adjacency, and components**
+- [x] **Step 3: Implement deterministic densification, supercover mapping, four-connected adjacency, and components**
 
 ```python
 def _bridge_cell(a, b, segment, cell_center):
@@ -258,7 +258,7 @@ Deduplicate ordered cells without losing path order. Build canonical nodes and
 undirected edges, calculate cell-center metric edge weights, label every
 component, and choose the primary component deterministically.
 
-- [ ] **Step 4: Write failing cache integrity and invalidation tests**
+- [x] **Step 4: Write failing cache integrity and invalidation tests**
 
 ```python
 @pytest.mark.parametrize("field", ["source_sha256", "target_crs", "aoi_bounds_m",
@@ -275,20 +275,20 @@ def test_cache_rejects_array_tampering(cache_pair):
         load_road_cache(*cache_pair, valid_expectation(cache_pair))
 ```
 
-- [ ] **Step 5: Run cache tests and verify the expected missing-interface failure**
+- [x] **Step 5: Run cache tests and verify the expected missing-interface failure**
 
 Run: `python -m pytest tests/g2/test_road_cache.py -q`
 
 Expected: tests fail because cache I/O is not implemented.
 
-- [ ] **Step 6: Implement canonical content hashing and atomic NPZ/JSON cache I/O**
+- [x] **Step 6: Implement canonical content hashing and atomic NPZ/JSON cache I/O**
 
 Hash every array using name, dtype, shape, and C-order bytes. Store sorted JSON
 with UTF-8 and `allow_nan=False`. Write sibling temporary files, validate them,
 then replace final paths. Record dependency versions, generator file hash, and
 generator commit in metadata.
 
-- [ ] **Step 7: Run Task 3 and full tests**
+- [x] **Step 7: Run Task 3 and full tests**
 
 Run: `python -m pytest tests/g2/test_road_raster.py tests/g2/test_road_cache.py -q`
 
@@ -298,7 +298,7 @@ Run: `python -m pytest -q`
 
 Expected: the full suite passes.
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 ```powershell
 git add src/problem2/road tests/g2/test_road_raster.py tests/g2/test_road_cache.py
