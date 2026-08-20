@@ -4,7 +4,7 @@
       "bytes": 41111,
       "path": "roads/g20x20_d2/metadata.json",
       "role": "road-cache",
-      "sha256": "f9e3eb00f74915f9d57361120ce90ae3806b83e53f0573dabe2b6271076d8371"
+      "sha256": "cf6d5414e584d4548edd217d1c7f6683af12864d0e071a675fef8374d211b9f9"
     },
     {
       "bytes": 3357,
@@ -16,7 +16,7 @@
       "bytes": 47212,
       "path": "roads/g20x30_d3/metadata.json",
       "role": "road-cache",
-      "sha256": "20ec2da8ae844d2da6a1c0a4a2e65db26fbff6d7f496334ba37dcab7a5255016"
+      "sha256": "0b15614cdf7c75e1dec17cc16f6b3e3fcf4a8c7dae7c28086f62e837f795ea16"
     },
     {
       "bytes": 3772,
@@ -28,7 +28,7 @@
       "bytes": 53172,
       "path": "roads/g20x40_d3/metadata.json",
       "role": "road-cache",
-      "sha256": "248367f2f33ae09f825f39118b74555b060eb96e9e95538cb7460db378ca6738"
+      "sha256": "a1b06f2b4035d75713269716a83246748f85fb7537d5f566fcd6cc0b6c80601c"
     },
     {
       "bytes": 4054,
@@ -40,7 +40,7 @@
       "bytes": 61514,
       "path": "roads/g30x30_d3/metadata.json",
       "role": "road-cache",
-      "sha256": "a534c819eaec517a2d7b060f15a3abdc2180c6425486da713f97d9b3daea188d"
+      "sha256": "9ac19818bca48632fad1c952e56fb9f534e47ec8592c5ac614bf5e4dc3731b72"
     },
     {
       "bytes": 4319,
@@ -52,7 +52,7 @@
       "bytes": 67410,
       "path": "roads/g30x40_d4/metadata.json",
       "role": "road-cache",
-      "sha256": "a1fcda51d536a47eab962bd0a850b935b12228adc3aa8792d5fd87d56a08b7d1"
+      "sha256": "d0dcfd583abb4d037f61ebb6b818f75bcf67ae03b6d41e3ba36a3c07f74f36dc"
     },
     {
       "bytes": 4659,
@@ -64,7 +64,7 @@
       "bytes": 72724,
       "path": "roads/g30x50_d4/metadata.json",
       "role": "road-cache",
-      "sha256": "c01157744442931529d6d82703ffee26eb456e3e4aa15eb5263f03c319e63387"
+      "sha256": "38a2cb5d1d9d456a8805987e056a4ec45b7e8c86479be8a16385ea50fe3eef18"
     },
     {
       "bytes": 4834,
@@ -73,22 +73,22 @@
       "sha256": "a9b362a28381890429d306ebf237f3c4e102be412a54e1d2822ff41328b44410"
     },
     {
-      "bytes": 25134,
+      "bytes": 37744,
       "path": "deterministic-event-trace.jsonl",
       "role": "deterministic-event-trace",
-      "sha256": "b6b74d0461bb9e6a72098277366a0472844f894323dddb55dd77fbdb6a4854a1"
+      "sha256": "9a47f8f10b17e780a50fce65f48e7cdcf4442d6d1c4602be074a3d4a8252a3f0"
     },
     {
       "bytes": 4303,
       "path": "g2-deterministic-audit.json",
       "role": "g2-audit-report",
-      "sha256": "14c001e83cf1aeac9df6ed0ab958737e0f2ee734edcaaabffd5084194831eeb8"
+      "sha256": "5c6c1c69aeeed2d4f33c24cc17f5396a4707adba92f8eaa830c23a57cc76a873"
     }
   ],
   "gate": "G2",
   "generator": {
-    "git_commit": "4578b08888abe7abf3278761437a905a1de5b309",
-    "tree_sha256": "58fa4e38bc8d12ae0c9c19b88a60cc08a267ec671868e3eef113b93fc9423cb0"
+    "git_commit": "d4dc97d02ede579cb6e8aedf4df65f4d5a47c107",
+    "tree_sha256": "e43c84d592e55d0925e747d6edcf1c713eb0a93174bfb2bb510a2908831c16f6"
   },
   "schema_version": "g2-artifact-manifest-v1",
   "status": "pass"

@@ -448,3 +448,32 @@ that SR-MAPPO outperforms a comparison, that formal experiments exist, or that
 the OSM-driven simulation is a real deployment. RL work begins only at G3;
 training cannot begin until G3 passes, formal experiments cannot begin until
 G5 is frozen and G6 is authorized, and sealed tests remain locked until G7.
+
+## 15. Fix-Round Correction Record
+
+The first implementation review found that several requirements were represented
+only as events or per-file behavior, which was insufficient for an auditable
+deterministic gate. The accepted implementation correction is:
+
+- Production CLIs accept only the frozen output root. The former test flag and
+  environment-variable bypass were removed; temporary-output tests use an
+  in-process test API and cannot alter CLI behavior.
+- Reservation is a real `PENDING -> RESERVED` replacement state before the
+  `RESERVED -> SERVING` replacement. The two transitions remain separate events
+  even when they occur in one step.
+- Vehicle road-state validation checks node range, primary-component membership,
+  node coordinates, transit edge progress, target, direction, and interpolated
+  position before masks, routing, selection, or service.
+- Motion events now carry the legal mask, available and actual distance, edge
+  progress, cumulative route distance, boundary clipping, and final position.
+- Six caches are staged and reload-validated under a temporary `roads`
+  directory, then published by one directory swap with backup recovery. A
+  failed generation preserves the previous complete set.
+- Cache expectations bind source CRS and generator commit in addition to the
+  existing source hash, target CRS, AOI, grid, preprocessing version, and tree
+  hash.
+- Config, inventory-depletion, and non-finite ledger validation are fail-closed
+  at their public boundaries.
+
+These corrections strengthen implementation semantics without changing the
+scientific question, frozen physical values, seed boundary, or maturity claim.

@@ -9,8 +9,8 @@
     "shapely": "2.1.2"
   },
   "generator": {
-    "git_commit": "4578b08888abe7abf3278761437a905a1de5b309",
-    "sha256": "58fa4e38bc8d12ae0c9c19b88a60cc08a267ec671868e3eef113b93fc9423cb0"
+    "git_commit": "d4dc97d02ede579cb6e8aedf4df65f4d5a47c107",
+    "sha256": "e43c84d592e55d0925e747d6edcf1c713eb0a93174bfb2bb510a2908831c16f6"
   },
   "grid": {
     "cell_height_m": 10.0,

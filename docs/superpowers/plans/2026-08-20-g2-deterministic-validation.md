@@ -721,14 +721,14 @@ git commit -m "test: record g2 deterministic evidence"
 - Consumes: the approved spec, completed plan tasks, clean generated evidence, and complete Git history.
 - Produces: an auditable G2 acceptance record with pushed content hash, fresh command results, remaining limits, and next authorized gate G3.
 
-- [ ] **Step 1: Review every spec requirement against code, tests, and artifacts**
+- [x] **Step 1: Review every spec requirement against code, tests, and artifacts**
 
 Create a local checklist mapping Sections 3-14 of the spec to production paths,
 test names, cache/report fields, and command evidence. Any missing mapping is a
 failed G2 requirement and must be repaired through a new failing test before
 continuing.
 
-- [ ] **Step 2: Run the complete fresh verification sequence**
+- [x] **Step 2: Run the complete fresh verification sequence**
 
 ```powershell
 python -m pytest tests/g2 -q
@@ -741,13 +741,13 @@ git diff --check
 Expected: both test commands have zero failures; both CLIs report pass for six
 scales; cross-process replay matches; Git whitespace check is clean.
 
-- [ ] **Step 3: Record implementation corrections and complete the plan checklist**
+- [x] **Step 3: Record implementation corrections and complete the plan checklist**
 
 If an approved design detail changed for correctness, update the design with
 the observed issue, replacement rule, evidence, and scope impact. Mark each
 completed plan checkbox only after its recorded RED and GREEN command ran.
 
-- [ ] **Step 4: Write the self-contained G2 handoff and pre-persistence state**
+- [x] **Step 4: Write the self-contained G2 handoff and pre-persistence state**
 
 `HANDOFFG2.md` must state the branch/base, module and artifact inventory, exact
 test/audit results, deterministic limits, protected assets, prohibited claims,

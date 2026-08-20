@@ -6,15 +6,15 @@
       1,
       98765
     ],
-    "sha256": "b6b74d0461bb9e6a72098277366a0472844f894323dddb55dd77fbdb6a4854a1"
+    "sha256": "9a47f8f10b17e780a50fce65f48e7cdcf4442d6d1c4602be074a3d4a8252a3f0"
   },
   "formal_experiments": {
     "performed": false
   },
   "gate": "G2",
   "generator": {
-    "git_commit": "4578b08888abe7abf3278761437a905a1de5b309",
-    "tree_sha256": "58fa4e38bc8d12ae0c9c19b88a60cc08a267ec671868e3eef113b93fc9423cb0"
+    "git_commit": "d4dc97d02ede579cb6e8aedf4df65f4d5a47c107",
+    "tree_sha256": "e43c84d592e55d0925e747d6edcf1c713eb0a93174bfb2bb510a2908831c16f6"
   },
   "maturity": "M2",
   "permitted_claim": "G2 deterministic implementation verified",

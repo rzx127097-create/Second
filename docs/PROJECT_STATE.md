@@ -20,24 +20,56 @@ real deployment evidence.
 - Authoritative repository for future work:
   `C:/Users/RZX/Documents/ChatGPT/Second`.
 - GitHub remote: `https://github.com/rzx127097-create/Second.git`.
-- Current branch: `codex/problem2-g0-orchestration`.
+- Current branch: `codex/problem2-g2-deterministic-validation`.
 - Current branch base at start of G0:
   `2643753855c385253951dfad2c225be0b09b7e00`
   (`origin/main`, commit message `docs: mark section 4.2 delivery complete`).
 - Existing remote feature branch:
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
-- Current highest maturity: `M1` design/specification evidence.
-- Current gate: bounded `G1.1` remediation passed TDD, independent full-range
-  review, fresh controller verification, and GitHub persistence. Content and
-  evidence are at `1b10457`; the acceptance record is at `9ece829`. `G2`
-  deterministic-model specification and validation are the next authorized
-  work; no G2 implementation has started.
+- Current highest maturity: `M2` deterministic implementation evidence.
+- Current gate: G2 deterministic road, physical-motion, service-state, pesticide
+  conservation, and replay validation passed its registered suite. The clean
+  implementation commit is `d4dc97d`; regenerated evidence is currently staged
+  for the content commit and the pushed content hash is pending. G3 is the next
+  authorized gate.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
 - Frozen second-problem output root: `outputs/problem2_sr_mappo_v1`.
+
+## G2 Deterministic Validation Record
+
+The G2 implementation is recorded in `src/problem2/`, `scripts/`, and
+`tests/g2/`. The self-contained handoff is `HANDOFFG2.md`; the Section 3-14
+mapping is `docs/audits/g2-spec-compliance.md`; the design correction record is
+Section 15 of `docs/superpowers/specs/2026-08-20-g2-deterministic-validation-design.md`.
+
+Implementation/provenance:
+
+- Clean generator commit: `d4dc97d02ede579cb6e8aedf4df65f4d5a47c107`.
+- Generator tree SHA-256: `e43c84d592e55d0925e747d6edcf1c713eb0a93174bfb2bb510a2908831c16f6`.
+- Source GraphML SHA-256: `B3AF36EFBFC87FFF30BD61D204283DC40C5B8C83A80BA0EE09F3DA5EF52A9462`.
+
+Fresh verification:
+
+- `python -m pytest tests/g2 -q`: `102 passed`.
+- `python -m pytest -q`: `158 passed`.
+- `python -m compileall -q src scripts`: exit 0.
+- G2 preprocessor: six scales, status pass.
+- G2 auditor: six scales, cross-process replay match, status pass.
+- Artifact manifest: 14 entries, zero hash/byte mismatches.
+- Maximum conservation error: `2.220446049250313e-16 L` with `1e-9 L` tolerance.
+
+Fix-round review closed the output-root confinement, explicit reservation,
+vehicle road-state validation, motion payload, six-cache publication, and cache
+provenance findings. No training, formal experiment, validation/sealed scenario
+access, protected external write, or deployment/effectiveness claim occurred.
+
+Persistence status: content commit and push, followed by a separate pushed-hash
+record, are required before this section is final. The next authorized gate is
+G3; RL training remains prohibited until G3 passes.
 
 The repository already contains chapter 4.1/4.2 design, figure, document, and
 artifact-ledger assets on `origin/main`. The remote branch
@@ -415,16 +447,16 @@ G1.1 bounded remediation persistence record:
   registry-contract gaps that the prior scoped reviews did not cover.
 - Completed and persisted the bounded G1.1 remediation with fail-closed tests,
   regenerated reports, independent review, and a verified remote content head.
+- Implemented and reviewed the G2 deterministic foundation: offline road source,
+  metric projection/topology, physical motion, explicit reservation/service
+  states, pesticide ledger, transactional replay, and fail-closed audit CLIs.
+- Regenerated six cache pairs, the 183-event deterministic trace, audit report,
+  and 14-entry artifact manifest from clean generator commit `d4dc97d`.
 
 ## Pending Tasks
 
-- Decide whether selected candidate-branch assets can be independently
-  reverified, copied into controlled modules, or must be rebuilt; no merge is
-  implied by the G1 audit.
-- Prepare the G2 design/specification and TDD plan, then build or verify
-  deterministic G2 components:
-  offline road ingestion, projection, topology, physical motion, service state
-  machine, request lifecycle, and conservation tests.
+- Commit/push the G2 content and then persist the pushed hash in a separate
+  project-state commit; do not mark the gate final before remote hash agreement.
 - Build or verify G3 heterogeneous MARL components:
   role-local observations, action masks, saved masked log-prob replay,
   structured critic, team GAE, role gradient isolation, normalization freeze,
@@ -439,11 +471,10 @@ G1.1 bounded remediation persistence record:
 
 - `Second` is now the authoritative repository for all future second-problem
   code and documentation records.
-- The current working branch is `codex/problem2-g0-orchestration`; no extra Git
-  worktree was created because the branch is already isolated from `origin/main`.
-- G1.1 is accepted at M1 after bounded remediation, independent full-range
-  review, fresh verification, and remote persistence. Candidate-branch reports
-  remain untrusted until later branch-local verification.
+- The current working branch is `codex/problem2-g2-deterministic-validation`.
+- G1.1 was accepted at M1; G2 deterministic implementation now passes at M2,
+  subject to its required content/persistence push records. Candidate-branch
+  reports remain untrusted until later branch-local verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -463,9 +494,8 @@ G1.1 bounded remediation persistence record:
 
 ## Known Issues
 
-- G2 deterministic-model implementation and evidence have not started.
-- The current M1 branch does not include the extensive code framework from
-  `origin/feature/problem2-code-framework`.
+- The candidate branch still contains unaccepted M2/M3/M4 wording and forbidden
+  names; it was not merged or used as G2 evidence.
 - The candidate branch contains M2/M3/M4 wording and forbidden-name mentions in
   its own docs/tests; the G1 audit records these as candidate-branch signals,
   not accepted maturity or implementation claims.
@@ -474,8 +504,8 @@ G1.1 bounded remediation persistence record:
 - Engineering parameter sources remain incomplete: device manuals, field
   studies, expert confirmation, and source-value conversions are registered as
   pending G1 source records and still require independent verification.
-- Resource activation has not been demonstrated in the current M1 evidence
-  branch.
+- Resource activation has not been demonstrated; G2 only verifies deterministic
+  accounting and does not support a mobile-treatment efficacy claim.
 - No formal second-problem raw logs, validated tables, paired statistics, or
   locked figures exist in the repository evidence set.
 - No claim is currently permitted that simulation outcomes reflect real
@@ -485,9 +515,7 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Prepare the G2 deterministic-model design/specification and TDD plan from the
-accepted G1.1 head. Create or use a dedicated
-`codex/problem2-g2-deterministic-validation` branch/worktree before G2
-implementation, and stop at the first failed deterministic gate. The highest
-maturity remains M1; RL training, formal experiments, and sealed-test evaluation
-remain unauthorized.
+Persist the completed G2 content and pushed-hash record, then begin G3 only with
+fresh role-local heterogeneous-MARL contracts and tests. The highest maturity
+is M2 deterministic implementation evidence. RL training, formal experiments,
+and sealed-test evaluation remain unauthorized.
