@@ -526,7 +526,7 @@ git commit -m "feat: enforce g2 service and pesticide conservation"
 - Produces: `run_deterministic_fixture(graph, config, seed=42) -> tuple[EpisodeState, tuple[Event, ...]]`.
 - Produces: `canonical_event_jsonl(events) -> bytes` and `replay_digest(events) -> str`.
 
-- [ ] **Step 1: Write failing exact-order and rollback integration tests**
+- [x] **Step 1: Write failing exact-order and rollback integration tests**
 
 ```python
 def test_step_emits_events_in_frozen_order(integration_fixture):
@@ -546,20 +546,20 @@ def test_failed_step_returns_no_partial_state(integration_fixture):
 Include termination exactly at and one step before the service-completion
 boundary, and validate conservation after every produced step.
 
-- [ ] **Step 2: Run engine tests and observe the intended missing-module failure**
+- [x] **Step 2: Run engine tests and observe the intended missing-module failure**
 
 Run: `python -m pytest tests/g2/test_simulation_engine.py -q`
 
 Expected: collection fails because `problem2.simulation.engine` does not exist.
 
-- [ ] **Step 3: Implement the pure transactional step composition**
+- [x] **Step 3: Implement the pure transactional step composition**
 
 Build masks from state `t`, require equality with supplied stored masks, apply
 movement/spray, create requests, reserve, advance service, run the no-op G2
 environment hook, terminate, then validate and return the replacement state.
 Wrap invariant errors with scale/step/entity context without mutating inputs.
 
-- [ ] **Step 4: Write failing canonical replay and subprocess tests**
+- [x] **Step 4: Write failing canonical replay and subprocess tests**
 
 ```python
 def test_event_json_is_canonical():
@@ -571,20 +571,20 @@ def test_hash_seed_does_not_change_fixture(tmp_path):
     assert first.read_bytes() == second.read_bytes()
 ```
 
-- [ ] **Step 5: Run replay tests and verify the intended missing-interface failure**
+- [x] **Step 5: Run replay tests and verify the intended missing-interface failure**
 
 Run: `python -m pytest tests/g2/test_reproducibility.py -q`
 
 Expected: tests fail because replay helpers are not implemented.
 
-- [ ] **Step 6: Implement PCG64-only fixture generation and canonical JSONL**
+- [x] **Step 6: Implement PCG64-only fixture generation and canonical JSONL**
 
 Require an explicit `Generator(PCG64(seed))`, sort every collection crossing a
 serialization boundary, format events through `json.dumps(sort_keys=True,
 separators=(",", ":"), allow_nan=False)`, and expose a subprocess worker entry
 that receives paths and seed as explicit arguments.
 
-- [ ] **Step 7: Run Task 6 and full tests**
+- [x] **Step 7: Run Task 6 and full tests**
 
 Run: `python -m pytest tests/g2/test_simulation_engine.py tests/g2/test_reproducibility.py -q`
 
@@ -594,7 +594,7 @@ Run: `python -m pytest -q`
 
 Expected: the full suite passes.
 
-- [ ] **Step 8: Commit Task 6**
+- [x] **Step 8: Commit Task 6**
 
 ```powershell
 git add src/problem2/simulation tests/g2/test_simulation_engine.py tests/g2/test_reproducibility.py
