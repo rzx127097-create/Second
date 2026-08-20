@@ -8,12 +8,14 @@ Base: `aadde5dae026f4737f34cb20927a5a882f71dc81`
 ## Gate Result
 
 The deterministic G2 implementation and its registered verification suite pass
-at maturity `M2`. The content is ready for the required non-rewriting commit and
-push, followed by a separate persistence-record commit. Until those two remote
-records are verified, this handoff is a pre-persistence record rather than the
-authoritative final state.
+at maturity `M2`. Content commit
+`c47f157225c0b362828478d6d2d244ed183218a4` and final persistence record
+`ab31744515eec0135e55054f438a010cbaee8b46` are pushed to
+`origin/codex/problem2-g2-deterministic-validation`; local HEAD, upstream HEAD,
+and `git ls-remote` agree on the final persistence hash, and the worktree is
+clean.
 
-Permitted claim after persistence:
+Permitted claim:
 
 > The G2 deterministic road, physical-motion, service-state, and pesticide-
 > conservation implementation passed its registered verification suite.
@@ -51,7 +53,7 @@ masked-action probability, and maximum conservation error
 - `python scripts/preprocess_g2_roads.py --config configs/problem2/g2_deterministic.yaml`: six scales, status pass.
 - `python scripts/audit_g2_deterministic.py --config configs/problem2/g2_deterministic.yaml --report outputs/problem2_sr_mappo_v1/g2/g2-deterministic-audit.json`: six scales, replay match, status pass.
 - Manifest verification: 14 entries, zero hash/byte mismatches.
-- `git diff --check`: exit 0 before documentation edits.
+- `git diff --check`: exit 0 before the final documentation synchronization.
 
 The independent fix-round review marked the original output-root, reservation,
 road-state, motion-payload, cache-publication, and cache-provenance findings
@@ -72,12 +74,9 @@ gradient isolation, and checkpoint round trip before any RL training is allowed.
 Formal experiments remain prohibited until G5/G6 authorization, and sealed tests
 remain prohibited until G7.
 
-## Next Persistence Actions
+## Persistence Record
 
-1. Commit the corrected design note, completed plan, checklist, handoff, and
-   regenerated G2 outputs as the content commit.
-2. Push `codex/problem2-g2-deterministic-validation` and verify local HEAD,
-   upstream HEAD, and `git ls-remote` agree.
-3. Record that content hash and the exact fresh verification in
-   `docs/PROJECT_STATE.md`, commit the persistence record, push again, and
-   recheck all three hashes plus a clean worktree.
+The content commit and separate persistence record were both pushed without
+rewriting history. The final remote state is
+`ab31744515eec0135e55054f438a010cbaee8b46`; no merge, force-push, training,
+formal experiment, or sealed-test access occurred.

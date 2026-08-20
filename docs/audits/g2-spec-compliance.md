@@ -18,7 +18,7 @@ Generator tree SHA-256: `e43c84d592e55d0925e747d6edcf1c713eb0a93174bfb2bb510a290
 | 11 Determinism/audit artifacts | `src/problem2/simulation/replay.py`, `src/problem2/audit.py`; `tests/g2/test_reproducibility.py`, `test_g2_cli.py` | Hash seeds 1/98765 byte-identical; trace SHA `9a47...a3f0`; manifest has 14 entries. |
 | 12 Failure policy | Public validators and CLI boundaries across `src/problem2/` and `scripts/` | Corrupt-cache, rollback, forged-CLI, nonfinite, and config-drift tests fail closed. |
 | 13 Required verification | All `tests/g2` modules and audit CLIs | `102 passed`; `158 passed`; compileall; preprocess pass; audit pass; diff check pass. |
-| 14 Persistence/claims | `HANDOFFG2.md`, `docs/PROJECT_STATE.md`, output manifest | Content/persistence commits and remote hashes are the remaining publication steps; no efficacy claim. |
+| 14 Persistence/claims | `HANDOFFG2.md`, `docs/PROJECT_STATE.md`, output manifest | Content `c47f157` and persistence `ab31744` are pushed and all final hashes agree; no efficacy claim. |
 
 ## Review Outcome
 

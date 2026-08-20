@@ -747,14 +747,14 @@ If an approved design detail changed for correctness, update the design with
 the observed issue, replacement rule, evidence, and scope impact. Mark each
 completed plan checkbox only after its recorded RED and GREEN command ran.
 
-- [x] **Step 4: Write the self-contained G2 handoff and pre-persistence state**
+- [x] **Step 4: Write the self-contained G2 handoff and persistence state**
 
 `HANDOFFG2.md` must state the branch/base, module and artifact inventory, exact
 test/audit results, deterministic limits, protected assets, prohibited claims,
-and G3 entry criteria. Update `docs/PROJECT_STATE.md` with G2 status but leave
-the pushed content hash field pending until the content commit is pushed.
+and G3 entry criteria. Update `docs/PROJECT_STATE.md` with G2 status and both
+verified persistence hashes.
 
-- [ ] **Step 5: Commit and push the complete G2 content**
+- [x] **Step 5: Commit and push the complete G2 content**
 
 ```powershell
 git add docs/superpowers/plans/2026-08-20-g2-deterministic-validation.md docs/superpowers/specs/2026-08-20-g2-deterministic-validation-design.md docs/PROJECT_STATE.md HANDOFFG2.md outputs/problem2_sr_mappo_v1/g2
@@ -765,7 +765,7 @@ git push -u origin codex/problem2-g2-deterministic-validation
 Verify `git rev-parse HEAD`, `git rev-parse @{upstream}`, and `git ls-remote`
 all report the same content commit.
 
-- [ ] **Step 6: Persist the pushed hash and final verification record**
+- [x] **Step 6: Persist the pushed hash and final verification record**
 
 Replace the pending field in `docs/PROJECT_STATE.md` with the verified content
 hash and record exact command counts/results. Commit and push:
@@ -776,7 +776,7 @@ git commit -m "docs: persist g2 verification hash"
 git push
 ```
 
-- [ ] **Step 7: Verify the final repository state**
+- [x] **Step 7: Verify the final repository state**
 
 Run:
 

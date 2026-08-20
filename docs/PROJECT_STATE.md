@@ -30,9 +30,10 @@ real deployment evidence.
 - Current highest maturity: `M2` deterministic implementation evidence.
 - Current gate: G2 deterministic road, physical-motion, service-state, pesticide
   conservation, and replay validation passed its registered suite. The clean
-  implementation commit is `d4dc97d`; regenerated evidence is currently staged
-  for the content commit and the pushed content hash is pending. G3 is the next
-  authorized gate.
+  implementation commit is `d4dc97d`; content commit
+  `c47f157225c0b362828478d6d2d244ed183218a4` and final persistence record
+  `ab31744515eec0135e55054f438a010cbaee8b46` are pushed and verified. G3 is
+  the next authorized gate.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -67,12 +68,13 @@ vehicle road-state validation, motion payload, six-cache publication, and cache
 provenance findings. No training, formal experiment, validation/sealed scenario
 access, protected external write, or deployment/effectiveness claim occurred.
 
-Persistence status before the final record: content commit
+Persistence status: content commit
 `c47f157225c0b362828478d6d2d244ed183218a4` was pushed to
 `origin/codex/problem2-g2-deterministic-validation`. Local HEAD, upstream HEAD,
-and `git ls-remote` all matched this hash. The separate persistence-record
-commit below records this verification. The next authorized gate is G3; RL
-training remains prohibited until G3 passes.
+and `git ls-remote` all matched this hash. Persistence record commit
+`ab31744515eec0135e55054f438a010cbaee8b46` was then pushed, and the final local,
+upstream, and remote hashes all match that record. The next authorized gate is
+G3; RL training remains prohibited until G3 passes.
 
 Content-push verification:
 
@@ -82,9 +84,12 @@ Content-push verification:
 - `python scripts/preprocess_g2_roads.py --config configs/problem2/g2_deterministic.yaml`: six scales, status pass.
 - `python scripts/audit_g2_deterministic.py --config configs/problem2/g2_deterministic.yaml --report outputs/problem2_sr_mappo_v1/g2/g2-deterministic-audit.json`: six scales, replay match, status pass.
 - `git diff --check`: exit 0.
-- `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
+- Content-push check: `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
   `git ls-remote origin refs/heads/codex/problem2-g2-deterministic-validation`:
   all `c47f157225c0b362828478d6d2d244ed183218a4`.
+- Final persistence check: the same three commands all returned
+  `ab31744515eec0135e55054f438a010cbaee8b46`; `git status --short --branch`
+  showed a clean worktree.
 
 The repository already contains chapter 4.1/4.2 design, figure, document, and
 artifact-ledger assets on `origin/main`. The remote branch
@@ -487,9 +492,9 @@ G1.1 bounded remediation persistence record:
 - `Second` is now the authoritative repository for all future second-problem
   code and documentation records.
 - The current working branch is `codex/problem2-g2-deterministic-validation`.
-- G1.1 was accepted at M1; G2 deterministic implementation now passes at M2,
-  subject to its required content/persistence push records. Candidate-branch
-  reports remain untrusted until later branch-local verification.
+- G1.1 was accepted at M1; G2 deterministic implementation now passes at M2
+  with content and persistence push records verified. Candidate-branch reports
+  remain untrusted until later branch-local verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -530,7 +535,6 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Persist the completed G2 content and pushed-hash record, then begin G3 only with
-fresh role-local heterogeneous-MARL contracts and tests. The highest maturity
-is M2 deterministic implementation evidence. RL training, formal experiments,
-and sealed-test evaluation remain unauthorized.
+Begin G3 only with fresh role-local heterogeneous-MARL contracts and tests. The
+highest maturity is M2 deterministic implementation evidence. RL training,
+formal experiments, and sealed-test evaluation remain unauthorized.
