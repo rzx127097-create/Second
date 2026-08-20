@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+  <key id="g_crs" for="graph" attr.name="crs" attr.type="string" />
+  <key id="n_x" for="node" attr.name="x" attr.type="double" />
+  <key id="n_y" for="node" attr.name="y" attr.type="double" />
+  <key id="e_geometry" for="edge" attr.name="geometry" attr.type="string" />
+  <key id="e_osmid" for="edge" attr.name="osmid" attr.type="string" />
+  <graph edgedefault="directed">
+    <data key="g_crs">EPSG:4326</data>
+    <node id="center">
+      <data key="n_x">73.0351433</data>
+      <data key="n_y">26.2967719</data>
+    </node>
+    <node id="east">
+      <data key="n_x">73.0361433</data>
+      <data key="n_y">26.2967719</data>
+    </node>
+    <node id="far_west">
+      <data key="n_x">73.0310000</data>
+      <data key="n_y">26.2967719</data>
+    </node>
+    <node id="far_east">
+      <data key="n_x">73.0395000</data>
+      <data key="n_y">26.2967719</data>
+    </node>
+    <edge id="curve" source="center" target="east">
+      <data key="e_osmid">101</data>
+      <data key="e_geometry">LINESTRING (73.0351433 26.2967719, 73.0356433 26.2970719, 73.0361433 26.2967719)</data>
+    </edge>
+    <edge id="fallback" source="east" target="center">
+      <data key="e_osmid">102</data>
+    </edge>
+    <edge id="cross" source="far_west" target="far_east">
+      <data key="e_osmid">103</data>
+      <data key="e_geometry">LINESTRING (73.0310000 26.2967719, 73.0395000 26.2967719)</data>
+    </edge>
+  </graph>
+</graphml>

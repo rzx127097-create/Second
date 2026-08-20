@@ -135,7 +135,7 @@ git commit -m "feat: freeze g2 deterministic configuration"
 - Produces: `load_projected_road_source(config: G2Config) -> ProjectedRoadSource`.
 - `ProjectedRoadSource` carries source hash, CRS values, lon/lat bbox, projected AOI, projected nodes, and clipped projected edge coordinate sequences.
 
-- [ ] **Step 1: Write failing source-integrity and projection tests**
+- [x] **Step 1: Write failing source-integrity and projection tests**
 
 ```python
 def test_projects_known_lonlat_offset_to_metric_distance(tiny_config):
@@ -157,13 +157,13 @@ def test_rejects_source_hash_mismatch(tiny_config):
 Include cases for WKT geometry, endpoint fallback, malformed geometry,
 non-finite node coordinates, and source CRS mismatch.
 
-- [ ] **Step 2: Run tests and verify the missing-module failure**
+- [x] **Step 2: Run tests and verify the missing-module failure**
 
 Run: `python -m pytest tests/g2/test_road_source.py -q`
 
 Expected: collection fails because `problem2.road.source` does not exist.
 
-- [ ] **Step 3: Implement hash verification, GraphML loading, projection, and clipping**
+- [x] **Step 3: Implement hash verification, GraphML loading, projection, and clipping**
 
 ```python
 def load_projected_road_source(config: G2Config) -> ProjectedRoadSource:
@@ -184,7 +184,7 @@ Use `shapely.wkt.loads`, `shapely.ops.transform`, and intersection with the
 projected AOI. Canonicalize IDs as strings and sort edges by source ID plus
 endpoint IDs.
 
-- [ ] **Step 4: Verify Task 2 and full regression**
+- [x] **Step 4: Verify Task 2 and full regression**
 
 Run: `python -m pytest tests/g2/test_road_source.py -q`
 
@@ -194,7 +194,7 @@ Run: `python -m pytest -q`
 
 Expected: the full suite passes.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```powershell
 git add src/problem2/road tests/g2/test_road_source.py tests/g2/fixtures/tiny_road.graphml
