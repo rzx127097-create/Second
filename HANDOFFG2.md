@@ -11,9 +11,10 @@ The deterministic G2 implementation and its registered verification suite pass
 at maturity `M2`. Content commit
 `c47f157225c0b362828478d6d2d244ed183218a4` and final persistence record
 `ab31744515eec0135e55054f438a010cbaee8b46` are pushed to
-`origin/codex/problem2-g2-deterministic-validation`; local HEAD, upstream HEAD,
-and `git ls-remote` agree on the final persistence hash, and the worktree is
-clean.
+`origin/codex/problem2-g2-deterministic-validation`; at that persistence point,
+local HEAD, upstream HEAD, and `git ls-remote` agreed. A subsequent
+documentation-only review synchronization was pushed without changing code or
+evidence, and the current worktree is clean.
 
 Permitted claim:
 
@@ -77,6 +78,6 @@ remain prohibited until G7.
 ## Persistence Record
 
 The content commit and separate persistence record were both pushed without
-rewriting history. The final remote state is
-`ab31744515eec0135e55054f438a010cbaee8b46`; no merge, force-push, training,
-formal experiment, or sealed-test access occurred.
+rewriting history. A later documentation-only synchronization was also pushed;
+the current local, upstream, and remote hashes agree. No merge, force-push,
+training, formal experiment, or sealed-test access occurred.
