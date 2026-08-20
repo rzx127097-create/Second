@@ -67,9 +67,24 @@ vehicle road-state validation, motion payload, six-cache publication, and cache
 provenance findings. No training, formal experiment, validation/sealed scenario
 access, protected external write, or deployment/effectiveness claim occurred.
 
-Persistence status: content commit and push, followed by a separate pushed-hash
-record, are required before this section is final. The next authorized gate is
-G3; RL training remains prohibited until G3 passes.
+Persistence status before the final record: content commit
+`c47f157225c0b362828478d6d2d244ed183218a4` was pushed to
+`origin/codex/problem2-g2-deterministic-validation`. Local HEAD, upstream HEAD,
+and `git ls-remote` all matched this hash. The separate persistence-record
+commit below records this verification. The next authorized gate is G3; RL
+training remains prohibited until G3 passes.
+
+Content-push verification:
+
+- `python -m pytest tests/g2 -q`: `102 passed`.
+- `python -m pytest -q`: `158 passed`.
+- `python -m compileall -q src scripts`: exit 0.
+- `python scripts/preprocess_g2_roads.py --config configs/problem2/g2_deterministic.yaml`: six scales, status pass.
+- `python scripts/audit_g2_deterministic.py --config configs/problem2/g2_deterministic.yaml --report outputs/problem2_sr_mappo_v1/g2/g2-deterministic-audit.json`: six scales, replay match, status pass.
+- `git diff --check`: exit 0.
+- `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
+  `git ls-remote origin refs/heads/codex/problem2-g2-deterministic-validation`:
+  all `c47f157225c0b362828478d6d2d244ed183218a4`.
 
 The repository already contains chapter 4.1/4.2 design, figure, document, and
 artifact-ledger assets on `origin/main`. The remote branch
