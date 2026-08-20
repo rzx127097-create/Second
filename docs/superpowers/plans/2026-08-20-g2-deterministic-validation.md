@@ -418,7 +418,7 @@ git commit -m "feat: add metric paths and physical motion"
 - Produces: `should_request`, `create_request`, `select_serviceable_request`, `start_service`, `advance_service`, and `cancel_terminal_requests`.
 - Every operation returns replacement immutable states plus canonical events.
 
-- [ ] **Step 1: Write failing event/step/episode conservation tests**
+- [x] **Step 1: Write failing event/step/episode conservation tests**
 
 ```python
 def test_partial_spray_and_transfer_preserve_total():
@@ -438,20 +438,20 @@ def test_invalid_transfer_rolls_back_inputs():
     assert before.pesticide_l == 1.08
 ```
 
-- [ ] **Step 2: Run resource tests and observe the intended import failure**
+- [x] **Step 2: Run resource tests and observe the intended import failure**
 
 Run: `python -m pytest tests/g2/test_resource_ledger.py -q`
 
 Expected: collection fails because `problem2.resources.ledger` does not exist.
 
-- [ ] **Step 3: Implement finite immutable resource transactions**
+- [x] **Step 3: Implement finite immutable resource transactions**
 
 Compute spray as `min(available, 0.02 L)` and transfer as the minimum of usable
 capacity gap, service cap, and vehicle inventory. Reject negative or non-finite
 inputs before constructing replacement objects. Track cumulative sprayed and
 transferred volumes and check the hand-derived conservation equation.
 
-- [ ] **Step 4: Write failing request and service-transition tests**
+- [x] **Step 4: Write failing request and service-transition tests**
 
 ```python
 def test_same_step_fifo_tie_breaks_by_uav_id():
@@ -480,13 +480,13 @@ UAV, multiple arrivals while busy, partial refill, exact vehicle depletion,
 duplicate reservation rejection, and terminal cancellation before/on the
 completion step.
 
-- [ ] **Step 5: Run service tests and observe the intended missing-interface failure**
+- [x] **Step 5: Run service tests and observe the intended missing-interface failure**
 
 Run: `python -m pytest tests/g2/test_service_state_machine.py -q`
 
 Expected: collection fails because the service state machine does not exist.
 
-- [ ] **Step 6: Implement deterministic request selection and atomic service transitions**
+- [x] **Step 6: Implement deterministic request selection and atomic service transitions**
 
 Use `(created_step, uav_id, request_id)` as the stable selection key after
 filtering to currently serviceable requests. Emit separate reserved and serving
@@ -494,7 +494,7 @@ events even when both transitions happen in one step. Lock both participants,
 advance one service step on the start step, and transfer atomically only when
 the counter reaches the frozen completion boundary.
 
-- [ ] **Step 7: Run Task 5 and full tests**
+- [x] **Step 7: Run Task 5 and full tests**
 
 Run: `python -m pytest tests/g2/test_resource_ledger.py tests/g2/test_service_state_machine.py -q`
 
@@ -504,7 +504,7 @@ Run: `python -m pytest -q`
 
 Expected: the full suite passes.
 
-- [ ] **Step 8: Commit Task 5**
+- [x] **Step 8: Commit Task 5**
 
 ```powershell
 git add src/problem2/resources src/problem2/service tests/g2/test_resource_ledger.py tests/g2/test_service_state_machine.py

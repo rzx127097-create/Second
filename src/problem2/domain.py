@@ -63,6 +63,7 @@ class VehicleState:
     x_m: float
     y_m: float
     inventory_l: float
+    inventory_depleted: bool = False
     mode: VehicleMode = VehicleMode.IDLE
     target_node: int | None = None
     direction: Action | None = None
