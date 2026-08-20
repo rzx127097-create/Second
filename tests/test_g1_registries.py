@@ -425,25 +425,23 @@ def _mutate_validation_tuning_to_forbidden(root: Path) -> None:
     write("scenario_seed_manifest.yaml", root, data)
 
 
-def _mutate_nonpositive_service_cap(root: Path) -> None:
+def _mutate_nonpositive_service_cap_lower_bound(root: Path) -> None:
     data = load("parameter_registry.yaml", root)
     record = next(
         item for item in data["parameters"]
         if item["id"] == "service.transfer_cap"
     )
     record["min"] = 0.0
-    record["value"] = 0.0
     write("parameter_registry.yaml", root, data)
 
 
-def _mutate_negative_request_safety_margin(root: Path) -> None:
+def _mutate_negative_request_safety_margin_lower_bound(root: Path) -> None:
     data = load("parameter_registry.yaml", root)
     record = next(
         item for item in data["parameters"]
         if item["id"] == "service.request_safety_margin"
     )
     record["min"] = -1.0
-    record["value"] = -1.0
     write("parameter_registry.yaml", root, data)
 
 
@@ -473,10 +471,14 @@ NEGATIVE_CASES: tuple[tuple[str, Callable[[Path], None], str], ...] = (
         "provenance",
     ),
     ("validation tuning forbidden", _mutate_validation_tuning_to_forbidden, "validation"),
-    ("nonpositive service cap", _mutate_nonpositive_service_cap, "service cap"),
     (
-        "negative request safety margin",
-        _mutate_negative_request_safety_margin,
+        "nonpositive service-cap lower bound",
+        _mutate_nonpositive_service_cap_lower_bound,
+        "service cap",
+    ),
+    (
+        "negative request-safety-margin lower bound",
+        _mutate_negative_request_safety_margin_lower_bound,
         "safety-margin",
     ),
 )

@@ -360,22 +360,32 @@ def _check_parameters(data: dict[str, Any], errors: list[str]) -> dict[str, dict
     elif service_cap.get("unit") != "L":
         errors.append("service cap parameter must use L")
     else:
+        service_cap_minimum = _number(
+            service_cap.get("min"), "service cap parameter minimum", errors
+        )
         service_cap_value = _number(
             service_cap.get("value"), "service cap parameter value", errors
         )
+        if service_cap_minimum is not None and service_cap_minimum <= 0:
+            errors.append("service cap parameter minimum must be positive")
         if service_cap_value is not None and service_cap_value <= 0:
-            errors.append("service cap parameter must be positive")
+            errors.append("service cap parameter value must be positive")
     request_margin = result.get("service.request_safety_margin")
     if request_margin is None:
         errors.append("parameter registry missing required request safety-margin parameter")
     elif request_margin.get("unit") != "s":
         errors.append("request safety-margin parameter must use s")
     else:
+        request_margin_minimum = _number(
+            request_margin.get("min"), "request safety-margin parameter minimum", errors
+        )
         request_margin_value = _number(
             request_margin.get("value"), "request safety-margin parameter value", errors
         )
+        if request_margin_minimum is not None and request_margin_minimum < 0:
+            errors.append("request safety-margin parameter minimum cannot be negative")
         if request_margin_value is not None and request_margin_value < 0:
-            errors.append("request safety-margin parameter cannot be negative")
+            errors.append("request safety-margin parameter value cannot be negative")
     if data.get("service_transfer_contract") != SERVICE_TRANSFER_CONTRACT:
         errors.append("service cap transfer contract is missing or not exact")
     if data.get("request_trigger_contract") != REQUEST_TRIGGER_CONTRACT:
