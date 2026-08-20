@@ -62,6 +62,30 @@ def _batch() -> RolloutBatch:
     return batch
 
 
+def test_actor_optimizer_parameter_sets_are_gradient_isolated() -> None:
+    torch = pytest.importorskip("torch")
+    algorithm = _algorithm()
+    trainer = SRMAPPOTrainer(algorithm)
+
+    loss = algorithm.uav_actor(torch.zeros(2, 179)).sum()
+    loss.backward()
+
+    assert any(parameter.grad is not None for parameter in algorithm.uav_actor.parameters())
+    assert all(parameter.grad is None for parameter in algorithm.vehicle_actor.parameters())
+    assert all(parameter.grad is None for parameter in algorithm.critic.parameters())
+    assert set(
+        parameter
+        for group in trainer.optimizers["uav"].param_groups
+        for parameter in group["params"]
+    ).isdisjoint(
+        set(
+            parameter
+            for group in trainer.optimizers["vehicle"].param_groups
+            for parameter in group["params"]
+        )
+    )
+
+
 def test_algorithm_act_replays_from_exact_masks_and_policy_inputs() -> None:
     torch = pytest.importorskip("torch")
     algorithm = _algorithm()
