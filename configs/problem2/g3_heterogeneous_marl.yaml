@@ -1,0 +1,45 @@
+schema_version: g3.v1
+algorithm_name: SR-MAPPO
+problem_description: air_ground_heterogeneous_extension
+
+uav_count: 2
+uav_obs_dim: 179
+vehicle_obs_dim: 28
+critic_state_dim: 185
+uav_action_dim: 6
+vehicle_action_dim: 5
+uav_actions: [up, down, left, right, stay, spray]
+vehicle_actions: [hold, slot-0, slot-1, slot-2, slot-3]
+max_candidate_slots: 4
+
+gamma: 0.99
+gae_lambda: 0.95
+ppo_epochs: 2
+rollout_horizon: 32
+total_updates: 1000
+learning_rate: 0.0003
+value_clip_eps: 0.2
+value_loss_coef: 0.5
+entropy_coef: 0.01
+max_grad_norm: 0.5
+minibatch_size: 64
+
+stability_components:
+  observation_normalization: true
+  return_normalization: true
+  orthogonal_initialization: true
+  layer_normalization: true
+  value_clipping: true
+  huber_value_loss: true
+  learning_rate_decay: true
+
+training_partition: development
+
+resources:
+  replenished_resource: pesticide
+  battery_replenishment_enabled: false
+
+pytorch_dependency: torch>=2.13,<2.14
+pytorch_dependency_floor: '2.13'
+pytorch_version: 2.13.0+cpu
+python_version: 3.11.15
