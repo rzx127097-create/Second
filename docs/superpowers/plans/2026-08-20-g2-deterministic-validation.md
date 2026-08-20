@@ -620,7 +620,7 @@ git commit -m "feat: add deterministic g2 transition replay"
 - Produces: `run_g2_audit(config, output_root, generator_commit) -> G2AuditReport`.
 - Both CLIs return zero only for a complete pass and publish no partial final report on failure.
 
-- [ ] **Step 1: Write failing CLI success, corruption, and output-boundary tests**
+- [x] **Step 1: Write failing CLI success, corruption, and output-boundary tests**
 
 ```python
 def test_preprocessor_generates_exactly_six_valid_cache_pairs(tmp_path):
@@ -644,13 +644,13 @@ def test_cli_rejects_output_outside_frozen_root(tmp_path):
 Use an explicit test-only override flag only for pytest temporary directories;
 production invocation accepts solely the frozen G2 root.
 
-- [ ] **Step 2: Run CLI tests and observe the intended missing-script failure**
+- [x] **Step 2: Run CLI tests and observe the intended missing-script failure**
 
 Run: `python -m pytest tests/g2/test_g2_cli.py -q`
 
 Expected: tests fail because the CLIs do not exist.
 
-- [ ] **Step 3: Implement preprocessing and audit orchestration**
+- [x] **Step 3: Implement preprocessing and audit orchestration**
 
 The preprocessor loads/project the source once, rasterizes six scales, writes
 and reload-validates each cache, then returns canonical records. The audit
@@ -658,7 +658,7 @@ reloads all caches, checks A*/Dijkstra pairs, masks, motion, service fixtures,
 conservation, and two hash-seed subprocess traces before atomically publishing
 the report and manifest.
 
-- [ ] **Step 4: Run CLI tests and full regression**
+- [x] **Step 4: Run CLI tests and full regression**
 
 Run: `python -m pytest tests/g2/test_g2_cli.py -q`
 
@@ -668,7 +668,7 @@ Run: `python -m pytest -q`
 
 Expected: the full suite passes.
 
-- [ ] **Step 5: Commit code and tests before generating evidence**
+- [x] **Step 5: Commit code and tests before generating evidence**
 
 ```powershell
 git add src/problem2/audit.py scripts/preprocess_g2_roads.py scripts/audit_g2_deterministic.py tests/g2/test_g2_cli.py
