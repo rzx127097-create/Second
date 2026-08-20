@@ -29,9 +29,8 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
 - Current gate: corrected `G1` evidence registration passed independent scoped
-  re-review and fresh controller verification; the acceptance commit is
-  pushed, and its persistence-record commit remains pending. `G2` is blocked
-  until the corrected G1 persistence record is pushed to `origin`.
+  re-review, fresh controller verification, and GitHub persistence. `G2`
+  deterministic-model validation is next.
 - Sealed-test status: locked; no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
@@ -249,8 +248,11 @@ G1 final-review remediation record:
 - Pushed-hash verification: `git rev-parse HEAD` and
   `git ls-remote origin refs/heads/codex/problem2-g0-orchestration` both
   returned `8969e5e9ab3b88d0851d2d7c0ae1292892dfc99e`.
-- The persistence-record commit for this pushed hash is the next
-  non-rewriting commit and must be pushed before G2 begins.
+- Persistence-record commit:
+  `c2743566ae1e9c10b466f0cb18b1f9b2f7c6c3d3`
+  (`docs: persist corrected g1 pushed hash`), pushed to
+  `origin/codex/problem2-g0-orchestration`; local and remote hashes matched
+  after the push.
 
 Fix Round 1 remediation record:
 
@@ -377,7 +379,6 @@ Fix Round 1 remediation record:
 
 The corrected G1 evidence registries and candidate-branch audit pass
 independent scoped re-review and fresh controller verification. The highest
-maturity remains M1. The acceptance commit is pushed; its non-rewriting
-persistence-record commit and push are still required. Only after corrected G1
-persistence may G2 deterministic-model validation begin; no training, formal
-experiment, or sealed-test evaluation is authorized by G1 alone.
+maturity remains M1. Corrected G1 persistence is complete, so G2
+deterministic-model validation may begin. No training, formal experiment, or
+sealed-test evaluation is authorized by G1 alone.
