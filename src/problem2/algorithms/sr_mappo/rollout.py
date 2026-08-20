@@ -7,6 +7,7 @@ from typing import Any, Mapping
 import numpy as np
 
 from problem2.algorithms.common.gae import compute_gae
+from problem2.environment.action_masks import validate_candidate_slot_mapping
 
 
 @dataclass(frozen=True)
@@ -103,7 +104,23 @@ def _record_from_transition(transition: RolloutTransition | Mapping[str, Any]) -
     record.setdefault("valid", record.get("valid_sample", True))
     record.setdefault("valid_sample", record["valid"])
     record.setdefault("reward_components", {})
+    _validate_g3_candidate_mapping(record)
     return copy.deepcopy(record)
+
+
+def _validate_g3_candidate_mapping(record: Mapping[str, Any]) -> None:
+    masks = record.get("action_mask")
+    mapping = record.get("candidate_mapping")
+    if not isinstance(masks, Mapping) or "vehicle" not in masks:
+        return
+    vehicle_mask = np.asarray(masks["vehicle"], dtype=bool)
+    if vehicle_mask.ndim != 2 or vehicle_mask.shape[1] != 5:
+        return
+    if vehicle_mask.shape[0] != 1:
+        raise ValueError("G3 vehicle action mask must contain exactly one vehicle row")
+    if not isinstance(mapping, Mapping) or "vehicle" not in mapping:
+        raise ValueError("G3 transition must store a vehicle candidate mapping")
+    validate_candidate_slot_mapping(mapping["vehicle"], vehicle_mask[0, 1:])
 
 
 def _scalar(value: Any, name: str) -> float:

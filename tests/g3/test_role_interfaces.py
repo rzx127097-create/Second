@@ -156,6 +156,34 @@ def test_g2_masks_convert_to_role_masks_without_action_replacement() -> None:
     assert vehicle_mask.tolist() == [True, True, False, True, False]
 
 
+def test_g2_vehicle_mask_allows_hold_only_without_candidate_slots() -> None:
+    _, vehicle_mask = convert_g2_masks_to_roles(
+        uav_mask=[True, True, True, True, True, True],
+        vehicle_mask=[True, False, False, False, False],
+        candidate_slot_mask=[False, False, False, False],
+    )
+
+    assert vehicle_mask.tolist() == [True, False, False, False, False]
+
+
+def test_g2_vehicle_mask_validates_candidate_slot_identity() -> None:
+    _, vehicle_mask = convert_g2_masks_to_roles(
+        uav_mask=[True, True, True, True, True, True],
+        vehicle_mask=[True, False, False, False, False],
+        candidate_slot_mask=[True, False, False, False],
+        candidate_mapping=["req-1", None, None, None],
+    )
+    assert vehicle_mask.tolist() == [True, True, False, False, False]
+
+    with pytest.raises(ValueError, match="candidate slot"):
+        convert_g2_masks_to_roles(
+            uav_mask=[True, True, True, True, True, True],
+            vehicle_mask=[True, False, False, False, False],
+            candidate_slot_mask=[True, False, False, False],
+            candidate_mapping=[None, None, None, None],
+        )
+
+
 def test_policy_value_and_entropy_losses_are_finite() -> None:
     torch = pytest.importorskip("torch")
     new_log_prob = torch.tensor([-0.2, -0.4])

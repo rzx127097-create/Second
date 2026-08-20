@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import random
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Callable
 
@@ -73,11 +74,26 @@ def save_checkpoint(
 def load_checkpoint(
     path: str | Path,
     algorithm_factory: Callable[[], Any],
+    *,
+    expected_provenance: Mapping[str, Any] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     source = Path(path)
     payload = torch.load(source, map_location="cpu", weights_only=False)
     if payload.get("format_version") != CHECKPOINT_FORMAT_VERSION:
         raise ValueError("unsupported G3 checkpoint format")
+    provenance = payload.get("provenance")
+    if not isinstance(provenance, dict):
+        raise ValueError("checkpoint provenance must be a mapping")
+    if expected_provenance is not None:
+        mismatches = [
+            key
+            for key, expected in expected_provenance.items()
+            if provenance.get(key) != expected
+        ]
+        if mismatches:
+            raise ValueError(
+                "checkpoint provenance mismatch: " + ", ".join(sorted(mismatches))
+            )
     algorithm = algorithm_factory()
     algorithm.load_state_dict(payload["algorithm"])
     trainer = getattr(algorithm, "_trainer", None)
@@ -88,7 +104,7 @@ def load_checkpoint(
     return algorithm, {
         "format_version": payload["format_version"],
         "step": int(payload["step"]),
-        "provenance": dict(payload.get("provenance") or {}),
+        "provenance": dict(provenance),
     }
 
 

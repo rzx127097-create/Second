@@ -58,7 +58,13 @@ def test_development_environment_refuses_reserved_validation_and_sealed_seeds(se
 
 
 def test_training_smoke_writes_finite_provenance_bound_artifacts(tmp_path: Path) -> None:
-    result = run_training_smoke(CONFIG_PATH, tmp_path, seed=9010, updates=2)
+    result = run_training_smoke(
+        CONFIG_PATH,
+        tmp_path,
+        seed=9010,
+        updates=2,
+        allow_noncanonical_output_root=True,
+    )
 
     assert result["updates"] == 2
     assert result["sealed_test_accessed"] is False
@@ -78,3 +84,12 @@ def test_training_smoke_writes_finite_provenance_bound_artifacts(tmp_path: Path)
     assert provenance["config_hash"] == result["config_hash"]
     assert provenance["sealed_test_accessed"] is False
     assert provenance["updates"] == 2
+    assert len(provenance["scenario_seed_manifest_sha256"]) == 64
+    assert provenance["scenario_seed_manifest_schema_version"] == "g1.v1"
+    assert isinstance(provenance["source_tree_clean"], bool)
+    assert len(provenance["source_tree_hash"]) == 64
+
+
+def test_training_smoke_rejects_noncanonical_output_root(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="canonical G3 output root"):
+        run_training_smoke(CONFIG_PATH, tmp_path, seed=9011, updates=1)

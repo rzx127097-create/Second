@@ -233,3 +233,14 @@ def test_rollout_role_valid_mask_excludes_padding_but_keeps_role_specific_forcin
     np.testing.assert_array_equal(
         batch.role_valid_mask("vehicle"), [True, False, False]
     )
+
+
+def test_rollout_rejects_g3_candidate_mapping_mask_mismatch() -> None:
+    record = _transition(step=0, reward=0.0, value=0.0, next_value=0.0)
+    record["action_mask"]["vehicle"] = np.array(
+        [[True, True, False, False, False]], dtype=bool
+    )
+    record["candidate_mapping"]["vehicle"] = [None, None, None, None]
+
+    with pytest.raises(ValueError, match="candidate slot"):
+        RolloutBatch().add(record)

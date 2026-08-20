@@ -111,6 +111,8 @@ def test_algorithm_act_replays_from_exact_masks_and_policy_inputs() -> None:
 
 
 def test_trainer_updates_roles_with_isolated_optimizers_and_counts() -> None:
+    torch = pytest.importorskip("torch")
+    torch.manual_seed(1234)
     algorithm = _algorithm()
     trainer = SRMAPPOTrainer(algorithm, learning_rate=1e-3)
     before_uav = [parameter.detach().clone() for parameter in algorithm.uav_actor.parameters()]
@@ -122,12 +124,29 @@ def test_trainer_updates_roles_with_isolated_optimizers_and_counts() -> None:
     assert metrics["critic_updates"] == 2
     assert metrics["uav_actor_updates"] == 2
     assert metrics["vehicle_actor_updates"] == 2
+    assert metrics["critic_valid_samples"] == 3
     assert metrics["uav_valid_samples"] == 5
     assert metrics["vehicle_valid_samples"] == 3
     assert any(not np.array_equal(a.numpy(), b.detach().numpy()) for a, b in zip(before_uav, algorithm.uav_actor.parameters()))
     assert any(not np.array_equal(a.numpy(), b.detach().numpy()) for a, b in zip(before_vehicle, algorithm.vehicle_actor.parameters()))
     assert any(not np.array_equal(a.numpy(), b.detach().numpy()) for a, b in zip(before_critic, algorithm.critic.parameters()))
     assert trainer.learning_rates()["uav"] < 1e-3
+
+
+def test_trainer_excludes_team_invalid_samples_from_all_updates() -> None:
+    torch = pytest.importorskip("torch")
+    torch.manual_seed(1234)
+    algorithm = _algorithm()
+    trainer = SRMAPPOTrainer(algorithm, learning_rate=1e-3)
+    batch = _batch()
+    batch.transitions[0]["valid"] = False
+    batch.transitions[0]["valid_sample"] = False
+
+    metrics = trainer.update(batch, epochs=1, progress=0.25)
+
+    assert metrics["critic_valid_samples"] == 2
+    assert metrics["uav_valid_samples"] == 3
+    assert metrics["vehicle_valid_samples"] == 2
 
 
 def test_deterministic_evaluation_freezes_normalizers_byte_identically() -> None:
@@ -159,6 +178,17 @@ def test_checkpoint_roundtrip_restores_policy_trainer_normalizers_and_rng(tmp_pa
     }
     masks = {"uav": np.ones((2, 6), dtype=bool), "vehicle": np.ones((1, 5), dtype=bool)}
     before = algorithm.act(observations, masks, deterministic=True, return_details=True)
+    critic_state = np.linspace(-1.0, 1.0, 185, dtype=np.float32)
+    value_before = algorithm.value(critic_state).detach().cpu().numpy()
+    normalizer_before = algorithm.normalizer_state_bytes()
+    scheduler_before = {
+        role: scheduler.state_dict()
+        for role, scheduler in trainer.schedulers.items()
+    }
+    optimizer_before = {
+        role: optimizer.state_dict()
+        for role, optimizer in trainer.optimizers.items()
+    }
     path = tmp_path / "g3.pt"
     save_checkpoint(path, algorithm, step=7, provenance={"config_hash": "a" * 64})
     expected_random = random.random()
@@ -182,10 +212,50 @@ def test_checkpoint_roundtrip_restores_policy_trainer_normalizers_and_rng(tmp_pa
     assert metadata["format_version"] == "g3-checkpoint-v1"
     assert after["actions"] == before["actions"]
     np.testing.assert_allclose(after["log_probs"]["uav"], before["log_probs"]["uav"], atol=1e-6)
+    np.testing.assert_allclose(
+        restored.value(critic_state).detach().cpu().numpy(),
+        value_before,
+        atol=1e-6,
+    )
+    assert restored.normalizer_state_bytes() == normalizer_before
     assert restored._trainer.learning_rates() == pytest.approx(trainer.learning_rates())
+    for role in trainer.schedulers:
+        assert restored._trainer.schedulers[role].state_dict() == scheduler_before[role]
+        restored_optimizer = restored._trainer.optimizers[role].state_dict()
+        expected_optimizer = optimizer_before[role]
+        assert restored_optimizer["param_groups"] == expected_optimizer["param_groups"]
+        assert set(restored_optimizer["state"]) == set(expected_optimizer["state"])
+        for parameter_id, expected_state in expected_optimizer["state"].items():
+            actual_state = restored_optimizer["state"][parameter_id]
+            assert actual_state.keys() == expected_state.keys()
+            for key, expected_value in expected_state.items():
+                actual_value = actual_state[key]
+                if torch.is_tensor(expected_value):
+                    torch.testing.assert_close(actual_value, expected_value)
+                else:
+                    assert actual_value == expected_value
     assert random.random() == pytest.approx(expected_random)
     assert float(np.random.random()) == pytest.approx(expected_numpy)
     assert float(torch.rand(1).item()) == pytest.approx(expected_torch)
+
+
+def test_checkpoint_rejects_expected_provenance_drift(tmp_path) -> None:
+    algorithm = _algorithm()
+    SRMAPPOTrainer(algorithm, learning_rate=1e-3)
+    path = tmp_path / "g3.pt"
+    save_checkpoint(path, algorithm, step=1, provenance={"config_hash": "a" * 64})
+
+    def factory() -> SRMAPPOAlgorithm:
+        restored = _algorithm()
+        SRMAPPOTrainer(restored, learning_rate=1e-3)
+        return restored
+
+    with pytest.raises(ValueError, match="provenance"):
+        load_checkpoint(
+            path,
+            factory,
+            expected_provenance={"config_hash": "b" * 64},
+        )
 
 
 def test_configuration_diff_only_allows_declared_stability_flags() -> None:

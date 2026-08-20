@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -15,7 +16,23 @@ from problem2.algorithms.sr_mappo.rollout import RolloutBatch
 from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
 from problem2.config import load_g3_config
 
-from .development_env import DevelopmentCooperativeEnv
+from .development_env import (
+    DevelopmentCooperativeEnv,
+    scenario_seed_manifest_provenance,
+)
+
+
+CANONICAL_G3_OUTPUT_ROOT = Path("outputs/problem2_sr_mappo_v1/g3")
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+SOURCE_TREE_ROOTS = (
+    "src",
+    "scripts",
+    "tests",
+    "configs",
+    "pyproject.toml",
+    "requirements-g2.lock",
+    "requirements-g3.lock",
+)
 
 
 def _source_tree_commit() -> str:
@@ -25,6 +42,67 @@ def _source_tree_commit() -> str:
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
+
+
+def _source_tree_clean() -> bool:
+    try:
+        completed = subprocess.run(
+            [
+                "git",
+                "status",
+                "--porcelain",
+                "--untracked-files=all",
+                "--",
+                *SOURCE_TREE_ROOTS,
+            ],
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+    except OSError:
+        return False
+    return completed.returncode == 0 and not completed.stdout.strip()
+
+
+def source_tree_hash() -> str:
+    try:
+        completed = subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "--",
+                *SOURCE_TREE_ROOTS,
+            ],
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+    except OSError:
+        return "unknown"
+    if completed.returncode != 0:
+        return "unknown"
+
+    digest = hashlib.sha256()
+    paths = sorted(
+        line.strip().replace("\\", "/")
+        for line in completed.stdout.splitlines()
+        if line.strip()
+    )
+    for relative in paths:
+        path = REPOSITORY_ROOT / Path(relative)
+        if not path.is_file():
+            return "unknown"
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -77,11 +155,26 @@ def run_training_smoke(
     *,
     seed: int,
     updates: int,
+    allow_noncanonical_output_root: bool = False,
 ) -> dict[str, Any]:
     config = load_g3_config(config_path)
     if updates <= 0:
         raise ValueError("updates must be positive")
-    root = Path(output_root)
+    root = Path(output_root).resolve()
+    canonical_root = (
+        REPOSITORY_ROOT / CANONICAL_G3_OUTPUT_ROOT
+    ).resolve()
+    if not allow_noncanonical_output_root and root != canonical_root:
+        raise ValueError(
+            "output root must remain the canonical G3 output root: "
+            f"{canonical_root}"
+        )
+    source_tree_clean = _source_tree_clean()
+    implementation_tree_hash = source_tree_hash()
+    if implementation_tree_hash == "unknown":
+        raise ValueError("canonical G3 smoke requires a resolvable implementation tree")
+    if not allow_noncanonical_output_root and not source_tree_clean:
+        raise ValueError("canonical G3 smoke requires a clean source tree")
     root.mkdir(parents=True, exist_ok=True)
     checkpoint_path = root / "checkpoints" / "g3-smoke.pt"
     raw_log_path = root / "training-smoke.jsonl"
@@ -103,6 +196,8 @@ def run_training_smoke(
         max_grad_norm=config.max_grad_norm,
     )
     environment = DevelopmentCooperativeEnv(seed=seed, config=config)
+    source_tree_commit = _source_tree_commit()
+    seed_manifest_provenance = scenario_seed_manifest_provenance()
     records: list[str] = []
     finite_loss_checks = True
 
@@ -140,23 +235,34 @@ def run_training_smoke(
             "update": update + 1,
             "seed": int(seed),
             "config_hash": config.config_hash,
+            "source_tree_commit": source_tree_commit,
+            "source_tree_clean": source_tree_clean,
+            "source_tree_hash": implementation_tree_hash,
+            "training_partition": config.training_partition,
+            "validation_scenarios_accessed": False,
+            **seed_manifest_provenance,
             "rollout_steps": len(batch),
             "metrics": metrics,
             "finite_losses": finite_losses,
             "sealed_test_accessed": False,
+            "battery_replenishment_enabled": False,
+            "replenished_resource": "pesticide",
         }
         records.append(json.dumps(record, sort_keys=True, allow_nan=False))
 
     provenance = {
         "artifact_type": "g3_development_training_smoke",
         "config_hash": config.config_hash,
-        "source_tree_commit": _source_tree_commit(),
+        "source_tree_commit": source_tree_commit,
+        "source_tree_clean": source_tree_clean,
+        "source_tree_hash": implementation_tree_hash,
         "training_partition": config.training_partition,
         "seed": int(seed),
         "updates": int(updates),
         "finite_loss_checks": bool(finite_loss_checks),
         "sealed_test_accessed": False,
         "validation_scenarios_accessed": False,
+        **seed_manifest_provenance,
         "battery_replenishment_enabled": False,
         "replenished_resource": "pesticide",
     }
@@ -182,4 +288,9 @@ def run_training_smoke(
     }
 
 
-__all__ = ["run_training_smoke"]
+__all__ = [
+    "CANONICAL_G3_OUTPUT_ROOT",
+    "SOURCE_TREE_ROOTS",
+    "run_training_smoke",
+    "source_tree_hash",
+]

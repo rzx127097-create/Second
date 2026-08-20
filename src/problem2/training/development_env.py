@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import hashlib
+from pathlib import Path
 from typing import Any
 
 import numpy as np
+import yaml
 
 from problem2.config import G3Config
 from problem2.environment.action_masks import (
@@ -17,7 +20,55 @@ from problem2.environment.observations import (
 )
 
 
-RESERVED_RANGES = ((20000, 20049), (30000, 30099))
+SCENARIO_SEED_MANIFEST_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "docs"
+    / "evidence"
+    / "g1"
+    / "scenario_seed_manifest.yaml"
+)
+
+
+def _load_scenario_seed_manifest() -> tuple[str, str, tuple[tuple[int, int], ...]]:
+    raw = SCENARIO_SEED_MANIFEST_PATH.read_bytes()
+    payload = yaml.safe_load(raw.decode("utf-8"))
+    if not isinstance(payload, Mapping):
+        raise RuntimeError("scenario seed manifest must be a mapping")
+    schema_version = payload.get("schema_version")
+    partitions = payload.get("partitions")
+    if not isinstance(schema_version, str) or not isinstance(partitions, Mapping):
+        raise RuntimeError("scenario seed manifest is incomplete")
+    ranges: list[tuple[int, int]] = []
+    for name in ("validation", "sealed_test"):
+        partition = partitions.get(name)
+        if not isinstance(partition, Mapping):
+            raise RuntimeError(f"scenario seed manifest lacks {name} partition")
+        start = partition.get("start")
+        end = partition.get("end")
+        if (
+            isinstance(start, bool)
+            or isinstance(end, bool)
+            or not isinstance(start, int)
+            or not isinstance(end, int)
+            or start > end
+        ):
+            raise RuntimeError(f"scenario seed manifest has invalid {name} range")
+        ranges.append((start, end))
+    return schema_version, hashlib.sha256(raw).hexdigest(), tuple(ranges)
+
+
+(
+    SCENARIO_SEED_MANIFEST_SCHEMA_VERSION,
+    SCENARIO_SEED_MANIFEST_SHA256,
+    RESERVED_RANGES,
+) = _load_scenario_seed_manifest()
+
+
+def scenario_seed_manifest_provenance() -> dict[str, str]:
+    return {
+        "scenario_seed_manifest_schema_version": SCENARIO_SEED_MANIFEST_SCHEMA_VERSION,
+        "scenario_seed_manifest_sha256": SCENARIO_SEED_MANIFEST_SHA256,
+    }
 
 
 def _reserved_seed(seed: int) -> bool:
@@ -119,24 +170,26 @@ class DevelopmentCooperativeEnv:
                 ]
             )
         old_vehicle_mask = [True, True, True, True, True]
-        uav_mask, vehicle_mask = convert_g2_masks_to_roles(
-            uav_mask=old_uav_mask[0],
-            vehicle_mask=old_vehicle_mask,
-            candidate_slot_mask=[True, False, False, False],
-        )
+        candidate_slot_mask = [True, False, False, False]
+        candidate_mapping = ["req-dev-0", None, None, None]
         uav_masks = np.asarray(
             [
                 convert_g2_masks_to_roles(
                     uav_mask=row,
                     vehicle_mask=old_vehicle_mask,
-                    candidate_slot_mask=[True, False, False, False],
+                    candidate_slot_mask=candidate_slot_mask,
+                    candidate_mapping=candidate_mapping,
                 )[0]
                 for row in old_uav_mask
             ],
             dtype=bool,
         )
-        del uav_mask
-        del vehicle_mask
+        _, vehicle_role_mask = convert_g2_masks_to_roles(
+            uav_mask=old_uav_mask[0],
+            vehicle_mask=old_vehicle_mask,
+            candidate_slot_mask=candidate_slot_mask,
+            candidate_mapping=candidate_mapping,
+        )
         return {
             "observations": build_role_observations(
                 snapshot,
@@ -150,19 +203,10 @@ class DevelopmentCooperativeEnv:
             ),
             "masks": {
                 "uav": uav_masks,
-                "vehicle": np.asarray(
-                    [
-                        convert_g2_masks_to_roles(
-                            uav_mask=old_uav_mask[0],
-                            vehicle_mask=old_vehicle_mask,
-                            candidate_slot_mask=[True, False, False, False],
-                        )[1]
-                    ],
-                    dtype=bool,
-                ),
+                "vehicle": np.asarray([vehicle_role_mask], dtype=bool),
             },
             "candidate_mapping": {
-                "vehicle": ["req-dev-0", None, None, None]
+                "vehicle": candidate_mapping
             },
             "agent_ids": {
                 "uav": [row["id"] for row in snapshot["uavs"]],
@@ -230,4 +274,10 @@ class DevelopmentCooperativeEnv:
         return next_state
 
 
-__all__ = ["DevelopmentCooperativeEnv", "RESERVED_RANGES"]
+__all__ = [
+    "DevelopmentCooperativeEnv",
+    "RESERVED_RANGES",
+    "SCENARIO_SEED_MANIFEST_SCHEMA_VERSION",
+    "SCENARIO_SEED_MANIFEST_SHA256",
+    "scenario_seed_manifest_provenance",
+]

@@ -92,6 +92,8 @@ class SRMAPPOTrainer:
             role_valid = np.asarray(record["valid_actor_sample"][role], dtype=bool).reshape(-1)
             if role_valid.size == 1:
                 role_valid = np.repeat(role_valid, obs.shape[0])
+            team_valid = bool(record.get("valid_sample", record.get("valid", True)))
+            role_valid = np.logical_and(role_valid, team_valid)
             if not (
                 obs.shape[0]
                 == mask.shape[0]
@@ -115,13 +117,25 @@ class SRMAPPOTrainer:
             "advantages": np.asarray(advantages, dtype=np.float32),
         }
 
-    def _update_critic(self, batch: Any) -> float:
+    def _update_critic(self, batch: Any) -> tuple[float, int]:
+        team_valid = np.asarray(
+            [
+                bool(record.get("valid_sample", record.get("valid", True)))
+                for record in batch.transitions
+            ],
+            dtype=bool,
+        )
+        if not team_valid.any():
+            raise ValueError("at least one team-valid sample is required")
         states = torch.as_tensor(
-            np.asarray([record["critic_state"] for record in batch.transitions], dtype=np.float32),
+            np.asarray(
+                [record["critic_state"] for record in batch.transitions],
+                dtype=np.float32,
+            )[team_valid],
             dtype=torch.float32,
             device=self.algorithm.device,
         )
-        returns_physical = np.asarray(batch.returns, dtype=np.float32)
+        returns_physical = np.asarray(batch.returns, dtype=np.float32)[team_valid]
         normalized_returns = self.algorithm.normalize_returns(
             returns_physical, update=True
         )
@@ -129,7 +143,9 @@ class SRMAPPOTrainer:
             normalized_returns, dtype=torch.float32, device=self.algorithm.device
         )
         old_values = self.algorithm.normalize_returns(
-            np.asarray([record["value"] for record in batch.transitions], dtype=np.float32),
+            np.asarray(
+                [record["value"] for record in batch.transitions], dtype=np.float32
+            )[team_valid],
             update=False,
         )
         old_values_tensor = torch.as_tensor(
@@ -156,7 +172,7 @@ class SRMAPPOTrainer:
         optimizer.step()
         if not torch.isfinite(loss):
             raise FloatingPointError("critic loss is not finite")
-        return float(loss.detach().cpu())
+        return float(loss.detach().cpu()), int(team_valid.sum())
 
     def _update_actor(self, batch: Any, role: str) -> tuple[float, float, int]:
         rows = self._role_rows(batch, role)
@@ -219,11 +235,14 @@ class SRMAPPOTrainer:
             "critic_updates": 0,
             "uav_actor_updates": 0,
             "vehicle_actor_updates": 0,
+            "critic_valid_samples": 0,
             "uav_valid_samples": 0,
             "vehicle_valid_samples": 0,
         }
         for _ in range(int(epochs)):
-            metrics["critic_loss"] = self._update_critic(batch)
+            metrics["critic_loss"], metrics["critic_valid_samples"] = self._update_critic(
+                batch
+            )
             metrics["critic_updates"] += 1
             for role in ("uav", "vehicle"):
                 policy_loss, entropy, valid_count = self._update_actor(batch, role)
