@@ -28,10 +28,10 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
-- Current gate: `G1` final-review remediation is implemented and locally
-  verified; independent re-review, persistence commit review, and push remain
-  pending. `G2` is blocked until the corrected G1 record is accepted and
-  persisted to `origin`.
+- Current gate: corrected `G1` evidence registration passed independent scoped
+  re-review and fresh controller verification; persistence commits and push
+  remain pending. `G2` is blocked until this corrected G1 record is persisted
+  to `origin`.
 - Sealed-test status: locked; no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
@@ -226,8 +226,24 @@ G1 final-review remediation record:
   CLIs returned `status=pass`; `git diff --check` returned no errors.
 - No training, formal experiment, sealed-test access, external repository
   write, Word-file edit, push, merge, or pull request occurred in this wave.
-- The remediation report/state commit is local and will be recorded by the
-  controller after independent re-review. No pushed hash is claimed here.
+- Fix-round code/test commit:
+  `91466005f0927a14c408fe5f04da5a87dc78010c`
+  (`fix: close g1 audit validation gaps`).
+- Fix-round regenerated-evidence commit:
+  `af388c76d4ddf7c7afdf610da1ec40dc1027361e`
+  (`docs: record g1 fix round 1 evidence`).
+- Independent scoped re-review found all original findings and both new
+  fail-open findings addressed, with no new Critical or Important breakage.
+- Fresh controller verification on `af388c7`:
+  `python -m pytest -q` returned `45 passed`; the focused G1 suite returned
+  `38 passed`; both audit CLIs returned `status=pass`; the registry audit
+  reported 10 files, 21 metrics, 10 parameters, 5 sources, 0 errors, and one
+  pending-source warning; `git diff --check` returned no errors.
+- The protected first-problem repository remained at
+  `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with the same 13 pre-existing
+  modified/untracked paths recorded at G0.
+- Corrected G1 acceptance and pushed-hash persistence commits remain to be
+  created by the controller. No pushed remediation hash is claimed yet.
 
 Fix Round 1 remediation record:
 
@@ -352,9 +368,9 @@ Fix Round 1 remediation record:
 
 ## Next Step
 
-The corrected G1 evidence registries and candidate-branch audit pass fresh
-local verification. The highest maturity remains M1. Independent scoped
-re-review, local persistence-record review, and controller push/recording are
-still required. Only after corrected G1 persistence may G2 deterministic-model
-validation begin; no training, formal experiment, or sealed-test evaluation is
-authorized by G1 alone.
+The corrected G1 evidence registries and candidate-branch audit pass
+independent scoped re-review and fresh controller verification. The highest
+maturity remains M1. Controller persistence commits, push, and remote-hash
+recording are still required. Only after corrected G1 persistence may G2
+deterministic-model validation begin; no training, formal experiment, or
+sealed-test evaluation is authorized by G1 alone.
