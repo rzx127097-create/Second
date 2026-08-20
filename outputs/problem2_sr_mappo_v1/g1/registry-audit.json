@@ -22,7 +22,7 @@
   },
   "errors": [],
   "provenance": {
-    "generated_at_utc": "2026-08-20T10:28:12.187833+00:00",
+    "generated_at_utc": "2026-08-20T10:35:55.255442+00:00",
     "registry_sha256": {
       "artifact_manifest_schema.yaml": "2d1c1dd6ffabb36822c926e0685c3fc163957ce739563b48079db4e47c483ebe",
       "experiment_matrix.yaml": "1155c4efab9abbadbaa993d21e88d34ec60beab32c39e4ef46d613affa17f414",
@@ -35,10 +35,10 @@
       "sealed_test_lock.yaml": "78c9caa7d432f56f91b67195eb413eddab4e9f84c9fd214eb7a9373f48a73226",
       "validated_long_table_schema.yaml": "43f557764e5e98a4db2a83a36e6653e4d34d5c5413f4fbb9c0509bcc55c549e7"
     },
-    "repository_commit": "15f3eb882ba78597d1eb5cfecc2eda3cfb0efc6c",
+    "repository_commit": "667ffcf74d625261a0fb0970df1db0e5c0d13a34",
     "validator": {
       "path": "scripts/audit_g1_registries.py",
-      "sha256": "1a45bbc41cb85a9751a256e39284b0c06dc51b59c099e71f03012ab24ab2f17f",
+      "sha256": "b4e4c21d2dd6b456c72cd207ec663bd1f462f4483bccaadf0d7eefafe611a620",
       "version": "g1.1-contract-remediation.v1"
     }
   },
