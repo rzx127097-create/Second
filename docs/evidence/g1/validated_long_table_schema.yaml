@@ -11,13 +11,12 @@ fields:
   - {name: scenario_id, type: string, required: true}
   - {name: config_hash, type: string, required: true}
   - {name: git_commit, type: string, required: true}
-  - {name: validation_status, type: string, required: true}
-  - {name: source_row_reference, type: string, required: true}
   - {name: termination_reason, type: string, required: true}
   - {name: reduction_rate, type: number, unit: "1", required: true}
-  - {name: success_at_0_85, type: boolean, required: true}
+  - {name: success_at_0_85, type: boolean, unit: "1", required: true}
   - {name: request_count, type: integer, unit: count, required: true}
   - {name: request_completed_count, type: integer, unit: count, required: true}
+  - {name: rendezvous_distance_m, type: number, unit: m, required: true}
   - {name: waiting_steps, type: integer, unit: step, required: true}
   - {name: pesticide_disabled_steps, type: integer, unit: step, required: true}
   - {name: return_steps, type: integer, unit: step, required: true}
@@ -26,3 +25,13 @@ fields:
   - {name: vehicle_travel_steps, type: integer, unit: step, required: true}
   - {name: vehicle_idle_steps, type: integer, unit: step, required: true}
   - {name: vehicle_stranded_inventory_l, type: number, unit: L, required: true}
+  - {name: decision_runtime_s, type: number, unit: s, required: true}
+  - {name: initial_uav_pesticide_l, type: number, unit: L, required: true}
+  - {name: final_uav_pesticide_l, type: number, unit: L, required: true}
+  - {name: initial_vehicle_inventory_l, type: number, unit: L, required: true}
+  - {name: final_vehicle_inventory_l, type: number, unit: L, required: true}
+  - {name: requested_pesticide_l, type: number, unit: L, required: true}
+  - {name: sprayed_pesticide_l, type: number, unit: L, required: true}
+  - {name: total_available_supply_l, type: number, unit: L, required: true}
+  - {name: validation_status, type: string, required: true}
+  - {name: source_row_reference, type: string, required: true}
