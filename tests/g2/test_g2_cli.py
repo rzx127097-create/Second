@@ -61,7 +61,12 @@ def _preprocess(config: Path, output_root: Path) -> subprocess.CompletedProcess[
     )
 
 
-def _audit(config: Path, output_root: Path) -> subprocess.CompletedProcess[str]:
+def _audit(
+    config: Path, output_root: Path, *, relative_report: bool = False
+) -> subprocess.CompletedProcess[str]:
+    report = output_root / "g2-deterministic-audit.json"
+    if relative_report:
+        report = Path(os.path.relpath(report, ROOT))
     return _run(
         [
             str(AUDITOR),
@@ -70,7 +75,7 @@ def _audit(config: Path, output_root: Path) -> subprocess.CompletedProcess[str]:
             "--output-root",
             str(output_root),
             "--report",
-            str(output_root / "g2-deterministic-audit.json"),
+            str(report),
             "--allow-test-output-root",
         ]
     )
@@ -106,6 +111,18 @@ def test_audit_validates_all_scales_and_cross_process_replay(tmp_path: Path) -> 
     assert report["sealed_test"]["accessed"] is False
     assert (output_root / "deterministic-event-trace.jsonl").stat().st_size > 0
     assert (output_root / "artifact-manifest.json").is_file()
+
+
+def test_audit_accepts_the_documented_relative_report_path(tmp_path: Path) -> None:
+    config = _test_config(tmp_path)
+    output_root = tmp_path / "g2"
+    generated = _preprocess(config, output_root)
+    assert generated.returncode == 0, generated.stderr
+
+    result = _audit(config, output_root, relative_report=True)
+
+    assert result.returncode == 0, result.stderr
+    assert (output_root / "g2-deterministic-audit.json").is_file()
 
 
 def test_audit_returns_nonzero_for_corrupt_cache_without_publishing_report(

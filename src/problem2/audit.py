@@ -336,6 +336,7 @@ def run_g2_audit(
 ) -> dict[str, Any]:
     if config.audit_seed != 42:
         raise G2AuditError("G2 deterministic audit seed must remain 42")
+    report_path = report_path.resolve()
     expected_report = output_root / "g2-deterministic-audit.json"
     if report_path.resolve() != expected_report.resolve():
         raise G2AuditError(f"audit report must be written to {expected_report}")
