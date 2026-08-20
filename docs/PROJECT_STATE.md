@@ -28,9 +28,10 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
-- Current gate: corrected `G1` evidence registration passed independent scoped
-  re-review, fresh controller verification, and GitHub persistence. `G2`
-  deterministic-model validation is next.
+- Current gate: `G1` was accepted at `0719483`, then reopened by the independent
+  G1 handoff audit after four previously missed contract gaps were verified in
+  the tracked registries and validator. A bounded G1.1 remediation is required
+  before `G2` deterministic-model validation may begin.
 - Sealed-test status: locked; no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
@@ -282,6 +283,48 @@ Fix Round 1 remediation record:
 - Maturity remains M1. No training, sealed-test access, external write, push,
   merge, or pull request occurred in Fix Round 1.
 
+G1 handoff-audit reopening record:
+
+- While preparing `HANDOFFG1.md`, two fresh read-only reviewers independently
+  checked the accepted G1 state against the tracked YAML registries and the
+  SR-MAPPO Problem 2 contracts.
+- One reviewer found no Critical issue in the G2 handoff structure after its
+  proposed corrections, but identified missing unit/service semantics, event
+  ordering, G2/G3 mask ownership, cache invalidation, transition-table,
+  per-transfer conservation, and two-stage persistence details. Those details
+  are incorporated into `HANDOFFG1.md` as future G2 acceptance requirements.
+- The factual reviewer found four additional G1 contract gaps, each confirmed
+  directly against the repository and required reference contracts:
+  `parameter_registry.yaml` lacks an executable per-service cap and an explicit
+  request-threshold/safety-margin contract; `sealed_test_lock.yaml` uses the
+  ambiguous `unlock_count: 1`; `artifact_manifest_schema.yaml` permits missing
+  execution provenance for validated/locked artifacts and has no output hash;
+  and `scenario_seed_manifest.yaml` forbids validation tuning although the
+  experiment protocol requires validation scenes for checkpoint selection and
+  algorithm tuning.
+- These are specification/validator defects at G1, not G2 implementation
+  findings. Per the stop-at-first-failed-gate rule, the previous G2 entry
+  authorization is paused and G1 is reopened for one bounded remediation.
+- The sealed-test range remains locked and unaccessed. The current
+  `unlock_count: 1` field is interpreted only as the historical intended
+  one-time policy until it is replaced by unambiguous maximum/actual counters.
+- No G2 implementation, training, formal experiment, sealed-test access,
+  external repository write, Word-file edit, PR merge, or protected-asset
+  modification occurred during this handoff audit.
+- After the handoff corrections, both scoped reviewers reported no remaining
+  Critical or Important handoff-document findings; the G2 contract reviewer
+  also reported no remaining Minor finding.
+- Fresh controller verification returned `45 passed` for
+  `python -m pytest -q`. Both G1 audit CLIs returned `status=pass` when their
+  reports were redirected to one-time files under the system temporary
+  directory, and `git diff --check` returned no content error. These audit
+  passes reproduce the accepted validator behavior but do not clear the four
+  newly verified contract gaps, because the current validator does not yet
+  encode them.
+- The protected first-problem repository remained at
+  `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with the same 13 pre-existing
+  modified/untracked paths recorded at G0.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:
@@ -307,13 +350,21 @@ Fix Round 1 remediation record:
   schemas, and 11 explicit fairness booleans.
 - Strengthened candidate-branch audit provenance without integrating or
   accepting candidate code, reports, outputs, or maturity claims.
+- Reopened G1 during handoff preparation after verifying four newly identified
+  registry-contract gaps that the prior scoped reviews did not cover.
 
 ## Pending Tasks
 
+- Complete bounded G1.1 remediation before G2: register service-cap and request
+  threshold semantics; split sealed maximum/actual unlock state; make artifact
+  provenance conditional and fail-closed for validated/locked outputs; align
+  validation-scene tuning semantics with the experiment protocol; update
+  validators, negative tests, generated reports, independent review, push, and
+  persistence records.
 - Decide whether selected candidate-branch assets can be independently
   reverified, copied into controlled modules, or must be rebuilt; no merge is
   implied by the G1 audit.
-- After corrected G1 persistence and independent re-review, build or verify
+- After G1.1 persistence and independent re-review, build or verify
   deterministic G2 components:
   offline road ingestion, projection, topology, physical motion, service state
   machine, request lifecycle, and conservation tests.
@@ -333,10 +384,11 @@ Fix Round 1 remediation record:
   code and documentation records.
 - The current working branch is `codex/problem2-g0-orchestration`; no extra Git
   worktree was created because the branch is already isolated from `origin/main`.
-- Corrected G1 registry and audit artifacts are authoritative M1 design/audit
-  records only after this remediation passes independent re-review and is
-  persisted; candidate-branch reports remain untrusted until later
-  branch-local verification.
+- The previously corrected G1 registry and audit artifacts remain historical
+  M1 design/audit records, but the G1 gate is not currently accepted until the
+  new G1.1 remediation passes independent review and is persisted;
+  candidate-branch reports remain untrusted until later branch-local
+  verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -356,6 +408,8 @@ Fix Round 1 remediation record:
 
 ## Known Issues
 
+- G1 is reopened because the four handoff-audit contract gaps above remain
+  unresolved in the tracked YAML and validator at the current HEAD.
 - The current M1 branch does not include the extensive code framework from
   `origin/feature/problem2-code-framework`.
 - The candidate branch contains M2/M3/M4 wording and forbidden-name mentions in
@@ -377,8 +431,9 @@ Fix Round 1 remediation record:
 
 ## Next Step
 
-The corrected G1 evidence registries and candidate-branch audit pass
-independent scoped re-review and fresh controller verification. The highest
-maturity remains M1. Corrected G1 persistence is complete, so G2
-deterministic-model validation may begin. No training, formal experiment, or
-sealed-test evaluation is authorized by G1 alone.
+Run one bounded G1.1 remediation using TDD and independent review. Do not start
+G2 implementation or merge the current PR into `main` until the four newly
+verified contract gaps are fixed, the full G1 audit is regenerated from a
+committed generator, all tests pass, and the new pushed commit and verification
+record are persisted here. The highest maturity remains M1; training, formal
+experiments, and sealed-test evaluation remain unauthorized.
