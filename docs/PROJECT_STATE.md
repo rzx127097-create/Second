@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-19
+Last updated: 2026-08-20
 
 ## Final Goal
 
@@ -28,7 +28,10 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
-- Current gate: `G1` registration and asset audit passed; `G2` deterministic-model validation is next.
+- Current gate: `G1` final-review remediation is implemented and locally
+  verified; independent re-review, persistence commit review, and push remain
+  pending. `G2` is blocked until the corrected G1 record is accepted and
+  persisted to `origin`.
 - Sealed-test status: locked; no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
 - Battery replenishment: inactive until a separate activation audit passes.
@@ -151,7 +154,7 @@ G0 persistence record:
 - Persistence-record commit: `9fdd560`
   (`docs: record g0 verification and push`), pushed to the same branch.
 
-G1 persistence record:
+Original G1 persistence record (historical; reopened by independent review):
 
 - Local implementation commits: `03f56e9`, `e63a85b`, `b0bfbad`, `d93fd1f`,
   and `267e715`.
@@ -195,6 +198,37 @@ G1 persistence record:
   `origin/codex/problem2-g0-orchestration`; local and remote hashes matched
   after the push.
 
+G1 final-review remediation record:
+
+- Independent final review reopened G1 after finding fail-open registry
+  validation, incomplete canonical metric/raw/validated schemas, incomplete
+  fairness declarations, and incomplete candidate-branch provenance and path
+  handling.
+- Fix base: `31795ca39d8412b0e22949207bdce2aeef2e57b1`.
+- Code/schema/test commit:
+  `ebada80f6aa95a9d8c2c321149ce45e33e106dcb`
+  (`fix: harden g1 evidence registration audits`).
+- Registry report provenance resolves the generator commit as `ebada80`, with
+  10 registry hashes and validator SHA-256
+  `94351669bf8a66374371de2b675e2fe871ea5067d1afc02ac68c3be338232846`.
+- Registry audit result: `status=pass`, 10 files, 21 canonical metrics,
+  10 parameters, 5 sources, 0 errors, and one warning that four external
+  source records remain pending and are not verified evidence.
+- Candidate audit result: `status=pass` means only that the read-only audit
+  executed successfully. It records 210 changed paths, 210 rendered paths,
+  0 omitted paths, five inspected Git blobs, and 20 unresolved findings.
+- The candidate `training_seeds: [0, 1, 2, 3, 4]` conflict with the frozen G1
+  seeds `[42, 123, 2024, 3407, 7919]` and remain unaccepted.
+- Focused verification:
+  `python -m pytest tests/test_g1_registries.py tests/test_g1_feature_branch_audit.py -q`
+  returned `32 passed`.
+- Full verification: `python -m pytest -q` returned `39 passed`; both audit
+  CLIs returned `status=pass`; `git diff --check` returned no errors.
+- No training, formal experiment, sealed-test access, external repository
+  write, Word-file edit, push, merge, or pull request occurred in this wave.
+- The remediation report/state commit is local and will be recorded by the
+  controller after independent re-review. No pushed hash is claimed here.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:
@@ -214,16 +248,20 @@ G1 persistence record:
   repository `.gitignore` and cannot enter the evidence history.
 - Committed and pushed G0 content as `7731d37` on
   `codex/problem2-g0-orchestration`.
+- Reopened the original G1 completion after independent final review and
+  implemented one bounded fail-closed remediation wave at M1.
+- Registered a canonical 21-metric contract, exact raw/validated table
+  schemas, and 11 explicit fairness booleans.
+- Strengthened candidate-branch audit provenance without integrating or
+  accepting candidate code, reports, outputs, or maturity claims.
 
 ## Pending Tasks
 
-- Complete G2 deterministic-model validation:
-  offline road ingestion, projection, topology, physical motion, service state
-  machine, request lifecycle, and conservation tests.
 - Decide whether selected candidate-branch assets can be independently
   reverified, copied into controlled modules, or must be rebuilt; no merge is
   implied by the G1 audit.
-- Build or verify deterministic G2 components:
+- After corrected G1 persistence and independent re-review, build or verify
+  deterministic G2 components:
   offline road ingestion, projection, topology, physical motion, service state
   machine, request lifecycle, and conservation tests.
 - Build or verify G3 heterogeneous MARL components:
@@ -242,8 +280,9 @@ G1 persistence record:
   code and documentation records.
 - The current working branch is `codex/problem2-g0-orchestration`; no extra Git
   worktree was created because the branch is already isolated from `origin/main`.
-- G1 registry and audit artifacts are authoritative design/audit records for
-  this branch; candidate-branch reports remain untrusted until later
+- Corrected G1 registry and audit artifacts are authoritative M1 design/audit
+  records only after this remediation passes independent re-review and is
+  persisted; candidate-branch reports remain untrusted until later
   branch-local verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
@@ -264,7 +303,7 @@ G1 persistence record:
 
 ## Known Issues
 
-- Current G1 branch does not include the extensive code framework from
+- The current M1 branch does not include the extensive code framework from
   `origin/feature/problem2-code-framework`.
 - The candidate branch contains M2/M3/M4 wording and forbidden-name mentions in
   its own docs/tests; the G1 audit records these as candidate-branch signals,
@@ -274,9 +313,10 @@ G1 persistence record:
 - Engineering parameter sources remain incomplete: device manuals, field
   studies, expert confirmation, and source-value conversions are registered as
   pending G1 source records and still require independent verification.
-- Resource activation has not been demonstrated in the current G0 branch.
+- Resource activation has not been demonstrated in the current M1 evidence
+  branch.
 - No formal second-problem raw logs, validated tables, paired statistics, or
-  locked figures exist in the current G0 branch.
+  locked figures exist in the repository evidence set.
 - No claim is currently permitted that simulation outcomes reflect real
   deployment.
 - Python cache files may still exist in the local working directory after tests,
@@ -284,8 +324,9 @@ G1 persistence record:
 
 ## Next Step
 
-G1 evidence registries and the candidate-branch audit have passed fresh local
-verification, with persistence push completion recorded in the follow-up
-commit. The highest maturity remains M1. G2 deterministic-model validation may
-begin; no training, formal experiment, or sealed-test evaluation is authorized
-by G1 alone.
+The corrected G1 evidence registries and candidate-branch audit pass fresh
+local verification. The highest maturity remains M1. Independent scoped
+re-review, local persistence-record review, and controller push/recording are
+still required. Only after corrected G1 persistence may G2 deterministic-model
+validation begin; no training, formal experiment, or sealed-test evaluation is
+authorized by G1 alone.

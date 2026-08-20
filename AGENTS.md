@@ -36,10 +36,12 @@ Never use force-push to rewrite the evidence history.
 - Treat OSM road data as simulation input for road-constrained modeling, not as
   evidence of real field deployment.
 
-## Current Maturity Boundary
+## Maturity Boundary
 
-- Current highest maturity level: `M1` design/specification evidence.
-- Current gate: `G0` isolation and project-state registration.
+- `docs/PROJECT_STATE.md` is authoritative for the dynamic current gate,
+  highest maturity level, verification state, and next authorized work.
+- Until that record documents a later persisted maturity gate, the highest
+  maturity remains `M1` design/specification evidence.
 - Permitted wording at M1: proposes, designs, defines, establishes, plans to
   test, provides a specification for later verification.
 - Disallowed wording at M1: proves, significantly outperforms, formal
