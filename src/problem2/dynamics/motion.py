@@ -54,8 +54,15 @@ def _motion_event(
     entity_id: str,
     kind: str,
     action: Action,
-    distance_m: float,
-    unused_distance_m: float = 0.0,
+    legal_mask: np.ndarray,
+    available_distance_m: float,
+    actual_distance_m: float,
+    edge_progress_m: float,
+    route_distance_m: float,
+    boundary_clipped: bool,
+    x_m: float,
+    y_m: float,
+    unused_distance_m: float,
 ) -> Event:
     return Event(
         step=step,
@@ -63,8 +70,15 @@ def _motion_event(
         kind=kind,
         entity_id=entity_id,
         payload=(
-            ("action", action.name),
-            ("distance_m", float(distance_m)),
+            ("intended_action", action.name),
+            ("legal_mask", tuple(bool(value) for value in legal_mask)),
+            ("available_distance_m", float(available_distance_m)),
+            ("actual_distance_m", float(actual_distance_m)),
+            ("edge_progress_m", float(edge_progress_m)),
+            ("route_distance_m", float(route_distance_m)),
+            ("boundary_clipped", bool(boundary_clipped)),
+            ("x_m", float(x_m)),
+            ("y_m", float(y_m)),
             ("unused_distance_m", float(unused_distance_m)),
         ),
     )
@@ -86,7 +100,21 @@ def move_uav(
     if not bool(mask[int(action)]):
         raise IllegalActionError(f"UAV {state.uav_id} action {action.name} is illegal")
     if action in (Action.STAY, Action.SPRAY):
-        return state, _motion_event(step, state.uav_id, "uav_motion", action, 0.0)
+        return state, _motion_event(
+            step,
+            state.uav_id,
+            "uav_motion",
+            action,
+            mask,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            False,
+            state.x_m,
+            state.y_m,
+            0.0,
+        )
     dx, dy = {
         Action.UP: (0.0, config.uav_speed_mps * config.dt_s),
         Action.DOWN: (0.0, -config.uav_speed_mps * config.dt_s),
@@ -97,11 +125,98 @@ def move_uav(
     x_m = min(max_x, max(min_x, state.x_m + dx))
     y_m = min(max_y, max(min_y, state.y_m + dy))
     distance = math.hypot(x_m - state.x_m, y_m - state.y_m)
+    available = config.uav_speed_mps * config.dt_s
     moved = replace(state, x_m=x_m, y_m=y_m)
-    return moved, _motion_event(step, state.uav_id, "uav_motion", action, distance)
+    return moved, _motion_event(
+        step,
+        state.uav_id,
+        "uav_motion",
+        action,
+        mask,
+        available,
+        distance,
+        0.0,
+        distance,
+        distance < available - config.tolerance,
+        x_m,
+        y_m,
+        available - distance,
+    )
 
 
-def vehicle_action_mask(state: VehicleState, graph: RasterRoadGraph) -> np.ndarray:
+def validate_vehicle_road_state(
+    state: VehicleState,
+    graph: RasterRoadGraph,
+    tolerance: float,
+) -> None:
+    if not math.isfinite(tolerance) or tolerance < 0.0:
+        raise ValueError("vehicle road tolerance must be finite and nonnegative")
+    node_count = len(graph.node_rows)
+    if not 0 <= state.current_node < node_count:
+        raise ValueError(
+            f"vehicle current_node {state.current_node} is outside road graph"
+        )
+
+    def require_primary(node: int, name: str) -> None:
+        row = int(graph.node_rows[node])
+        col = int(graph.node_cols[node])
+        if int(graph.component_id[row, col]) != graph.primary_component_id:
+            raise ValueError(f"vehicle {name} is not in the primary component")
+
+    require_primary(state.current_node, "current_node")
+    if state.target_node is None:
+        if state.mode is VehicleMode.TRANSIT:
+            raise ValueError("transit vehicle must have target_node")
+        if state.direction is not None:
+            raise ValueError("stopped vehicle must not have a direction")
+        if state.edge_progress_m > tolerance:
+            raise ValueError("stopped vehicle must have zero edge progress")
+        expected_x = float(graph.node_x_m[state.current_node])
+        expected_y = float(graph.node_y_m[state.current_node])
+        if (
+            abs(state.x_m - expected_x) > tolerance
+            or abs(state.y_m - expected_y) > tolerance
+        ):
+            raise ValueError("vehicle node coordinate does not match current_node")
+        return
+
+    if state.mode is not VehicleMode.TRANSIT or state.direction is None:
+        raise ValueError("vehicle with target_node must be in coherent transit state")
+    if not 0 <= state.target_node < node_count:
+        raise ValueError(f"vehicle target_node {state.target_node} is outside road graph")
+    require_primary(state.target_node, "target_node")
+    matches = [
+        (neighbor, action, length)
+        for neighbor, action, length in graph.neighbors(state.current_node)
+        if neighbor == state.target_node and action is state.direction
+    ]
+    if len(matches) != 1:
+        raise ValueError("transit vehicle target and direction do not identify one edge")
+    edge_length = matches[0][2]
+    if state.edge_progress_m < 0.0 or state.edge_progress_m >= edge_length - tolerance:
+        raise ValueError("transit edge progress must remain inside the active edge")
+    fraction = state.edge_progress_m / edge_length
+    expected_x = float(graph.node_x_m[state.current_node]) + fraction * (
+        float(graph.node_x_m[state.target_node])
+        - float(graph.node_x_m[state.current_node])
+    )
+    expected_y = float(graph.node_y_m[state.current_node]) + fraction * (
+        float(graph.node_y_m[state.target_node])
+        - float(graph.node_y_m[state.current_node])
+    )
+    if (
+        abs(state.x_m - expected_x) > tolerance
+        or abs(state.y_m - expected_y) > tolerance
+    ):
+        raise ValueError("vehicle transit coordinate does not match edge progress")
+
+
+def vehicle_action_mask(
+    state: VehicleState,
+    graph: RasterRoadGraph,
+    tolerance: float = 1e-9,
+) -> np.ndarray:
+    validate_vehicle_road_state(state, graph, tolerance)
     mask = np.zeros(5, dtype=np.bool_)
     if state.mode is VehicleMode.SERVING:
         mask[int(Action.STAY)] = True
@@ -153,7 +268,21 @@ def move_vehicle(
             f"vehicle {state.vehicle_id} action {action.name} is illegal"
         )
     if action is Action.STAY:
-        return state, _motion_event(step, state.vehicle_id, "vehicle_motion", action, 0.0)
+        return state, _motion_event(
+            step,
+            state.vehicle_id,
+            "vehicle_motion",
+            action,
+            mask,
+            distance_budget_m,
+            0.0,
+            state.edge_progress_m,
+            state.route_distance_m,
+            False,
+            state.x_m,
+            state.y_m,
+            distance_budget_m,
+        )
 
     current = state.current_node
     target = state.target_node
@@ -222,6 +351,13 @@ def move_vehicle(
         state.vehicle_id,
         "vehicle_motion",
         action,
+        mask,
+        distance_budget_m,
         travelled,
+        progress,
+        moved.route_distance_m,
+        False,
+        x_m,
+        y_m,
         remaining,
     )

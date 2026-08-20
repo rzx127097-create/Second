@@ -6,6 +6,7 @@ import json
 import math
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -74,20 +75,19 @@ def _generator_files(root: Path) -> list[Path]:
 
 
 def resolve_generator_provenance(
-    root: Path = REPOSITORY_ROOT, *, allow_dirty: bool = False
+    root: Path = REPOSITORY_ROOT,
 ) -> GeneratorProvenance:
-    if not allow_dirty:
-        dirty = subprocess.run(
-            ["git", "status", "--porcelain", "--", *_GENERATOR_PATHS],
-            cwd=root,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if dirty.returncode != 0:
-            raise G2AuditError(f"cannot inspect generator worktree: {dirty.stderr.strip()}")
-        if dirty.stdout.strip():
-            raise G2AuditError("G2 generator code or configuration is dirty")
+    dirty = subprocess.run(
+        ["git", "status", "--porcelain", "--", *_GENERATOR_PATHS],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if dirty.returncode != 0:
+        raise G2AuditError(f"cannot inspect generator worktree: {dirty.stderr.strip()}")
+    if dirty.stdout.strip():
+        raise G2AuditError("G2 generator code or configuration is dirty")
     commit = subprocess.run(
         ["git", "log", "-1", "--format=%H", "--", *_GENERATOR_PATHS],
         cwd=root,
@@ -113,8 +113,6 @@ def resolve_generator_provenance(
 def resolve_output_root(
     config: G2Config,
     override: Path | None,
-    *,
-    allow_test_output_root: bool,
 ) -> Path:
     frozen = (REPOSITORY_ROOT / config.output_root).resolve()
     if override is None:
@@ -122,8 +120,6 @@ def resolve_output_root(
     resolved = Path(override).resolve()
     if resolved == frozen:
         return frozen
-    if allow_test_output_root and os.environ.get("PYTEST_CURRENT_TEST"):
-        return resolved
     raise G2AuditError(
         f"output must remain inside the frozen G2 output root {frozen}"
     )
@@ -139,12 +135,57 @@ def _expectation(
     return RoadCacheExpectation(
         scale_id=scale_id,
         source_sha256=source.source_sha256,
+        source_crs=source.source_crs,
         target_crs=source.target_crs,
         aoi_bounds_m=source.aoi_bounds_m,
         grid_shape=grid_shape,
         preprocess_version=config.preprocess_version,
+        generator_commit=provenance.git_commit,
         generator_sha256=provenance.tree_sha256,
     )
+
+
+def _remove_tree(path: Path) -> None:
+    if path.exists():
+        shutil.rmtree(path)
+
+
+def _recover_roads_transaction(output_root: Path) -> None:
+    output_root.mkdir(parents=True, exist_ok=True)
+    final_roads = output_root / "roads"
+    backup_roads = output_root / ".roads-backup"
+    for staging_root in output_root.glob(".roads-staging-*"):
+        _remove_tree(staging_root)
+    if backup_roads.exists():
+        if final_roads.exists():
+            _remove_tree(backup_roads)
+        else:
+            os.replace(backup_roads, final_roads)
+
+
+def _publish_roads_directory(staged_roads: Path, output_root: Path) -> None:
+    final_roads = output_root / "roads"
+    backup_roads = output_root / ".roads-backup"
+    had_prior = final_roads.exists()
+    if backup_roads.exists():
+        raise G2AuditError("roads transaction backup was not recovered")
+    if had_prior:
+        os.replace(final_roads, backup_roads)
+    try:
+        os.replace(staged_roads, final_roads)
+    except BaseException:
+        if final_roads.exists():
+            _remove_tree(final_roads)
+        if had_prior and backup_roads.exists():
+            os.replace(backup_roads, final_roads)
+        raise
+    if backup_roads.exists():
+        try:
+            _remove_tree(backup_roads)
+        except BaseException:
+            _remove_tree(final_roads)
+            os.replace(backup_roads, final_roads)
+            raise
 
 
 def preprocess_all(
@@ -152,37 +193,63 @@ def preprocess_all(
     output_root: Path,
     provenance: GeneratorProvenance,
 ) -> tuple[RoadCacheRecord, ...]:
+    output_root = Path(output_root)
+    _recover_roads_transaction(output_root)
     source = load_projected_road_source(config)
-    records: list[RoadCacheRecord] = []
-    for scale in config.scales:
-        graph = rasterize_road_source(source, scale, config.max_segment_m)
-        npz_path, metadata_path = write_road_cache(
-            graph,
-            source,
-            config,
-            output_root,
-            provenance.git_commit,
-            provenance.tree_sha256,
-        )
-        validated = load_road_cache(
-            npz_path,
-            metadata_path,
-            _expectation(
-                scale.scale_id, scale.grid_shape, source, config, provenance
-            ),
-        )
-        records.append(
-            RoadCacheRecord(
-                scale.scale_id,
+    staging_root = Path(
+        tempfile.mkdtemp(prefix=".roads-staging-", dir=output_root)
+    )
+    record_values: list[tuple[str, int, int, tuple[int, ...], int]] = []
+    try:
+        for scale in config.scales:
+            graph = rasterize_road_source(source, scale, config.max_segment_m)
+            npz_path, metadata_path = write_road_cache(
+                graph,
+                source,
+                config,
+                staging_root,
+                provenance.git_commit,
+                provenance.tree_sha256,
+            )
+            validated = load_road_cache(
                 npz_path,
                 metadata_path,
-                len(validated.node_rows),
-                len(validated.edges),
-                validated.component_sizes,
-                len(validated.repairs),
+                _expectation(
+                    scale.scale_id, scale.grid_shape, source, config, provenance
+                ),
             )
+            record_values.append(
+                (
+                    scale.scale_id,
+                    len(validated.node_rows),
+                    len(validated.edges),
+                    validated.component_sizes,
+                    len(validated.repairs),
+                )
+            )
+        if len(record_values) != len(config.scales):
+            raise G2AuditError("preprocessing did not stage all six road caches")
+        _publish_roads_directory(staging_root / "roads", output_root)
+        return tuple(
+            RoadCacheRecord(
+                scale_id,
+                output_root / "roads" / scale_id / "road_graph.npz",
+                output_root / "roads" / scale_id / "metadata.json",
+                node_count,
+                edge_count,
+                component_sizes,
+                repair_count,
+            )
+            for (
+                scale_id,
+                node_count,
+                edge_count,
+                component_sizes,
+                repair_count,
+            ) in record_values
         )
-    return tuple(records)
+    finally:
+        _remove_tree(staging_root)
 
 
 def _primary_nodes(graph) -> np.ndarray:
@@ -231,7 +298,7 @@ def _audit_scale(graph, config: G2Config, generator: np.random.Generator) -> dic
     moved_uav, uav_event = move_uav(
         uav, Action.RIGHT, config, graph.aoi_bounds_m
     )
-    uav_distance = float(dict(uav_event.payload)["distance_m"])
+    uav_distance = float(dict(uav_event.payload)["actual_distance_m"])
     if abs(uav_distance - config.uav_speed_mps * config.dt_s) > config.tolerance:
         raise G2AuditError(f"scale {graph.scale_id} violates the UAV metric speed")
 
@@ -252,7 +319,7 @@ def _audit_scale(graph, config: G2Config, generator: np.random.Generator) -> dic
         graph,
         config.vehicle_speed_mps * config.dt_s,
     )
-    vehicle_distance = float(dict(vehicle_event.payload)["distance_m"])
+    vehicle_distance = float(dict(vehicle_event.payload)["actual_distance_m"])
     if vehicle_distance <= 0.0 or vehicle_distance > config.vehicle_speed_mps * config.dt_s + config.tolerance:
         raise G2AuditError(f"scale {graph.scale_id} violates the vehicle metric speed")
     if moved_vehicle.route_distance_m != vehicle_distance:

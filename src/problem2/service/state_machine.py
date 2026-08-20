@@ -18,6 +18,8 @@ from problem2.resources.ledger import (
     ResourceLedger,
     apply_transfer,
 )
+from problem2.dynamics.motion import validate_vehicle_road_state
+from problem2.road.models import RasterRoadGraph
 
 
 class ServiceStateError(ValueError):
@@ -95,12 +97,19 @@ def select_serviceable_request(
     vehicle: VehicleState,
     uavs: Mapping[str, UavState],
     rendezvous_radius_m: float,
+    graph: RasterRoadGraph,
+    tolerance: float,
 ) -> ServiceRequest | None:
     radius = _finite_nonnegative(rendezvous_radius_m, "rendezvous_radius_m")
+    try:
+        validate_vehicle_road_state(vehicle, graph, tolerance)
+    except ValueError as exc:
+        raise ServiceStateError(str(exc)) from exc
     if (
         vehicle.mode is not VehicleMode.IDLE
         or vehicle.target_node is not None
         or vehicle.inventory_l <= 0.0
+        or vehicle.inventory_depleted
         or vehicle.active_request_id is not None
     ):
         return None
@@ -122,15 +131,48 @@ def select_serviceable_request(
     )
 
 
+def reserve_request(
+    request: ServiceRequest,
+    vehicle: VehicleState,
+    step: int,
+) -> tuple[ServiceRequest, Event]:
+    if request.status is not RequestStatus.PENDING:
+        raise ServiceStateError("only a pending request can be reserved")
+    if request.reserved_vehicle_id is not None:
+        raise ServiceStateError("request is already reserved")
+    if vehicle.mode is not VehicleMode.IDLE or vehicle.active_request_id is not None:
+        raise ServiceStateError("vehicle is not idle for reservation")
+    reserved_request = replace(
+        request,
+        status=RequestStatus.RESERVED,
+        reserved_vehicle_id=vehicle.vehicle_id,
+    )
+    event = Event(
+        step,
+        "reserve",
+        "request_reserved",
+        request.request_id,
+        (("uav_id", request.uav_id), ("vehicle_id", vehicle.vehicle_id)),
+    )
+    return reserved_request, event
+
+
 def start_service(
     request: ServiceRequest,
     vehicle: VehicleState,
     uav: UavState,
     config: G2Config,
     step: int,
-) -> tuple[ServiceRequest, VehicleState, UavState, tuple[Event, Event]]:
-    if request.status is not RequestStatus.PENDING:
-        raise ServiceStateError("only a pending request can start service")
+    graph: RasterRoadGraph,
+) -> tuple[ServiceRequest, VehicleState, UavState, Event]:
+    try:
+        validate_vehicle_road_state(vehicle, graph, config.tolerance)
+    except ValueError as exc:
+        raise ServiceStateError(str(exc)) from exc
+    if request.status is not RequestStatus.RESERVED:
+        raise ServiceStateError("only a reserved request can start service")
+    if request.reserved_vehicle_id != vehicle.vehicle_id:
+        raise ServiceStateError("reserved request belongs to a different vehicle")
     if request.uav_id != uav.uav_id:
         raise ServiceStateError("request UAV does not match service UAV")
     if uav.active_request_id not in (None, request.request_id):
@@ -139,6 +181,8 @@ def start_service(
         raise ServiceStateError("vehicle is not idle for service")
     if vehicle.target_node is not None:
         raise ServiceStateError("vehicle must be stopped at a road node")
+    if vehicle.inventory_depleted:
+        raise ServiceStateError("vehicle inventory is marked depleted")
     distance = math.hypot(uav.x_m - vehicle.x_m, uav.y_m - vehicle.y_m)
     if distance > config.rendezvous_radius_m:
         raise ServiceStateError("UAV is outside the rendezvous radius")
@@ -156,7 +200,6 @@ def start_service(
     serving_request = replace(
         request,
         status=RequestStatus.SERVING,
-        reserved_vehicle_id=vehicle.vehicle_id,
     )
     serving_vehicle = replace(
         vehicle,
@@ -169,13 +212,6 @@ def start_service(
     serving_uav = replace(
         uav, active_request_id=request.request_id, service_locked=True
     )
-    reserved = Event(
-        step,
-        "reserve",
-        "request_reserved",
-        request.request_id,
-        (("uav_id", uav.uav_id), ("vehicle_id", vehicle.vehicle_id)),
-    )
     started = Event(
         step,
         "service",
@@ -183,7 +219,7 @@ def start_service(
         request.request_id,
         (("planned_transfer_l", planned), ("required_steps", required_steps)),
     )
-    return serving_request, serving_vehicle, serving_uav, (reserved, started)
+    return serving_request, serving_vehicle, serving_uav, started
 
 
 def advance_service(

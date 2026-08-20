@@ -19,6 +19,7 @@ from problem2.dynamics.motion import (
     move_uav,
     move_vehicle,
     uav_action_mask,
+    validate_vehicle_road_state,
     vehicle_action_mask,
 )
 from problem2.resources.ledger import (
@@ -34,6 +35,7 @@ from problem2.service.state_machine import (
     advance_service,
     cancel_terminal_requests,
     create_request,
+    reserve_request,
     select_serviceable_request,
     should_request,
     start_service,
@@ -59,6 +61,10 @@ class StoredMasks:
 def build_action_masks(
     state: EpisodeState, graph: RasterRoadGraph, config: G2Config
 ) -> StoredMasks:
+    try:
+        validate_vehicle_road_state(state.vehicle, graph, config.tolerance)
+    except ValueError as exc:
+        raise StepTransactionError(f"invalid vehicle road state: {exc}") from exc
     return StoredMasks(
         uavs=tuple(
             (
@@ -72,7 +78,12 @@ def build_action_masks(
             )
             for uav in sorted(state.uavs, key=lambda item: item.uav_id)
         ),
-        vehicle=tuple(bool(value) for value in vehicle_action_mask(state.vehicle, graph)),
+        vehicle=tuple(
+            bool(value)
+            for value in vehicle_action_mask(
+                state.vehicle, graph, config.tolerance
+            )
+        ),
     )
 
 
@@ -91,6 +102,10 @@ def estimate_service_delay_s(
     config: G2Config,
 ) -> float:
     vehicle = state.vehicle
+    try:
+        validate_vehicle_road_state(vehicle, graph, config.tolerance)
+    except ValueError as exc:
+        raise ServiceStateError(str(exc)) from exc
     committed_inventory = (
         vehicle.planned_transfer_l if vehicle.mode is VehicleMode.SERVING else 0.0
     )
@@ -264,16 +279,24 @@ def step_episode(
             service_events.extend(events)
         else:
             selected = select_serviceable_request(
-                requests, vehicle, uavs, config.rendezvous_radius_m
+                requests,
+                vehicle,
+                uavs,
+                config.rendezvous_radius_m,
+                graph,
+                config.tolerance,
             )
             if selected is not None:
                 selected_uav = uavs[selected.uav_id]
-                selected, vehicle, selected_uav, events = start_service(
-                    selected, vehicle, selected_uav, config, step
+                selected, reserve_event = reserve_request(selected, vehicle, step)
+                _replace_request(requests, selected)
+                service_events.append(reserve_event)
+                selected, vehicle, selected_uav, started_event = start_service(
+                    selected, vehicle, selected_uav, config, step, graph
                 )
                 _replace_request(requests, selected)
                 uavs[selected.uav_id] = selected_uav
-                service_events.extend(events)
+                service_events.append(started_event)
                 selected, vehicle, selected_uav, ledger, events = advance_service(
                     selected, vehicle, selected_uav, ledger, config, step
                 )

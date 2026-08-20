@@ -5,6 +5,7 @@ import pytest
 from problem2.domain import UavState
 from problem2.resources.ledger import (
     ResourceInvariantError,
+    ResourceLedger,
     apply_spray,
     apply_transfer,
     assert_conserved,
@@ -84,3 +85,34 @@ def test_conservation_detects_unlogged_resource_change() -> None:
 
     with pytest.raises(ResourceInvariantError, match="conservation"):
         assert_conserved([_uav(0.9)], 2.0, ledger, tolerance=1e-9)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("initial_total_l", float("nan")),
+        ("cumulative_sprayed_l", float("inf")),
+        ("cumulative_transferred_l", -0.1),
+    ],
+)
+def test_ledger_rejects_invalid_fields_at_construction(
+    field: str, value: float
+) -> None:
+    values = {
+        "initial_total_l": 1.0,
+        "cumulative_sprayed_l": 0.0,
+        "cumulative_transferred_l": 0.0,
+    }
+    values[field] = value
+
+    with pytest.raises(ResourceInvariantError, match=field):
+        ResourceLedger(**values)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf")])
+def test_conservation_rejects_nonfinite_tampered_ledger(value: float) -> None:
+    ledger = new_ledger([_uav(1.0)], 2.0)
+    object.__setattr__(ledger, "initial_total_l", value)
+
+    with pytest.raises(ResourceInvariantError, match="initial_total_l"):
+        assert_conserved([_uav(1.0)], 2.0, ledger, tolerance=1e-9)

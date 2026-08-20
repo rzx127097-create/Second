@@ -24,10 +24,12 @@ class CacheValidationError(ValueError):
 class RoadCacheExpectation:
     scale_id: str
     source_sha256: str
+    source_crs: str
     target_crs: str
     aoi_bounds_m: tuple[float, float, float, float]
     grid_shape: tuple[int, int]
     preprocess_version: str
+    generator_commit: str
     generator_sha256: str
 
 
@@ -155,10 +157,12 @@ def write_road_cache(
     expectation = RoadCacheExpectation(
         scale_id=graph.scale_id,
         source_sha256=source.source_sha256,
+        source_crs=source.source_crs,
         target_crs=source.target_crs,
         aoi_bounds_m=source.aoi_bounds_m,
         grid_shape=graph.grid_shape,
         preprocess_version=config.preprocess_version,
+        generator_commit=generator_commit,
         generator_sha256=generator_sha256,
     )
     try:
@@ -207,27 +211,30 @@ def load_road_cache(
     observed = {
         "scale_id": metadata.get("scale_id"),
         "source_sha256": metadata.get("source", {}).get("sha256"),
+        "source_crs": metadata.get("source", {}).get("crs"),
         "target_crs": metadata.get("projection", {}).get("target_crs"),
         "aoi_bounds_m": tuple(metadata.get("projection", {}).get("aoi_bounds_m", ())),
         "grid_shape": tuple(metadata.get("grid", {}).get("shape", ())),
         "preprocess_version": metadata.get("preprocess_version"),
+        "generator_commit": metadata.get("generator", {}).get("git_commit"),
         "generator_sha256": metadata.get("generator", {}).get("sha256"),
     }
     for field, wanted in (
         ("scale_id", expected.scale_id),
         ("source_sha256", expected.source_sha256),
+        ("source_crs", expected.source_crs),
         ("target_crs", expected.target_crs),
         ("aoi_bounds_m", expected.aoi_bounds_m),
         ("grid_shape", expected.grid_shape),
         ("preprocess_version", expected.preprocess_version),
+        ("generator_commit", expected.generator_commit),
         ("generator_sha256", expected.generator_sha256),
     ):
         if observed[field] != wanted:
             raise CacheValidationError(
                 f"{field} mismatch: expected {wanted!r}, observed {observed[field]!r}"
             )
-    generator_commit = str(metadata.get("generator", {}).get("git_commit", ""))
-    _validate_hex(generator_commit, 40, "generator git commit")
+    _validate_hex(str(observed["generator_commit"]), 40, "generator_commit")
 
     try:
         with np.load(npz_path, allow_pickle=False) as archive:

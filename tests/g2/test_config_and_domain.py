@@ -84,6 +84,41 @@ def test_rejects_scale_set_drift(tmp_path: Path) -> None:
         load_g2_config(path)
 
 
+def test_rejects_negative_request_margin(tmp_path: Path) -> None:
+    path = _write_config(
+        tmp_path,
+        lambda payload: payload["service"].__setitem__("request_margin_s", -0.1),
+    )
+
+    with pytest.raises(G2ConfigError, match="request_margin_s.*nonnegative"):
+        load_g2_config(path)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda payload: payload["source"].__setitem__("crs", "EPSG:3857"),
+        lambda payload: payload["projection"].__setitem__("target_crs", "EPSG:3857"),
+        lambda payload: payload["projection"].__setitem__(
+            "center_lonlat", [73.0, 26.0]
+        ),
+        lambda payload: payload["projection"].__setitem__(
+            "extent_m", [501.0, 300.0]
+        ),
+        lambda payload: payload["road"].__setitem__("topology", "directed"),
+        lambda payload: payload["road"].__setitem__(
+            "preprocess_version", "g2-road-v2"
+        ),
+        lambda payload: payload["audit"].__setitem__("seed", 43),
+    ],
+)
+def test_rejects_frozen_gis_or_audit_contract_drift(tmp_path: Path, mutation) -> None:
+    path = _write_config(tmp_path, mutation)
+
+    with pytest.raises(G2ConfigError, match="frozen G2"):
+        load_g2_config(path)
+
+
 def test_domain_states_reject_negative_or_nonfinite_resources() -> None:
     with pytest.raises(ValueError, match="pesticide_l"):
         UavState("u0", x_m=1.0, y_m=2.0, pesticide_l=-0.1)

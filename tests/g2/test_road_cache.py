@@ -61,10 +61,12 @@ def cache_pair(tmp_path: Path):
     expectation = RoadCacheExpectation(
         scale_id="fixture",
         source_sha256=source.source_sha256,
+        source_crs=source.source_crs,
         target_crs=source.target_crs,
         aoi_bounds_m=source.aoi_bounds_m,
         grid_shape=graph.grid_shape,
         preprocess_version=CONFIG.preprocess_version,
+        generator_commit=GENERATOR_COMMIT,
         generator_sha256=GENERATOR_SHA,
     )
     return paths, expectation, graph
@@ -95,10 +97,12 @@ def test_round_trip_preserves_arrays_mappings_repairs_and_provenance(cache_pair)
     ("field", "replacement", "message"),
     [
         ("source_sha256", "D" * 64, "source_sha256"),
+        ("source_crs", "EPSG:3857", "source_crs"),
         ("target_crs", "EPSG:3857", "target_crs"),
         ("aoi_bounds_m", (0.0, 0.0, 90.0, 100.0), "aoi_bounds_m"),
         ("grid_shape", (9, 10), "grid_shape"),
         ("preprocess_version", "g2-road-v2", "preprocess_version"),
+        ("generator_commit", "d" * 40, "generator_commit"),
         ("generator_sha256", "E" * 64, "generator_sha256"),
     ],
 )
@@ -121,6 +125,31 @@ def test_cache_rejects_array_tampering(cache_pair) -> None:
         np.savez_compressed(handle, **arrays)
 
     with pytest.raises(CacheValidationError, match="content checksum"):
+        load_road_cache(npz_path, metadata_path, expectation)
+
+
+@pytest.mark.parametrize(
+    ("section", "field", "replacement", "message"),
+    [
+        ("source", "crs", "EPSG:3857", "source_crs"),
+        ("generator", "git_commit", "d" * 40, "generator_commit"),
+    ],
+)
+def test_cache_rejects_provenance_metadata_tampering(
+    cache_pair,
+    section: str,
+    field: str,
+    replacement: str,
+    message: str,
+) -> None:
+    (npz_path, metadata_path), expectation, _ = cache_pair
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata[section][field] = replacement
+    metadata_path.write_text(
+        json.dumps(metadata, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+    )
+
+    with pytest.raises(CacheValidationError, match=message):
         load_road_cache(npz_path, metadata_path, expectation)
 
 

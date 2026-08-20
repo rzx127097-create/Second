@@ -18,11 +18,26 @@ class ResourceLedger:
     cumulative_transferred_l: float = 0.0
     events: tuple[Event, ...] = ()
 
+    def __post_init__(self) -> None:
+        _finite_nonnegative(self.initial_total_l, "initial_total_l")
+        _finite_nonnegative(self.cumulative_sprayed_l, "cumulative_sprayed_l")
+        _finite_nonnegative(
+            self.cumulative_transferred_l, "cumulative_transferred_l"
+        )
+
 
 def _finite_nonnegative(value: float, name: str) -> float:
     if isinstance(value, bool) or not math.isfinite(float(value)) or value < 0.0:
         raise ResourceInvariantError(f"{name} must be finite and nonnegative")
     return float(value)
+
+
+def _validate_ledger(ledger: ResourceLedger) -> None:
+    _finite_nonnegative(ledger.initial_total_l, "initial_total_l")
+    _finite_nonnegative(ledger.cumulative_sprayed_l, "cumulative_sprayed_l")
+    _finite_nonnegative(
+        ledger.cumulative_transferred_l, "cumulative_transferred_l"
+    )
 
 
 def new_ledger(
@@ -39,6 +54,7 @@ def assert_conserved(
     ledger: ResourceLedger,
     tolerance: float,
 ) -> None:
+    _validate_ledger(ledger)
     inventory = _finite_nonnegative(vehicle_inventory_l, "vehicle_inventory_l")
     allowed_error = _finite_nonnegative(tolerance, "tolerance")
     observed = math.fsum(uav.pesticide_l for uav in uavs) + inventory
@@ -59,6 +75,7 @@ def apply_spray(
     *,
     step: int = 0,
 ) -> tuple[UavState, ResourceLedger, Event]:
+    _validate_ledger(ledger)
     requested = _finite_nonnegative(requested_l, "requested_l")
     actual = min(uav.pesticide_l, requested)
     updated_uav = replace(uav, pesticide_l=uav.pesticide_l - actual)
@@ -91,6 +108,7 @@ def apply_transfer(
     *,
     step: int = 0,
 ) -> tuple[UavState, float, ResourceLedger, Event]:
+    _validate_ledger(ledger)
     inventory = _finite_nonnegative(vehicle_inventory_l, "vehicle_inventory_l")
     service_cap = _finite_nonnegative(service_cap_l, "service_cap_l")
     capacity = _finite_nonnegative(usable_capacity_l, "usable_capacity_l")

@@ -60,6 +60,16 @@ _FROZEN_SCALES = (
     ("g30x50_d4", (30, 50), 350),
 )
 
+_FROZEN_GIS_AUDIT = {
+    "source_crs": "EPSG:4326",
+    "target_crs": "EPSG:32643",
+    "center_lonlat": (73.0351433, 26.2967719),
+    "extent_m": (500.0, 300.0),
+    "topology": "four_connected_undirected",
+    "preprocess_version": "g2-road-v1",
+    "audit_seed": 42,
+}
+
 
 def _mapping(value: Any, name: str) -> dict[str, Any]:
     if not isinstance(value, dict):
@@ -174,20 +184,45 @@ def load_g2_config(path: Path | str) -> G2Config:
     if len(source_hash) != 64 or any(c not in "0123456789ABCDEF" for c in source_hash):
         raise G2ConfigError("source.sha256 must be a 64-character hexadecimal hash")
 
+    source_crs = _text(source.get("crs"), "source.crs")
+    target_crs = _text(projection.get("target_crs"), "projection.target_crs")
+    topology = _text(road.get("topology"), "road.topology")
+    preprocess_version = _text(
+        road.get("preprocess_version"), "road.preprocess_version"
+    )
+    audit_seed = _integer(audit.get("seed"), "audit.seed")
+    observed_contract = {
+        "source_crs": source_crs,
+        "target_crs": target_crs,
+        "center_lonlat": center,
+        "extent_m": extent,
+        "topology": topology,
+        "preprocess_version": preprocess_version,
+        "audit_seed": audit_seed,
+    }
+    if observed_contract != _FROZEN_GIS_AUDIT:
+        raise G2ConfigError(
+            "configuration must preserve the frozen G2 GIS and audit contract"
+        )
+
+    request_margin_s = _number(
+        service.get("request_margin_s"), "request_margin_s"
+    )
+    if request_margin_s < 0.0:
+        raise G2ConfigError("request_margin_s must be nonnegative")
+
     return G2Config(
         source_path=Path(_text(source.get("path"), "source.path")),
         source_sha256=source_hash,
-        source_crs=_text(source.get("crs"), "source.crs"),
-        target_crs=_text(projection.get("target_crs"), "projection.target_crs"),
+        source_crs=source_crs,
+        target_crs=target_crs,
         center_lonlat=center,
         extent_m=extent,
-        topology=_text(road.get("topology"), "road.topology"),
+        topology=topology,
         max_segment_m=_number(
             road.get("max_segment_m"), "road.max_segment_m", positive=True
         ),
-        preprocess_version=_text(
-            road.get("preprocess_version"), "road.preprocess_version"
-        ),
+        preprocess_version=preprocess_version,
         scales=tuple(scales),
         dt_s=dt_s,
         uav_speed_mps=_number(
@@ -214,15 +249,13 @@ def load_g2_config(path: Path | str) -> G2Config:
         service_cap_l=_number(
             service.get("service_cap_l"), "service_cap_l", positive=True
         ),
-        request_margin_s=_number(
-            service.get("request_margin_s"), "request_margin_s"
-        ),
+        request_margin_s=request_margin_s,
         rendezvous_radius_m=_number(
             service.get("rendezvous_radius_m"),
             "rendezvous_radius_m",
             positive=True,
         ),
-        audit_seed=_integer(audit.get("seed"), "audit.seed"),
+        audit_seed=audit_seed,
         tolerance=_number(audit.get("tolerance"), "audit.tolerance", positive=True),
         output_root=output_root,
     )

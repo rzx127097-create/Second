@@ -14,6 +14,7 @@ from problem2.dynamics.motion import (
     move_uav,
     move_vehicle,
     uav_action_mask,
+    validate_vehicle_road_state,
     vehicle_action_mask,
 )
 from tests.g2.helpers import make_raster_graph
@@ -40,7 +41,7 @@ def test_uav_metric_displacement_is_scale_independent(scale_id: str) -> None:
     moved, event = move_uav(state, Action.RIGHT, CONFIG, (0.0, 0.0, 500.0, 300.0))
 
     assert moved.x_m - state.x_m == pytest.approx(5.0)
-    assert dict(event.payload)["distance_m"] == pytest.approx(5.0)
+    assert dict(event.payload)["actual_distance_m"] == pytest.approx(5.0)
 
 
 def test_uav_boundary_clips_actual_distance_and_masks_outward_action() -> None:
@@ -49,7 +50,18 @@ def test_uav_boundary_clips_actual_distance_and_masks_outward_action() -> None:
     moved, event = move_uav(state, Action.RIGHT, CONFIG, (0.0, 0.0, 500.0, 300.0))
 
     assert moved.x_m == pytest.approx(500.0)
-    assert dict(event.payload)["distance_m"] == pytest.approx(2.0)
+    assert event.payload == (
+        ("intended_action", "RIGHT"),
+        ("legal_mask", (True, True, True, True, True, True)),
+        ("available_distance_m", 5.0),
+        ("actual_distance_m", 2.0),
+        ("edge_progress_m", 0.0),
+        ("route_distance_m", 2.0),
+        ("boundary_clipped", True),
+        ("x_m", 500.0),
+        ("y_m", 150.0),
+        ("unused_distance_m", 3.0),
+    )
     assert not uav_action_mask(moved, CONFIG, (0.0, 0.0, 500.0, 300.0))[Action.RIGHT]
 
 
@@ -66,7 +78,18 @@ def test_vehicle_carries_unfinished_edge_progress_across_steps() -> None:
     assert second.target_node == 2
     assert second.edge_progress_m == pytest.approx(6.0)
     assert second.route_distance_m == pytest.approx(16.0)
-    assert dict(event.payload)["distance_m"] == pytest.approx(8.0)
+    assert event.payload == (
+        ("intended_action", "RIGHT"),
+        ("legal_mask", (False, False, False, False, True)),
+        ("available_distance_m", 8.0),
+        ("actual_distance_m", 8.0),
+        ("edge_progress_m", 6.0),
+        ("route_distance_m", 16.0),
+        ("boundary_clipped", False),
+        ("x_m", 21.0),
+        ("y_m", 35.0),
+        ("unused_distance_m", 0.0),
+    )
 
 
 def test_vehicle_discards_unused_step_distance_at_branch() -> None:
@@ -82,7 +105,18 @@ def test_vehicle_discards_unused_step_distance_at_branch() -> None:
     assert moved.current_node == 1
     assert moved.target_node is None
     assert moved.route_distance_m == pytest.approx(10.0)
-    assert dict(event.payload)["unused_distance_m"] == pytest.approx(8.0)
+    assert event.payload == (
+        ("intended_action", "RIGHT"),
+        ("legal_mask", (True, False, False, False, True)),
+        ("available_distance_m", 18.0),
+        ("actual_distance_m", 10.0),
+        ("edge_progress_m", 0.0),
+        ("route_distance_m", 10.0),
+        ("boundary_clipped", False),
+        ("x_m", 15.0),
+        ("y_m", 35.0),
+        ("unused_distance_m", 8.0),
+    )
 
 
 def test_vehicle_service_lock_allows_only_stay() -> None:
@@ -92,7 +126,7 @@ def test_vehicle_service_lock_allows_only_stay() -> None:
     assert vehicle_action_mask(serving, graph).tolist() == [True, False, False, False, False]
     stayed, event = move_vehicle(serving, Action.STAY, graph, 8.0)
     assert stayed == serving
-    assert dict(event.payload)["distance_m"] == 0.0
+    assert dict(event.payload)["actual_distance_m"] == 0.0
 
 
 def test_illegal_action_has_zero_probability_and_cannot_change_state() -> None:
@@ -106,3 +140,41 @@ def test_illegal_action_has_zero_probability_and_cannot_change_state() -> None:
     with pytest.raises(IllegalActionError, match="UP"):
         move_vehicle(state, Action.UP, graph, 8.0)
     assert state == _vehicle_at_node(graph)
+
+
+def test_vehicle_mask_rejects_node_coordinate_mismatch() -> None:
+    graph = make_raster_graph([(0, 0), (0, 1)], [(0, 1)])
+    invalid = replace(_vehicle_at_node(graph), x_m=6.0)
+
+    with pytest.raises(ValueError, match="node coordinate"):
+        vehicle_action_mask(invalid, graph, CONFIG.tolerance)
+
+
+@pytest.mark.parametrize("current_node", [2, 1])
+def test_vehicle_mask_rejects_invalid_or_nonprimary_node(current_node: int) -> None:
+    graph = make_raster_graph([(0, 0), (2, 2)], [], component_ids=[0, 1])
+    state = VehicleState(
+        "v0",
+        current_node=current_node,
+        x_m=0.0,
+        y_m=0.0,
+        inventory_l=20.0,
+    )
+
+    message = "outside road graph" if current_node == 2 else "primary component"
+    with pytest.raises(ValueError, match=message):
+        vehicle_action_mask(state, graph, CONFIG.tolerance)
+
+
+def test_transit_vehicle_rejects_coordinate_inconsistent_with_edge_progress() -> None:
+    graph = make_raster_graph([(0, 0), (0, 1)], [(0, 1)])
+    transit = replace(
+        _vehicle_at_node(graph),
+        mode=VehicleMode.TRANSIT,
+        target_node=1,
+        direction=Action.RIGHT,
+        edge_progress_m=5.0,
+    )
+
+    with pytest.raises(ValueError, match="transit coordinate"):
+        validate_vehicle_road_state(transit, graph, CONFIG.tolerance)

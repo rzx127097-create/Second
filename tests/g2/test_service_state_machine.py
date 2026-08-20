@@ -19,22 +19,36 @@ from problem2.service.state_machine import (
     advance_service,
     cancel_terminal_requests,
     create_request,
+    reserve_request,
     select_serviceable_request,
     should_request,
     start_service,
 )
+from tests.g2.helpers import make_raster_graph
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = load_g2_config(ROOT / "configs" / "problem2" / "g2_deterministic.yaml")
+GRAPH = make_raster_graph([(0, 0), (0, 1)], [(0, 1)])
 
 
 def _uav(uav_id: str, pesticide_l: float, x_m: float = 0.0) -> UavState:
-    return UavState(uav_id, x_m=x_m, y_m=0.0, pesticide_l=pesticide_l)
+    return UavState(
+        uav_id,
+        x_m=float(GRAPH.node_x_m[0]) + x_m,
+        y_m=float(GRAPH.node_y_m[0]),
+        pesticide_l=pesticide_l,
+    )
 
 
 def _vehicle(inventory_l: float = 20.0, x_m: float = 0.0) -> VehicleState:
-    return VehicleState("v0", 0, x_m=x_m, y_m=0.0, inventory_l=inventory_l)
+    return VehicleState(
+        "v0",
+        0,
+        x_m=float(GRAPH.node_x_m[0]) + x_m,
+        y_m=float(GRAPH.node_y_m[0]),
+        inventory_l=inventory_l,
+    )
 
 
 def _pending(uav_id: str, step: int) -> ServiceRequest:
@@ -71,7 +85,12 @@ def test_same_step_fifo_tie_breaks_by_uav_id() -> None:
     uavs = {"u1": _uav("u1", 0.1), "u2": _uav("u2", 0.1)}
 
     chosen = select_serviceable_request(
-        requests, _vehicle(), uavs, rendezvous_radius_m=15.0
+        requests,
+        _vehicle(),
+        uavs,
+        rendezvous_radius_m=15.0,
+        graph=GRAPH,
+        tolerance=CONFIG.tolerance,
     )
 
     assert chosen is not None
@@ -83,7 +102,12 @@ def test_old_unreachable_request_does_not_block_new_serviceable_request() -> Non
     uavs = {"u0": _uav("u0", 0.1, x_m=100.0), "u1": _uav("u1", 0.1)}
 
     chosen = select_serviceable_request(
-        requests, _vehicle(), uavs, rendezvous_radius_m=15.0
+        requests,
+        _vehicle(),
+        uavs,
+        rendezvous_radius_m=15.0,
+        graph=GRAPH,
+        tolerance=CONFIG.tolerance,
     )
 
     assert chosen is not None
@@ -96,11 +120,74 @@ def test_busy_or_depleted_vehicle_selects_no_request() -> None:
 
     assert (
         select_serviceable_request(
-            [request], replace(_vehicle(), mode=VehicleMode.SERVING), uavs, 15.0
+            [request],
+            replace(_vehicle(), mode=VehicleMode.SERVING),
+            uavs,
+            15.0,
+            GRAPH,
+            CONFIG.tolerance,
         )
         is None
     )
-    assert select_serviceable_request([request], _vehicle(0.0), uavs, 15.0) is None
+    assert (
+        select_serviceable_request(
+            [request], _vehicle(0.0), uavs, 15.0, GRAPH, CONFIG.tolerance
+        )
+        is None
+    )
+
+
+def test_inventory_depleted_flag_rejects_tiny_positive_residual() -> None:
+    request = _pending("u0", 1)
+    uavs = {"u0": _uav("u0", 0.1)}
+    depleted = replace(_vehicle(1e-12), inventory_depleted=True)
+
+    assert (
+        select_serviceable_request(
+            [request], depleted, uavs, 15.0, GRAPH, CONFIG.tolerance
+        )
+        is None
+    )
+
+
+def test_reservation_is_explicit_and_pending_cannot_start_service() -> None:
+    pending = _pending("u0", 1)
+    vehicle = _vehicle(1.0)
+    uav = _uav("u0", 0.08)
+
+    with pytest.raises(ServiceStateError, match="reserved request"):
+        start_service(pending, vehicle, uav, CONFIG, step=1, graph=GRAPH)
+
+    reserved, event = reserve_request(pending, vehicle, step=1)
+
+    assert reserved.status is RequestStatus.RESERVED
+    assert reserved.reserved_vehicle_id == vehicle.vehicle_id
+    assert event.kind == "request_reserved"
+
+
+def test_service_selection_rejects_vehicle_node_coordinate_mismatch() -> None:
+    invalid = replace(_vehicle(), x_m=float(GRAPH.node_x_m[0]) + 1.0)
+
+    with pytest.raises(ServiceStateError, match="node coordinate"):
+        select_serviceable_request(
+            [_pending("u0", 1)],
+            invalid,
+            {"u0": _uav("u0", 0.1)},
+            15.0,
+            GRAPH,
+            CONFIG.tolerance,
+        )
+
+
+def test_service_start_rejects_vehicle_node_outside_graph() -> None:
+    vehicle = _vehicle(1.0)
+    request, _ = reserve_request(_pending("u0", 1), vehicle, step=1)
+    invalid = replace(vehicle, current_node=len(GRAPH.node_rows))
+
+    with pytest.raises(ServiceStateError, match="outside road graph"):
+        start_service(
+            request, invalid, _uav("u0", 0.08), CONFIG, step=1, graph=GRAPH
+        )
 
 
 def test_transfer_occurs_only_on_atomic_completion_boundary() -> None:
@@ -108,11 +195,15 @@ def test_transfer_occurs_only_on_atomic_completion_boundary() -> None:
     request = _pending("u0", 1)
     vehicle = _vehicle(1.0)
     ledger = new_ledger([uav], vehicle.inventory_l)
-    request, vehicle, uav, start_events = start_service(
-        request, vehicle, uav, CONFIG, step=1
+    request, reserved_event = reserve_request(request, vehicle, step=1)
+    request, vehicle, uav, started_event = start_service(
+        request, vehicle, uav, CONFIG, step=1, graph=GRAPH
     )
 
-    assert [event.kind for event in start_events] == ["request_reserved", "service_started"]
+    assert [reserved_event.kind, started_event.kind] == [
+        "request_reserved",
+        "service_started",
+    ]
     assert vehicle.service_steps_required == 25
     for step in range(1, 25):
         request, vehicle, uav, ledger, events = advance_service(
@@ -135,8 +226,10 @@ def test_transfer_occurs_only_on_atomic_completion_boundary() -> None:
 
 def test_terminal_before_completion_cancels_without_transfer() -> None:
     uav = _uav("u0", 0.08)
+    vehicle = _vehicle(1.0)
+    request, _ = reserve_request(_pending("u0", 1), vehicle, step=1)
     request, vehicle, uav, _ = start_service(
-        _pending("u0", 1), _vehicle(1.0), uav, CONFIG, step=1
+        request, vehicle, uav, CONFIG, step=1, graph=GRAPH
     )
     ledger = new_ledger([_uav("u0", 0.08)], 1.0)
     for step in range(1, 25):

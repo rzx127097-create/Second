@@ -21,18 +21,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate the six audited G2 road caches.")
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--output-root", type=Path)
-    parser.add_argument("--allow-test-output-root", action="store_true")
     args = parser.parse_args(argv)
     try:
         config = load_g2_config(args.config)
-        output_root = resolve_output_root(
-            config,
-            args.output_root,
-            allow_test_output_root=args.allow_test_output_root,
-        )
-        provenance = resolve_generator_provenance(
-            allow_dirty=args.allow_test_output_root
-        )
+        output_root = resolve_output_root(config, args.output_root)
+        provenance = resolve_generator_provenance()
         records = preprocess_all(config, output_root, provenance)
         print(
             json.dumps(

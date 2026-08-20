@@ -1,0 +1,3 @@
+outputs/problem2_sr_mappo_v1/g2/**/*.json text eol=lf
+outputs/problem2_sr_mappo_v1/g2/**/*.jsonl text eol=lf
+outputs/problem2_sr_mappo_v1/g2/**/*.npz binary
