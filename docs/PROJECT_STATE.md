@@ -82,12 +82,14 @@ and rejects validation or sealed-test training partitions, non-finite
 hyperparameters, battery replenishment, and any drift from the frozen role,
 action, dimension, stability-flag, or dependency contract. The canonical YAML
 SHA-256 is
-`0f1420311796fc0a70d65c421b53b0954db253d9c58024c7d656230b48a36d7e`.
+`421eff64d1161f78c9029dfc6d133b9b66247f3cf905b9577e55965584195f93`.
 
 Verification before persistence:
 
-- `python -m pytest tests/g3/test_g3_config.py -q`: `10 passed`.
-- `python -m pytest tests/g3/test_g3_config.py tests/g2 -q`: `112 passed`.
+- `python -m pytest tests/g3/test_g3_config.py -q`: `19 passed`.
+- `python -m pytest tests/g2 -q`: `102 passed`.
+- `python -m pip install --dry-run -r requirements-g3.lock`: exit 0 with the
+  PyPI and CPU PyTorch wheel indexes declared by the lock file.
 - `python -m compileall -q src`: exit 0.
 - `git diff --check`: exit 0.
 - The verified dependency environment is Python `3.11.15` and CPU-only PyTorch

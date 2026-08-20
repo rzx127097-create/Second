@@ -54,11 +54,12 @@ partitions:
 training_partition: development
 configuration:
   path: configs/problem2/g3_heterogeneous_marl.yaml
-  canonical_yaml_sha256: 0f1420311796fc0a70d65c421b53b0954db253d9c58024c7d656230b48a36d7e
+  canonical_yaml_sha256: 421eff64d1161f78c9029dfc6d133b9b66247f3cf905b9577e55965584195f93
 dependencies:
   python: 3.11.15
-  pytorch_dependency: torch>=2.13,<2.14
+  pytorch_dependency: torch==2.13.0+cpu
   pytorch_dependency_floor: '2.13'
+  pytorch_index_url: https://download.pytorch.org/whl/cpu
   pytorch_version: 2.13.0+cpu
 resources:
   replenished_resource: pesticide

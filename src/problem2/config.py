@@ -3,8 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import math
+from types import MappingProxyType
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import yaml
 
@@ -83,12 +84,13 @@ class G3Config:
     entropy_coef: float
     max_grad_norm: float
     minibatch_size: int
-    stability_components: dict[str, bool]
+    stability_components: Mapping[str, bool]
     training_partition: str
     replenished_resource: str
     battery_replenishment_enabled: bool
     pytorch_dependency: str
     pytorch_dependency_floor: str
+    pytorch_index_url: str
     pytorch_version: str
     python_version: str
     config_hash: str
@@ -332,12 +334,97 @@ _G3_STABILITY_FLAGS = (
 )
 _G3_UAV_ACTIONS = ("up", "down", "left", "right", "stay", "spray")
 _G3_VEHICLE_ACTIONS = ("hold", "slot-0", "slot-1", "slot-2", "slot-3")
+_G3_TOP_LEVEL_KEYS = frozenset(
+    {
+        "schema_version",
+        "algorithm_name",
+        "problem_description",
+        "uav_count",
+        "uav_obs_dim",
+        "vehicle_obs_dim",
+        "critic_state_dim",
+        "uav_action_dim",
+        "vehicle_action_dim",
+        "uav_actions",
+        "vehicle_actions",
+        "max_candidate_slots",
+        "gamma",
+        "gae_lambda",
+        "ppo_epochs",
+        "rollout_horizon",
+        "total_updates",
+        "learning_rate",
+        "value_clip_eps",
+        "value_loss_coef",
+        "entropy_coef",
+        "max_grad_norm",
+        "minibatch_size",
+        "stability_components",
+        "training_partition",
+        "resources",
+        "pytorch_dependency",
+        "pytorch_dependency_floor",
+        "pytorch_index_url",
+        "pytorch_version",
+        "python_version",
+    }
+)
+_G3_RESOURCE_KEYS = frozenset(
+    {"replenished_resource", "battery_replenishment_enabled"}
+)
+_G3_EXACT_NUMBERS = {
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "learning_rate": 0.0003,
+    "value_clip_eps": 0.2,
+    "value_loss_coef": 0.5,
+    "entropy_coef": 0.01,
+    "max_grad_norm": 0.5,
+}
+_G3_EXACT_INTEGERS = {
+    "ppo_epochs": 2,
+    "rollout_horizon": 32,
+    "total_updates": 1000,
+    "minibatch_size": 64,
+}
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    pass
+
+
+def _construct_unique_mapping(loader: _UniqueKeyLoader, node: yaml.Node) -> dict[Any, Any]:
+    mapping: dict[Any, Any] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node)
+        if key in mapping:
+            raise G3ConfigError(f"duplicate YAML key: {key}")
+        mapping[key] = loader.construct_object(value_node)
+    return mapping
+
+
+_UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
+)
 
 
 def _g3_mapping(value: Any, name: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise G3ConfigError(f"{name} must be a mapping")
     return value
+
+
+def _g3_require_keys(
+    mapping: dict[str, Any], expected: frozenset[str], name: str
+) -> None:
+    keys = set(mapping)
+    extra = sorted(keys - expected)
+    missing = sorted(expected - keys)
+    if extra:
+        raise G3ConfigError(f"{name} contains unknown keys: {', '.join(extra)}")
+    if missing:
+        raise G3ConfigError(f"{name} is missing keys: {', '.join(missing)}")
 
 
 def _g3_text(value: Any, name: str) -> str:
@@ -415,7 +502,9 @@ def load_g3_config(path: Path | str) -> G3Config:
 
     config_path = Path(path)
     try:
-        payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        payload = yaml.load(
+            config_path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader
+        )
     except (OSError, yaml.YAMLError) as exc:
         raise G3ConfigError(f"cannot load G3 configuration: {exc}") from exc
     return load_g3_payload(payload, source_path=config_path)
@@ -427,6 +516,7 @@ def load_g3_payload(
     """Validate an already parsed G3 payload and calculate its identity."""
 
     root = _g3_mapping(payload, "configuration")
+    _g3_require_keys(root, _G3_TOP_LEVEL_KEYS, "configuration")
     _reject_nonfinite_g3_values(root)
 
     if root.get("schema_version") != "g3.v1":
@@ -466,6 +556,7 @@ def load_g3_payload(
     stability = _g3_mapping(
         root.get("stability_components"), "stability_components"
     )
+    _g3_require_keys(stability, frozenset(_G3_STABILITY_FLAGS), "stability_components")
     if set(stability) != set(_G3_STABILITY_FLAGS):
         raise G3ConfigError("stability_components must define all seven G3 flags")
     stability_components: dict[str, bool] = {}
@@ -485,6 +576,7 @@ def load_g3_payload(
         )
 
     resources = _g3_mapping(root.get("resources"), "resources")
+    _g3_require_keys(resources, _G3_RESOURCE_KEYS, "resources")
     replenished_resource = _g3_text(
         resources.get("replenished_resource"), "resources.replenished_resource"
     )
@@ -494,41 +586,18 @@ def load_g3_payload(
     if battery_replenishment_enabled is not False:
         raise G3ConfigError("battery replenishment must remain disabled")
 
-    scalar_hyperparameters = {
-        "gamma": _g3_number(root.get("gamma"), "gamma"),
-        "gae_lambda": _g3_number(root.get("gae_lambda"), "gae_lambda"),
-        "learning_rate": _g3_number(
-            root.get("learning_rate"), "learning_rate", positive=True
-        ),
-        "value_clip_eps": _g3_number(
-            root.get("value_clip_eps"), "value_clip_eps", positive=True
-        ),
-        "value_loss_coef": _g3_number(
-            root.get("value_loss_coef"), "value_loss_coef", positive=True
-        ),
-        "entropy_coef": _g3_number(
-            root.get("entropy_coef"), "entropy_coef", positive=True
-        ),
-        "max_grad_norm": _g3_number(
-            root.get("max_grad_norm"), "max_grad_norm", positive=True
-        ),
-    }
-    if not 0.0 < scalar_hyperparameters["gamma"] <= 1.0:
-        raise G3ConfigError("gamma must be in (0, 1]")
-    if not 0.0 < scalar_hyperparameters["gae_lambda"] <= 1.0:
-        raise G3ConfigError("gae_lambda must be in (0, 1]")
-    integer_hyperparameters = {
-        "ppo_epochs": _g3_integer(root.get("ppo_epochs"), "ppo_epochs", positive=True),
-        "rollout_horizon": _g3_integer(
-            root.get("rollout_horizon"), "rollout_horizon", positive=True
-        ),
-        "total_updates": _g3_integer(
-            root.get("total_updates"), "total_updates", positive=True
-        ),
-        "minibatch_size": _g3_integer(
-            root.get("minibatch_size"), "minibatch_size", positive=True
-        ),
-    }
+    scalar_hyperparameters = {}
+    for name, expected in _G3_EXACT_NUMBERS.items():
+        value = _g3_number(root.get(name), name, positive=True)
+        if value != expected:
+            raise G3ConfigError(f"{name} must remain frozen at {expected}")
+        scalar_hyperparameters[name] = value
+    integer_hyperparameters = {}
+    for name, expected in _G3_EXACT_INTEGERS.items():
+        value = _g3_integer(root.get(name), name, positive=True)
+        if value != expected:
+            raise G3ConfigError(f"{name} must remain frozen at {expected}")
+        integer_hyperparameters[name] = value
 
     pytorch_dependency = _g3_text(
         root.get("pytorch_dependency"), "pytorch_dependency"
@@ -536,12 +605,15 @@ def load_g3_payload(
     pytorch_dependency_floor = _g3_text(
         root.get("pytorch_dependency_floor"), "pytorch_dependency_floor"
     )
+    pytorch_index_url = _g3_text(root.get("pytorch_index_url"), "pytorch_index_url")
     pytorch_version = _g3_text(root.get("pytorch_version"), "pytorch_version")
     python_version = _g3_text(root.get("python_version"), "python_version")
-    if pytorch_dependency != "torch>=2.13,<2.14":
-        raise G3ConfigError("pytorch_dependency must preserve the G3 dependency floor")
+    if pytorch_dependency != "torch==2.13.0+cpu":
+        raise G3ConfigError("pytorch_dependency must preserve the G3 dependency lock")
     if pytorch_dependency_floor != "2.13":
         raise G3ConfigError("pytorch_dependency_floor must be 2.13")
+    if pytorch_index_url != "https://download.pytorch.org/whl/cpu":
+        raise G3ConfigError("pytorch_index_url must use the CPU PyTorch wheel index")
     if pytorch_version != "2.13.0+cpu":
         raise G3ConfigError("pytorch_version must be 2.13.0+cpu")
     if python_version != "3.11.15":
@@ -557,12 +629,13 @@ def load_g3_payload(
         vehicle_actions=vehicle_actions,
         **scalar_hyperparameters,
         **integer_hyperparameters,
-        stability_components=stability_components,
+        stability_components=MappingProxyType(stability_components),
         training_partition=training_partition,
         replenished_resource=replenished_resource,
         battery_replenishment_enabled=False,
         pytorch_dependency=pytorch_dependency,
         pytorch_dependency_floor=pytorch_dependency_floor,
+        pytorch_index_url=pytorch_index_url,
         pytorch_version=pytorch_version,
         python_version=python_version,
         config_hash=canonical_hash,

@@ -39,7 +39,8 @@ resources:
   replenished_resource: pesticide
   battery_replenishment_enabled: false
 
-pytorch_dependency: torch>=2.13,<2.14
+pytorch_dependency: torch==2.13.0+cpu
 pytorch_dependency_floor: '2.13'
+pytorch_index_url: https://download.pytorch.org/whl/cpu
 pytorch_version: 2.13.0+cpu
 python_version: 3.11.15
