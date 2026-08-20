@@ -1,0 +1,95 @@
+{
+  "artifacts": [
+    {
+      "bytes": 41111,
+      "path": "roads/g20x20_d2/metadata.json",
+      "role": "road-cache",
+      "sha256": "f9e3eb00f74915f9d57361120ce90ae3806b83e53f0573dabe2b6271076d8371"
+    },
+    {
+      "bytes": 3357,
+      "path": "roads/g20x20_d2/road_graph.npz",
+      "role": "road-cache",
+      "sha256": "705bf336498bc80c0b9be8dbfbca9eabe12491d659c0b5379a86763b75585eb4"
+    },
+    {
+      "bytes": 47212,
+      "path": "roads/g20x30_d3/metadata.json",
+      "role": "road-cache",
+      "sha256": "20ec2da8ae844d2da6a1c0a4a2e65db26fbff6d7f496334ba37dcab7a5255016"
+    },
+    {
+      "bytes": 3772,
+      "path": "roads/g20x30_d3/road_graph.npz",
+      "role": "road-cache",
+      "sha256": "9d13c7fec1179eb79fb90dcbbcc7cbfc50d12c16eaea0ea761c155570cef6c41"
+    },
+    {
+      "bytes": 53172,
+      "path": "roads/g20x40_d3/metadata.json",
+      "role": "road-cache",
+      "sha256": "248367f2f33ae09f825f39118b74555b060eb96e9e95538cb7460db378ca6738"
+    },
+    {
+      "bytes": 4054,
+      "path": "roads/g20x40_d3/road_graph.npz",
+      "role": "road-cache",
+      "sha256": "c8c514aed4289bf30a44a2b3abf57274dc6823fa74ad1f8c9de2e447b57c001c"
+    },
+    {
+      "bytes": 61514,
+      "path": "roads/g30x30_d3/metadata.json",
+      "role": "road-cache",
+      "sha256": "a534c819eaec517a2d7b060f15a3abdc2180c6425486da713f97d9b3daea188d"
+    },
+    {
+      "bytes": 4319,
+      "path": "roads/g30x30_d3/road_graph.npz",
+      "role": "road-cache",
+      "sha256": "6b666cf4b8ce55cc0c30cfbc7538387c08baa9f6368bfe89257b490a3dd523ac"
+    },
+    {
+      "bytes": 67410,
+      "path": "roads/g30x40_d4/metadata.json",
+      "role": "road-cache",
+      "sha256": "a1fcda51d536a47eab962bd0a850b935b12228adc3aa8792d5fd87d56a08b7d1"
+    },
+    {
+      "bytes": 4659,
+      "path": "roads/g30x40_d4/road_graph.npz",
+      "role": "road-cache",
+      "sha256": "da09bc6777e4d4b88d2b3b4835e1806cdb54974f6b9a052339a9471ab2c9c18f"
+    },
+    {
+      "bytes": 72724,
+      "path": "roads/g30x50_d4/metadata.json",
+      "role": "road-cache",
+      "sha256": "c01157744442931529d6d82703ffee26eb456e3e4aa15eb5263f03c319e63387"
+    },
+    {
+      "bytes": 4834,
+      "path": "roads/g30x50_d4/road_graph.npz",
+      "role": "road-cache",
+      "sha256": "a9b362a28381890429d306ebf237f3c4e102be412a54e1d2822ff41328b44410"
+    },
+    {
+      "bytes": 25134,
+      "path": "deterministic-event-trace.jsonl",
+      "role": "deterministic-event-trace",
+      "sha256": "b6b74d0461bb9e6a72098277366a0472844f894323dddb55dd77fbdb6a4854a1"
+    },
+    {
+      "bytes": 4303,
+      "path": "g2-deterministic-audit.json",
+      "role": "g2-audit-report",
+      "sha256": "14c001e83cf1aeac9df6ed0ab958737e0f2ee734edcaaabffd5084194831eeb8"
+    }
+  ],
+  "gate": "G2",
+  "generator": {
+    "git_commit": "4578b08888abe7abf3278761437a905a1de5b309",
+    "tree_sha256": "58fa4e38bc8d12ae0c9c19b88a60cc08a267ec671868e3eef113b93fc9423cb0"
+  },
+  "schema_version": "g2-artifact-manifest-v1",
+  "status": "pass"
+}

@@ -682,7 +682,7 @@ requirements-g2.lock configs/problem2/g2_deterministic.yaml src/problem2
 scripts/preprocess_g2_roads.py scripts/audit_g2_deterministic.py`; pure evidence
 or documentation commits therefore do not create a false cache invalidation.
 
-- [ ] **Step 6: Generate the six real caches and unified audit evidence**
+- [x] **Step 6: Generate the six real caches and unified audit evidence**
 
 Run:
 
@@ -694,7 +694,7 @@ python scripts/audit_g2_deterministic.py --config configs/problem2/g2_determinis
 Expected: both commands print `status=pass`, identify six scales, and report no
 failed invariant. The audit report records the clean generator commit.
 
-- [ ] **Step 7: Verify generated artifacts and commit them**
+- [x] **Step 7: Verify generated artifacts and commit them**
 
 Run: `python -m pytest tests/g2 -q`
 

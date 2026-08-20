@@ -1,0 +1,178 @@
+{
+  "cross_process_replay": {
+    "event_count": 183,
+    "match": true,
+    "python_hash_seeds": [
+      1,
+      98765
+    ],
+    "sha256": "b6b74d0461bb9e6a72098277366a0472844f894323dddb55dd77fbdb6a4854a1"
+  },
+  "formal_experiments": {
+    "performed": false
+  },
+  "gate": "G2",
+  "generator": {
+    "git_commit": "4578b08888abe7abf3278761437a905a1de5b309",
+    "tree_sha256": "58fa4e38bc8d12ae0c9c19b88a60cc08a267ec671868e3eef113b93fc9423cb0"
+  },
+  "maturity": "M2",
+  "permitted_claim": "G2 deterministic implementation verified",
+  "resource_conservation": {
+    "max_abs_error_l": 2.220446049250313e-16,
+    "tolerance_l": 1e-09
+  },
+  "scales": [
+    {
+      "astar_dijkstra_max_abs_difference_m": 0.0,
+      "component_sizes": [
+        192,
+        2,
+        2
+      ],
+      "edge_count": 203,
+      "grid_shape": [
+        20,
+        20
+      ],
+      "illegal_action_nonzero_probability_count": 0,
+      "node_count": 196,
+      "path_pairs_checked": 20,
+      "primary_component_id": 0,
+      "repair_count": 9,
+      "scale_id": "g20x20_d2",
+      "uav_test_distance_m": 5.0,
+      "vehicle_test_distance_m": 8.0,
+      "vehicle_test_target_node": 1
+    },
+    {
+      "astar_dijkstra_max_abs_difference_m": 0.0,
+      "component_sizes": [
+        242,
+        2
+      ],
+      "edge_count": 251,
+      "grid_shape": [
+        20,
+        30
+      ],
+      "illegal_action_nonzero_probability_count": 0,
+      "node_count": 244,
+      "path_pairs_checked": 20,
+      "primary_component_id": 0,
+      "repair_count": 15,
+      "scale_id": "g20x30_d3",
+      "uav_test_distance_m": 5.0,
+      "vehicle_test_distance_m": 8.0,
+      "vehicle_test_target_node": 12
+    },
+    {
+      "astar_dijkstra_max_abs_difference_m": 0.0,
+      "component_sizes": [
+        277,
+        2,
+        3
+      ],
+      "edge_count": 288,
+      "grid_shape": [
+        20,
+        40
+      ],
+      "illegal_action_nonzero_probability_count": 0,
+      "node_count": 282,
+      "path_pairs_checked": 20,
+      "primary_component_id": 0,
+      "repair_count": 23,
+      "scale_id": "g20x40_d3",
+      "uav_test_distance_m": 5.0,
+      "vehicle_test_distance_m": 8.0,
+      "vehicle_test_target_node": 1
+    },
+    {
+      "astar_dijkstra_max_abs_difference_m": 0.0,
+      "component_sizes": [
+        321,
+        3
+      ],
+      "edge_count": 331,
+      "grid_shape": [
+        30,
+        30
+      ],
+      "illegal_action_nonzero_probability_count": 0,
+      "node_count": 324,
+      "path_pairs_checked": 20,
+      "primary_component_id": 0,
+      "repair_count": 37,
+      "scale_id": "g30x30_d3",
+      "uav_test_distance_m": 5.0,
+      "vehicle_test_distance_m": 8.0,
+      "vehicle_test_target_node": 9
+    },
+    {
+      "astar_dijkstra_max_abs_difference_m": 0.0,
+      "component_sizes": [
+        359,
+        3,
+        3
+      ],
+      "edge_count": 371,
+      "grid_shape": [
+        30,
+        40
+      ],
+      "illegal_action_nonzero_probability_count": 0,
+      "node_count": 365,
+      "path_pairs_checked": 20,
+      "primary_component_id": 0,
+      "repair_count": 45,
+      "scale_id": "g30x40_d4",
+      "uav_test_distance_m": 5.0,
+      "vehicle_test_distance_m": 8.0,
+      "vehicle_test_target_node": 1
+    },
+    {
+      "astar_dijkstra_max_abs_difference_m": 0.0,
+      "component_sizes": [
+        398,
+        3,
+        4
+      ],
+      "edge_count": 411,
+      "grid_shape": [
+        30,
+        50
+      ],
+      "illegal_action_nonzero_probability_count": 0,
+      "node_count": 405,
+      "path_pairs_checked": 20,
+      "primary_component_id": 0,
+      "repair_count": 49,
+      "scale_id": "g30x50_d4",
+      "uav_test_distance_m": 5.0,
+      "vehicle_test_distance_m": 8.0,
+      "vehicle_test_target_node": 9
+    }
+  ],
+  "schema_version": "g2-deterministic-audit-v1",
+  "sealed_test": {
+    "accessed": false,
+    "unlock_count": 0
+  },
+  "source": {
+    "aoi_bounds_m": [
+      303584.90761204995,
+      2909890.641288977,
+      304084.90761204995,
+      2910190.641288977
+    ],
+    "path": "D:\\Pycharm\\Locust_rl\\data\\jodhpur_drive.graphml",
+    "sha256": "B3AF36EFBFC87FFF30BD61D204283DC40C5B8C83A80BA0EE09F3DA5EF52A9462",
+    "source_crs": "EPSG:4326",
+    "target_crs": "EPSG:32643"
+  },
+  "status": "pass",
+  "training": {
+    "performed": false
+  }
+}
