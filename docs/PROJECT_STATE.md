@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-21
+Last updated: 2026-08-20
 
 ## Final Goal
 
@@ -27,10 +27,11 @@ real deployment evidence.
 - Existing remote feature branch:
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
-- Current highest maturity: `M2` deterministic implementation evidence.
-- Current gate: G3 Task 1 configuration/dependency contract is implemented and
-  pushed. The full G3 acceptance suite remains open; G4, formal experiments,
-  validation tuning, and sealed evaluation remain unauthorized.
+- Current highest maturity: `M2` heterogeneous implementation evidence.
+- Current gate: G3 heterogeneous-MARL acceptance passed at M2. G4 is the next
+  authorized gate after the G3 evidence and persistence records are pushed and
+  recorded. Formal experiments, validation tuning, and sealed evaluation
+  remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -102,6 +103,26 @@ The local HEAD, upstream HEAD, and `git ls-remote` matched this hash before
 this state record. This Task 1 record does not close G3 or authorize training
 on validation or sealed scenarios.
 
+Task 1 hardening and planning synchronization:
+
+- Hardening commit `098f119938754947644ae28c5f8adef03394a0d8`
+  (`fix: harden g3 contract validation`) closes the Task 1 review findings for
+  installable CPU PyTorch locking, independent registry/hash parity, unknown
+  and duplicate YAML keys, exact optimization freezes, and immutable stability
+  flags.
+- Planning commit `176f54925a866846e56bcbad79901b80ddd16313`
+  (`docs: add g3 heterogeneous marl plan`) records the G3 design and execution
+  plan in `docs/superpowers/`.
+- Fresh verification before the push: `python -m pytest
+  tests/g3/test_g3_config.py -q` returned `19 passed`; `python -m pytest
+  tests/g2 -q` returned `102 passed`; `python -m compileall -q src scripts`
+  exited 0; `git diff --check` exited 0.
+- Push verification after the push: local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-g3-heterogeneous-marl` all
+  returned `176f54925a866846e56bcbad79901b80ddd16313`.
+- This synchronization still does not close G3; the role-learning acceptance
+  suite, controlled development smoke, gate report, and HANDOFFG3 remain open.
+
 Content-push verification:
 
 - `python -m pytest tests/g2 -q`: `102 passed`.
@@ -116,6 +137,63 @@ Content-push verification:
 - Final persistence check: the same three commands all returned
   `ab31744515eec0135e55054f438a010cbaee8b46`; `git status --short --branch`
   showed a clean worktree.
+
+## G3 Heterogeneous MARL Acceptance Record
+
+G3 now passes at maturity `M2`. The implementation remains engineering
+evidence only; it does not promote the project to M3 and does not support
+mobile-treatment efficacy, superiority, formal-experiment, or deployment
+claims.
+
+Implementation and evidence:
+
+- Implementation hardening commit:
+  `092b7f3e965a24979bac65c8304cd9d7dc142f73`.
+- G3 configuration hash:
+  `421eff64d1161f78c9029dfc6d133b9b66247f3cf905b9577e55965584195f93`.
+- Source-tree commit bound to the canonical smoke:
+  `092b7f3e965a24979bac65c8304cd9d7dc142f73`.
+- Implementation source-tree hash:
+  `a3b5f20c6935cf29c0c0edb627cf64a0b4b5c7b96a3ca94449c205da1b5f2a95`.
+- Scenario seed manifest:
+  schema `g1.v1`,
+  SHA-256
+  `ab993f19e1ae4cb9d7ba4f4f862639901581be057e0a251e5c113d957f6059ce`.
+- Acceptance result: `17/17`, audit `status=pass`.
+
+Canonical smoke artifacts:
+
+- `outputs/problem2_sr_mappo_v1/g3/training-smoke.jsonl`:
+  SHA-256
+  `9885e24a0e58191fdd7975b55d72487d3f817985c8a0ec585d737af5228e2972`,
+  `2204` bytes.
+- `outputs/problem2_sr_mappo_v1/g3/provenance.json`:
+  SHA-256
+  `10da75b9c01d485ece3e6214de10367ba5356d80e4be97e38a1e399afb9ed69d`,
+  `756` bytes.
+- `outputs/problem2_sr_mappo_v1/g3/checkpoints/g3-smoke.pt`:
+  SHA-256
+  `832ddd1350ff82a0642b144c4d962e762f47b294dcc00873354e2df99159d0b3`,
+  `1293261` bytes.
+- `outputs/problem2_sr_mappo_v1/g3/g3-marl-audit.json`:
+  SHA-256
+  `b9e2829f02372235bba856317767b8d0703d83e5841c75befab68d092ddc6b2c`,
+  `4874` bytes.
+
+Fresh verification:
+
+- `python -m pytest tests/g3 -q`: `63 passed`.
+- `python -m pytest -q`: `221 passed`.
+- `python -m compileall -q src scripts`: exit 0.
+- `git diff --check`: no content errors.
+- Canonical development smoke: seed `9017`, `2` updates, finite losses,
+  `source_tree_clean: true`, validation/sealed access false.
+- Canonical G3 auditor: `17/17` acceptance nodes, `status=pass`.
+
+The next authorized gate is G4. G4 must begin with resource-scarcity
+activation and counterfactual mechanism probes. The G3 smoke must not be used
+as treatment efficacy evidence. Formal jobs, validation tuning, and sealed
+evaluation remain unauthorized.
 
 The repository already contains chapter 4.1/4.2 design, figure, document, and
 artifact-ledger assets on `origin/main`. The remote branch
@@ -501,13 +579,9 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Complete and independently verify the remaining G3 heterogeneous MARL
-  components:
-  role-local observations, action masks, saved masked log-prob replay,
-  structured critic, team GAE, role gradient isolation, normalization freeze,
-  and checkpoint round trip.
-- Run G4 resource activation and counterfactual probes before any formal claim
-  about mobile replenishment.
+- Start G4 with resource-scarcity activation and counterfactual mechanism
+  probes; preserve pesticide-only scope and keep battery replenishment
+  inactive.
 - Freeze G5 pilot protocol and baseline fairness before formal matrix jobs.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
@@ -520,9 +594,10 @@ G1.1 bounded remediation persistence record:
 - G1.1 was accepted at M1; G2 deterministic implementation now passes at M2
   with content and persistence push records verified. Candidate-branch reports
   remain untrusted until later branch-local verification.
-- G3 Task 1 configuration/dependency contract is implemented at M2 on content
-  commit `8822edad2f48fc468fc00271e88de8926897cba6`; the full G3 gate remains
-  open until the role-learning acceptance tests and development smoke pass.
+- G3 heterogeneous-MARL implementation and acceptance passed at M2 on
+  implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
+  canonical smoke and audit artifacts are recorded above. G4 is the next
+  authorized gate after the evidence and persistence commits are recorded.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -563,7 +638,7 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Continue G3 with the role-local heterogeneous-MARL implementation and its
-acceptance tests. The highest maturity remains M2 deterministic/contract
-implementation evidence. Formal experiments and sealed-test evaluation remain
-unauthorized.
+Begin G4 with resource-scarcity activation and counterfactual mechanism probes
+using the frozen G2 physical foundation and G3 learning interface. The highest
+maturity remains M2 implementation evidence. Formal experiments, validation
+tuning, and sealed-test evaluation remain unauthorized.

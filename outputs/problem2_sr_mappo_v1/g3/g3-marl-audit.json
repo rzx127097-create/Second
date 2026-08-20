@@ -1,0 +1,73 @@
+{
+  "acceptance": {
+    "command": "C:\\Users\\RZX\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe -m pytest tests/g3/test_training_and_checkpoint.py::test_actor_optimizer_parameter_sets_are_gradient_isolated tests/g3/test_training_and_checkpoint.py::test_algorithm_act_replays_from_exact_masks_and_policy_inputs tests/g3/test_common_math_and_rollout.py::test_masked_categorical_has_exact_zero_probability_for_invalid_actions tests/g3/test_common_math_and_rollout.py::test_compute_gae_bootstraps_truncation_but_cuts_termination_and_trace tests/g3/test_common_math_and_rollout.py::test_rollout_advantage_normalization_uses_only_valid_team_samples tests/g3/test_training_and_checkpoint.py::test_trainer_updates_roles_with_isolated_optimizers_and_counts tests/g3/test_training_and_checkpoint.py::test_trainer_excludes_team_invalid_samples_from_all_updates tests/g3/test_training_and_checkpoint.py::test_deterministic_evaluation_freezes_normalizers_byte_identically tests/g3/test_training_and_checkpoint.py::test_checkpoint_roundtrip_restores_policy_trainer_normalizers_and_rng tests/g3/test_training_and_checkpoint.py::test_checkpoint_rejects_expected_provenance_drift tests/g3/test_role_interfaces.py::test_actor_interfaces_accept_only_role_observation tests/g3/test_training_and_checkpoint.py::test_configuration_diff_only_allows_declared_stability_flags tests/g3/test_role_interfaces.py::test_g2_masks_convert_to_role_masks_without_action_replacement tests/g3/test_role_interfaces.py::test_g2_vehicle_mask_allows_hold_only_without_candidate_slots tests/g3/test_role_interfaces.py::test_g2_vehicle_mask_validates_candidate_slot_identity tests/g3/test_common_math_and_rollout.py::test_rollout_rejects_g3_candidate_mapping_mask_mismatch tests/g3/test_training_smoke.py::test_training_smoke_writes_finite_provenance_bound_artifacts -q",
+    "passed": 17,
+    "required": 17,
+    "summary": "17 passed in 4.79s",
+    "tests": {
+      "actor_information_boundary": true,
+      "checkpoint_expected_provenance": true,
+      "checkpoint_roundtrip": true,
+      "configuration_diff": true,
+      "configured_update_counts": true,
+      "development_training_smoke": true,
+      "evaluation_normalizer_freeze": true,
+      "g2_candidate_slot_identity": true,
+      "g2_hold_only_mask": true,
+      "g2_mask_conversion": true,
+      "gradient_isolation": true,
+      "masked_log_prob_replay": true,
+      "rollout_candidate_mapping": true,
+      "team_gae_gold": true,
+      "team_valid_sample_filtering": true,
+      "valid_advantage_normalization": true,
+      "zero_invalid_action_probability": true
+    }
+  },
+  "algorithm_name": "SR-MAPPO",
+  "artifacts": {
+    "checkpoint": {
+      "bytes": 1293261,
+      "path": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g3\\checkpoints\\g3-smoke.pt",
+      "sha256": "832ddd1350ff82a0642b144c4d962e762f47b294dcc00873354e2df99159d0b3"
+    },
+    "provenance": {
+      "bytes": 756,
+      "path": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g3\\provenance.json",
+      "sha256": "10da75b9c01d485ece3e6214de10367ba5356d80e4be97e38a1e399afb9ed69d"
+    },
+    "raw_log": {
+      "bytes": 2204,
+      "path": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g3\\training-smoke.jsonl",
+      "sha256": "9885e24a0e58191fdd7975b55d72487d3f817985c8a0ec585d737af5228e2972"
+    }
+  },
+  "boundaries": {
+    "battery_replenishment_enabled": false,
+    "endpoint_claim_permitted": false,
+    "formal_jobs": false,
+    "sealed_test_accessed": false,
+    "validation_tuning": false
+  },
+  "config_hash": "421eff64d1161f78c9029dfc6d133b9b66247f3cf905b9577e55965584195f93",
+  "gate": "G3",
+  "generated_at_utc": "2026-08-20T22:56:14.498666+00:00",
+  "maturity": "M2",
+  "schema_version": "g3-audit.v1",
+  "status": "pass",
+  "training_smoke": {
+    "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g3\\checkpoints\\g3-smoke.pt",
+    "config_hash": "421eff64d1161f78c9029dfc6d133b9b66247f3cf905b9577e55965584195f93",
+    "finite_loss_checks": true,
+    "provenance": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g3\\provenance.json",
+    "raw_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g3\\training-smoke.jsonl",
+    "scenario_seed_manifest_schema_version": "g1.v1",
+    "scenario_seed_manifest_sha256": "ab993f19e1ae4cb9d7ba4f4f862639901581be057e0a251e5c113d957f6059ce",
+    "sealed_test_accessed": false,
+    "source_tree_clean": true,
+    "source_tree_commit": "092b7f3e965a24979bac65c8304cd9d7dc142f73",
+    "source_tree_hash": "a3b5f20c6935cf29c0c0edb627cf64a0b4b5c7b96a3ca94449c205da1b5f2a95",
+    "updates": 2,
+    "validation_scenarios_accessed": false
+  }
+}

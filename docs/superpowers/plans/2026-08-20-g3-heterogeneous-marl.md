@@ -237,10 +237,10 @@ git commit -m "feat: add nonsealed g3 training smoke"
 - Create: `HANDOFFG3.md`
 - Modify: `docs/PROJECT_STATE.md`
 
-- [ ] **Step 1: Write failing audit tests for required test names, report fields, provenance, and no sealed access**
-- [ ] **Step 2: Run the audit tests and verify the report is absent**
-- [ ] **Step 3: Implement the fail-closed G3 auditor**
-- [ ] **Step 4: Run the complete G3 suite, full regression suite, compileall, and diff hygiene**
+- [x] **Step 1: Write failing audit tests for required test names, report fields, provenance, and no sealed access**
+- [x] **Step 2: Run the audit tests and verify the report is absent**
+- [x] **Step 3: Implement the fail-closed G3 auditor**
+- [x] **Step 4: Run the complete G3 suite, full regression suite, compileall, and diff hygiene**
 
 ```powershell
 python -m pytest tests/g3 -q
@@ -249,9 +249,9 @@ python -m compileall -q src scripts
 git diff --check
 ```
 
-- [ ] **Step 5: Run the G3 smoke with a fresh development seed and audit the generated artifacts**
-- [ ] **Step 6: Ask an independent reviewer to inspect the full G3 diff and repair all Critical/Important findings**
-- [ ] **Step 7: Commit**
+- [x] **Step 5: Run the G3 smoke with a fresh development seed and audit the generated artifacts**
+- [x] **Step 6: Ask an independent reviewer to inspect the full G3 diff and repair all Critical/Important findings**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add scripts/audit_g3_marl.py tests/g3/test_g3_audit.py outputs/problem2_sr_mappo_v1/g3 docs/audits/g3-marl-compliance.md HANDOFFG3.md docs/PROJECT_STATE.md
@@ -261,7 +261,7 @@ git commit -m "docs: record g3 heterogeneous marl verification"
 ### Task 7: Persist G3 and authorize the G4 handoff
 
 - [ ] **Step 1: Run the complete fresh verification after the content commit**
-- [ ] **Step 2: Push the G3 branch to `origin`**
+- [x] **Step 2: Push the G3 branch to `origin`**
 - [ ] **Step 3: Record the pushed content hash in `docs/PROJECT_STATE.md`**
 - [ ] **Step 4: Create and push a separate persistence-record commit**
 - [ ] **Step 5: Verify local HEAD, upstream HEAD, and `git ls-remote` agree**

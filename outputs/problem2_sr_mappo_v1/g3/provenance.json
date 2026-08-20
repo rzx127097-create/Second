@@ -1,0 +1,17 @@
+{
+  "artifact_type": "g3_development_training_smoke",
+  "battery_replenishment_enabled": false,
+  "config_hash": "421eff64d1161f78c9029dfc6d133b9b66247f3cf905b9577e55965584195f93",
+  "finite_loss_checks": true,
+  "replenished_resource": "pesticide",
+  "scenario_seed_manifest_schema_version": "g1.v1",
+  "scenario_seed_manifest_sha256": "ab993f19e1ae4cb9d7ba4f4f862639901581be057e0a251e5c113d957f6059ce",
+  "sealed_test_accessed": false,
+  "seed": 9017,
+  "source_tree_clean": true,
+  "source_tree_commit": "092b7f3e965a24979bac65c8304cd9d7dc142f73",
+  "source_tree_hash": "a3b5f20c6935cf29c0c0edb627cf64a0b4b5c7b96a3ca94449c205da1b5f2a95",
+  "training_partition": "development",
+  "updates": 2,
+  "validation_scenarios_accessed": false
+}
