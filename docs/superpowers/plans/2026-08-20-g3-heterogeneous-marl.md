@@ -260,9 +260,9 @@ git commit -m "docs: record g3 heterogeneous marl verification"
 
 ### Task 7: Persist G3 and authorize the G4 handoff
 
-- [ ] **Step 1: Run the complete fresh verification after the content commit**
+- [x] **Step 1: Run the complete fresh verification after the content commit**
 - [x] **Step 2: Push the G3 branch to `origin`**
-- [ ] **Step 3: Record the pushed content hash in `docs/PROJECT_STATE.md`**
+- [x] **Step 3: Record the pushed content hash in `docs/PROJECT_STATE.md`**
 - [ ] **Step 4: Create and push a separate persistence-record commit**
 - [ ] **Step 5: Verify local HEAD, upstream HEAD, and `git ls-remote` agree**
 - [ ] **Step 6: Confirm the highest maturity remains M2 unless an independently registered pilot criterion is met; mark G3 passed and G4 as next authorized gate**

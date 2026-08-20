@@ -195,6 +195,20 @@ activation and counterfactual mechanism probes. The G3 smoke must not be used
 as treatment efficacy evidence. Formal jobs, validation tuning, and sealed
 evaluation remain unauthorized.
 
+Persistence status:
+
+- Implementation hardening commit
+  `092b7f3e965a24979bac65c8304cd9d7dc142f73` was pushed to
+  `origin/codex/problem2-g3-heterogeneous-marl`.
+- Evidence content commit
+  `5d7fa5e2ae4ee490ca9ab02c2956a82ccb77118f` was pushed to the same branch.
+- For the evidence content commit, `git rev-parse HEAD`,
+  `git rev-parse '@{upstream}'`, and
+  `git ls-remote origin refs/heads/codex/problem2-g3-heterogeneous-marl` all
+  returned `5d7fa5e2ae4ee490ca9ab02c2956a82ccb77118f`.
+- The separate persistence-record commit is the final required G3
+  synchronization before G4 work begins.
+
 The repository already contains chapter 4.1/4.2 design, figure, document, and
 artifact-ledger assets on `origin/main`. The remote branch
 `origin/feature/problem2-code-framework` contains extensive problem-2 code,
