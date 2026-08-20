@@ -29,8 +29,9 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M1` design/specification evidence.
 - Current gate: bounded `G1.1` remediation passed TDD, independent full-range
-  review, fresh controller verification, and GitHub persistence at `1b10457`.
-  `G2` deterministic-model specification and validation are the next authorized
+  review, fresh controller verification, and GitHub persistence. Content and
+  evidence are at `1b10457`; the acceptance record is at `9ece829`. `G2`
+  deterministic-model specification and validation are the next authorized
   work; no G2 implementation has started.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
@@ -376,6 +377,9 @@ G1.1 bounded remediation persistence record:
 - Content/evidence head `1b10457f64316dbd56e2ec2bf64f67db215602b6`
   was pushed to `origin/codex/problem2-g0-orchestration`; local HEAD, upstream,
   and `git ls-remote` matched after the push.
+- Acceptance-state commit `9ece8297e83fef2cf10811de24e9a65becb26206`
+  (`docs: accept g1.1 bounded remediation`) was pushed to the same branch;
+  local HEAD, upstream, and `git ls-remote` matched after the push.
 - No G2 implementation, training, formal experiment, sealed-test access,
   protected external write, Word-file edit, merge, or force-push occurred.
 - The protected first-problem repository remained at
