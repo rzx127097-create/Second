@@ -1,0 +1,19 @@
+schema_version: g1.v1
+registry_id: G1-OUTPUT-ROOT
+status: design_frozen
+root: outputs/problem2_sr_mappo_v1
+allowed_descendants_only: true
+forbidden_roots:
+  - outputs/sr_mappo_paper_v1
+  - C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper
+  - D:/Pycharm/Locust_rl
+source_inputs:
+  osm_inputs_are_simulation_only: true
+  source_files_read_only: true
+derived_road_cache_required_metadata:
+  - source_hash
+  - crs
+  - bbox
+  - grid_shape
+  - topology_checksum
+  - code_version

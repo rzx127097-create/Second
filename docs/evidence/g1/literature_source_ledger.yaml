@@ -1,0 +1,106 @@
+schema_version: g1.v1
+registry_id: G1-SOURCES
+status: design_frozen
+sources:
+  - id: SRC-ASSUMPTION-001
+    source_type: assumption
+    title: Internal development assumption
+    authors: []
+    venue: internal
+    year: 2026
+    locator: docs/evidence/g1/parameter_registry.yaml
+    authority: internal_design_record
+    access_status: read
+    full_text_status: not_applicable
+    verification_status: design_record
+    supports:
+      - parameter_id: uav.pesticide_capacity
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not empirical equipment evidence
+      - parameter_id: uav.usable_fraction
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not empirical equipment evidence
+      - parameter_id: uav.spray_flow
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not empirical equipment evidence
+      - parameter_id: uav.speed
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not empirical equipment evidence
+      - parameter_id: vehicle.inventory
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not empirical vehicle evidence
+      - parameter_id: vehicle.speed
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not empirical vehicle evidence
+      - parameter_id: vehicle.transfer_rate
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not empirical equipment evidence
+      - parameter_id: service.setup_time
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not field-service evidence
+      - parameter_id: service.rendezvous_radius
+        claim: Development value selected for specification and later sensitivity audit
+        applicability_limit: Not field-deployment evidence
+      - parameter_id: simulation.dt
+        claim: Simulation discretization selected for specification
+        applicability_limit: Not a physical measurement claim
+  - id: SRC-EQUIPMENT-MANUAL-PENDING
+    source_type: equipment_manual
+    title: UAV and vehicle equipment manuals
+    authors: []
+    venue: pending_external_source
+    year: null
+    locator: null
+    authority: manufacturer_documentation
+    database: null
+    authoritative_page: null
+    access_status: pending
+    full_text_status: pending
+    verification_status: pending
+    supports: []
+    applicability_limit: Cannot be used as a verified parameter source until independently checked
+  - id: SRC-FIELD-STUDY-PENDING
+    source_type: field_study
+    title: Field spraying and replenishment measurements
+    authors: []
+    venue: pending_external_source
+    year: null
+    locator: null
+    authority: peer_reviewed_field_evidence
+    database: null
+    authoritative_page: null
+    access_status: pending
+    full_text_status: pending
+    verification_status: pending
+    supports: []
+    applicability_limit: Cannot be used as a verified parameter source until independently checked
+  - id: SRC-EXPERT-CONFIRMATION-PENDING
+    source_type: expert_confirmation
+    title: Domain expert confirmation of operating ranges
+    authors: []
+    venue: pending_external_source
+    year: null
+    locator: null
+    authority: documented_expert_confirmation
+    database: null
+    authoritative_page: null
+    access_status: pending
+    full_text_status: pending
+    verification_status: pending
+    supports: []
+    applicability_limit: Cannot be used as a verified parameter source until independently checked
+  - id: SRC-SOURCE-CONVERSION-PENDING
+    source_type: source_conversion
+    title: Unit and source-value conversion records
+    authors: []
+    venue: pending_external_source
+    year: null
+    locator: null
+    authority: reproducible_conversion_record
+    database: null
+    authoritative_page: null
+    access_status: pending
+    full_text_status: pending
+    verification_status: pending
+    supports: []
+    applicability_limit: Cannot be used as a verified parameter source until independently checked
