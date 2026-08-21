@@ -22,6 +22,18 @@ from problem2.experiments.g4_support import FixedSupportPolicy, MobileSupportPol
 ROOT = Path(__file__).resolve().parents[3]
 G2_CONFIG_PATH = ROOT / "configs/problem2/g2_deterministic.yaml"
 CANONICAL_G4_ROOT = (ROOT / "outputs/problem2_sr_mappo_v1/g4").resolve()
+SOURCE_PROVENANCE_PATHS = (
+    "configs/problem2/g2_deterministic.yaml",
+    "docs/evidence/g4/g4_contract.yaml",
+    "docs/evidence/g4/g4_probe_manifest.yaml",
+    "scripts/audit_g4_mechanism.py",
+    "scripts/run_g4_mechanism_probe.py",
+    "src/problem2/experiments/g4_activation.py",
+    "src/problem2/experiments/g4_audit.py",
+    "src/problem2/experiments/g4_contract.py",
+    "src/problem2/experiments/g4_counterfactual.py",
+    "src/problem2/experiments/g4_support.py",
+)
 REQUIRED_METRICS = (
     "scarcity_active",
     "activation_window",
@@ -110,6 +122,11 @@ def _git(*args: str) -> str:
     if not value or value == "unknown":
         raise G4ContractError("G4 generator produced unknown Git provenance")
     return value
+
+
+def _source_tree_identity() -> tuple[str, str]:
+    commit = _git("log", "-1", "--format=%H", "--", *SOURCE_PROVENANCE_PATHS)
+    return commit, _git("rev-parse", f"{commit}^{{tree}}")
 
 
 def _safe_output_root(output_root: Path | str) -> Path:
@@ -352,6 +369,7 @@ def _run_one(
 
 
 def _lineage(contract: G4Contract, manifest: G4ProbeManifest, config: G2Config) -> dict[str, Any]:
+    source_commit, source_tree = _source_tree_identity()
     return {
         "g4_contract": str(contract.source_path),
         "probe_manifest": str(manifest.source_path),
@@ -359,8 +377,8 @@ def _lineage(contract: G4Contract, manifest: G4ProbeManifest, config: G2Config) 
         "probe_manifest_sha256": _sha256(manifest.source_path) if manifest.source_path else "unknown",
         "g2_config": str(G2_CONFIG_PATH),
         "g2_config_sha256": _sha256(G2_CONFIG_PATH),
-        "source_tree_commit": _git("rev-parse", "HEAD"),
-        "source_tree_hash": _git("rev-parse", "HEAD^{tree}"),
+        "source_tree_commit": source_commit,
+        "source_tree_hash": source_tree,
         "validation_accessed": False,
         "sealed_test_accessed": False,
         "battery_replenishment_enabled": False,

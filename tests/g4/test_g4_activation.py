@@ -206,3 +206,29 @@ def test_run_one_records_service_start_distance_from_post_step_state(
     )
 
     assert record["euclidean_service_start_distance_m"] == 3.0
+
+
+def test_lineage_binds_generator_contract_commit_not_output_commit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def fake_git(*args: str) -> str:
+        calls.append(args)
+        if args[:3] == ("log", "-1", "--format=%H"):
+            return "a" * 40
+        if args == ("rev-parse", f"{'a' * 40}^{{tree}}"):
+            return "b" * 40
+        raise AssertionError(f"unexpected git call: {args}")
+
+    monkeypatch.setattr(activation, "_git", fake_git)
+
+    lineage = activation._lineage(
+        CONTRACT,
+        MANIFEST,
+        activation.load_g2_config(activation.G2_CONFIG_PATH),
+    )
+
+    assert lineage["source_tree_commit"] == "a" * 40
+    assert lineage["source_tree_hash"] == "b" * 40
+    assert any(call[:3] == ("log", "-1", "--format=%H") for call in calls)
