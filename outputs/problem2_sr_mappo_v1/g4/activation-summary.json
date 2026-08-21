@@ -1,0 +1,13 @@
+{
+  "schema_version": "g4-activation-index.v1",
+  "status": "descriptive",
+  "activation_window": [1.0, 12.0],
+  "arms": {
+    "fixed": "fixed/activation-summary.json",
+    "mobile": "mobile/activation-summary.json"
+  },
+  "paired_counterfactual": "counterfactual-summary.json",
+  "validation_accessed": false,
+  "sealed_test_accessed": false,
+  "battery_replenishment_enabled": false
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": "g4-provenance-index.v1",
+  "status": "descriptive",
+  "contract": "docs/evidence/g4/g4_contract.yaml",
+  "probe_manifest": "docs/evidence/g4/g4_probe_manifest.yaml",
+  "fixed_provenance": "fixed/provenance.json",
+  "mobile_provenance": "mobile/provenance.json",
+  "source_tree_commit": "ea0849bdbfb949e9269861efc06cfb6a1a2ce01a",
+  "validation_accessed": false,
+  "sealed_test_accessed": false,
+  "battery_replenishment_enabled": false
+}

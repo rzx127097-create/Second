@@ -1,0 +1,527 @@
+{
+  "activation_band": [
+    1.0,
+    12.0
+  ],
+  "audit": "g4-mechanism-compliance",
+  "claim_boundary": "mechanism activation and paired counterfactual deltas only; no superiority or deployment claim",
+  "frozen_contract_sha256": "6e9049414421dcf03be373fe7c53bae5ed4576c2b9e94bc45168a266cfeb936a",
+  "hard_boundary": {
+    "battery_replenishment_enabled": false,
+    "g3_endpoint_evidence_accepted": false,
+    "sealed_test_accessed": false,
+    "validation_accessed": false
+  },
+  "output_artifact_hashes": [
+    {
+      "bytes": 387,
+      "path": "activation-summary.json",
+      "sha256": "ee37a8bfa9ed848b8f3cdbfad49390e8e965e40a6b9b211f3155ee080570ff51"
+    },
+    {
+      "bytes": 36867,
+      "path": "counterfactual-summary.json",
+      "sha256": "b078888fbfbd44e7524f91ab7557ce6e3fa7c592057968ea6a666a01f0ca9b1e"
+    },
+    {
+      "bytes": 43375,
+      "path": "fixed/activation-summary.json",
+      "sha256": "955931ff9512891969bb6d9a5ed39419fb9c985b8bf487664abc7132bb60161b"
+    },
+    {
+      "bytes": 848,
+      "path": "fixed/provenance.json",
+      "sha256": "092f3cc70745846177ae9bf6ff6d353c6a2b79e23d137acf73f7db3d190f785c"
+    },
+    {
+      "bytes": 35091,
+      "path": "fixed/raw-probe.jsonl",
+      "sha256": "354623b93c1dc5d6b222361b033c175b48684b2aa6a7308296a188aefb7f6045"
+    },
+    {
+      "bytes": 43546,
+      "path": "mobile/activation-summary.json",
+      "sha256": "b1c7c645b1f5002111655f4570dc5b2bb81b9b60939feaa469692ce3ff421532"
+    },
+    {
+      "bytes": 848,
+      "path": "mobile/provenance.json",
+      "sha256": "092f3cc70745846177ae9bf6ff6d353c6a2b79e23d137acf73f7db3d190f785c"
+    },
+    {
+      "bytes": 35254,
+      "path": "mobile/raw-probe.jsonl",
+      "sha256": "4097c04ec9605cedcef4625d71f7e6bb3b5418db830fa7d4602f6327c4b29447"
+    },
+    {
+      "bytes": 184073,
+      "path": "probe-matrix-summary.json",
+      "sha256": "80ddfc3efdf056b3fb5c4dacda7eed928f891887504f8631e798ec61304751be"
+    },
+    {
+      "bytes": 461,
+      "path": "provenance.json",
+      "sha256": "f7a49910d912567252c394ceaacac872ca5c3774ad80d89f7f1b459524407b10"
+    },
+    {
+      "bytes": 43375,
+      "path": "pytest-activation/activation-summary.json",
+      "sha256": "955931ff9512891969bb6d9a5ed39419fb9c985b8bf487664abc7132bb60161b"
+    },
+    {
+      "bytes": 43375,
+      "path": "pytest-activation/fixed/activation-summary.json",
+      "sha256": "955931ff9512891969bb6d9a5ed39419fb9c985b8bf487664abc7132bb60161b"
+    },
+    {
+      "bytes": 848,
+      "path": "pytest-activation/fixed/provenance.json",
+      "sha256": "092f3cc70745846177ae9bf6ff6d353c6a2b79e23d137acf73f7db3d190f785c"
+    },
+    {
+      "bytes": 35091,
+      "path": "pytest-activation/fixed/raw-probe.jsonl",
+      "sha256": "354623b93c1dc5d6b222361b033c175b48684b2aa6a7308296a188aefb7f6045"
+    },
+    {
+      "bytes": 43546,
+      "path": "pytest-activation/mobile/activation-summary.json",
+      "sha256": "b1c7c645b1f5002111655f4570dc5b2bb81b9b60939feaa469692ce3ff421532"
+    },
+    {
+      "bytes": 848,
+      "path": "pytest-activation/mobile/provenance.json",
+      "sha256": "092f3cc70745846177ae9bf6ff6d353c6a2b79e23d137acf73f7db3d190f785c"
+    },
+    {
+      "bytes": 35254,
+      "path": "pytest-activation/mobile/raw-probe.jsonl",
+      "sha256": "4097c04ec9605cedcef4625d71f7e6bb3b5418db830fa7d4602f6327c4b29447"
+    },
+    {
+      "bytes": 184073,
+      "path": "pytest-activation/probe-matrix-summary.json",
+      "sha256": "80ddfc3efdf056b3fb5c4dacda7eed928f891887504f8631e798ec61304751be"
+    },
+    {
+      "bytes": 848,
+      "path": "pytest-activation/provenance.json",
+      "sha256": "092f3cc70745846177ae9bf6ff6d353c6a2b79e23d137acf73f7db3d190f785c"
+    },
+    {
+      "bytes": 35091,
+      "path": "pytest-activation/raw-probe.jsonl",
+      "sha256": "354623b93c1dc5d6b222361b033c175b48684b2aa6a7308296a188aefb7f6045"
+    }
+  ],
+  "paired_deltas": [
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 1.0,
+      "seed": 123,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 70.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": -2.0,
+      "reservation_count": -3.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 12.0,
+      "seed": 123,
+      "service_count": -2.0,
+      "sprayed_volume_l": -0.5400000000000011,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 70.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": -2.0,
+      "reservation_count": -3.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 6.5,
+      "seed": 123,
+      "service_count": -2.0,
+      "sprayed_volume_l": -0.5400000000000011,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 1.0,
+      "seed": 2024,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 23.0,
+      "rendezvous_distance_change_m": 1.5,
+      "rendezvous_distance_m": 1.5,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 12.0,
+      "seed": 2024,
+      "service_count": -1.0,
+      "sprayed_volume_l": 0.3999999999999997,
+      "waiting_time_reduction_s": -76.0,
+      "waiting_time_s": 76.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 23.0,
+      "rendezvous_distance_change_m": 1.5,
+      "rendezvous_distance_m": 1.5,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 6.5,
+      "seed": 2024,
+      "service_count": -1.0,
+      "sprayed_volume_l": 0.3999999999999997,
+      "waiting_time_reduction_s": -76.0,
+      "waiting_time_s": 76.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 1.0,
+      "seed": 42,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 48.0,
+      "rendezvous_distance_change_m": 10.5,
+      "rendezvous_distance_m": 10.5,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 12.0,
+      "seed": 42,
+      "service_count": -1.0,
+      "sprayed_volume_l": -0.10000000000000075,
+      "waiting_time_reduction_s": -101.0,
+      "waiting_time_s": 101.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 48.0,
+      "rendezvous_distance_change_m": 10.5,
+      "rendezvous_distance_m": 10.5,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x20_d2",
+      "scarcity_level_l": 6.5,
+      "seed": 42,
+      "service_count": -1.0,
+      "sprayed_volume_l": -0.10000000000000075,
+      "waiting_time_reduction_s": -101.0,
+      "waiting_time_s": 101.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 1.0,
+      "seed": 123,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": -1.7763568394002505e-15,
+      "pesticide_disabled_time_s": 52.0,
+      "rendezvous_distance_change_m": 2.5,
+      "rendezvous_distance_m": 2.5,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 12.0,
+      "seed": 123,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.03999999999999915,
+      "waiting_time_reduction_s": -105.0,
+      "waiting_time_s": 105.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 52.0,
+      "rendezvous_distance_change_m": 2.5,
+      "rendezvous_distance_m": 2.5,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 6.5,
+      "seed": 123,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.03999999999999915,
+      "waiting_time_reduction_s": -105.0,
+      "waiting_time_s": 105.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 1.0,
+      "seed": 2024,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": -1.7763568394002505e-15,
+      "pesticide_disabled_time_s": 46.0,
+      "rendezvous_distance_change_m": 0.6666666666569654,
+      "rendezvous_distance_m": 0.6666666666569654,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 12.0,
+      "seed": 2024,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.1599999999999988,
+      "waiting_time_reduction_s": -85.0,
+      "waiting_time_s": 85.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 46.0,
+      "rendezvous_distance_change_m": 0.6666666666569654,
+      "rendezvous_distance_m": 0.6666666666569654,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 6.5,
+      "seed": 2024,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.1599999999999988,
+      "waiting_time_reduction_s": -85.0,
+      "waiting_time_s": 85.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 1.0,
+      "seed": 42,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": -1.7763568394002505e-15,
+      "pesticide_disabled_time_s": 46.0,
+      "rendezvous_distance_change_m": 0.3333333333430346,
+      "rendezvous_distance_m": 0.3333333333430346,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 12.0,
+      "seed": 42,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.1599999999999988,
+      "waiting_time_reduction_s": -74.0,
+      "waiting_time_s": 74.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 46.0,
+      "rendezvous_distance_change_m": 0.3333333333430346,
+      "rendezvous_distance_m": 0.3333333333430346,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g20x30_d3",
+      "scarcity_level_l": 6.5,
+      "seed": 42,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.1599999999999988,
+      "waiting_time_reduction_s": -74.0,
+      "waiting_time_s": 74.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 1.0,
+      "seed": 123,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": -1.7763568394002505e-15,
+      "pesticide_disabled_time_s": 86.0,
+      "rendezvous_distance_change_m": 9.0,
+      "rendezvous_distance_m": 9.0,
+      "request_count": -2.0,
+      "reservation_count": -3.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 12.0,
+      "seed": 123,
+      "service_count": -3.0,
+      "sprayed_volume_l": -0.2800000000000016,
+      "waiting_time_reduction_s": -77.0,
+      "waiting_time_s": 77.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 86.0,
+      "rendezvous_distance_change_m": 9.0,
+      "rendezvous_distance_m": 9.0,
+      "request_count": -2.0,
+      "reservation_count": -3.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 6.5,
+      "seed": 123,
+      "service_count": -3.0,
+      "sprayed_volume_l": -0.2800000000000016,
+      "waiting_time_reduction_s": -77.0,
+      "waiting_time_s": 77.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 1.0,
+      "seed": 2024,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": -1.7763568394002505e-15,
+      "pesticide_disabled_time_s": 86.0,
+      "rendezvous_distance_change_m": 0.8888888888953564,
+      "rendezvous_distance_m": 0.8888888888953564,
+      "request_count": -2.0,
+      "reservation_count": -2.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 12.0,
+      "seed": 2024,
+      "service_count": -3.0,
+      "sprayed_volume_l": -0.2800000000000016,
+      "waiting_time_reduction_s": -271.0,
+      "waiting_time_s": 271.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 86.0,
+      "rendezvous_distance_change_m": 0.8888888888953564,
+      "rendezvous_distance_m": 0.8888888888953564,
+      "request_count": -2.0,
+      "reservation_count": -2.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 6.5,
+      "seed": 2024,
+      "service_count": -3.0,
+      "sprayed_volume_l": -0.2800000000000016,
+      "waiting_time_reduction_s": -271.0,
+      "waiting_time_s": 271.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 0.0,
+      "rendezvous_distance_change_m": 0.0,
+      "rendezvous_distance_m": 0.0,
+      "request_count": 0.0,
+      "reservation_count": 0.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 1.0,
+      "seed": 42,
+      "service_count": 0.0,
+      "sprayed_volume_l": 0.0,
+      "waiting_time_reduction_s": 0.0,
+      "waiting_time_s": 0.0
+    },
+    {
+      "conservation_error_l": -1.7763568394002505e-15,
+      "pesticide_disabled_time_s": 52.0,
+      "rendezvous_distance_change_m": 0.44444444445737946,
+      "rendezvous_distance_m": 0.44444444445737946,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 12.0,
+      "seed": 42,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.399999999999999,
+      "waiting_time_reduction_s": -237.0,
+      "waiting_time_s": 237.0
+    },
+    {
+      "conservation_error_l": 0.0,
+      "pesticide_disabled_time_s": 52.0,
+      "rendezvous_distance_change_m": 0.44444444445737946,
+      "rendezvous_distance_m": 0.44444444445737946,
+      "request_count": -1.0,
+      "reservation_count": -2.0,
+      "scale_id": "g30x30_d3",
+      "scarcity_level_l": 6.5,
+      "seed": 42,
+      "service_count": -2.0,
+      "sprayed_volume_l": 0.399999999999999,
+      "waiting_time_reduction_s": -237.0,
+      "waiting_time_s": 237.0
+    }
+  ],
+  "probe_manifest": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_probe_manifest.yaml",
+  "provenance_count": 142,
+  "status": "pass"
+}
