@@ -152,6 +152,18 @@ def test_g4_artifact_manifest_excludes_self_generated_audit_report(tmp_path: Pat
     assert [entry["path"] for entry in manifest["artifacts"]] == ["probe.json"]
 
 
+def test_g4_artifact_manifest_registers_nested_audit_named_evidence(tmp_path: Path) -> None:
+    output_root = tmp_path / "g4"
+    nested_report = output_root / "fixed" / "g4-mechanism-audit.json"
+    nested_report.parent.mkdir(parents=True)
+    _write_json(output_root / "g4-mechanism-audit.json", {"status": "pass"})
+    _write_json(nested_report, {"probe": "evidence"})
+
+    manifest = build_g4_artifact_manifest(output_root)
+
+    assert [entry["path"] for entry in manifest["artifacts"]] == ["fixed/g4-mechanism-audit.json"]
+
+
 def test_g4_audit_happy_path_recomputes_counterfactual(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
 

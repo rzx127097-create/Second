@@ -29,8 +29,8 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G4 resource-scarcity activation and the descriptive
-  fixed-versus-mobile counterfactual passed at M2. G5 is the next authorized
-  gate after the G4 persistence record is pushed and recorded. Formal jobs,
+  fixed-versus-mobile counterfactual passed at M2. Its final persistence record
+  is pushed and recorded; G5 is the next authorized gate. Formal jobs,
   validation tuning, sealed evaluation, and efficacy/superiority claims remain
   unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
@@ -234,28 +234,27 @@ Frozen interface and canonical evidence:
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`, including
   `activation-summary.json`, `counterfactual-summary.json`, `provenance.json`,
   `g4-mechanism-audit.json`, and `artifact-manifest.json`.
-- The fail-closed audit records `status=pass`, `20` supported JSON/JSONL
+- The fail-closed audit records `status=pass`, `10` supported JSON/JSONL
   artifacts, validation/sealed access false, battery replenishment false, and
   G3 endpoint evidence rejected.
 
-Fresh verification on the pushed G4 content commit:
+Fresh verification after the G4 evidence-bundle fix round:
 
-- `python -m pytest tests/g4 -q`: `39 passed in 25.06s`.
-- `python -m pytest -q`: `260 passed in 65.51s`.
+- `python -m pytest tests/g4 -q`: `40 passed in 24.54s`.
+- `python -m pytest -q`: `261 passed in 63.18s`.
 - `python -m compileall -q src scripts`: exit `0`.
 - `git diff --check`: exit `0`.
-- `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`: `status=pass artifacts=20`.
+- `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`: `status=pass artifacts=10`.
 
-Persistence status: content commit
-`d27dcf5440e39f87611383960410ab8d75c79562`
-(`feat: persist g4 mechanism evidence bundle`) was pushed to
-`origin/codex/problem2-g4-resource-scarcity`. Before this state record,
+Persistence status: final persistence-record commit
+`97f92bf2d93f662963f47ffce43e412bbbe33e4a`
+(`docs: record g4 persistence verification`) was pushed to
+`origin/codex/problem2-g4-resource-scarcity`. After this state record,
 `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
 `git ls-remote origin refs/heads/codex/problem2-g4-resource-scarcity` all
-returned `d27dcf5440e39f87611383960410ab8d75c79562`.
+returned `97f92bf2d93f662963f47ffce43e412bbbe33e4a`.
 
-G5 is the next authorized gate only after this separate persistence record is
-pushed and its final local/upstream/remote hash check agrees. G5 must freeze a
+G5 is the next authorized gate. It must freeze a
 fair pilot protocol before any formal job: identical environment, pesticide
 budget, horizon, scenario/seed identity, observability, and information
 conditions across comparison arms; declared validation-tuning rules; sealed
@@ -656,16 +655,16 @@ G1.1 bounded remediation persistence record:
 
 - `Second` is now the authoritative repository for all future second-problem
   code and documentation records.
-- The current working branch is `codex/problem2-g3-heterogeneous-marl`.
+- The current working branch is `codex/problem2-g4-resource-scarcity`.
 - G1.1 was accepted at M1; G2 deterministic implementation now passes at M2
   with content and persistence push records verified. Candidate-branch reports
   remain untrusted until later branch-local verification.
 - G3 heterogeneous-MARL implementation and acceptance passed at M2 on
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
   canonical smoke and audit artifacts are recorded above. G4 subsequently
-  passed at M2 as descriptive scarcity-mechanism evidence on content commit
-  `d27dcf5440e39f87611383960410ab8d75c79562`; G5 is next after the G4
-  persistence record is verified.
+  passed at M2 as descriptive scarcity-mechanism evidence with final
+  persistence record `97f92bf2d93f662963f47ffce43e412bbbe33e4a`; G5 is the
+  next authorized gate.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,

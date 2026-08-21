@@ -24,12 +24,13 @@ def _sha256(path: Path) -> str:
 def build_g4_artifact_manifest(output_root: str | Path) -> dict[str, Any]:
     root = Path(output_root).resolve()
     manifest_path = root / "artifact-manifest.json"
+    audit_report_path = root / SELF_GENERATED_AUDIT_REPORT
     artifacts = []
     for path in sorted(root.rglob("*")):
         if (
             not path.is_file()
             or path.resolve() == manifest_path.resolve()
-            or path.name == SELF_GENERATED_AUDIT_REPORT
+            or path.resolve() == audit_report_path.resolve()
         ):
             continue
         relative = path.relative_to(root).as_posix()
