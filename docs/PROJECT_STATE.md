@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-20
+Last updated: 2026-08-21
 
 ## Final Goal
 
@@ -20,18 +20,19 @@ real deployment evidence.
 - Authoritative repository for future work:
   `C:/Users/RZX/Documents/ChatGPT/Second`.
 - GitHub remote: `https://github.com/rzx127097-create/Second.git`.
-- Current branch: `codex/problem2-g3-heterogeneous-marl`.
+- Current branch: `codex/problem2-g4-resource-scarcity`.
 - Current branch base at start of G0:
   `2643753855c385253951dfad2c225be0b09b7e00`
   (`origin/main`, commit message `docs: mark section 4.2 delivery complete`).
 - Existing remote feature branch:
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
-- Current highest maturity: `M2` heterogeneous implementation evidence.
-- Current gate: G3 heterogeneous-MARL acceptance passed at M2. G4 is the next
-  authorized gate after the G3 evidence and persistence records are pushed and
-  recorded. Formal experiments, validation tuning, and sealed evaluation
-  remain unauthorized.
+- Current highest maturity: `M2` implementation and scoped mechanism evidence.
+- Current gate: G4 resource-scarcity activation and the descriptive
+  fixed-versus-mobile counterfactual passed at M2. G5 is the next authorized
+  gate after the G4 persistence record is pushed and recorded. Formal jobs,
+  validation tuning, sealed evaluation, and efficacy/superiority claims remain
+  unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -208,6 +209,59 @@ Persistence status:
   returned `5d7fa5e2ae4ee490ca9ab02c2956a82ccb77118f`.
 - The separate persistence-record commit is the final required G3
   synchronization before G4 work begins.
+
+## G4 Resource-Scarcity Mechanism Record
+
+G4 passes at the existing maturity boundary `M2`: its frozen pesticide
+resource-scarcity mechanism activated across the registered development probe,
+and the fixed/mobile SR-MAPPO counterfactual produced descriptive paired
+deltas. This is not formal treatment-effect, significance, superiority, or
+deployment evidence.
+
+Frozen interface and canonical evidence:
+
+- Public algorithm: `SR-MAPPO`; Problem 2 is its air-ground heterogeneous
+  extension.
+- Resource scope: pesticide only; battery replenishment is inactive.
+- Contract: `docs/evidence/g4/g4_contract.yaml`, SHA-256
+  `6e9049414421dcf03be373fe7c53bae5ed4576c2b9e94bc45168a266cfeb936a`.
+- Probe manifest: `docs/evidence/g4/g4_probe_manifest.yaml`, SHA-256
+  `f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1`.
+- Frozen band: initial UAV pesticide `[1.0, 12.0] L`; probe scales
+  `g20x20_d2`, `g20x30_d3`, `g30x30_d3`; seeds `42`, `123`, `2024`.
+- Counterfactual pair: `sr_mappo_fixed` and `sr_mappo_mobile`, with 27
+  same-input descriptive pairs and equal activation counts of 27 per arm.
+- Canonical output root: `outputs/problem2_sr_mappo_v1/g4`, including
+  `activation-summary.json`, `counterfactual-summary.json`, `provenance.json`,
+  `g4-mechanism-audit.json`, and `artifact-manifest.json`.
+- The fail-closed audit records `status=pass`, `20` supported JSON/JSONL
+  artifacts, validation/sealed access false, battery replenishment false, and
+  G3 endpoint evidence rejected.
+
+Fresh verification on the pushed G4 content commit:
+
+- `python -m pytest tests/g4 -q`: `39 passed in 25.06s`.
+- `python -m pytest -q`: `260 passed in 65.51s`.
+- `python -m compileall -q src scripts`: exit `0`.
+- `git diff --check`: exit `0`.
+- `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`: `status=pass artifacts=20`.
+
+Persistence status: content commit
+`d27dcf5440e39f87611383960410ab8d75c79562`
+(`feat: persist g4 mechanism evidence bundle`) was pushed to
+`origin/codex/problem2-g4-resource-scarcity`. Before this state record,
+`git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
+`git ls-remote origin refs/heads/codex/problem2-g4-resource-scarcity` all
+returned `d27dcf5440e39f87611383960410ab8d75c79562`.
+
+G5 is the next authorized gate only after this separate persistence record is
+pushed and its final local/upstream/remote hash check agrees. G5 must freeze a
+fair pilot protocol before any formal job: identical environment, pesticide
+budget, horizon, scenario/seed identity, observability, and information
+conditions across comparison arms; declared validation-tuning rules; sealed
+access disabled; and paired statistical estimands, exclusions, and artifact
+schemas independently audited. No formal job, validation tuning, sealed
+evaluation, or thesis efficacy/superiority claim is authorized yet.
 
 The repository already contains chapter 4.1/4.2 design, figure, document, and
 artifact-ledger assets on `origin/main`. The remote branch
@@ -593,10 +647,8 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Start G4 with resource-scarcity activation and counterfactual mechanism
-  probes; preserve pesticide-only scope and keep battery replenishment
-  inactive.
-- Freeze G5 pilot protocol and baseline fairness before formal matrix jobs.
+- Freeze the G5 pilot protocol, baseline fairness matrix, validation-tuning
+  rules, and paired-statistics contract before formal matrix jobs.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -610,8 +662,10 @@ G1.1 bounded remediation persistence record:
   remain untrusted until later branch-local verification.
 - G3 heterogeneous-MARL implementation and acceptance passed at M2 on
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
-  canonical smoke and audit artifacts are recorded above. G4 is the next
-  authorized gate after the evidence and persistence commits are recorded.
+  canonical smoke and audit artifacts are recorded above. G4 subsequently
+  passed at M2 as descriptive scarcity-mechanism evidence on content commit
+  `d27dcf5440e39f87611383960410ab8d75c79562`; G5 is next after the G4
+  persistence record is verified.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -641,8 +695,8 @@ G1.1 bounded remediation persistence record:
 - Engineering parameter sources remain incomplete: device manuals, field
   studies, expert confirmation, and source-value conversions are registered as
   pending G1 source records and still require independent verification.
-- Resource activation has not been demonstrated; G2 only verifies deterministic
-  accounting and does not support a mobile-treatment efficacy claim.
+- G4 demonstrates only development-probe resource activation and descriptive
+  paired deltas; it does not support a mobile-treatment efficacy claim.
 - No formal second-problem raw logs, validated tables, paired statistics, or
   locked figures exist in the repository evidence set.
 - No claim is currently permitted that simulation outcomes reflect real
@@ -652,7 +706,7 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Begin G4 with resource-scarcity activation and counterfactual mechanism probes
-using the frozen G2 physical foundation and G3 learning interface. The highest
-maturity remains M2 implementation evidence. Formal experiments, validation
-tuning, and sealed-test evaluation remain unauthorized.
+Begin G5 by freezing the fair pilot protocol and comparison/statistics
+contracts using the verified G4 mechanism boundary. The highest maturity
+remains M2 implementation and scoped mechanism evidence. Formal jobs,
+validation tuning, and sealed-test evaluation remain unauthorized.
