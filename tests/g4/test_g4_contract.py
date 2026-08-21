@@ -109,6 +109,14 @@ def test_g4_contract_rejects_validation_and_sealed_probe_ids(
         load_g4_probe_manifest(_write_payload(MANIFEST_PATH, payload, tmp_path))
 
 
+def test_g4_contract_rejects_non_integer_partition_ids(tmp_path: Path) -> None:
+    payload = _payload(MANIFEST_PATH)
+    payload["probe_partitions"]["training"] = ["42", 123, 2024]
+
+    with pytest.raises(G4ContractError, match="integer IDs"):
+        load_g4_probe_manifest(_write_payload(MANIFEST_PATH, payload, tmp_path))
+
+
 def test_g4_contract_rejects_battery_activation(tmp_path: Path) -> None:
     payload = _payload(CONTRACT_PATH)
     payload["resources"]["battery_replenishment_enabled"] = True

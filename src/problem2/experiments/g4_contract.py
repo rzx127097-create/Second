@@ -249,6 +249,13 @@ def load_g4_probe_manifest(path: Path | str) -> G4ProbeManifest:
         raise G4ContractError("probe horizons must be positive")
     partitions = _mapping(root["probe_partitions"], "probe_partitions")
     _require_keys(partitions, {"training", "validation", "sealed_test"}, "probe_partitions")
+    for partition_name, values in partitions.items():
+        if not isinstance(values, list) or any(
+            isinstance(value, bool) or not isinstance(value, int) for value in values
+        ):
+            raise G4ContractError(
+                f"probe_partitions.{partition_name} must be a list of integer IDs"
+            )
     if partitions["training"] != list(seeds):
         raise G4ContractError("training probe IDs must equal the frozen probe seeds")
     if partitions["validation"] or partitions["sealed_test"]:
