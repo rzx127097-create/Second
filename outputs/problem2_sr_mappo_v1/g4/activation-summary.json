@@ -17,8 +17,21 @@
   "probe_manifest_sha256": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1",
   "schema_version": "g4-activation-index.v1",
   "sealed_test_accessed": false,
-  "source_tree_commit": "0f4003f1d9146187f827537e770a307c22ee687a",
-  "source_tree_hash": "9ab9e2ff1cb54c3d23596ae9ee43962d253db191",
+  "source_bundle_sha256": "6e4f959610f9a3ab29eda6cdf44bf3da916f8e4e5db9b6323450bb7c26e28878",
+  "source_file_sha256": {
+    "configs/problem2/g2_deterministic.yaml": "297b602272b40de9778a6c9c768921d13503911d3a42ec7145b3560d807d59f2",
+    "docs/evidence/g4/g4_contract.yaml": "2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea",
+    "docs/evidence/g4/g4_probe_manifest.yaml": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1",
+    "scripts/audit_g4_mechanism.py": "ea648f2a46abdfc313410b72a93aadfe7ea03423c36aa494a82af958de3680b3",
+    "scripts/run_g4_mechanism_probe.py": "101cf174d686cf12bd71025a8571913a761342fa1d32dcfa5f8e6a8e6b1ef811",
+    "src/problem2/experiments/g4_activation.py": "566434a9128e2769dffbda0b3569058e4209cebafafbfafafd8b3dc30944b6bc",
+    "src/problem2/experiments/g4_audit.py": "736e806c1d368edb2eed8014f6f832bac0b52b98df8707bd5f9214f6779262f3",
+    "src/problem2/experiments/g4_contract.py": "26a04b67e8d2e54518ea0f5b5a9d263f552993fe54159f288ce0597415da89a4",
+    "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
+    "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
+  },
+  "source_tree_commit": "f53b86b05372a142a9b4796db2e7c3fc9be901a1",
+  "source_tree_hash": "743d8cd30508af265a9232dd5b52402d7025ede2",
   "status": "descriptive",
   "validation_accessed": false
 }

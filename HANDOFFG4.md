@@ -39,20 +39,21 @@ non-rewriting push verification.
   `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
   (`docs: regenerate g4 onboard scarcity evidence`).
 - Generator/code commit bound in the canonical artifacts:
-  `0f4003f1d9146187f827537e770a307c22ee687a`
-  (`fix: stabilize g4 generator provenance`).
+  `f53b86b05372a142a9b4796db2e7c3fc9be901a1`
+  (`perf: cache g4 source bundle verification`).
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`.
-- Provenance binds source commit `0f4003f`, source tree
-  `9ab9e2ff1cb54c3d23596ae9ee43962d253db191`, and contract SHA-256
-  `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
+- Provenance binds source commit `f53b86b`, source tree
+  `743d8cd30508af265a9232dd5b52402d7025ede2`, source bundle SHA-256
+  `6e4f959610f9a3ab29eda6cdf44bf3da916f8e4e5db9b6323450bb7c26e28878`, and
+  contract SHA-256 `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
 - The audit verifies the exact `3 x 3 x 3` raw matrix per arm, raw/summary and
   counterfactual consistency, active service cycle, positive request and
   transfer evidence, common activation window, provenance hashes, manifest
   hashes/bytes, missing-manifest rejection, G3 endpoint-reference rejection,
   and duplicate-path rejection.
-- Fresh controller verification:
-  `python -m pytest tests/g4 -q` returned `60 passed in 31.80s`;
-  `python -m pytest -q` returned `281 passed in 67.01s`;
+- Fresh fix-worker verification before controller persistence:
+  `python -m pytest tests/g4 -q` returned `70 passed in 69.38s`;
+  `python -m pytest -q` returned `291 passed in 105.23s`;
   `python -m compileall -q src scripts` exited `0`;
   `git diff --check` exited `0`;
   `python scripts/run_g4_mechanism_probe.py` returned `[0.05, 0.525]`; and the

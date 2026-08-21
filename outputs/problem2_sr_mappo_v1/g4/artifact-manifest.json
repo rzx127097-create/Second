@@ -1,9 +1,9 @@
 {
   "artifacts": [
     {
-      "bytes": 1178,
+      "bytes": 2446,
       "path": "activation-summary.json",
-      "sha256": "e90663cf7037c265f6a0113f325618b2ef63c763fab4a601191184bcc7acb0fb"
+      "sha256": "94c8d64d3932521b15da02b564f5f32af467131f4ad2d8ab4b619deb967abbdc"
     },
     {
       "bytes": 57326,
@@ -11,44 +11,44 @@
       "sha256": "ce77e1720d0818edc7a213f719529209aacc22887262e6b9845c2994c8e9180b"
     },
     {
-      "bytes": 52800,
+      "bytes": 90436,
       "path": "fixed/activation-summary.json",
-      "sha256": "3979eeb0c3f465e6d5e1cdee7ce97600f98c745fb24b7f124e547929ec49f915"
+      "sha256": "bcc3cbf5430b4352a86740033636c05de8a075a1da6f85418237a2dcbb1b1aef"
     },
     {
-      "bytes": 848,
+      "bytes": 2116,
       "path": "fixed/provenance.json",
-      "sha256": "ba333617ad0c614cee0f09b5c9073ea9124630f5451e2fd575d5687794afba23"
+      "sha256": "aa702712adaed81d3df8c00eaa0c47cdd3b3b5234e7c20c642a7f3ccb5faa55d"
     },
     {
-      "bytes": 43155,
+      "bytes": 75744,
       "path": "fixed/raw-probe.jsonl",
-      "sha256": "d367cf486f2813f0b188d3ea174a169607f5931d91b956be5203cb9034065b3a"
+      "sha256": "64a9aa4600276bb6cab10727e027f2084e962b6a8bf98b1549e3e12a84196647"
     },
     {
-      "bytes": 52575,
+      "bytes": 90211,
       "path": "mobile/activation-summary.json",
-      "sha256": "42df9ad82bf7bfaa9135ddca079ff4b0dd0368474d1af9b2d6f530bad1e35423"
+      "sha256": "9002a237aec3fe3045d26d950b4f71f92a8aadf77daaf1ed9b8313789f018361"
     },
     {
-      "bytes": 848,
+      "bytes": 2116,
       "path": "mobile/provenance.json",
-      "sha256": "ba333617ad0c614cee0f09b5c9073ea9124630f5451e2fd575d5687794afba23"
+      "sha256": "aa702712adaed81d3df8c00eaa0c47cdd3b3b5234e7c20c642a7f3ccb5faa55d"
     },
     {
-      "bytes": 42905,
+      "bytes": 75494,
       "path": "mobile/raw-probe.jsonl",
-      "sha256": "2bc7c26c0a1b0ee3a55f0430df6f47ab50b96dccf4989429c661c4a69420780f"
+      "sha256": "f3e2bf2af73ede37abb7ba7bba18f3aafe5054d93bafbdd31047ac23f9152ffe"
     },
     {
-      "bytes": 222488,
+      "bytes": 376054,
       "path": "probe-matrix-summary.json",
-      "sha256": "d532bce430cf71c52681c6b3e941c0628a51bc035caec9a3c531de53cd8433b0"
+      "sha256": "14345bbfc8be1a68379cd20f7b1f15ee2d890d820c4ae18e232a4bf45209ab23"
     },
     {
-      "bytes": 848,
+      "bytes": 2116,
       "path": "provenance.json",
-      "sha256": "ba333617ad0c614cee0f09b5c9073ea9124630f5451e2fd575d5687794afba23"
+      "sha256": "aa702712adaed81d3df8c00eaa0c47cdd3b3b5234e7c20c642a7f3ccb5faa55d"
     }
   ],
   "schema_version": "g4-artifact-manifest.v1"

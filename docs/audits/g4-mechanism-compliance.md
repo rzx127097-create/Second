@@ -16,7 +16,7 @@ the controller completes final review and non-rewriting push verification.
 - Corrective evidence commit:
   `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
 - Generator/code commit:
-  `0f4003f1d9146187f827537e770a307c22ee687a`
+  `f53b86b05372a142a9b4796db2e7c3fc9be901a1`
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`
 - Matrix: `3 scales x 3 seeds x 3 initial-UAV-pesticide levels` per arm
 - Paired diagnostic records: `27`
@@ -62,13 +62,14 @@ conservation error at or below `1e-9 L`; and enforces equal input fingerprints
 across each paired row.
 
 The audit also verifies the contract, probe-manifest, and G2-config hashes;
-resolvable Git commit/tree provenance; all manifest SHA-256 and byte counts;
-missing-manifest rejection; duplicate, traversal, nested-manifest,
-unsupported-file, and G3 endpoint-reference rejections. The regenerated audit
-reports `status=pass` with 10 registered evidence artifacts.
+resolvable Git commit/tree provenance; per-file and deterministic source-bundle
+hashes; all manifest SHA-256 and byte counts; missing-manifest rejection;
+duplicate, traversal, nested-manifest, unsupported-file, realistic G3 endpoint
+and execution-flag, and reserved-seed rejections. The regenerated audit reports
+`status=pass` with 10 registered evidence artifacts.
 
-Fresh controller verification returned `60 passed in 31.80s` for `tests/g4`,
-`281 passed in 67.01s` for the full suite, exit `0` for `compileall`, exit `0` for
+Fresh fix-worker verification before controller persistence returned `70 passed
+in 69.38s` for `tests/g4`, `291 passed in 105.23s` for the full suite, exit `0` for
 `git diff --check`, `[0.05, 0.525]` from the G4 generator, and
 `status=pass artifacts=10` from the G4 audit.
 

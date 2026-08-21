@@ -226,8 +226,8 @@ non-rewriting push verification.
   (`docs: regenerate g4 onboard scarcity evidence`), prepared on
   `codex/problem2-g4-resource-scarcity`.
 - Generator/code commit bound in the canonical G4 artifacts:
-  `0f4003f1d9146187f827537e770a307c22ee687a`
-  (`fix: stabilize g4 generator provenance`).
+  `f53b86b05372a142a9b4796db2e7c3fc9be901a1`
+  (`perf: cache g4 source bundle verification`).
 - Executed scarcity axis: `initial_uav_pesticide_l`, sampled at `0.05`,
   `0.2875`, and `0.525 L`, all within the frozen G2 usable UAV capacity
   `1.08 L`.
@@ -241,13 +241,18 @@ non-rewriting push verification.
   that reached service start, while `euclidean_service_start_distance_m` is
   Euclidean separation at service start, not road-travel distance.
 - Canonical G4 evidence was regenerated below
-  `outputs/problem2_sr_mappo_v1/g4` with source commit `0f4003f`, source tree
-  `9ab9e2ff1cb54c3d23596ae9ee43962d253db191`, and contract SHA-256
+  `outputs/problem2_sr_mappo_v1/g4` with source commit `f53b86b`, source tree
+  `743d8cd30508af265a9232dd5b52402d7025ede2`, source bundle SHA-256
+  `6e4f959610f9a3ab29eda6cdf44bf3da916f8e4e5db9b6323450bb7c26e28878`, and contract SHA-256
   `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
 - Hardened audit result: `status=pass`, exact matrix shape `3 x 3 x 3` per
   arm, 27 same-input pairs, 10 manifest artifacts, validation/sealed access
   false, battery replenishment false, no G3 endpoint evidence, and no G3
   actor/checkpoint execution.
+- Final-review remediation also rejects realistic G3 paths, root or nested
+  manifest bypasses, truthy G3 execution flags, and reserved validation/sealed
+  seed IDs in manifested JSON/JSONL. Generation rejects dirty source paths and
+  emits per-file plus deterministic source-bundle hashes verified by the audit.
 - The audit now fails closed if `artifact-manifest.json` is missing, rejects
   G3 endpoint references in artifact paths and string values, verifies raw
   records execute the declared UAV-initial-pesticide axis, and requires active
@@ -257,9 +262,9 @@ non-rewriting push verification.
   onboard-pesticide scarcity mechanism and emitted paired descriptive deltas.
   No efficacy, superiority, formal-result, deployment, vehicle-inventory
   scarcity, or G3 actor-execution claim is permitted.
-- Fresh controller verification before this state record:
-  `python -m pytest tests/g4 -q`: `60 passed in 31.80s`;
-  `python -m pytest -q`: `281 passed in 67.01s`;
+- Fresh fix-worker verification before controller persistence:
+  `python -m pytest tests/g4 -q`: `70 passed in 69.38s`;
+  `python -m pytest -q`: `291 passed in 105.23s`;
   `python -m compileall -q src scripts`: exit `0`;
   `git diff --check`: exit `0`;
   `python scripts/run_g4_mechanism_probe.py`: `[0.05, 0.525]`;
