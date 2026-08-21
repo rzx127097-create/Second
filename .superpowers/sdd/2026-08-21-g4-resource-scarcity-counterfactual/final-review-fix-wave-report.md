@@ -70,9 +70,9 @@ was fully green.
 - `906bfc2549ce31cb3bad054cb8ff080baec65243` - `fix: harden g4 review boundaries`
 - `f53b86b05372a142a9b4796db2e7c3fc9be901a1` - `perf: cache g4 source bundle verification`
 
-No push was performed. The branch is six commits ahead of upstream before
-controller persistence; regenerated canonical evidence is currently
-uncommitted and must be included in the controller's persistence decision.
+No push was performed. The regenerated canonical evidence and this report are
+committed locally; the controller must perform the final review, non-rewriting
+push verification, and final acceptance-state persistence decision.
 
 ## Concerns
 
