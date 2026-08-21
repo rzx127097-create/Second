@@ -4,12 +4,13 @@ Date: 2026-08-21
 Repository: `C:/Users/RZX/Documents/ChatGPT/Second`
 Branch: `codex/problem2-g4-resource-scarcity`
 
-## Gate Status
+## Gate Result
 
-G4 is not accepted and G5 is not authorized. The final-review remediation is
-locally complete and the regenerated diagnostic bundle passes its hardened
-audit, but controller-run independent verification and push/persistence
-confirmation remain required.
+G4 passed at the existing `M2` evidence boundary after final-review
+remediation. The accepted evidence is diagnostic support-probe mechanism
+evidence only. It does not establish mobile-treatment efficacy, SR-MAPPO
+superiority, statistical significance, a formal experiment result, G3 actor
+execution, or deployment evidence.
 
 ## Corrected Frozen Interface
 
@@ -27,17 +28,32 @@ confirmation remain required.
 - Probe scales: `g20x20_d2`, `g20x30_d3`, `g30x30_d3`; seeds `42`, `123`,
   `2024`. Validation and sealed-test partitions remain inaccessible.
 
-## Local Evidence
+## Verified Evidence
 
-- Fixed-generator commit: `75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f`
-  (`fix: preserve g4 contract diagnostics`).
+- Content/evidence commit:
+  `c80541f26a09c82d2bb0ce680016428149e43152`
+  (`docs: regenerate g4 evidence for final verification`), pushed to
+  `origin/codex/problem2-g4-resource-scarcity`.
+- Generator/code commit bound in the canonical artifacts:
+  `317fe18c97d37c92d1a71a597139d2b462c3b2e0`
+  (`test: cover g4 service-start distance call path`).
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`.
-- Provenance binds source commit `75e5bcf`, source tree
-  `e49be77ea7c235c0cc6d26714c703506ce85a064`, and contract SHA-256
+- Provenance binds source commit `317fe18`, source tree
+  `64d6a06049ff0d3ff6302ee9a3287ca50a1735df`, and contract SHA-256
   `dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c`.
 - The audit verifies the exact `3 x 3 x 3` raw matrix per arm, raw/summary and
   counterfactual consistency, active service cycle, common activation window,
   provenance hashes, manifest hashes/bytes, and duplicate-path rejection.
+- Fresh controller verification:
+  `python -m pytest tests/g4 -q` returned `55 passed`;
+  `python -m pytest -q` returned `276 passed`;
+  `python -m compileall -q src scripts` exited `0`;
+  `git diff --check` exited `0`;
+  `python scripts/run_g4_mechanism_probe.py` returned `[1.0, 12.0]`; and the
+  G4 audit returned `status=pass artifacts=10`.
+- Content-push verification: local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-g4-resource-scarcity` all
+  returned `c80541f26a09c82d2bb0ce680016428149e43152` after the content push.
 
 ## Claim Boundary
 
@@ -47,12 +63,18 @@ deltas under the G2 simulation semantics. This is not a mobile-treatment
 efficacy, SR-MAPPO superiority, statistical-significance, formal-result,
 deployment, or G3 actor-execution claim.
 
-## Controller Follow-Up
+## G5 Entry Condition
 
-1. Run the independent final verification against the local commits.
-2. Push the content and persistence commits without rewriting history.
-3. Verify local, upstream, and `git ls-remote` hashes agree.
-4. Add the actual pushed persistence hash to `docs/PROJECT_STATE.md`.
+G5 may begin as a pilot-protocol freeze gate only. It must freeze, before any
+formal job or sealed evaluation:
 
-No final remote or persistence hash is recorded here because this worker did
-not push.
+1. pilot scenarios, resource budgets, horizons, seeds, and information
+   conditions shared by every comparison arm;
+2. the fairness matrix for `sr_mappo_mobile`, `sr_mappo_fixed`,
+   `sr_mappo_astar`, `mappo_mobile`, and `sr_mappo_two_stage`;
+3. validation-tuning rules with sealed-test access disabled;
+4. paired statistical estimands, exclusion rules, and artifact schemas;
+5. an independent audit confirming the frozen methods and statistics.
+
+Formal jobs, validation tuning, sealed evaluation, and thesis
+efficacy/superiority claims remain unauthorized until their later gates.

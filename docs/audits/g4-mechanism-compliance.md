@@ -4,16 +4,18 @@ Date: 2026-08-21
 
 ## Status
 
-This is a local final-review remediation record, not G4 gate acceptance. The
-regenerated bundle passes the hardened G4 audit, but controller-run independent
-verification, push, and persistence confirmation remain required. G5 is not
-authorized.
+G4 passed at `M2` after final-review remediation. This is diagnostic
+support-probe mechanism evidence only, not formal treatment-effect evidence.
+G5 pilot-protocol freezing is the next authorized gate.
 
-- Gate: `G4` final-review remediation
-- Local audit: `pass`
+- Gate: `G4` resource-scarcity mechanism acceptance
+- Hardened audit: `pass`
 - Public algorithm identity: `SR-MAPPO`
 - Problem identity: air-ground heterogeneous extension
-- Generator commit: `75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f`
+- Content/evidence commit:
+  `c80541f26a09c82d2bb0ce680016428149e43152`
+- Generator/code commit:
+  `317fe18c97d37c92d1a71a597139d2b462c3b2e0`
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`
 - Matrix: `3 scales x 3 seeds x 3 vehicle-inventory levels` per arm
 - Paired diagnostic records: `27`
@@ -56,6 +58,13 @@ and duplicate, traversal, nested-manifest, unsupported-file, and G3-path
 rejections. The regenerated audit reports `status=pass` with 10 registered
 evidence artifacts.
 
+Fresh controller verification returned `55 passed` for `tests/g4`, `276
+passed` for the full suite, exit `0` for `compileall`, exit `0` for
+`git diff --check`, `[1.0, 12.0]` from the G4 generator, and
+`status=pass artifacts=10` from the G4 audit. After the content push, local
+HEAD, upstream HEAD, and `git ls-remote` all matched
+`c80541f26a09c82d2bb0ce680016428149e43152`.
+
 ## Claim Boundary
 
 The evidence supports only that diagnostic support probes exercised the frozen
@@ -64,9 +73,9 @@ under the G2 simulation semantics. It does not support a mobile-treatment
 efficacy claim, SR-MAPPO superiority claim, significance claim, formal result,
 deployment claim, or G3 actor/checkpoint execution claim.
 
-## Required Controller Follow-Up
+## G5 Boundary
 
-The controller must independently verify the local commits, push without
-rewriting history, confirm local/upstream/remote hash agreement, and then add
-the actual persistence hash to `docs/PROJECT_STATE.md`. No post-remediation
-remote or persistence hash is recorded here.
+G5 may freeze the pilot protocol and fairness/statistics contracts. Formal
+jobs, validation tuning, sealed-test evaluation, thesis efficacy claims,
+superiority claims, G3 actor-execution claims, and deployment claims remain
+outside the G4 evidence boundary.
