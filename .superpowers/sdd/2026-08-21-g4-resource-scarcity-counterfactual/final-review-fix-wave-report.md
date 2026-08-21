@@ -129,8 +129,7 @@ Canonical provenance source commit: ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb
 ### Commits
 
 - `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb` - `fix: close g4 artifact boundary gaps`
-- The regenerated canonical evidence and round-2 report are pending the next
-  local persistence commit.
+- `69b71dd6aaa2489c772cbb7b5571a00c53c34c4a` - `docs: persist g4 round 2 review evidence`
 
 No push was performed. G4 remains an M2 acceptance candidate pending
 controller final review, non-rewriting push verification, and final
