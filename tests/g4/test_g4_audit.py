@@ -214,6 +214,24 @@ def test_g4_audit_rejects_malformed_jsonl_evidence(tmp_path: Path, monkeypatch: 
         audit_g4_mechanism(CONTRACT, output_root, report_path)
 
 
+def test_g4_audit_rejects_blank_only_jsonl_evidence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    (output_root / "fixed" / "raw-probe.jsonl").write_text("\n  \n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="JSONL evidence is empty"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
+def test_g4_audit_rejects_unsupported_textual_artifact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    (output_root / "notes.txt").write_text('"validation_accessed": true\n', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unsupported G4 artifact file type"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
 def test_g4_audit_rejects_non_finite_counterfactual_metric(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
     fixed_path = output_root / "fixed" / "activation-summary.json"

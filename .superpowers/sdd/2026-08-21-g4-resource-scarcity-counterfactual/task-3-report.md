@@ -131,3 +131,27 @@ python -m compileall -q src scripts
 git diff --check
 warning: normal LF/CRLF working-copy warnings only
 ```
+
+## Fix Round 2
+
+The audit now rejects every file under the G4 output root whose suffix is not
+`.json` or `.jsonl`, so boundary flags cannot be hidden in unsupported textual
+or binary artifacts. JSONL parsing also counts non-blank records and rejects a
+file containing only blank lines as empty evidence.
+
+Exact verification commands and outputs:
+
+```text
+python -m pytest tests/g4/test_g4_audit.py -q
+.................                                                        [100%]
+17 passed in 0.71s
+
+python -m pytest tests/g4 -q
+......................................                                   [100%]
+38 passed in 26.70s
+
+python -m compileall -q src scripts
+
+python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json
+status=pass artifacts=18
+```

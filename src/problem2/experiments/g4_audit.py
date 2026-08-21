@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTRACT_PATH = ROOT / "docs/evidence/g4/g4_contract.yaml"
 PROBE_MANIFEST_PATH = ROOT / "docs/evidence/g4/g4_probe_manifest.yaml"
 CANONICAL_G4_ROOT = (ROOT / "outputs/problem2_sr_mappo_v1/g4").resolve()
+SUPPORTED_G4_SUFFIXES = frozenset({".json", ".jsonl"})
 
 
 def _sha256(path: Path) -> str:
@@ -108,6 +109,7 @@ def _structured_payloads(root: Path) -> list[dict[str, Any]]:
             lines = path.read_text(encoding="utf-8").splitlines()
         except (OSError, UnicodeError) as exc:
             raise ValueError(f"cannot read G4 JSONL evidence {path.name}") from exc
+        record_count = 0
         if not lines:
             raise ValueError(f"G4 JSONL evidence is empty: {path.name}")
         for line_number, line in enumerate(lines, start=1):
@@ -120,6 +122,9 @@ def _structured_payloads(root: Path) -> list[dict[str, Any]]:
             if not isinstance(value, dict):
                 raise ValueError(f"G4 JSONL record must be an object: {path.name}:{line_number}")
             payloads.append(value)
+            record_count += 1
+        if record_count == 0:
+            raise ValueError(f"G4 JSONL evidence is empty: {path.name}")
     return payloads
 
 
@@ -160,6 +165,8 @@ def audit_g4_mechanism(
         raise ValueError("G4 output root does not exist")
     for path in root.rglob("*"):
         relative_text = path.relative_to(root).as_posix().lower()
+        if path.is_file() and path.suffix.lower() not in SUPPORTED_G4_SUFFIXES:
+            raise ValueError(f"unsupported G4 artifact file type: {relative_text}")
         if path.is_file() and "g3" in Path(relative_text).parts:
             raise ValueError("G3 artifacts cannot be used as endpoint evidence")
     payloads = _structured_payloads(root)
