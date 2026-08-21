@@ -27,12 +27,13 @@ real deployment evidence.
 - Existing remote feature branch:
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
-- Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G4 resource-scarcity activation and the descriptive
-  fixed-versus-mobile counterfactual passed at M2. Its final persistence record
-  is pushed and recorded; G5 is the next authorized gate. Formal jobs,
-  validation tuning, sealed evaluation, and efficacy/superiority claims remain
-  unauthorized.
+- Current highest maturity: `M2` implementation evidence. G4 final acceptance
+  is pending a controller-run independent review and local/upstream/remote
+  persistence check; G5 is not authorized.
+- Current gate: G4 final-review remediation. The regenerated local diagnostic
+  support-probe bundle is audit-clean, but no post-remediation content or
+  persistence commit has been pushed. Formal jobs, validation tuning, sealed
+  evaluation, and efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -210,7 +211,41 @@ Persistence status:
 - The separate persistence-record commit is the final required G3
   synchronization before G4 work begins.
 
-## G4 Resource-Scarcity Mechanism Record
+## G4 Final-Review Remediation Record
+
+The following local remediation supersedes the rejected pre-final-review G4
+acceptance language below. It does not close G4 or authorize G5 until the
+controller independently verifies the local commits and performs the required
+push/persistence record.
+
+- Fix-generator commit: `5a65bbca1a95bda6db7a4cf9688af755891acac0`
+  (`fix: harden g4 diagnostic evidence contract`); it is local only.
+- Executed scarcity axis: `initial_vehicle_inventory_l`, sampled at `1.0`,
+  `6.5`, and `12.0 L`. The separate frozen request-trigger setting is
+  `initial_uav_pesticide_l = 0.05 L`.
+- Executed arms: `fixed_support_probe` and `mobile_support_probe`. They are
+  deterministic diagnostic support probes, not loaded G3 actor/checkpoint
+  executions; SR-MAPPO remains the public project identity only.
+- Metric semantics: `started_service_waiting_time_s` counts waits for requests
+  that reached service start, while `euclidean_service_start_distance_m` is
+  Euclidean separation at service start, not road-travel distance.
+- Canonical G4 evidence was regenerated below
+  `outputs/problem2_sr_mappo_v1/g4` with source commit `5a65bbc`, source tree
+  `1f43f3636952019585f5036b56c85a77ae619959`, and contract SHA-256
+  `dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c`.
+- Local audit result: `status=pass`, exact matrix shape `3 x 3 x 3` per arm,
+  27 same-input pairs, 10 manifest artifacts, validation/sealed access false,
+  battery replenishment false, and no G3 actor/checkpoint execution.
+- Permitted claim: the diagnostic support probes exercised the frozen
+  vehicle-inventory scarcity mechanism and emitted paired descriptive deltas.
+  No efficacy, superiority, formal-result, deployment, or G3 actor-execution
+  claim is permitted.
+- Controller follow-up: run independent final verification, push the content
+  commit(s), confirm local/upstream/remote agreement, then add the actual
+  pushed persistence hash. This record intentionally contains no invented
+  post-remediation remote hash.
+
+## Superseded Pre-Final-Review G4 Record
 
 G4 passes at the existing maturity boundary `M2`: its frozen pesticide
 resource-scarcity mechanism activated across the registered development probe,
@@ -646,8 +681,11 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Freeze the G5 pilot protocol, baseline fairness matrix, validation-tuning
-  rules, and paired-statistics contract before formal matrix jobs.
+- Complete the independent final review, push, and persistence record for the
+  local G4 final-review remediation before any G5 work begins.
+- After G4 is actually accepted, freeze the G5 pilot protocol, baseline
+  fairness matrix, validation-tuning rules, and paired-statistics contract
+  before formal matrix jobs.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -661,10 +699,9 @@ G1.1 bounded remediation persistence record:
   remain untrusted until later branch-local verification.
 - G3 heterogeneous-MARL implementation and acceptance passed at M2 on
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
-  canonical smoke and audit artifacts are recorded above. G4 subsequently
-  passed at M2 as descriptive scarcity-mechanism evidence with final
-  persistence record `97f92bf2d93f662963f47ffce43e412bbbe33e4a`; G5 is the
-  next authorized gate.
+  canonical smoke and audit artifacts are recorded above. G4 is in local
+  final-review remediation on commit `5a65bbc`; it is not accepted and G5 is
+  not authorized until controller verification and persistence complete.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -705,7 +742,8 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Begin G5 by freezing the fair pilot protocol and comparison/statistics
-contracts using the verified G4 mechanism boundary. The highest maturity
-remains M2 implementation and scoped mechanism evidence. Formal jobs,
-validation tuning, and sealed-test evaluation remain unauthorized.
+Run the controller's independent final verification of the G4 remediation,
+push the verified local commits, confirm local/upstream/remote agreement, and
+record the actual persistence hash. The highest maturity remains M2
+implementation evidence; G5, formal jobs, validation tuning, and sealed-test
+evaluation remain unauthorized.

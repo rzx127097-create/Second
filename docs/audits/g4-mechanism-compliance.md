@@ -2,72 +2,71 @@
 
 Date: 2026-08-21
 
-## Result
+## Status
 
-The G4 resource-scarcity and fixed/mobile counterfactual boundary passes at
-maturity `M2`. The evidence is a development-only mechanism probe built on the
-frozen G2 physical foundation and the G3 heterogeneous SR-MAPPO interface.
+This is a local final-review remediation record, not G4 gate acceptance. The
+regenerated bundle passes the hardened G4 audit, but controller-run independent
+verification, push, and persistence confirmation remain required. G5 is not
+authorized.
 
-- Gate: `G4`
-- Audit: `g4-mechanism-compliance`
-- Audit status: `pass`
-- Public algorithm: `SR-MAPPO`
+- Gate: `G4` final-review remediation
+- Local audit: `pass`
+- Public algorithm identity: `SR-MAPPO`
 - Problem identity: air-ground heterogeneous extension
-- Scarcity band: `[1.0, 12.0] L`
-- Comparator: `sr_mappo_fixed` versus `sr_mappo_mobile`
-- Paired records: `27`
+- Generator commit: `5a65bbca1a95bda6db7a4cf9688af755891acac0`
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`
+- Matrix: `3 scales x 3 seeds x 3 vehicle-inventory levels` per arm
+- Paired diagnostic records: `27`
 
-## Contract And Probe Coverage
+## Corrected Contract
 
-| Contract | Frozen or verified condition |
+| Contract item | Frozen or verified condition |
 |---|---|
-| Resource scope | Pesticide replenishment only; battery replenishment is `false` |
-| Scarcity axis | `initial_uav_pesticide_l` |
-| Activation band | Complete contiguous probe coverage at `1.0`, `6.5`, and `12.0 L` |
-| Scales | `g20x20_d2`, `g20x30_d3`, `g30x30_d3` |
-| Seeds | `42`, `123`, `2024` |
-| Counterfactual inputs | Matching scale, seed, scarcity level, and input fingerprint |
-| Validation access | `false`; validation partition is empty |
-| Sealed access | `false`; sealed partition is empty |
-| G3 endpoint reuse | Rejected by the audit boundary |
+| Resource scope | Pesticide only; battery replenishment is `false` |
+| Executed scarcity axis | `initial_vehicle_inventory_l` |
+| Vehicle-inventory levels | `1.0`, `6.5`, and `12.0 L` |
+| Request-trigger setting | `initial_uav_pesticide_l = 0.05 L` |
+| Diagnostic arms | `fixed_support_probe`, `mobile_support_probe` |
+| Probe scales | `g20x20_d2`, `g20x30_d3`, `g30x30_d3` |
+| Probe seeds | `42`, `123`, `2024` |
+| Validation and sealed access | `false`; no reserved seed is accessed |
+| G3 endpoint reuse | rejected |
+| G3 actor/checkpoint execution | `false`; no such execution is claimed |
 
-## Evidence Chain
+## Metric Semantics
 
-The contract and probe manifest freeze the G4 interface. The fixed and mobile
-activation summaries and JSONL records provide the raw mechanism observations.
-The counterfactual summary recomputes paired deltas from those summaries. The
-audit verifies the recomputed summary, boundary flags, path containment, and
-SHA-256/byte manifest before writing `g4-mechanism-audit.json`.
+- `started_service_waiting_time_s` is the wait from request creation until
+  service start for requests that reached service start. It is not a censored
+  wait for pending requests at horizon end.
+- `euclidean_service_start_distance_m` is the Euclidean UAV-vehicle separation
+  at service start. It is not vehicle road-travel distance.
 
-The current bundle contains 27 fixed/mobile pairs and equal activation counts
-of 27 per arm. The recorded maximum conservation error is
-`3.552713678800501e-15 L` in the aggregate counterfactual summary. These are
-descriptive probe values, not formal evaluation outcomes.
+## Evidence And Audit Coverage
 
-## Artifact Set
+The activation JSONL is the raw evidence. The audit requires the exact frozen
+matrix per arm and rejects missing, duplicate, or extra rows. It verifies raw
+records against arm summaries, the root probe matrix, and the recomputed
+counterfactual summary; confirms a positive request/reservation/service cycle
+for active rows; requires finite metrics and conservation error at or below
+`1e-9 L`; and enforces equal input fingerprints across each paired row.
 
-- `activation-summary.json`
-- `counterfactual-summary.json`
-- `provenance.json`
-- `g4-mechanism-audit.json`
-- `artifact-manifest.json`
-- `fixed/` and `mobile/` activation summaries, provenance, and raw JSONL
-- `probe-matrix-summary.json`
-
-All endpoint artifacts are JSON or JSONL files under the canonical G4 output
-root. The artifact manifest records each path, byte count, and SHA-256 hash.
+The audit also verifies the contract, probe-manifest, and G2-config hashes;
+resolvable Git commit/tree provenance; all manifest SHA-256 and byte counts;
+and duplicate, traversal, nested-manifest, unsupported-file, and G3-path
+rejections. The regenerated audit reports `status=pass` with 10 registered
+evidence artifacts.
 
 ## Claim Boundary
 
-The evidence supports only the statement that the frozen pesticide scarcity
-mechanism activated and that fixed/mobile arms produced paired descriptive
-deltas under the registered development probe. It does not support a mobile
-treatment improvement claim, an SR-MAPPO superiority claim, a significance
-claim, a formal endpoint result, or a deployment claim.
+The evidence supports only that diagnostic support probes exercised the frozen
+vehicle-inventory scarcity mechanism and emitted paired descriptive deltas
+under the G2 simulation semantics. It does not support a mobile-treatment
+efficacy claim, SR-MAPPO superiority claim, significance claim, formal result,
+deployment claim, or G3 actor/checkpoint execution claim.
 
-The next authorized gate is G5. G5 entry requires persisted G4 content and
-state records, matching local/upstream/remote references, and a pre-registered
-pilot protocol with resource budgets, horizons, scenario/seed protocol,
-information conditions, baseline fairness, validation-tuning rules, and
-paired statistical estimands independently audited before formal jobs.
+## Required Controller Follow-Up
+
+The controller must independently verify the local commits, push without
+rewriting history, confirm local/upstream/remote hash agreement, and then add
+the actual persistence hash to `docs/PROJECT_STATE.md`. No post-remediation
+remote or persistence hash is recorded here.

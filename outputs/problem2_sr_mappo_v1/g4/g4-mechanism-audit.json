@@ -3,73 +3,75 @@
     1.0,
     12.0
   ],
+  "artifact_manifest_sha256": "57808c9db54c3b1ac1cc8546a930b01704b5389ac0e54be1726d2c29f247bf78",
   "audit": "g4-mechanism-compliance",
-  "claim_boundary": "mechanism activation and paired counterfactual deltas only; no superiority or deployment claim",
-  "frozen_contract_sha256": "6e9049414421dcf03be373fe7c53bae5ed4576c2b9e94bc45168a266cfeb936a",
+  "claim_boundary": "diagnostic support-probe mechanism activation and paired descriptive counterfactual deltas only; no G3 actor or checkpoint execution, superiority, efficacy, formal-result, or deployment claim",
+  "frozen_contract_sha256": "dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c",
   "hard_boundary": {
     "battery_replenishment_enabled": false,
+    "g3_actor_or_checkpoint_executed": false,
     "g3_endpoint_evidence_accepted": false,
     "sealed_test_accessed": false,
     "validation_accessed": false
   },
   "output_artifact_hashes": [
     {
-      "bytes": 387,
+      "bytes": 1176,
       "path": "activation-summary.json",
-      "sha256": "ee37a8bfa9ed848b8f3cdbfad49390e8e965e40a6b9b211f3155ee080570ff51"
+      "sha256": "fa620b8533880a4fd7f6ef00fd4ee2b4d48afcfda62eea6cc9c56fa4c090ef52"
     },
     {
-      "bytes": 36867,
+      "bytes": 40038,
       "path": "counterfactual-summary.json",
-      "sha256": "b078888fbfbd44e7524f91ab7557ce6e3fa7c592057968ea6a666a01f0ca9b1e"
+      "sha256": "fa223a50d4b5ecd3335b43296e98973a351e5fe9ca4a8181d6c70eedb5149aa3"
     },
     {
-      "bytes": 43375,
+      "bytes": 46829,
       "path": "fixed/activation-summary.json",
-      "sha256": "955931ff9512891969bb6d9a5ed39419fb9c985b8bf487664abc7132bb60161b"
+      "sha256": "b80ea86e5add8d2e57fda67e570254d9c8c835aa4c713917f24cae7bdc8c1115"
     },
     {
       "bytes": 848,
       "path": "fixed/provenance.json",
-      "sha256": "092f3cc70745846177ae9bf6ff6d353c6a2b79e23d137acf73f7db3d190f785c"
+      "sha256": "ec446e46aa4f7f56d4635f2c498228f550b8357f1bc3d221bc6f43489ee9d038"
     },
     {
-      "bytes": 35091,
+      "bytes": 38124,
       "path": "fixed/raw-probe.jsonl",
-      "sha256": "354623b93c1dc5d6b222361b033c175b48684b2aa6a7308296a188aefb7f6045"
+      "sha256": "6cccbf9e2be659194634e54beea4d8855e29990496ad7a732af67ad23c145bf9"
     },
     {
-      "bytes": 43546,
+      "bytes": 47000,
       "path": "mobile/activation-summary.json",
-      "sha256": "b1c7c645b1f5002111655f4570dc5b2bb81b9b60939feaa469692ce3ff421532"
+      "sha256": "cd439cffb5d1f6838205957da67cf9ef0f0a0882fe9e7f0b03586f960fa97ebb"
     },
     {
       "bytes": 848,
       "path": "mobile/provenance.json",
-      "sha256": "092f3cc70745846177ae9bf6ff6d353c6a2b79e23d137acf73f7db3d190f785c"
+      "sha256": "ec446e46aa4f7f56d4635f2c498228f550b8357f1bc3d221bc6f43489ee9d038"
     },
     {
-      "bytes": 35254,
+      "bytes": 38287,
       "path": "mobile/raw-probe.jsonl",
-      "sha256": "4097c04ec9605cedcef4625d71f7e6bb3b5418db830fa7d4602f6327c4b29447"
+      "sha256": "d9297d09435d3b47d102c51a7e2f90a86084dd9227a238fd8200d6ba3557c633"
     },
     {
-      "bytes": 184073,
+      "bytes": 198451,
       "path": "probe-matrix-summary.json",
-      "sha256": "80ddfc3efdf056b3fb5c4dacda7eed928f891887504f8631e798ec61304751be"
+      "sha256": "5e732f73617707067b5162513e7f4e7cb38d04021c5b55de10eefde4ea065cb6"
     },
     {
-      "bytes": 964,
+      "bytes": 848,
       "path": "provenance.json",
-      "sha256": "f30ce033b0938389ccdac26399c346935e1a505a388e2993b45c4ef5e5f8d4a5"
+      "sha256": "ec446e46aa4f7f56d4635f2c498228f550b8357f1bc3d221bc6f43489ee9d038"
     }
   ],
   "paired_deltas": [
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g20x20_d2",
@@ -77,14 +79,14 @@
       "seed": 123,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 70.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": -2.0,
       "reservation_count": -3.0,
       "scale_id": "g20x20_d2",
@@ -92,14 +94,14 @@
       "seed": 123,
       "service_count": -2.0,
       "sprayed_volume_l": -0.5400000000000011,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 70.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": -2.0,
       "reservation_count": -3.0,
       "scale_id": "g20x20_d2",
@@ -107,14 +109,14 @@
       "seed": 123,
       "service_count": -2.0,
       "sprayed_volume_l": -0.5400000000000011,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g20x20_d2",
@@ -122,14 +124,14 @@
       "seed": 2024,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 1.5,
+      "euclidean_service_start_distance_m": 1.5,
       "pesticide_disabled_time_s": 23.0,
-      "rendezvous_distance_change_m": 1.5,
-      "rendezvous_distance_m": 1.5,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x20_d2",
@@ -137,14 +139,14 @@
       "seed": 2024,
       "service_count": -1.0,
       "sprayed_volume_l": 0.3999999999999997,
-      "waiting_time_reduction_s": -76.0,
-      "waiting_time_s": 76.0
+      "started_service_waiting_time_reduction_s": -76.0,
+      "started_service_waiting_time_s": 76.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 1.5,
+      "euclidean_service_start_distance_m": 1.5,
       "pesticide_disabled_time_s": 23.0,
-      "rendezvous_distance_change_m": 1.5,
-      "rendezvous_distance_m": 1.5,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x20_d2",
@@ -152,14 +154,14 @@
       "seed": 2024,
       "service_count": -1.0,
       "sprayed_volume_l": 0.3999999999999997,
-      "waiting_time_reduction_s": -76.0,
-      "waiting_time_s": 76.0
+      "started_service_waiting_time_reduction_s": -76.0,
+      "started_service_waiting_time_s": 76.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g20x20_d2",
@@ -167,14 +169,14 @@
       "seed": 42,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 10.5,
+      "euclidean_service_start_distance_m": 10.5,
       "pesticide_disabled_time_s": 48.0,
-      "rendezvous_distance_change_m": 10.5,
-      "rendezvous_distance_m": 10.5,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x20_d2",
@@ -182,14 +184,14 @@
       "seed": 42,
       "service_count": -1.0,
       "sprayed_volume_l": -0.10000000000000075,
-      "waiting_time_reduction_s": -101.0,
-      "waiting_time_s": 101.0
+      "started_service_waiting_time_reduction_s": -101.0,
+      "started_service_waiting_time_s": 101.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 10.5,
+      "euclidean_service_start_distance_m": 10.5,
       "pesticide_disabled_time_s": 48.0,
-      "rendezvous_distance_change_m": 10.5,
-      "rendezvous_distance_m": 10.5,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x20_d2",
@@ -197,14 +199,14 @@
       "seed": 42,
       "service_count": -1.0,
       "sprayed_volume_l": -0.10000000000000075,
-      "waiting_time_reduction_s": -101.0,
-      "waiting_time_s": 101.0
+      "started_service_waiting_time_reduction_s": -101.0,
+      "started_service_waiting_time_s": 101.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g20x30_d3",
@@ -212,14 +214,14 @@
       "seed": 123,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
+      "euclidean_service_start_distance_change_m": 2.5,
+      "euclidean_service_start_distance_m": 2.5,
       "pesticide_disabled_time_s": 52.0,
-      "rendezvous_distance_change_m": 2.5,
-      "rendezvous_distance_m": 2.5,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x30_d3",
@@ -227,14 +229,14 @@
       "seed": 123,
       "service_count": -2.0,
       "sprayed_volume_l": 0.03999999999999915,
-      "waiting_time_reduction_s": -105.0,
-      "waiting_time_s": 105.0
+      "started_service_waiting_time_reduction_s": -105.0,
+      "started_service_waiting_time_s": 105.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 2.5,
+      "euclidean_service_start_distance_m": 2.5,
       "pesticide_disabled_time_s": 52.0,
-      "rendezvous_distance_change_m": 2.5,
-      "rendezvous_distance_m": 2.5,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x30_d3",
@@ -242,14 +244,14 @@
       "seed": 123,
       "service_count": -2.0,
       "sprayed_volume_l": 0.03999999999999915,
-      "waiting_time_reduction_s": -105.0,
-      "waiting_time_s": 105.0
+      "started_service_waiting_time_reduction_s": -105.0,
+      "started_service_waiting_time_s": 105.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g20x30_d3",
@@ -257,14 +259,14 @@
       "seed": 2024,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
+      "euclidean_service_start_distance_change_m": 0.6666666666569654,
+      "euclidean_service_start_distance_m": 0.6666666666569654,
       "pesticide_disabled_time_s": 46.0,
-      "rendezvous_distance_change_m": 0.6666666666569654,
-      "rendezvous_distance_m": 0.6666666666569654,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x30_d3",
@@ -272,14 +274,14 @@
       "seed": 2024,
       "service_count": -2.0,
       "sprayed_volume_l": 0.1599999999999988,
-      "waiting_time_reduction_s": -85.0,
-      "waiting_time_s": 85.0
+      "started_service_waiting_time_reduction_s": -85.0,
+      "started_service_waiting_time_s": 85.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.6666666666569654,
+      "euclidean_service_start_distance_m": 0.6666666666569654,
       "pesticide_disabled_time_s": 46.0,
-      "rendezvous_distance_change_m": 0.6666666666569654,
-      "rendezvous_distance_m": 0.6666666666569654,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x30_d3",
@@ -287,14 +289,14 @@
       "seed": 2024,
       "service_count": -2.0,
       "sprayed_volume_l": 0.1599999999999988,
-      "waiting_time_reduction_s": -85.0,
-      "waiting_time_s": 85.0
+      "started_service_waiting_time_reduction_s": -85.0,
+      "started_service_waiting_time_s": 85.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g20x30_d3",
@@ -302,14 +304,14 @@
       "seed": 42,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
+      "euclidean_service_start_distance_change_m": 0.3333333333430346,
+      "euclidean_service_start_distance_m": 0.3333333333430346,
       "pesticide_disabled_time_s": 46.0,
-      "rendezvous_distance_change_m": 0.3333333333430346,
-      "rendezvous_distance_m": 0.3333333333430346,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x30_d3",
@@ -317,14 +319,14 @@
       "seed": 42,
       "service_count": -2.0,
       "sprayed_volume_l": 0.1599999999999988,
-      "waiting_time_reduction_s": -74.0,
-      "waiting_time_s": 74.0
+      "started_service_waiting_time_reduction_s": -74.0,
+      "started_service_waiting_time_s": 74.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.3333333333430346,
+      "euclidean_service_start_distance_m": 0.3333333333430346,
       "pesticide_disabled_time_s": 46.0,
-      "rendezvous_distance_change_m": 0.3333333333430346,
-      "rendezvous_distance_m": 0.3333333333430346,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g20x30_d3",
@@ -332,14 +334,14 @@
       "seed": 42,
       "service_count": -2.0,
       "sprayed_volume_l": 0.1599999999999988,
-      "waiting_time_reduction_s": -74.0,
-      "waiting_time_s": 74.0
+      "started_service_waiting_time_reduction_s": -74.0,
+      "started_service_waiting_time_s": 74.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g30x30_d3",
@@ -347,14 +349,14 @@
       "seed": 123,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
+      "euclidean_service_start_distance_change_m": 9.0,
+      "euclidean_service_start_distance_m": 9.0,
       "pesticide_disabled_time_s": 86.0,
-      "rendezvous_distance_change_m": 9.0,
-      "rendezvous_distance_m": 9.0,
       "request_count": -2.0,
       "reservation_count": -3.0,
       "scale_id": "g30x30_d3",
@@ -362,14 +364,14 @@
       "seed": 123,
       "service_count": -3.0,
       "sprayed_volume_l": -0.2800000000000016,
-      "waiting_time_reduction_s": -77.0,
-      "waiting_time_s": 77.0
+      "started_service_waiting_time_reduction_s": -77.0,
+      "started_service_waiting_time_s": 77.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 9.0,
+      "euclidean_service_start_distance_m": 9.0,
       "pesticide_disabled_time_s": 86.0,
-      "rendezvous_distance_change_m": 9.0,
-      "rendezvous_distance_m": 9.0,
       "request_count": -2.0,
       "reservation_count": -3.0,
       "scale_id": "g30x30_d3",
@@ -377,14 +379,14 @@
       "seed": 123,
       "service_count": -3.0,
       "sprayed_volume_l": -0.2800000000000016,
-      "waiting_time_reduction_s": -77.0,
-      "waiting_time_s": 77.0
+      "started_service_waiting_time_reduction_s": -77.0,
+      "started_service_waiting_time_s": 77.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g30x30_d3",
@@ -392,14 +394,14 @@
       "seed": 2024,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
+      "euclidean_service_start_distance_change_m": 0.8888888888953564,
+      "euclidean_service_start_distance_m": 0.8888888888953564,
       "pesticide_disabled_time_s": 86.0,
-      "rendezvous_distance_change_m": 0.8888888888953564,
-      "rendezvous_distance_m": 0.8888888888953564,
       "request_count": -2.0,
       "reservation_count": -2.0,
       "scale_id": "g30x30_d3",
@@ -407,14 +409,14 @@
       "seed": 2024,
       "service_count": -3.0,
       "sprayed_volume_l": -0.2800000000000016,
-      "waiting_time_reduction_s": -271.0,
-      "waiting_time_s": 271.0
+      "started_service_waiting_time_reduction_s": -271.0,
+      "started_service_waiting_time_s": 271.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.8888888888953564,
+      "euclidean_service_start_distance_m": 0.8888888888953564,
       "pesticide_disabled_time_s": 86.0,
-      "rendezvous_distance_change_m": 0.8888888888953564,
-      "rendezvous_distance_m": 0.8888888888953564,
       "request_count": -2.0,
       "reservation_count": -2.0,
       "scale_id": "g30x30_d3",
@@ -422,14 +424,14 @@
       "seed": 2024,
       "service_count": -3.0,
       "sprayed_volume_l": -0.2800000000000016,
-      "waiting_time_reduction_s": -271.0,
-      "waiting_time_s": 271.0
+      "started_service_waiting_time_reduction_s": -271.0,
+      "started_service_waiting_time_s": 271.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 0.0,
-      "rendezvous_distance_change_m": 0.0,
-      "rendezvous_distance_m": 0.0,
       "request_count": 0.0,
       "reservation_count": 0.0,
       "scale_id": "g30x30_d3",
@@ -437,14 +439,14 @@
       "seed": 42,
       "service_count": 0.0,
       "sprayed_volume_l": 0.0,
-      "waiting_time_reduction_s": 0.0,
-      "waiting_time_s": 0.0
+      "started_service_waiting_time_reduction_s": 0.0,
+      "started_service_waiting_time_s": 0.0
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
+      "euclidean_service_start_distance_change_m": 0.44444444445737946,
+      "euclidean_service_start_distance_m": 0.44444444445737946,
       "pesticide_disabled_time_s": 52.0,
-      "rendezvous_distance_change_m": 0.44444444445737946,
-      "rendezvous_distance_m": 0.44444444445737946,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g30x30_d3",
@@ -452,14 +454,14 @@
       "seed": 42,
       "service_count": -2.0,
       "sprayed_volume_l": 0.399999999999999,
-      "waiting_time_reduction_s": -237.0,
-      "waiting_time_s": 237.0
+      "started_service_waiting_time_reduction_s": -237.0,
+      "started_service_waiting_time_s": 237.0
     },
     {
       "conservation_error_l": 0.0,
+      "euclidean_service_start_distance_change_m": 0.44444444445737946,
+      "euclidean_service_start_distance_m": 0.44444444445737946,
       "pesticide_disabled_time_s": 52.0,
-      "rendezvous_distance_change_m": 0.44444444445737946,
-      "rendezvous_distance_m": 0.44444444445737946,
       "request_count": -1.0,
       "reservation_count": -2.0,
       "scale_id": "g30x30_d3",
@@ -467,11 +469,28 @@
       "seed": 42,
       "service_count": -2.0,
       "sprayed_volume_l": 0.399999999999999,
-      "waiting_time_reduction_s": -237.0,
-      "waiting_time_s": 237.0
+      "started_service_waiting_time_reduction_s": -237.0,
+      "started_service_waiting_time_s": 237.0
     }
   ],
   "probe_manifest": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_probe_manifest.yaml",
-  "provenance_count": 57,
+  "probe_matrix_shape": [
+    3,
+    3,
+    3
+  ],
+  "provenance": {
+    "battery_replenishment_enabled": false,
+    "g2_config": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\configs\\problem2\\g2_deterministic.yaml",
+    "g2_config_sha256": "297b602272b40de9778a6c9c768921d13503911d3a42ec7145b3560d807d59f2",
+    "g4_contract": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_contract.yaml",
+    "g4_contract_sha256": "dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c",
+    "probe_manifest": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_probe_manifest.yaml",
+    "probe_manifest_sha256": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1",
+    "sealed_test_accessed": false,
+    "source_tree_commit": "5a65bbca1a95bda6db7a4cf9688af755891acac0",
+    "source_tree_hash": "1f43f3636952019585f5036b56c85a77ae619959",
+    "validation_accessed": false
+  },
   "status": "pass"
 }
