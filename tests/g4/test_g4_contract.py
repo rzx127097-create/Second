@@ -44,6 +44,16 @@ def test_g4_contract_exposes_frozen_boundary() -> None:
     assert manifest.sealed_test_access_allowed is False
 
 
+def test_g4_contract_endpoint_root_is_stable_across_working_directories(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    contract = load_g4_contract(CONTRACT_PATH)
+
+    assert contract.output_root.as_posix() == "outputs/problem2_sr_mappo_v1/g4"
+
+
 def test_g4_contract_rejects_g3_endpoint_evidence_paths(tmp_path: Path) -> None:
     payload = _payload(CONTRACT_PATH)
     payload["output_root"] = "outputs/problem2_sr_mappo_v1/g3"

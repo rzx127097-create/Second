@@ -37,6 +37,9 @@ class G4ProbeManifest:
     sealed_test_access_allowed: bool
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+
+
 class _UniqueKeyLoader(yaml.SafeLoader):
     pass
 
@@ -121,7 +124,7 @@ def _load(path: Path, loader: type[yaml.SafeLoader]) -> Any:
 
 
 def _validate_endpoint_evidence_roots(values: tuple[str, ...]) -> None:
-    canonical_root = Path("outputs/problem2_sr_mappo_v1/g4").resolve()
+    canonical_root = (REPOSITORY_ROOT / "outputs/problem2_sr_mappo_v1/g4").resolve()
     for value in values:
         candidate = Path(value)
         windows_candidate = PureWindowsPath(value)
@@ -134,7 +137,7 @@ def _validate_endpoint_evidence_roots(values: tuple[str, ...]) -> None:
                 "endpoint evidence root cannot contain traversal components"
             )
         try:
-            candidate.resolve().relative_to(canonical_root)
+            (REPOSITORY_ROOT / candidate).resolve().relative_to(canonical_root)
         except ValueError as exc:
             raise G4ContractError(
                 "endpoint evidence root must resolve beneath the canonical G4 root"

@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 import re
 import subprocess
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
 from problem2.config import G2Config, load_g2_config
@@ -33,6 +34,63 @@ REQUIRED_METRICS = (
     "sprayed_volume_l",
     "conservation_error_l",
 )
+
+
+def validate_activation_band(
+    records: Iterable[Mapping[str, Any]],
+    expected_levels: Sequence[float],
+) -> dict[tuple[str, int], tuple[float, float]]:
+    """Validate contiguous activation for every frozen scale/seed combination."""
+
+    levels = tuple(sorted({float(level) for level in expected_levels}))
+    if len(levels) < 2:
+        raise G4ContractError("activation band requires at least two sampled levels")
+    grouped: dict[tuple[str, int], dict[float, bool]] = {}
+    for record in records:
+        key = (str(record.get("scale_id")), int(record.get("seed")))
+        level = float(record.get("scarcity_level_l"))
+        if level not in levels:
+            raise G4ContractError(
+                f"activation record for {key} contains an unexpected scarcity level"
+            )
+        levels_for_key = grouped.setdefault(key, {})
+        if level in levels_for_key:
+            raise G4ContractError(f"duplicate activation level for frozen probe {key}")
+        levels_for_key[level] = bool(record.get("scarcity_active"))
+
+    if not grouped:
+        raise G4ContractError("no activation records were provided")
+
+    windows: dict[tuple[str, int], tuple[float, float]] = {}
+    for key, observed in grouped.items():
+        if set(observed) != set(levels):
+            raise G4ContractError(f"activation levels are incomplete for frozen probe {key}")
+        active = [level for level in levels if observed[level]]
+        if not active:
+            raise G4ContractError(f"no activation for frozen probe {key}")
+        if len(active) == 1:
+            raise G4ContractError(
+                f"activation requires at least two sampled points for frozen probe {key}"
+            )
+        active_indices = [levels.index(level) for level in active]
+        expected_indices = list(range(active_indices[0], active_indices[-1] + 1))
+        if active_indices != expected_indices:
+            raise G4ContractError(
+                f"activation points are not contiguous for frozen probe {key}"
+            )
+        windows[key] = (active[0], active[-1])
+    return windows
+
+
+def _require_common_activation_window(
+    windows: Mapping[tuple[str, int], tuple[float, float]],
+    *,
+    context: str,
+) -> tuple[float, float]:
+    unique = set(windows.values())
+    if len(unique) != 1:
+        raise G4ContractError(f"{context} activation windows do not match")
+    return next(iter(unique))
 
 
 def _sha256(path: Path) -> str:
@@ -258,12 +316,13 @@ def run_activation_probe(contract: G4Contract, manifest: G4ProbeManifest, *, sup
                 record["lineage"] = _lineage(contract, manifest, config)
                 records.append(record)
                 raw_lines.append(json.dumps({key: value for key, value in record.items() if key != "events"}, sort_keys=True, default=lambda value: getattr(value, "value", str(value))))
-    active_levels = sorted({record["scarcity_level_l"] for record in records if record["scarcity_active"]})
-    if not active_levels:
-        raise G4ContractError("frozen probe set did not activate the scarcity mechanism")
+    activation_windows = validate_activation_band(records, levels)
+    activation_window = _require_common_activation_window(
+        activation_windows, context=records[0]["support_policy"]
+    )
     summary: dict[str, Any] = {
         "scarcity_active": True,
-        "activation_window": [min(active_levels), max(active_levels)],
+        "activation_window": list(activation_window),
         "request_count": sum(record["request_count"] for record in records),
         "reservation_count": sum(record["reservation_count"] for record in records),
         "service_count": sum(record["service_count"] for record in records),
@@ -287,6 +346,8 @@ def run_probe_matrix(contract: G4Contract, manifest: G4ProbeManifest, *, output_
     root = _safe_output_root(output_root)
     fixed = run_activation_probe(contract, manifest, support_policy=FixedSupportPolicy(), output_root=root / "fixed")
     mobile = run_activation_probe(contract, manifest, support_policy=MobileSupportPolicy(), output_root=root / "mobile")
+    if fixed["activation_window"] != mobile["activation_window"]:
+        raise G4ContractError("fixed and mobile arm activation windows do not match")
     fixed_records = {(row["scale_id"], row["seed"], row["scarcity_level_l"]): row for row in fixed["records"]}
     mobile_records = {(row["scale_id"], row["seed"], row["scarcity_level_l"]): row for row in mobile["records"]}
     paired_inputs = []
@@ -295,7 +356,7 @@ def run_probe_matrix(contract: G4Contract, manifest: G4ProbeManifest, *, output_
     result = {
         "arms": [fixed, mobile],
         "paired_inputs": paired_inputs,
-        "activation_window": [min(fixed["activation_window"][0], mobile["activation_window"][0]), max(fixed["activation_window"][1], mobile["activation_window"][1])],
+        "activation_window": fixed["activation_window"],
         "lineage": fixed["lineage"],
     }
     _write_json(root / "probe-matrix-summary.json", result)

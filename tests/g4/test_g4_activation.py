@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from problem2.experiments.g4_activation import run_activation_probe, run_probe_matrix
+import problem2.experiments.g4_activation as activation
+from problem2.experiments.g4_activation import (
+    run_activation_probe,
+    run_probe_matrix,
+    validate_activation_band,
+)
 from problem2.experiments.g4_contract import (
     G4ContractError,
     load_g4_contract,
@@ -17,15 +22,18 @@ from problem2.experiments.g4_support import FixedSupportPolicy, MobileSupportPol
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = load_g4_contract(ROOT / "docs/evidence/g4/g4_contract.yaml")
 MANIFEST = load_g4_probe_manifest(ROOT / "docs/evidence/g4/g4_probe_manifest.yaml")
-OUTPUT_ROOT = ROOT / "outputs/problem2_sr_mappo_v1/g4/pytest-activation"
 
 
-def test_activation_probe_records_a_fail_closed_scarcity_band(tmp_path: Path) -> None:
+def test_activation_probe_records_a_fail_closed_scarcity_band(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root = tmp_path / "g4"
+    monkeypatch.setattr(activation, "CANONICAL_G4_ROOT", output_root.resolve())
     result = run_activation_probe(
         CONTRACT,
         MANIFEST,
         support_policy=FixedSupportPolicy(),
-        output_root=OUTPUT_ROOT,
+        output_root=output_root,
     )
 
     assert result["scarcity_active"] is True
@@ -36,17 +44,18 @@ def test_activation_probe_records_a_fail_closed_scarcity_band(tmp_path: Path) ->
     assert result["service_count"] > 0
     assert result["conservation_error_l"] <= 1.0e-9
     assert result["lineage"]["probe_manifest"] == str(MANIFEST.source_path)
-    assert (OUTPUT_ROOT / "raw-probe.jsonl").exists()
-    assert (OUTPUT_ROOT / "provenance.json").exists()
+    assert (output_root / "raw-probe.jsonl").exists()
+    assert (output_root / "provenance.json").exists()
 
 
-def test_activation_probe_rejects_validation_and_sealed_access() -> None:
+def test_activation_probe_rejects_validation_and_sealed_access(tmp_path: Path) -> None:
+    output_root = tmp_path / "g4"
     with pytest.raises(G4ContractError, match="validation access"):
         run_activation_probe(
             CONTRACT,
             replace(MANIFEST, validation_access_allowed=True),
             support_policy=FixedSupportPolicy(),
-            output_root=OUTPUT_ROOT,
+            output_root=output_root,
         )
 
     with pytest.raises(G4ContractError, match="sealed-test access"):
@@ -54,12 +63,16 @@ def test_activation_probe_rejects_validation_and_sealed_access() -> None:
             CONTRACT,
             replace(MANIFEST, sealed_test_access_allowed=True),
             support_policy=FixedSupportPolicy(),
-            output_root=OUTPUT_ROOT,
+            output_root=output_root,
         )
 
 
-def test_activation_probe_uses_the_same_inputs_for_each_counterfactual_arm() -> None:
-    result = run_probe_matrix(CONTRACT, MANIFEST, output_root=OUTPUT_ROOT)
+def test_activation_probe_uses_the_same_inputs_for_each_counterfactual_arm(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root = tmp_path / "g4"
+    monkeypatch.setattr(activation, "CANONICAL_G4_ROOT", output_root.resolve())
+    result = run_probe_matrix(CONTRACT, MANIFEST, output_root=output_root)
 
     assert result["lineage"]["validation_accessed"] is False
     assert result["lineage"]["sealed_test_accessed"] is False
@@ -75,3 +88,50 @@ def test_activation_probe_uses_the_same_inputs_for_each_counterfactual_arm() -> 
         "fixed",
         "mobile",
     }
+
+
+def _band_records(active_levels: set[float]) -> list[dict[str, object]]:
+    return [
+        {
+            "scale_id": "g20x20_d2",
+            "seed": 42,
+            "scarcity_level_l": level,
+            "scarcity_active": level in active_levels,
+        }
+        for level in (1.0, 6.5, 12.0)
+    ]
+
+
+def test_validate_activation_band_rejects_no_activation() -> None:
+    with pytest.raises(G4ContractError, match="no activation"):
+        validate_activation_band(_band_records(set()), (1.0, 6.5, 12.0))
+
+
+def test_validate_activation_band_rejects_one_point_activation() -> None:
+    with pytest.raises(G4ContractError, match="at least two"):
+        validate_activation_band(_band_records({6.5}), (1.0, 6.5, 12.0))
+
+
+def test_validate_activation_band_rejects_a_gap_between_active_points() -> None:
+    with pytest.raises(G4ContractError, match="contiguous"):
+        validate_activation_band(_band_records({1.0, 12.0}), (1.0, 6.5, 12.0))
+
+
+def test_probe_matrix_rejects_mismatched_arm_windows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root = tmp_path / "g4"
+    monkeypatch.setattr(activation, "CANONICAL_G4_ROOT", output_root.resolve())
+
+    def fake_probe(contract, manifest, *, support_policy, output_root):
+        return {
+            "activation_window": [1.0, 12.0]
+            if isinstance(support_policy, FixedSupportPolicy)
+            else [6.5, 12.0],
+            "records": [],
+            "lineage": {},
+        }
+
+    monkeypatch.setattr(activation, "run_activation_probe", fake_probe)
+    with pytest.raises(G4ContractError, match="arm activation windows"):
+        run_probe_matrix(CONTRACT, MANIFEST, output_root=output_root)
