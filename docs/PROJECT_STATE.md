@@ -28,10 +28,11 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G4 resource-scarcity activation and diagnostic support-probe
-  counterfactual passed at M2 after final-review remediation. G5 pilot-protocol
-  freezing is the next authorized gate. Formal jobs, validation tuning, sealed
-  evaluation, and efficacy/superiority claims remain unauthorized.
+- Current gate: G4 onboard-pesticide scarcity activation and diagnostic
+  support-probe counterfactual passed at M2 after corrective final-review
+  remediation. G5 pilot-protocol freezing is the next authorized gate. Formal
+  jobs, validation tuning, sealed evaluation, and efficacy/superiority claims
+  remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -211,22 +212,26 @@ Persistence status:
 
 ## G4 Resource-Scarcity Mechanism Acceptance Record
 
-G4 passes at the existing `M2` maturity boundary after final-review
-remediation. The accepted evidence is diagnostic support-probe mechanism
-evidence only; it does not authorize formal jobs, validation tuning, sealed
-evaluation, mobile-treatment efficacy claims, SR-MAPPO superiority claims, G3
-actor-execution claims, or deployment claims.
+G4 passes at the existing `M2` maturity boundary after corrective
+final-review remediation. The accepted evidence is diagnostic support-probe
+mechanism evidence for limited onboard UAV pesticide only; it does not
+authorize formal jobs, validation tuning, sealed evaluation, mobile-treatment
+efficacy claims, SR-MAPPO superiority claims, vehicle-inventory scarcity
+claims, G3 actor-execution claims, or deployment claims.
 
 - Content/evidence commit:
-  `c80541f26a09c82d2bb0ce680016428149e43152`
-  (`docs: regenerate g4 evidence for final verification`), pushed to
-  `origin/codex/problem2-g4-resource-scarcity`.
+  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
+  (`docs: regenerate g4 onboard scarcity evidence`), prepared on
+  `codex/problem2-g4-resource-scarcity`.
 - Generator/code commit bound in the canonical G4 artifacts:
-  `317fe18c97d37c92d1a71a597139d2b462c3b2e0`
-  (`test: cover g4 service-start distance call path`).
-- Executed scarcity axis: `initial_vehicle_inventory_l`, sampled at `1.0`,
-  `6.5`, and `12.0 L`. The separate frozen request-trigger setting is
-  `initial_uav_pesticide_l = 0.05 L`.
+  `0f4003f1d9146187f827537e770a307c22ee687a`
+  (`fix: stabilize g4 generator provenance`).
+- Executed scarcity axis: `initial_uav_pesticide_l`, sampled at `0.05`,
+  `0.2875`, and `0.525 L`, all within the frozen G2 usable UAV capacity
+  `1.08 L`.
+- Fixed support inventory: `initial_vehicle_inventory_l = 20.0 L`, matching the
+  G1 parameter registry and frozen G2 configuration. Vehicle inventory is not
+  swept and no vehicle-inventory scarcity or depletion claim is permitted.
 - Executed arms: `fixed_support_probe` and `mobile_support_probe`. They are
   deterministic diagnostic support probes, not loaded G3 actor/checkpoint
   executions; SR-MAPPO remains the public project identity only.
@@ -234,34 +239,30 @@ actor-execution claims, or deployment claims.
   that reached service start, while `euclidean_service_start_distance_m` is
   Euclidean separation at service start, not road-travel distance.
 - Canonical G4 evidence was regenerated below
-  `outputs/problem2_sr_mappo_v1/g4` with source commit `317fe18`, source tree
-  `64d6a06049ff0d3ff6302ee9a3287ca50a1735df`, and contract SHA-256
-  `dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c`.
+  `outputs/problem2_sr_mappo_v1/g4` with source commit `0f4003f`, source tree
+  `9ab9e2ff1cb54c3d23596ae9ee43962d253db191`, and contract SHA-256
+  `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
 - Hardened audit result: `status=pass`, exact matrix shape `3 x 3 x 3` per
   arm, 27 same-input pairs, 10 manifest artifacts, validation/sealed access
-  false, battery replenishment false, and no G3 actor/checkpoint execution.
+  false, battery replenishment false, no G3 endpoint evidence, and no G3
+  actor/checkpoint execution.
+- The audit now fails closed if `artifact-manifest.json` is missing, rejects
+  G3 endpoint references in artifact paths and string values, verifies raw
+  records execute the declared UAV-initial-pesticide axis, and requires active
+  records to show positive request/reservation/service, requested pesticide,
+  transferred pesticide, and vehicle inventory use.
 - Permitted claim: the diagnostic support probes exercised the frozen
-  vehicle-inventory scarcity mechanism and emitted paired descriptive deltas.
-  No efficacy, superiority, formal-result, deployment, or G3 actor-execution
-  claim is permitted.
-- Independent review closure:
-  - Final-review fix wave closed the scarcity-axis, raw-matrix audit,
-    persistence, diagnostic naming, provenance, and metric-semantics findings.
-  - Residual scoped re-reviews closed exact contract freeze, Windows-safe
-    manifest duplicate detection, and service-start distance call-path
-    regression coverage.
-- Fresh controller verification before the content push:
-  `python -m pytest tests/g4 -q`: `55 passed in 29.21s`;
-  `python -m pytest -q`: `276 passed in 63.34s`;
+  onboard-pesticide scarcity mechanism and emitted paired descriptive deltas.
+  No efficacy, superiority, formal-result, deployment, vehicle-inventory
+  scarcity, or G3 actor-execution claim is permitted.
+- Fresh controller verification before this state record:
+  `python -m pytest tests/g4 -q`: `60 passed in 31.80s`;
+  `python -m pytest -q`: `281 passed in 67.01s`;
   `python -m compileall -q src scripts`: exit `0`;
   `git diff --check`: exit `0`;
-  `python scripts/run_g4_mechanism_probe.py`: `[1.0, 12.0]`;
+  `python scripts/run_g4_mechanism_probe.py`: `[0.05, 0.525]`;
   `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`:
   `status=pass artifacts=10`.
-- Content-push verification after the push: `git rev-parse HEAD`,
-  `git rev-parse '@{upstream}'`, and
-  `git ls-remote origin refs/heads/codex/problem2-g4-resource-scarcity` all
-  returned `c80541f26a09c82d2bb0ce680016428149e43152`.
 
 G5 may begin only as a pilot-protocol freeze gate. It must pre-register fair
 pilot scenarios, comparison budgets, validation-tuning rules, paired
@@ -707,11 +708,10 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Complete the independent final review, push, and persistence record for the
-  local G4 final-review remediation before any G5 work begins.
-- After G4 is actually accepted, freeze the G5 pilot protocol, baseline
-  fairness matrix, validation-tuning rules, and paired-statistics contract
-  before formal matrix jobs.
+- Complete the final independent review and non-rewriting push verification for
+  the corrected G4 onboard-pesticide remediation before any G5 work begins.
+- Freeze the G5 pilot protocol, baseline fairness matrix, validation-tuning
+  rules, and paired-statistics contract before any formal matrix jobs.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -726,9 +726,10 @@ G1.1 bounded remediation persistence record:
 - G3 heterogeneous-MARL implementation and acceptance passed at M2 on
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
   canonical smoke and audit artifacts are recorded above. G4 now passes at M2
-  as diagnostic support-probe mechanism evidence after remediation through
-  `c80541f26a09c82d2bb0ce680016428149e43152`; G5 pilot-protocol freezing is
-  the next authorized gate.
+  as diagnostic support-probe mechanism evidence for onboard UAV pesticide
+  scarcity after corrective evidence commit
+  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; G5 pilot-protocol freezing is
+  the next authorized gate after final review and push verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -758,8 +759,9 @@ G1.1 bounded remediation persistence record:
 - Engineering parameter sources remain incomplete: device manuals, field
   studies, expert confirmation, and source-value conversions are registered as
   pending G1 source records and still require independent verification.
-- G4 demonstrates only development-probe resource activation and descriptive
-  paired deltas; it does not support a mobile-treatment efficacy claim.
+- G4 demonstrates only development-probe onboard-pesticide resource activation
+  and descriptive paired deltas; it does not support a mobile-treatment
+  efficacy claim or any vehicle-inventory scarcity claim.
 - No formal second-problem raw logs, validated tables, paired statistics, or
   locked figures exist in the repository evidence set.
 - No claim is currently permitted that simulation outcomes reflect real

@@ -187,3 +187,88 @@ through `54b23d0`, rather than treating `5a65bbc` as the current remediation
 commit. No output regeneration was performed because the production behavior,
 output schema, and frozen inputs are unchanged. No push was performed; G4
 remains pending controller verification, push, and persistence recording.
+
+## Final Acceptance Blocker Repair
+
+Status: DONE
+
+Scope: corrected G4 from vehicle-inventory scarcity to onboard UAV pesticide
+scarcity. Vehicle inventory is now fixed at `20.0 L` from G2/G1, while
+`initial_uav_pesticide_l` is sampled at `0.05`, `0.2875`, and `0.525 L`.
+
+RED evidence:
+
+```text
+python -m pytest tests/g4 -q
+15 failed, 44 passed in 28.20s
+```
+
+The intended failures showed the old vehicle-inventory axis, old
+`[1.0, 12.0] L` band, missing raw demand/transfer fields, missing manifest
+fail-closed behavior, and missing G3 endpoint string-value rejection.
+
+Additional RED evidence for provenance stability:
+
+```text
+python -m pytest tests/g4/test_g4_activation.py::test_lineage_binds_generator_contract_commit_not_output_commit -q
+1 failed
+E       AssertionError: unexpected git call: ('rev-parse', 'HEAD')
+```
+
+GREEN evidence:
+
+```text
+python -m pytest tests/g4 -q
+60 passed in 32.24s
+
+python -m pytest -q
+281 passed in 68.37s (0:01:08)
+
+python -m compileall -q src scripts
+exit 0
+
+git diff --check
+exit 0
+
+python scripts/run_g4_mechanism_probe.py
+[0.05, 0.525]
+
+python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json
+status=pass artifacts=10
+```
+
+Commits created:
+
+- `d2ef72e fix: repair g4 onboard scarcity semantics`
+- `0f4003f fix: stabilize g4 generator provenance`
+- `4e81567 docs: regenerate g4 onboard scarcity evidence`
+
+Canonical evidence now binds generator/code commit
+`0f4003f1d9146187f827537e770a307c22ee687a`, source tree
+`9ab9e2ff1cb54c3d23596ae9ee43962d253db191`, and contract SHA-256
+`2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
+
+Concerns: final independent review and non-rewriting push verification are
+still required before G5 begins.
+
+Controller rerun after documentation updates:
+
+```text
+python -m pytest tests/g4 -q
+60 passed in 31.80s
+
+python -m pytest -q
+281 passed in 67.01s (0:01:07)
+
+python -m compileall -q src scripts
+exit 0
+
+git diff --check
+exit 0
+
+python scripts/run_g4_mechanism_probe.py
+[0.05, 0.525]
+
+python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json
+status=pass artifacts=10
+```
