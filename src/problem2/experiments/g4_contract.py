@@ -19,6 +19,7 @@ class G4Contract:
     source_path: Path | None
     scarcity_axis: str
     admissible_band: tuple[float, float]
+    request_trigger_initial_uav_pesticide_l: float
     probe_scales: tuple[str, ...]
     probe_seeds: tuple[int, ...]
     comparator_pair: tuple[str, str]
@@ -154,6 +155,7 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         {
             "schema_version", "registry_id", "status", "algorithm_name",
             "problem_description", "scarcity_axis", "scarcity_band",
+            "request_trigger",
             "probe_scales", "probe_seeds", "comparator_pair", "metrics",
             "output_root", "permitted_claim_boundary", "resources",
             "endpoint_evidence_roots",
@@ -170,6 +172,8 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         raise G4ContractError("the public algorithm name must remain SR-MAPPO")
     if root["problem_description"] != "air_ground_heterogeneous_extension":
         raise G4ContractError("problem_description must remain the air-ground extension")
+    if root["scarcity_axis"] != "initial_vehicle_inventory_l":
+        raise G4ContractError("scarcity_axis must be initial_vehicle_inventory_l")
 
     band = _mapping(root["scarcity_band"], "scarcity_band")
     if "lower" not in band or "upper" not in band:
@@ -181,15 +185,38 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         raise G4ContractError("scarcity_band lower must be less than upper")
     if _text(band["unit"], "scarcity_band.unit") != "L":
         raise G4ContractError("scarcity_band.unit must be L")
+    request_trigger = _mapping(root["request_trigger"], "request_trigger")
+    _require_keys(request_trigger, {"initial_uav_pesticide_l", "unit"}, "request_trigger")
+    initial_uav_pesticide_l = _number(
+        request_trigger["initial_uav_pesticide_l"],
+        "request_trigger.initial_uav_pesticide_l",
+    )
+    if initial_uav_pesticide_l != 0.05:
+        raise G4ContractError(
+            "request_trigger.initial_uav_pesticide_l must remain frozen at 0.05 L"
+        )
+    if _text(request_trigger["unit"], "request_trigger.unit") != "L":
+        raise G4ContractError("request_trigger.unit must be L")
 
     scales = _text_tuple(root["probe_scales"], "probe_scales")
     seeds = _integer_tuple(root["probe_seeds"], "probe_seeds")
     if any(20000 <= seed <= 20049 or 30000 <= seed <= 30099 for seed in seeds):
         raise G4ContractError("validation and sealed probe seeds are forbidden")
     pair = _text_tuple(root["comparator_pair"], "comparator_pair")
-    if pair != ("sr_mappo_fixed", "sr_mappo_mobile"):
-        raise G4ContractError("comparator_pair must be fixed versus mobile SR-MAPPO")
+    if pair != ("fixed_support_probe", "mobile_support_probe"):
+        raise G4ContractError("comparator_pair must be the diagnostic support-probe pair")
     metrics = _text_tuple(root["metrics"], "metrics")
+    if metrics != (
+        "request_count",
+        "reservation_count",
+        "service_count",
+        "started_service_waiting_time_s",
+        "euclidean_service_start_distance_m",
+        "pesticide_disabled_time_s",
+        "sprayed_volume_l",
+        "conservation_error_l",
+    ):
+        raise G4ContractError("metrics must match the frozen diagnostic metric names")
     output_root = Path(_text(root["output_root"], "output_root"))
     if output_root.as_posix() == "outputs/problem2_sr_mappo_v1/g3":
         raise G4ContractError("G3 output-root paths cannot be endpoint evidence")
@@ -208,6 +235,7 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         source_path=contract_path,
         scarcity_axis=_text(root["scarcity_axis"], "scarcity_axis"),
         admissible_band=(lower, upper),
+        request_trigger_initial_uav_pesticide_l=initial_uav_pesticide_l,
         probe_scales=scales,
         probe_seeds=seeds,
         comparator_pair=pair,

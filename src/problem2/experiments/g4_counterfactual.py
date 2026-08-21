@@ -9,8 +9,8 @@ DELTA_METRICS = (
     "request_count",
     "reservation_count",
     "service_count",
-    "waiting_time_s",
-    "rendezvous_distance_m",
+    "started_service_waiting_time_s",
+    "euclidean_service_start_distance_m",
     "pesticide_disabled_time_s",
     "sprayed_volume_l",
     "conservation_error_l",
@@ -65,8 +65,8 @@ def _validate_record(row: Mapping[str, Any]) -> None:
     for name in ("request_count", "reservation_count", "service_count"):
         _nonnegative_count(row.get(name), name)
     for name in (
-        "waiting_time_s",
-        "rendezvous_distance_m",
+        "started_service_waiting_time_s",
+        "euclidean_service_start_distance_m",
         "pesticide_disabled_time_s",
         "sprayed_volume_l",
         "conservation_error_l",
@@ -100,12 +100,20 @@ def run_counterfactual_probe(
         _validate_record(mobile_row)
         if fixed_row["input_fingerprint"] != mobile_row["input_fingerprint"]:
             raise ValueError("fixed and mobile probe inputs must have identical probe inputs")
-        for row, expected in ((fixed_row, "fixed"), (mobile_row, "mobile")):
+        for row, expected in (
+            (fixed_row, "fixed_support_probe"),
+            (mobile_row, "mobile_support_probe"),
+        ):
             if row.get("support_policy") != expected:
                 raise ValueError(f"counterfactual arm must be {expected}")
         delta = {name: float(mobile_row[name]) - float(fixed_row[name]) for name in DELTA_METRICS}
-        delta["waiting_time_reduction_s"] = float(fixed_row["waiting_time_s"]) - float(mobile_row["waiting_time_s"])
-        delta["rendezvous_distance_change_m"] = delta["rendezvous_distance_m"]
+        delta["started_service_waiting_time_reduction_s"] = (
+            float(fixed_row["started_service_waiting_time_s"])
+            - float(mobile_row["started_service_waiting_time_s"])
+        )
+        delta["euclidean_service_start_distance_change_m"] = (
+            delta["euclidean_service_start_distance_m"]
+        )
         for name, value in delta.items():
             if name not in ("scale_id", "seed", "scarcity_level_l") and not math.isfinite(float(value)):
                 raise ValueError(f"counterfactual {name} must be finite")
@@ -124,7 +132,7 @@ def run_counterfactual_probe(
 
     result: dict[str, Any] = {
         "status": "descriptive",
-        "comparison": ["sr_mappo_fixed", "sr_mappo_mobile"],
+        "comparison": ["fixed_support_probe", "mobile_support_probe"],
         "paired_count": len(pairs),
         "activation_counts": {
             "fixed": sum(bool(row.get("scarcity_active")) for row in fixed_rows),
@@ -132,8 +140,14 @@ def run_counterfactual_probe(
         },
         "paired_deltas": deltas,
         "aggregate": {
-            "waiting_time_reduction_s": _sum("waiting_time_s", fixed_rows) - _sum("waiting_time_s", mobile_rows),
-            "rendezvous_distance_change_m": _sum("rendezvous_distance_m", mobile_rows) - _sum("rendezvous_distance_m", fixed_rows),
+            "started_service_waiting_time_reduction_s": (
+                _sum("started_service_waiting_time_s", fixed_rows)
+                - _sum("started_service_waiting_time_s", mobile_rows)
+            ),
+            "euclidean_service_start_distance_change_m": (
+                _sum("euclidean_service_start_distance_m", mobile_rows)
+                - _sum("euclidean_service_start_distance_m", fixed_rows)
+            ),
             "conservation_error_l": max(
                 max(float(row["conservation_error_l"]) for row in fixed_rows),
                 max(float(row["conservation_error_l"]) for row in mobile_rows),

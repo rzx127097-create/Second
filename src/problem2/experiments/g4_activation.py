@@ -28,8 +28,8 @@ REQUIRED_METRICS = (
     "request_count",
     "reservation_count",
     "service_count",
-    "waiting_time_s",
-    "rendezvous_distance_m",
+    "started_service_waiting_time_s",
+    "euclidean_service_start_distance_m",
     "pesticide_disabled_time_s",
     "sprayed_volume_l",
     "conservation_error_l",
@@ -99,9 +99,12 @@ def _sha256(path: Path) -> str:
 
 def _git(*args: str) -> str:
     try:
-        return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
-    except (OSError, subprocess.CalledProcessError):
-        return "unknown"
+        value = subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise G4ContractError("G4 generator requires Git provenance") from exc
+    if not value or value == "unknown":
+        raise G4ContractError("G4 generator produced unknown Git provenance")
+    return value
 
 
 def _safe_output_root(output_root: Path | str) -> Path:
@@ -155,7 +158,14 @@ def _uav_count(scale_id: str) -> int:
     return int(match.group(1))
 
 
-def _initial_state(graph, config: G2Config, scale_id: str, seed: int, scarcity_l: float) -> EpisodeState:
+def _initial_state(
+    graph,
+    config: G2Config,
+    scale_id: str,
+    seed: int,
+    vehicle_inventory_l: float,
+    initial_uav_pesticide_l: float,
+) -> EpisodeState:
     nodes = [
         node
         for node, (row, col) in enumerate(zip(graph.node_rows, graph.node_cols))
@@ -176,7 +186,7 @@ def _initial_state(graph, config: G2Config, scale_id: str, seed: int, scarcity_l
             f"uav-{index}",
             float(graph.node_x_m[node]),
             float(graph.node_y_m[node]),
-            0.05,
+            initial_uav_pesticide_l,
         )
         for index, node in enumerate(indices)
     )
@@ -186,9 +196,9 @@ def _initial_state(graph, config: G2Config, scale_id: str, seed: int, scarcity_l
         support_node,
         float(graph.node_x_m[support_node]),
         float(graph.node_y_m[support_node]),
-        float(scarcity_l),
+        float(vehicle_inventory_l),
     )
-    return EpisodeState(0, uavs, vehicle, ledger=new_ledger(uavs, scarcity_l))
+    return EpisodeState(0, uavs, vehicle, ledger=new_ledger(uavs, vehicle_inventory_l))
 
 
 def _json_state(state: EpisodeState) -> dict[str, Any]:
@@ -206,15 +216,38 @@ def _fingerprint(payload: object) -> str:
     return hashlib.sha256(rendered.encode("utf-8")).hexdigest()
 
 
-def _run_one(config: G2Config, manifest: G4ProbeManifest, scale_id: str, seed: int, scarcity_l: float, policy: Any) -> dict[str, Any]:
+def _support_probe_name(policy: Any) -> str:
+    if isinstance(policy, FixedSupportPolicy):
+        return "fixed_support_probe"
+    if isinstance(policy, MobileSupportPolicy):
+        return "mobile_support_probe"
+    raise G4ContractError("support policy must be a frozen fixed or mobile policy")
+
+
+def _run_one(
+    contract: G4Contract,
+    config: G2Config,
+    manifest: G4ProbeManifest,
+    scale_id: str,
+    seed: int,
+    scarcity_l: float,
+    policy: Any,
+) -> dict[str, Any]:
     graph = _load_graph(config, scale_id)
     horizon = manifest.horizon_by_scale[scale_id]
-    state = _initial_state(graph, config, scale_id, seed, scarcity_l)
+    state = _initial_state(
+        graph,
+        config,
+        scale_id,
+        seed,
+        scarcity_l,
+        contract.request_trigger_initial_uav_pesticide_l,
+    )
     input_fingerprint = _fingerprint({"scale_id": scale_id, "seed": seed, "horizon": horizon, "state": _json_state(state)})
     events = []
     request_steps: dict[str, int] = {}
-    waiting_time = 0.0
-    rendezvous_distances: list[float] = []
+    started_service_waiting_time = 0.0
+    euclidean_service_start_distances: list[float] = []
     disabled_steps = 0
     max_conservation_error = 0.0
     while not state.terminated:
@@ -244,7 +277,7 @@ def _run_one(config: G2Config, manifest: G4ProbeManifest, scale_id: str, seed: i
             elif event.kind == "service_started":
                 request_id = event.entity_id
                 if request_id in request_steps:
-                    waiting_time += (event.step - request_steps[request_id]) * config.dt_s
+                    started_service_waiting_time += (event.step - request_steps[request_id]) * config.dt_s
                 started_request = next(
                     request
                     for request in next_state.requests
@@ -253,7 +286,9 @@ def _run_one(config: G2Config, manifest: G4ProbeManifest, scale_id: str, seed: i
                 uav = next(
                     uav for uav in state.uavs if uav.uav_id == started_request.uav_id
                 )
-                rendezvous_distances.append(math.hypot(uav.x_m - state.vehicle.x_m, uav.y_m - state.vehicle.y_m))
+                euclidean_service_start_distances.append(
+                    math.hypot(uav.x_m - state.vehicle.x_m, uav.y_m - state.vehicle.y_m)
+                )
             if event.kind == "conservation_checked":
                 max_conservation_error = max(max_conservation_error, float(payload["error_l"]))
         state = next_state
@@ -264,15 +299,21 @@ def _run_one(config: G2Config, manifest: G4ProbeManifest, scale_id: str, seed: i
         "scale_id": scale_id,
         "seed": seed,
         "scarcity_level_l": scarcity_l,
-        "support_policy": "mobile" if isinstance(policy, MobileSupportPolicy) else "fixed",
+        "initial_vehicle_inventory_l": scarcity_l,
+        "initial_uav_pesticide_l": contract.request_trigger_initial_uav_pesticide_l,
+        "support_policy": _support_probe_name(policy),
         "input_fingerprint": input_fingerprint,
         "scarcity_active": active,
         "activation_window": [scarcity_l, scarcity_l] if active else None,
         "request_count": counts["request_created"],
         "reservation_count": counts["request_reserved"],
         "service_count": counts["service_completed"],
-        "waiting_time_s": waiting_time,
-        "rendezvous_distance_m": sum(rendezvous_distances) / len(rendezvous_distances) if rendezvous_distances else 0.0,
+        "started_service_waiting_time_s": started_service_waiting_time,
+        "euclidean_service_start_distance_m": (
+            sum(euclidean_service_start_distances) / len(euclidean_service_start_distances)
+            if euclidean_service_start_distances
+            else 0.0
+        ),
         "pesticide_disabled_time_s": disabled_steps * config.dt_s,
         "sprayed_volume_l": sprayed,
         "conservation_error_l": max_conservation_error,
@@ -312,7 +353,9 @@ def run_activation_probe(contract: G4Contract, manifest: G4ProbeManifest, *, sup
     for scale_id in manifest.probe_scales:
         for seed in manifest.probe_seeds:
             for scarcity_l in levels:
-                record = _run_one(config, manifest, scale_id, seed, scarcity_l, support_policy)
+                record = _run_one(
+                    contract, config, manifest, scale_id, seed, scarcity_l, support_policy
+                )
                 record["lineage"] = _lineage(contract, manifest, config)
                 records.append(record)
                 raw_lines.append(json.dumps({key: value for key, value in record.items() if key != "events"}, sort_keys=True, default=lambda value: getattr(value, "value", str(value))))
@@ -326,8 +369,12 @@ def run_activation_probe(contract: G4Contract, manifest: G4ProbeManifest, *, sup
         "request_count": sum(record["request_count"] for record in records),
         "reservation_count": sum(record["reservation_count"] for record in records),
         "service_count": sum(record["service_count"] for record in records),
-        "waiting_time_s": sum(record["waiting_time_s"] for record in records),
-        "rendezvous_distance_m": sum(record["rendezvous_distance_m"] for record in records),
+        "started_service_waiting_time_s": sum(
+            record["started_service_waiting_time_s"] for record in records
+        ),
+        "euclidean_service_start_distance_m": sum(
+            record["euclidean_service_start_distance_m"] for record in records
+        ),
         "pesticide_disabled_time_s": sum(record["pesticide_disabled_time_s"] for record in records),
         "sprayed_volume_l": sum(record["sprayed_volume_l"] for record in records),
         "conservation_error_l": max(record["conservation_error_l"] for record in records),

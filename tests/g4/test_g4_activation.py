@@ -44,6 +44,8 @@ def test_activation_probe_records_a_fail_closed_scarcity_band(
     assert result["service_count"] > 0
     assert result["conservation_error_l"] <= 1.0e-9
     assert result["lineage"]["probe_manifest"] == str(MANIFEST.source_path)
+    assert result["records"][0]["initial_vehicle_inventory_l"] == 1.0
+    assert result["records"][0]["initial_uav_pesticide_l"] == 0.05
     assert (output_root / "raw-probe.jsonl").exists()
     assert (output_root / "provenance.json").exists()
 
@@ -85,8 +87,8 @@ def test_activation_probe_uses_the_same_inputs_for_each_counterfactual_arm(
         assert pair["fixed"]["seed"] == pair["mobile"]["seed"]
     assert result["arms"]
     assert {row["support_policy"] for row in result["arms"]} == {
-        "fixed",
-        "mobile",
+        "fixed_support_probe",
+        "mobile_support_probe",
     }
 
 

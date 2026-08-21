@@ -31,11 +31,22 @@ def test_g4_contract_exposes_frozen_boundary() -> None:
     contract = load_g4_contract(CONTRACT_PATH)
     manifest = load_g4_probe_manifest(MANIFEST_PATH)
 
-    assert contract.scarcity_axis == "initial_uav_pesticide_l"
+    assert contract.scarcity_axis == "initial_vehicle_inventory_l"
     assert contract.admissible_band == (1.0, 12.0)
+    assert contract.request_trigger_initial_uav_pesticide_l == 0.05
     assert contract.probe_scales == ("g20x20_d2", "g20x30_d3", "g30x30_d3")
     assert contract.probe_seeds == (42, 123, 2024)
-    assert contract.comparator_pair == ("sr_mappo_fixed", "sr_mappo_mobile")
+    assert contract.comparator_pair == ("fixed_support_probe", "mobile_support_probe")
+    assert contract.metrics == (
+        "request_count",
+        "reservation_count",
+        "service_count",
+        "started_service_waiting_time_s",
+        "euclidean_service_start_distance_m",
+        "pesticide_disabled_time_s",
+        "sprayed_volume_l",
+        "conservation_error_l",
+    )
     assert contract.output_root.as_posix() == "outputs/problem2_sr_mappo_v1/g4"
     assert "mechanism activation" in contract.permitted_claim_boundary
     assert manifest.probe_scales == contract.probe_scales
@@ -122,4 +133,21 @@ def test_g4_contract_rejects_battery_activation(tmp_path: Path) -> None:
     payload["resources"]["battery_replenishment_enabled"] = True
 
     with pytest.raises(G4ContractError, match="battery"):
+        load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("scarcity_axis", "initial_uav_pesticide_l", "scarcity_axis"),
+        ("comparator_pair", ["sr_mappo_fixed", "sr_mappo_mobile"], "comparator_pair"),
+    ],
+)
+def test_g4_contract_rejects_final_review_semantic_drift(
+    field: str, value: object, message: str, tmp_path: Path
+) -> None:
+    payload = _payload(CONTRACT_PATH)
+    payload[field] = value
+
+    with pytest.raises(G4ContractError, match=message):
         load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
