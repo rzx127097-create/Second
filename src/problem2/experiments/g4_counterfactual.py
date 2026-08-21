@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+import math
 from typing import Any
 
 
@@ -35,6 +36,44 @@ def _key(row: Mapping[str, Any]) -> tuple[Any, ...]:
         raise ValueError(f"counterfactual record is missing {exc.args[0]}") from exc
 
 
+def _finite_nonnegative(value: Any, name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"counterfactual {name} must be numeric")
+    result = float(value)
+    if not math.isfinite(result) or result < 0:
+        raise ValueError(f"counterfactual {name} must be finite and non-negative")
+    return result
+
+
+def _nonnegative_count(value: Any, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"counterfactual {name} must be a non-negative integer")
+    return value
+
+
+def _validate_record(row: Mapping[str, Any]) -> None:
+    scale_id = row.get("scale_id")
+    if not isinstance(scale_id, str) or not scale_id.strip():
+        raise ValueError("counterfactual scale_id must be non-empty text")
+    _nonnegative_count(row.get("seed"), "seed")
+    _finite_nonnegative(row.get("scarcity_level_l"), "scarcity_level_l")
+    fingerprint = row.get("input_fingerprint")
+    if not isinstance(fingerprint, str) or not fingerprint.strip():
+        raise ValueError("counterfactual input_fingerprint must be non-empty text")
+    if not isinstance(row.get("scarcity_active"), bool):
+        raise ValueError("counterfactual scarcity_active must be boolean")
+    for name in ("request_count", "reservation_count", "service_count"):
+        _nonnegative_count(row.get(name), name)
+    for name in (
+        "waiting_time_s",
+        "rendezvous_distance_m",
+        "pesticide_disabled_time_s",
+        "sprayed_volume_l",
+        "conservation_error_l",
+    ):
+        _finite_nonnegative(row.get(name), name)
+
+
 def run_counterfactual_probe(
     fixed: Mapping[str, Any] | Sequence[Mapping[str, Any]],
     mobile: Mapping[str, Any] | Sequence[Mapping[str, Any]],
@@ -57,7 +96,9 @@ def run_counterfactual_probe(
     for key in sorted(fixed_by_key, key=str):
         fixed_row = fixed_by_key[key]
         mobile_row = mobile_by_key[key]
-        if fixed_row.get("input_fingerprint") != mobile_row.get("input_fingerprint"):
+        _validate_record(fixed_row)
+        _validate_record(mobile_row)
+        if fixed_row["input_fingerprint"] != mobile_row["input_fingerprint"]:
             raise ValueError("fixed and mobile probe inputs must have identical probe inputs")
         for row, expected in ((fixed_row, "fixed"), (mobile_row, "mobile")):
             if row.get("support_policy") != expected:
@@ -65,6 +106,9 @@ def run_counterfactual_probe(
         delta = {name: float(mobile_row[name]) - float(fixed_row[name]) for name in DELTA_METRICS}
         delta["waiting_time_reduction_s"] = float(fixed_row["waiting_time_s"]) - float(mobile_row["waiting_time_s"])
         delta["rendezvous_distance_change_m"] = delta["rendezvous_distance_m"]
+        for name, value in delta.items():
+            if name not in ("scale_id", "seed", "scarcity_level_l") and not math.isfinite(float(value)):
+                raise ValueError(f"counterfactual {name} must be finite")
         deltas.append({"scale_id": key[0], "seed": key[1], "scarcity_level_l": key[2], **delta})
         pairs.append({
             "scale_id": key[0],

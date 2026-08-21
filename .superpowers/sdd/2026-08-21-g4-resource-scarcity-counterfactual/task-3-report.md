@@ -90,3 +90,44 @@ are not formal evaluation results.
 This task does not by itself close G4 or authorize G5. The next task must
 perform the final G4 documentation, handoff, project-state synchronization,
 and persistence checks.
+
+## Fix Round 1
+
+Review findings were addressed as follows:
+
+1. The audit now recomputes the descriptive counterfactual from the fixed and
+   mobile activation summaries and requires the stored JSON object to match the
+   recomputed object exactly. Updating the artifact hash cannot mask content
+   tampering.
+2. `output_root` and `report_path` are resolved and required to remain under
+   the canonical `outputs/problem2_sr_mappo_v1/g4` root.
+3. Both arms require a non-empty string `input_fingerprint`.
+4. Counts must be non-negative integers; all continuous mechanism metrics must
+   be finite and non-negative. NaN and infinity are rejected.
+5. JSON and JSONL evidence is parsed structurally. Malformed JSONL, empty JSONL,
+   and non-object JSONL records are rejected. Boundary flags are checked
+   recursively in parsed objects rather than by raw-text substring matching.
+6. Tests cover the happy path, tampered counterfactual content, activation-band
+   mismatch, battery activation, sealed-test activation, unrecorded artifacts,
+   malformed JSONL, non-finite metrics, missing fingerprints, invalid counts,
+   and both output/report path boundaries.
+
+Exact verification commands and outputs:
+
+```text
+python -m pytest tests/g4/test_g4_audit.py -q
+...............                                                          [100%]
+15 passed in 0.73s
+
+python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json
+status=pass artifacts=18
+
+python -m pytest tests/g4 -q
+....................................                                     [100%]
+36 passed in 27.24s
+
+python -m compileall -q src scripts
+
+git diff --check
+warning: normal LF/CRLF working-copy warnings only
+```

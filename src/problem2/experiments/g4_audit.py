@@ -12,6 +12,7 @@ from .g4_counterfactual import run_counterfactual_probe
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT_PATH = ROOT / "docs/evidence/g4/g4_contract.yaml"
 PROBE_MANIFEST_PATH = ROOT / "docs/evidence/g4/g4_probe_manifest.yaml"
+CANONICAL_G4_ROOT = (ROOT / "outputs/problem2_sr_mappo_v1/g4").resolve()
 
 
 def _sha256(path: Path) -> str:
@@ -87,6 +88,62 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _require_under(path: Path, root: Path, label: str) -> Path:
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(root.resolve())
+    except ValueError as exc:
+        raise ValueError(f"{label} must remain under the canonical G4 root") from exc
+    return resolved
+
+
+def _structured_payloads(root: Path) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for path in sorted(root.rglob("*.json")):
+        if path.name == "artifact-manifest.json":
+            continue
+        payloads.append(_read_json(path))
+    for path in sorted(root.rglob("*.jsonl")):
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeError) as exc:
+            raise ValueError(f"cannot read G4 JSONL evidence {path.name}") from exc
+        if not lines:
+            raise ValueError(f"G4 JSONL evidence is empty: {path.name}")
+        for line_number, line in enumerate(lines, start=1):
+            if not line.strip():
+                continue
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"malformed G4 JSONL evidence {path.name}:{line_number}") from exc
+            if not isinstance(value, dict):
+                raise ValueError(f"G4 JSONL record must be an object: {path.name}:{line_number}")
+            payloads.append(value)
+    return payloads
+
+
+def _check_boundary(value: Any) -> None:
+    if isinstance(value, dict):
+        for key in ("validation_accessed", "sealed_test_accessed", "battery_replenishment_enabled"):
+            if key in value and value[key] is not False:
+                raise ValueError(f"{key} must remain false")
+        for nested in value.values():
+            _check_boundary(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            _check_boundary(nested)
+
+
+def _reject_manifest_g3_paths(recorded: dict[str, Any]) -> None:
+    artifacts = recorded.get("artifacts", [])
+    if not isinstance(artifacts, list):
+        return
+    for entry in artifacts:
+        if isinstance(entry, dict) and isinstance(entry.get("path"), str):
+            path = Path(entry["path"])
+            if "g3" in {part.lower() for part in path.parts}:
+                raise ValueError("G3 artifact paths cannot be endpoint evidence")
 def audit_g4_mechanism(
     config_path: str | Path,
     output_root: str | Path,
@@ -96,61 +153,48 @@ def audit_g4_mechanism(
 
     contract = load_g4_contract(config_path)
     manifest = load_g4_probe_manifest(PROBE_MANIFEST_PATH)
-    root = Path(output_root).resolve()
+    canonical_root = CANONICAL_G4_ROOT.resolve()
+    root = _require_under(Path(output_root), canonical_root, "output_root")
+    destination = _require_under(Path(report_path), canonical_root, "report_path")
     if not root.is_dir():
         raise ValueError("G4 output root does not exist")
     for path in root.rglob("*"):
         relative_text = path.relative_to(root).as_posix().lower()
         if path.is_file() and "g3" in Path(relative_text).parts:
             raise ValueError("G3 artifacts cannot be used as endpoint evidence")
-        if path.is_file() and path.name != "artifact-manifest.json":
-            text = path.read_text(encoding="utf-8", errors="ignore")
-            for flag in (
-                '"validation_accessed": true',
-                '"sealed_test_accessed": true',
-                '"battery_replenishment_enabled": true',
-            ):
-                if flag in text.lower():
-                    boundary = flag.split(":", 1)[0].strip('"')
-                    raise ValueError(f"{boundary} must remain false")
-
-    json_artifacts = [path for path in root.rglob("*.json") if path.name != "artifact-manifest.json"]
-    provenance = []
-    for path in json_artifacts:
-        payload = _read_json(path)
-        if payload.get("validation_accessed") or payload.get("sealed_test_accessed"):
-            raise ValueError("validation or sealed-test access must remain false")
-        lineage = payload.get("lineage")
-        if isinstance(lineage, dict):
-            provenance.append(lineage)
-            if lineage.get("validation_accessed") or lineage.get("sealed_test_accessed"):
-                raise ValueError("validation or sealed-test access must remain false")
-            if lineage.get("battery_replenishment_enabled"):
-                raise ValueError("battery replenishment activation must remain false")
-        if payload.get("battery_replenishment_enabled"):
-            raise ValueError("battery replenishment activation must remain false")
+    payloads = _structured_payloads(root)
+    for payload in payloads:
+        _check_boundary(payload)
+    provenance = [payload.get("lineage") for payload in payloads if isinstance(payload.get("lineage"), dict)]
     recorded_path = root / "artifact-manifest.json"
     recorded = _read_json(recorded_path) if recorded_path.exists() else None
     if recorded is not None:
-        verified_artifacts = _verify_manifest(
-            root,
-            recorded,
-            ignored_paths={Path(report_path).resolve().relative_to(root).as_posix()}
-            if Path(report_path).resolve().is_relative_to(root)
-            else set(),
-        )
+        _reject_manifest_g3_paths(recorded)
 
     fixed = _read_json(root / "fixed" / "activation-summary.json")
     mobile = _read_json(root / "mobile" / "activation-summary.json")
     if fixed.get("activation_window") != mobile.get("activation_window"):
         raise ValueError("fixed and mobile activation bands must match")
+    if fixed.get("activation_window") != list(contract.admissible_band):
+        raise ValueError("activation band does not match the frozen contract")
+    recomputed = run_counterfactual_probe(fixed, mobile)
     counterfactual_path = root / "counterfactual-summary.json"
     if counterfactual_path.exists():
         counterfactual = _read_json(counterfactual_path)
+        if counterfactual != recomputed:
+            raise ValueError("stored counterfactual summary does not match recomputed values")
     else:
-        counterfactual = run_counterfactual_probe(fixed, mobile, output_path=str(counterfactual_path))
-    if not counterfactual.get("paired_deltas"):
-        raise ValueError("G4 counterfactual summary has no paired deltas")
+        counterfactual = recomputed
+        counterfactual_path.write_text(json.dumps(counterfactual, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    if recorded is not None:
+        verified_artifacts = _verify_manifest(
+            root,
+            recorded,
+            ignored_paths={destination.relative_to(root).as_posix()}
+            if destination.is_relative_to(root)
+            else set(),
+        )
 
     if recorded is None:
         recorded = build_g4_artifact_manifest(root)
@@ -174,7 +218,6 @@ def audit_g4_mechanism(
         "provenance_count": len(provenance),
         "claim_boundary": contract.permitted_claim_boundary,
     }
-    destination = Path(report_path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report
