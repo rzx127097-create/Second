@@ -17,8 +17,8 @@
   "probe_manifest_sha256": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1",
   "schema_version": "g4-activation-index.v1",
   "sealed_test_accessed": false,
-  "source_tree_commit": "75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f",
-  "source_tree_hash": "e49be77ea7c235c0cc6d26714c703506ce85a064",
+  "source_tree_commit": "317fe18c97d37c92d1a71a597139d2b462c3b2e0",
+  "source_tree_hash": "64d6a06049ff0d3ff6302ee9a3287ca50a1735df",
   "status": "descriptive",
   "validation_accessed": false
 }
