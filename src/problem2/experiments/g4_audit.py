@@ -229,6 +229,7 @@ def _tree_for_commit(commit: str) -> str:
     return _git("rev-parse", f"{commit}^{{tree}}")
 
 
+@lru_cache(maxsize=None)
 def _source_file_hashes_for_commit(commit: str) -> dict[str, str]:
     hashes: dict[str, str] = {}
     for relative in SOURCE_PROVENANCE_PATHS:
