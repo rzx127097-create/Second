@@ -6,12 +6,13 @@ Branch: `codex/problem2-g4-resource-scarcity`
 
 ## Gate Result
 
-G4 passed at the existing `M2` evidence boundary after corrective
-final-review remediation. The accepted evidence is diagnostic support-probe
-mechanism evidence for limited onboard UAV pesticide only. It does not
-establish mobile-treatment efficacy, SR-MAPPO superiority, statistical
-significance, a formal experiment result, vehicle-inventory scarcity, G3 actor
-execution, or deployment evidence.
+G4 is an `M2` acceptance candidate after corrective final-review remediation.
+The candidate evidence is diagnostic support-probe mechanism evidence for
+limited onboard UAV pesticide only. It does not establish mobile-treatment
+efficacy, SR-MAPPO superiority, statistical significance, a formal experiment
+result, vehicle-inventory scarcity, G3 actor execution, or deployment evidence.
+Final acceptance remains pending the controller's final review and
+non-rewriting push verification.
 
 ## Corrected Frozen Interface
 
@@ -67,9 +68,9 @@ deployment, vehicle-inventory scarcity, or G3 actor-execution claim.
 
 ## G5 Entry Condition
 
-G5 may begin as a pilot-protocol freeze gate only after final G4 review and
-non-rewriting push verification. It must freeze, before any formal job or
-sealed evaluation:
+G5 is not authorized. It may begin as a pilot-protocol freeze gate only after
+final G4 review and non-rewriting push verification. It must freeze, before
+any formal job or sealed evaluation:
 
 1. pilot scenarios, resource budgets, horizons, seeds, and information
    conditions shared by every comparison arm;

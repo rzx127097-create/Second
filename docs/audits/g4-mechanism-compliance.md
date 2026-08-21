@@ -4,13 +4,13 @@ Date: 2026-08-21
 
 ## Status
 
-G4 passed at `M2` after corrective final-review remediation. This is
-diagnostic support-probe mechanism evidence for limited onboard UAV pesticide,
-not formal treatment-effect evidence. G5 pilot-protocol freezing is the next
-authorized gate after final review and push verification.
+G4 is an `M2` acceptance candidate after corrective final-review remediation.
+This is diagnostic support-probe mechanism evidence for limited onboard UAV
+pesticide, not formal treatment-effect evidence. G5 is not authorized until
+the controller completes final review and non-rewriting push verification.
 
-- Gate: `G4` onboard-pesticide scarcity mechanism acceptance
-- Hardened audit: `pass`
+- Gate: `G4` onboard-pesticide scarcity mechanism acceptance candidate
+- Hardened audit: evidence candidate, not final gate acceptance
 - Public algorithm identity: `SR-MAPPO`
 - Problem identity: air-ground heterogeneous extension
 - Corrective evidence commit:
@@ -83,8 +83,8 @@ execution claim.
 
 ## G5 Boundary
 
-G5 may freeze the pilot protocol and fairness/statistics contracts only after
-final G4 review and push verification. Formal jobs, validation tuning,
-sealed-test evaluation, thesis efficacy claims, superiority claims, G3
-actor-execution claims, and deployment claims remain outside the G4 evidence
-boundary.
+G5 remains unauthorized. It may freeze the pilot protocol and
+fairness/statistics contracts only after final G4 review and push verification.
+Formal jobs, validation tuning, sealed-test evaluation, thesis efficacy claims,
+superiority claims, G3 actor-execution claims, and deployment claims remain
+outside the G4 evidence boundary.

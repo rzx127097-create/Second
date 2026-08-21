@@ -29,8 +29,8 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G4 onboard-pesticide scarcity activation and diagnostic
-  support-probe counterfactual passed at M2 after corrective final-review
-  remediation. G5 pilot-protocol freezing is the next authorized gate. Formal
+  support-probe counterfactual is an M2 acceptance candidate pending final
+  review and non-rewriting push verification. G5 is not authorized. Formal
   jobs, validation tuning, sealed evaluation, and efficacy/superiority claims
   remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
@@ -210,14 +210,16 @@ Persistence status:
 - The separate persistence-record commit is the final required G3
   synchronization before G4 work begins.
 
-## G4 Resource-Scarcity Mechanism Acceptance Record
+## G4 Resource-Scarcity Mechanism Acceptance Candidate Record
 
-G4 passes at the existing `M2` maturity boundary after corrective
-final-review remediation. The accepted evidence is diagnostic support-probe
-mechanism evidence for limited onboard UAV pesticide only; it does not
-authorize formal jobs, validation tuning, sealed evaluation, mobile-treatment
-efficacy claims, SR-MAPPO superiority claims, vehicle-inventory scarcity
-claims, G3 actor-execution claims, or deployment claims.
+G4 is an acceptance candidate at the existing `M2` maturity boundary after
+corrective final-review remediation. The candidate evidence is diagnostic
+support-probe mechanism evidence for limited onboard UAV pesticide only; it
+does not authorize formal jobs, validation tuning, sealed evaluation,
+mobile-treatment efficacy claims, SR-MAPPO superiority claims,
+vehicle-inventory scarcity claims, G3 actor-execution claims, or deployment
+claims. Final acceptance requires the controller's final review and
+non-rewriting push verification.
 
 - Content/evidence commit:
   `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
@@ -264,7 +266,8 @@ claims, G3 actor-execution claims, or deployment claims.
   `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`:
   `status=pass artifacts=10`.
 
-G5 may begin only as a pilot-protocol freeze gate. It must pre-register fair
+G5 is not authorized. It may begin only as a pilot-protocol freeze gate after
+final G4 review and non-rewriting push verification. It must pre-register fair
 pilot scenarios, comparison budgets, validation-tuning rules, paired
 statistical estimands, exclusions, and artifact schemas before any formal or
 sealed evaluation is accepted.
@@ -289,8 +292,10 @@ Frozen interface and canonical evidence:
   `6e9049414421dcf03be373fe7c53bae5ed4576c2b9e94bc45168a266cfeb936a`.
 - Probe manifest: `docs/evidence/g4/g4_probe_manifest.yaml`, SHA-256
   `f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1`.
-- Frozen band: initial UAV pesticide `[1.0, 12.0] L`; probe scales
-  `g20x20_d2`, `g20x30_d3`, `g30x30_d3`; seeds `42`, `123`, `2024`.
+- Historical vehicle-inventory sweep: `[1.0, 12.0] L`; its initial UAV
+  pesticide was `0.05 L`. This superseded record is not the current scarcity
+  axis. Probe scales were `g20x20_d2`, `g20x30_d3`, `g30x30_d3`; seeds `42`,
+  `123`, `2024`.
 - Counterfactual pair: `sr_mappo_fixed` and `sr_mappo_mobile`, with 27
   same-input descriptive pairs and equal activation counts of 27 per arm.
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`, including
@@ -725,11 +730,11 @@ G1.1 bounded remediation persistence record:
   remain untrusted until later branch-local verification.
 - G3 heterogeneous-MARL implementation and acceptance passed at M2 on
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
-  canonical smoke and audit artifacts are recorded above. G4 now passes at M2
-  as diagnostic support-probe mechanism evidence for onboard UAV pesticide
+  canonical smoke and audit artifacts are recorded above. G4 is an M2
+  diagnostic support-probe acceptance candidate for onboard UAV pesticide
   scarcity after corrective evidence commit
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; G5 pilot-protocol freezing is
-  the next authorized gate after final review and push verification.
+  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; G5 remains unauthorized pending
+  final review and non-rewriting push verification.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,

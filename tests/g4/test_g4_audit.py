@@ -25,6 +25,15 @@ def _sha256(path: Path) -> str:
 
 
 def _lineage() -> dict:
+    source_tree_commit = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    source_file_hashes = {
+        relative: hashlib.sha256(
+            subprocess.check_output(["git", "show", f"{source_tree_commit}:{relative}"], cwd=ROOT)
+        ).hexdigest()
+        for relative in g4_audit.SOURCE_PROVENANCE_PATHS
+    }
     return {
         "validation_accessed": False,
         "sealed_test_accessed": False,
@@ -32,12 +41,12 @@ def _lineage() -> dict:
         "g4_contract_sha256": _sha256(CONTRACT),
         "probe_manifest_sha256": _sha256(ROOT / "docs/evidence/g4/g4_probe_manifest.yaml"),
         "g2_config_sha256": _sha256(ROOT / "configs/problem2/g2_deterministic.yaml"),
-        "source_tree_commit": subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
-        ).strip(),
+        "source_tree_commit": source_tree_commit,
         "source_tree_hash": subprocess.check_output(
             ["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True
         ).strip(),
+        "source_file_sha256": source_file_hashes,
+        "source_bundle_sha256": g4_audit._source_bundle_sha256(source_file_hashes),
     }
 
 
@@ -221,6 +230,86 @@ def test_g4_audit_rejects_g3_smoke_artifacts_as_endpoint_evidence(
         audit_g4_mechanism(CONTRACT, output_root, output_root / "report.json")
 
 
+@pytest.mark.parametrize(
+    "path",
+    (
+        "../g3/checkpoints/g3-smoke.pt",
+        "g3/g3-marl-audit.json",
+    ),
+)
+def test_g4_audit_rejects_realistic_g3_artifact_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, path: str
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    manifest = json.loads((output_root / "artifact-manifest.json").read_text(encoding="utf-8"))
+    manifest["artifacts"].append({"path": path, "sha256": "0" * 64, "bytes": 0})
+    _write_json(output_root / "artifact-manifest.json", manifest)
+
+    with pytest.raises(ValueError, match="G3.*endpoint evidence"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
+def test_g4_audit_scans_root_artifact_manifest_values_for_g3_references(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    manifest_path = output_root / "artifact-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["source_reference"] = "g3/g3-marl-audit.json"
+    _write_json(manifest_path, manifest)
+
+    with pytest.raises(ValueError, match="G3.*endpoint evidence"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
+def test_g4_audit_rejects_nested_artifact_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    _write_json(output_root / "fixed" / "artifact-manifest.json", {"artifacts": []})
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
+
+    with pytest.raises(ValueError, match="nested artifact manifest"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
+@pytest.mark.parametrize(
+    "flag",
+    ("g3_actor_or_checkpoint_executed", "g3_checkpoint_loaded"),
+)
+def test_g4_audit_rejects_truthy_g3_execution_flags(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, flag: str
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    _write_json(output_root / "extra-boundary.json", {"audit": {flag: True}})
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
+
+    with pytest.raises(ValueError, match="G3.*execution"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
+@pytest.mark.parametrize(
+    ("relative", "payload"),
+    (
+        ("extra-seed.json", {"nested": {"scenario_id": 20000}}),
+        ("extra-seed.jsonl", {"records": [30099]}),
+    ),
+)
+def test_g4_audit_rejects_reserved_seed_ids_in_extra_manifested_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, relative: str, payload: dict
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    path = output_root / relative
+    if path.suffix == ".jsonl":
+        path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    else:
+        _write_json(path, payload)
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
+
+    with pytest.raises(ValueError, match="reserved.*seed"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
 def test_g4_audit_rejects_validation_or_sealed_access_flags(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -247,6 +336,15 @@ def test_g4_audit_rejects_recorded_hash_drift(tmp_path: Path) -> None:
         from problem2.experiments.g4_audit import _verify_manifest
 
         _verify_manifest(output_root, manifest)
+
+
+def test_g4_audit_rejects_source_bundle_hash_drift() -> None:
+    contract = g4_audit.load_g4_contract(CONTRACT)
+    lineage = _lineage()
+    lineage["source_bundle_sha256"] = "0" * 64
+
+    with pytest.raises(ValueError, match="source_bundle_sha256"):
+        g4_audit._require_lineage(lineage, contract)
 
 
 def test_g4_artifact_manifest_excludes_self_generated_audit_report(tmp_path: Path) -> None:

@@ -9,7 +9,7 @@ import re
 import subprocess
 from typing import Any, Iterable, Mapping
 
-from .g4_activation import validate_activation_band
+from .g4_activation import SOURCE_PROVENANCE_PATHS, validate_activation_band
 from .g4_contract import G4Contract, load_g4_contract, load_g4_probe_manifest
 from .g4_counterfactual import run_counterfactual_probe
 
@@ -43,6 +43,7 @@ G3_ENDPOINT_PATTERNS = (
     "g3-smoke.json",
     "training-smoke",
 )
+G3_EXECUTION_TERMS = ("execut", "load", "used", "reuse", "run")
 
 
 def _sha256(path: Path) -> str:
@@ -72,7 +73,32 @@ def build_g4_artifact_manifest(output_root: str | Path) -> dict[str, Any]:
 
 def _is_g3_endpoint_reference(value: str) -> bool:
     normalized = value.replace("\\", "/").casefold()
-    return any(pattern in normalized for pattern in G3_ENDPOINT_PATTERNS)
+    return (
+        any(pattern in normalized for pattern in G3_ENDPOINT_PATTERNS)
+        or "/g3/" in f"/{normalized.strip('/')}"
+        or normalized.startswith("../g3/")
+        or "g3-marl" in normalized
+    )
+
+
+def _is_g3_execution_flag(name: object) -> bool:
+    if not isinstance(name, str):
+        return False
+    normalized = name.casefold()
+    return (
+        normalized.startswith("g3_")
+        and ("actor" in normalized or "checkpoint" in normalized)
+        and any(term in normalized for term in G3_EXECUTION_TERMS)
+    )
+
+
+def _is_reserved_seed_id(value: Any) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    numeric_value = float(value)
+    return math.isfinite(numeric_value) and numeric_value.is_integer() and (
+        20000 <= value <= 20049 or 30000 <= value <= 30099
+    )
 
 
 def _verify_manifest(
@@ -172,7 +198,9 @@ def _check_boundary(value: Any) -> None:
         for key in ("validation_accessed", "sealed_test_accessed", "battery_replenishment_enabled"):
             if key in value and value[key] is not False:
                 raise ValueError(f"{key} must remain false")
-        for nested in value.values():
+        for key, nested in value.items():
+            if _is_g3_execution_flag(key) and nested:
+                raise ValueError(f"G3 execution flag must remain false: {key}")
             _check_boundary(nested)
     elif isinstance(value, list):
         for nested in value:
@@ -180,6 +208,8 @@ def _check_boundary(value: Any) -> None:
     elif isinstance(value, str):
         if _is_g3_endpoint_reference(value):
             raise ValueError("G3 endpoint references cannot be endpoint evidence")
+    elif _is_reserved_seed_id(value):
+        raise ValueError("reserved validation or sealed seed ID is forbidden")
 
 
 def _git(*args: str) -> str:
@@ -197,6 +227,27 @@ def _tree_for_commit(commit: str) -> str:
     if _git("rev-parse", commit) != commit:
         raise ValueError("G4 provenance source_tree_commit is unresolved")
     return _git("rev-parse", f"{commit}^{{tree}}")
+
+
+def _source_file_hashes_for_commit(commit: str) -> dict[str, str]:
+    hashes: dict[str, str] = {}
+    for relative in SOURCE_PROVENANCE_PATHS:
+        try:
+            content = subprocess.check_output(["git", "show", f"{commit}:{relative}"], cwd=ROOT)
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise ValueError("G4 provenance source bundle is unresolved") from exc
+        hashes[relative] = hashlib.sha256(content).hexdigest()
+    return hashes
+
+
+def _source_bundle_sha256(file_hashes: Mapping[str, str]) -> str:
+    payload = {
+        "schema_version": "g4-source-bundle.v1",
+        "files": dict(sorted(file_hashes.items())),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
 
 def _require_lineage(lineage: Any, contract: G4Contract) -> dict[str, Any]:
@@ -221,6 +272,15 @@ def _require_lineage(lineage: Any, contract: G4Contract) -> dict[str, Any]:
         raise ValueError("G4 provenance source_tree_hash is invalid")
     if _tree_for_commit(commit) != tree:
         raise ValueError("G4 provenance source_tree_hash does not match its commit")
+    source_file_hashes = lineage.get("source_file_sha256")
+    if not isinstance(source_file_hashes, dict):
+        raise ValueError("G4 provenance source_file_sha256 is invalid")
+    expected_source_file_hashes = _source_file_hashes_for_commit(commit)
+    if source_file_hashes != expected_source_file_hashes:
+        raise ValueError("G4 provenance source_file_sha256 does not match its commit")
+    source_bundle_hash = lineage.get("source_bundle_sha256")
+    if source_bundle_hash != _source_bundle_sha256(expected_source_file_hashes):
+        raise ValueError("G4 provenance source_bundle_sha256 does not match its files")
     return lineage
 
 
@@ -373,6 +433,8 @@ def audit_g4_mechanism(
         relative = path.relative_to(root).as_posix().lower()
         if path.is_file() and path.suffix.lower() not in SUPPORTED_G4_SUFFIXES:
             raise ValueError(f"unsupported G4 artifact file type: {relative}")
+        if path.is_file() and path.name.casefold() == "artifact-manifest.json" and path.parent != root:
+            raise ValueError("nested artifact manifest is forbidden")
         if path.is_file() and _is_g3_endpoint_reference(relative):
             raise ValueError("G3 artifacts cannot be used as endpoint evidence")
     recorded_path = root / "artifact-manifest.json"
@@ -382,6 +444,7 @@ def audit_g4_mechanism(
     artifacts = recorded.get("artifacts", [])
     if not isinstance(artifacts, list):
         raise ValueError("G4 artifact manifest must contain artifacts")
+    _check_boundary(recorded)
     for entry in artifacts:
         if isinstance(entry, dict) and isinstance(entry.get("path"), str):
             if _is_g3_endpoint_reference(entry["path"]):

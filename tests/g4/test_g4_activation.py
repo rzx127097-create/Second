@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -215,13 +216,15 @@ def test_lineage_binds_generator_contract_commit_not_output_commit(
 
     def fake_git(*args: str) -> str:
         calls.append(args)
-        if args[:3] == ("log", "-1", "--format=%H"):
+        if args == ("rev-parse", "HEAD"):
             return "a" * 40
         if args == ("rev-parse", f"{'a' * 40}^{{tree}}"):
             return "b" * 40
         raise AssertionError(f"unexpected git call: {args}")
 
     monkeypatch.setattr(activation, "_git", fake_git)
+    monkeypatch.setattr(activation, "_require_clean_source_provenance", lambda _commit: None)
+    monkeypatch.setattr(activation, "_source_file_hashes", lambda: {"source.py": "c" * 64})
 
     lineage = activation._lineage(
         CONTRACT,
@@ -231,4 +234,29 @@ def test_lineage_binds_generator_contract_commit_not_output_commit(
 
     assert lineage["source_tree_commit"] == "a" * 40
     assert lineage["source_tree_hash"] == "b" * 40
-    assert any(call[:3] == ("log", "-1", "--format=%H") for call in calls)
+    assert ("rev-parse", "HEAD") in calls
+
+
+def test_lineage_rejects_a_dirty_source_provenance_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_root = tmp_path / "source-repo"
+    source_root.mkdir()
+    for relative in activation.SOURCE_PROVENANCE_PATHS:
+        path = source_root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"tracked {relative}\n", encoding="utf-8")
+    for command in (
+        ("git", "init"),
+        ("git", "config", "user.email", "g4-test@example.invalid"),
+        ("git", "config", "user.name", "G4 Test"),
+        ("git", "add", "."),
+        ("git", "commit", "-m", "source bundle"),
+    ):
+        subprocess.run(command, cwd=source_root, check=True, capture_output=True, text=True)
+    dirty_source = source_root / activation.SOURCE_PROVENANCE_PATHS[0]
+    dirty_source.write_text("unstaged change\n", encoding="utf-8")
+    monkeypatch.setattr(activation, "ROOT", source_root)
+
+    with pytest.raises(G4ContractError, match="source provenance paths"):
+        activation._lineage(CONTRACT, MANIFEST, activation.load_g2_config(activation.G2_CONFIG_PATH))

@@ -124,8 +124,58 @@ def _git(*args: str) -> str:
     return value
 
 
+def _require_clean_source_provenance(source_commit: str) -> None:
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all", "--", *SOURCE_PROVENANCE_PATHS],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise G4ContractError("G4 generator requires readable Git source provenance") from exc
+    if result.stdout:
+        raise G4ContractError("G4 source provenance paths differ from the selected source commit")
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--quiet", source_commit, "--", *SOURCE_PROVENANCE_PATHS],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        raise G4ContractError("G4 generator requires readable Git source provenance") from exc
+    if result.returncode == 1:
+        raise G4ContractError("G4 source provenance paths differ from the selected source commit")
+    if result.returncode != 0:
+        raise G4ContractError("G4 generator cannot compare source provenance")
+
+
+def _source_file_hashes() -> dict[str, str]:
+    try:
+        return {
+            relative: _sha256(ROOT / relative)
+            for relative in SOURCE_PROVENANCE_PATHS
+        }
+    except OSError as exc:
+        raise G4ContractError("G4 generator cannot hash source provenance") from exc
+
+
+def _source_bundle_sha256(file_hashes: Mapping[str, str]) -> str:
+    payload = {
+        "schema_version": "g4-source-bundle.v1",
+        "files": dict(sorted(file_hashes.items())),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
 def _source_tree_identity() -> tuple[str, str]:
-    commit = _git("log", "-1", "--format=%H", "--", *SOURCE_PROVENANCE_PATHS)
+    commit = _git("rev-parse", "HEAD")
+    _require_clean_source_provenance(commit)
     return commit, _git("rev-parse", f"{commit}^{{tree}}")
 
 
@@ -370,6 +420,7 @@ def _run_one(
 
 def _lineage(contract: G4Contract, manifest: G4ProbeManifest, config: G2Config) -> dict[str, Any]:
     source_commit, source_tree = _source_tree_identity()
+    source_file_hashes = _source_file_hashes()
     return {
         "g4_contract": str(contract.source_path),
         "probe_manifest": str(manifest.source_path),
@@ -379,6 +430,8 @@ def _lineage(contract: G4Contract, manifest: G4ProbeManifest, config: G2Config) 
         "g2_config_sha256": _sha256(G2_CONFIG_PATH),
         "source_tree_commit": source_commit,
         "source_tree_hash": source_tree,
+        "source_file_sha256": source_file_hashes,
+        "source_bundle_sha256": _source_bundle_sha256(source_file_hashes),
         "validation_accessed": False,
         "sealed_test_accessed": False,
         "battery_replenishment_enabled": False,
