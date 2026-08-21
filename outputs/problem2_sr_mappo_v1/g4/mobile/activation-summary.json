@@ -28,8 +28,8 @@
       "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
       "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
     },
-    "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-    "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+    "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+    "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
     "validation_accessed": false
   },
   "pesticide_disabled_time_s": 9445.0,
@@ -67,8 +67,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 195.0,
@@ -119,8 +119,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 183.0,
@@ -171,8 +171,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 171.0,
@@ -223,8 +223,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 217.0,
@@ -275,8 +275,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 208.0,
@@ -327,8 +327,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 200.0,
@@ -379,8 +379,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 170.0,
@@ -431,8 +431,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 158.0,
@@ -483,8 +483,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 146.0,
@@ -535,8 +535,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 400.0,
@@ -587,8 +587,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 379.0,
@@ -639,8 +639,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 359.0,
@@ -691,8 +691,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 406.0,
@@ -743,8 +743,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 382.0,
@@ -795,8 +795,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 359.0,
@@ -847,8 +847,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 400.0,
@@ -899,8 +899,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 379.0,
@@ -951,8 +951,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 359.0,
@@ -1003,8 +1003,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 486.0,
@@ -1055,8 +1055,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 462.0,
@@ -1107,8 +1107,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 438.0,
@@ -1159,8 +1159,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 520.0,
@@ -1211,8 +1211,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 499.0,
@@ -1263,8 +1263,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 479.0,
@@ -1315,8 +1315,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 520.0,
@@ -1367,8 +1367,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 497.0,
@@ -1419,8 +1419,8 @@
           "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
           "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
         },
-        "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
-        "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
+        "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
+        "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
         "validation_accessed": false
       },
       "pesticide_disabled_time_s": 473.0,

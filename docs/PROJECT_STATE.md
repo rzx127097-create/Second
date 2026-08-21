@@ -29,10 +29,9 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G4 onboard-pesticide scarcity activation and diagnostic
-  support-probe counterfactual is an M2 acceptance candidate pending final
-  review and non-rewriting push verification. G5 is not authorized. Formal
-  jobs, validation tuning, sealed evaluation, and efficacy/superiority claims
-  remain unauthorized.
+  support-probe counterfactual is accepted at M2. G5 pilot-protocol freezing
+  is the next authorized gate. Formal jobs, validation tuning, sealed
+  evaluation, and efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -210,16 +209,15 @@ Persistence status:
 - The separate persistence-record commit is the final required G3
   synchronization before G4 work begins.
 
-## G4 Resource-Scarcity Mechanism Acceptance Candidate Record
+## G4 Resource-Scarcity Mechanism Acceptance Record
 
-G4 is an acceptance candidate at the existing `M2` maturity boundary after
-corrective final-review remediation. The candidate evidence is diagnostic
+G4 passes at the existing `M2` maturity boundary after corrective final-review
+remediation and controller verification. The accepted evidence is diagnostic
 support-probe mechanism evidence for limited onboard UAV pesticide only; it
 does not authorize formal jobs, validation tuning, sealed evaluation,
 mobile-treatment efficacy claims, SR-MAPPO superiority claims,
 vehicle-inventory scarcity claims, G3 actor-execution claims, or deployment
-claims. Final acceptance requires the controller's final review and
-non-rewriting push verification.
+claims.
 
 - Content/evidence commit:
   `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
@@ -262,17 +260,17 @@ non-rewriting push verification.
   onboard-pesticide scarcity mechanism and emitted paired descriptive deltas.
   No efficacy, superiority, formal-result, deployment, vehicle-inventory
   scarcity, or G3 actor-execution claim is permitted.
-- Fresh fix-worker verification before controller persistence:
-  `python -m pytest tests/g4 -q`: `76 passed in 83.09s`;
-  `python -m pytest -q`: `297 passed in 122.71s`;
+- Fresh controller verification:
+  `python -m pytest tests/g4 -q`: `76 passed in 78.54s`;
+  `python -m pytest -q`: `297 passed in 115.76s`;
   `python -m compileall -q src scripts`: exit `0`;
   `git diff --check`: exit `0`;
   `python scripts/run_g4_mechanism_probe.py`: `[0.05, 0.525]`;
   `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`:
   `status=pass artifacts=10`.
 
-G5 is not authorized. It may begin only as a pilot-protocol freeze gate after
-final G4 review and non-rewriting push verification. It must pre-register fair
+G5 is the next authorized gate. It may begin as a pilot-protocol freeze gate
+and must pre-register fair
 pilot scenarios, comparison budgets, validation-tuning rules, paired
 statistical estimands, exclusions, and artifact schemas before any formal or
 sealed evaluation is accepted.
@@ -718,8 +716,6 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Complete the final independent review and non-rewriting push verification for
-  the corrected G4 onboard-pesticide remediation before any G5 work begins.
 - Freeze the G5 pilot protocol, baseline fairness matrix, validation-tuning
   rules, and paired-statistics contract before any formal matrix jobs.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
@@ -735,11 +731,11 @@ G1.1 bounded remediation persistence record:
   remain untrusted until later branch-local verification.
 - G3 heterogeneous-MARL implementation and acceptance passed at M2 on
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
-  canonical smoke and audit artifacts are recorded above. G4 is an M2
-  diagnostic support-probe acceptance candidate for onboard UAV pesticide
+  canonical smoke and audit artifacts are recorded above. G4 is accepted at
+  M2 as diagnostic support-probe mechanism evidence for onboard UAV pesticide
   scarcity after corrective evidence commit
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; G5 remains unauthorized pending
-  final review and non-rewriting push verification.
+  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; G5 pilot-protocol freezing is
+  the next authorized gate.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -781,8 +777,9 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Complete final G4 review, non-rewriting push verification, and final
-acceptance-state persistence before beginning G5. G5 remains unauthorized. The
-highest maturity remains M2 implementation and scoped mechanism evidence.
+Begin G5 by freezing the fair pilot protocol, comparison fairness matrix,
+validation-tuning policy, paired-statistics contract, exclusions, and artifact
+schemas. The highest maturity remains M2 implementation and scoped mechanism
+evidence.
 Formal jobs, validation tuning, sealed-test evaluation, and thesis
 efficacy/superiority claims remain unauthorized until their later gates.

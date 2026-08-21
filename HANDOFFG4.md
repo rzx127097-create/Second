@@ -6,13 +6,12 @@ Branch: `codex/problem2-g4-resource-scarcity`
 
 ## Gate Result
 
-G4 is an `M2` acceptance candidate after corrective final-review remediation.
-The candidate evidence is diagnostic support-probe mechanism evidence for
-limited onboard UAV pesticide only. It does not establish mobile-treatment
-efficacy, SR-MAPPO superiority, statistical significance, a formal experiment
-result, vehicle-inventory scarcity, G3 actor execution, or deployment evidence.
-Final acceptance remains pending the controller's final review and
-non-rewriting push verification.
+G4 passes at the existing `M2` maturity boundary after corrective
+final-review remediation and controller verification. The accepted evidence is
+diagnostic support-probe mechanism evidence for limited onboard UAV pesticide
+only. It does not establish mobile-treatment efficacy, SR-MAPPO superiority,
+statistical significance, a formal experiment result, vehicle-inventory
+scarcity, G3 actor execution, or deployment evidence.
 
 ## Corrected Frozen Interface
 
@@ -51,13 +50,15 @@ non-rewriting push verification.
   transfer evidence, common activation window, provenance hashes, manifest
   hashes/bytes, missing-manifest rejection, G3 endpoint-reference rejection,
   and duplicate-path rejection.
-- Fresh fix-worker verification before controller persistence:
-  `python -m pytest tests/g4 -q` returned `76 passed in 83.09s`;
-  `python -m pytest -q` returned `297 passed in 122.71s`;
+- Fresh controller verification:
+  `python -m pytest tests/g4 -q` returned `76 passed in 78.54s`;
+  `python -m pytest -q` returned `297 passed in 115.76s`;
   `python -m compileall -q src scripts` exited `0`;
   `git diff --check` exited `0`;
   `python scripts/run_g4_mechanism_probe.py` returned `[0.05, 0.525]`; and the
   G4 audit returned `status=pass artifacts=10`.
+- Final controller verification was rerun on the accepted tree with the same
+  canonical output root and no validation or sealed-test access.
 
 ## Claim Boundary
 
@@ -69,9 +70,8 @@ deployment, vehicle-inventory scarcity, or G3 actor-execution claim.
 
 ## G5 Entry Condition
 
-G5 is not authorized. It may begin as a pilot-protocol freeze gate only after
-final G4 review and non-rewriting push verification. It must freeze, before
-any formal job or sealed evaluation:
+G5 is the next authorized gate and may begin only as a pilot-protocol freeze
+gate. It must freeze, before any formal job or sealed evaluation:
 
 1. pilot scenarios, resource budgets, horizons, seeds, and information
    conditions shared by every comparison arm;

@@ -4,13 +4,13 @@ Date: 2026-08-21
 
 ## Status
 
-G4 is an `M2` acceptance candidate after corrective final-review remediation.
-This is diagnostic support-probe mechanism evidence for limited onboard UAV
-pesticide, not formal treatment-effect evidence. G5 is not authorized until
-the controller completes final review and non-rewriting push verification.
+G4 passes at the existing `M2` maturity boundary after corrective final-review
+remediation and controller verification. This is diagnostic support-probe
+mechanism evidence for limited onboard UAV pesticide, not formal
+treatment-effect evidence. G5 is the next authorized gate.
 
-- Gate: `G4` onboard-pesticide scarcity mechanism acceptance candidate
-- Hardened audit: evidence candidate, not final gate acceptance
+- Gate: `G4` onboard-pesticide scarcity mechanism accepted
+- Hardened audit: `status=pass`, final acceptance recorded
 - Public algorithm identity: `SR-MAPPO`
 - Problem identity: air-ground heterogeneous extension
 - Corrective evidence commit:
@@ -68,10 +68,10 @@ duplicate, traversal, nested-manifest, unsupported-file, realistic G3 endpoint
 and execution-flag, and reserved-seed rejections. The regenerated audit reports
 `status=pass` with 10 registered evidence artifacts.
 
-Fresh fix-worker verification before controller persistence returned `76 passed
-in 83.09s` for `tests/g4`, `297 passed in 122.71s` for the full suite, exit `0` for
-`git diff --check`, `[0.05, 0.525]` from the G4 generator, and
-`status=pass artifacts=10` from the G4 audit.
+Fresh controller verification returned `297 passed in 115.76s` for the full
+suite, `76 passed` for `tests/g4`, exit `0` for `git diff --check` and
+`python -m compileall -q src scripts`, `[0.05, 0.525]` from the G4 generator,
+and `status=pass artifacts=10` from the G4 audit.
 
 ## Claim Boundary
 
@@ -84,8 +84,7 @@ execution claim.
 
 ## G5 Boundary
 
-G5 remains unauthorized. It may freeze the pilot protocol and
-fairness/statistics contracts only after final G4 review and push verification.
+G5 may now freeze the pilot protocol and fairness/statistics contracts.
 Formal jobs, validation tuning, sealed-test evaluation, thesis efficacy claims,
 superiority claims, G3 actor-execution claims, and deployment claims remain
 outside the G4 evidence boundary.
