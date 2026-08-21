@@ -1,0 +1,15 @@
+schema_version: g4.v1
+manifest_id: G4-PROBE-MANIFEST
+status: design_frozen
+probe_scales: [g20x20_d2, g20x30_d3, g30x30_d3]
+probe_seeds: [42, 123, 2024]
+horizon_by_scale:
+  g20x20_d2: 150
+  g20x30_d3: 180
+  g30x30_d3: 220
+probe_partitions:
+  training: [42, 123, 2024]
+  validation: []
+  sealed_test: []
+validation_access_allowed: false
+sealed_test_access_allowed: false

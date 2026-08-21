@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+import yaml
+
+from problem2.experiments.g4_contract import (
+    G4ContractError,
+    load_g4_contract,
+    load_g4_probe_manifest,
+)
+
+
+ROOT = Path(__file__).resolve().parents[2]
+CONTRACT_PATH = ROOT / "docs" / "evidence" / "g4" / "g4_contract.yaml"
+MANIFEST_PATH = ROOT / "docs" / "evidence" / "g4" / "g4_probe_manifest.yaml"
+
+
+def _payload(path: Path) -> dict:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _write_payload(path: Path, payload: dict, tmp_path: Path) -> Path:
+    target = tmp_path / path.name
+    target.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    return target
+
+
+def test_g4_contract_exposes_frozen_boundary() -> None:
+    contract = load_g4_contract(CONTRACT_PATH)
+    manifest = load_g4_probe_manifest(MANIFEST_PATH)
+
+    assert contract.scarcity_axis == "initial_uav_pesticide_l"
+    assert contract.admissible_band == (1.0, 12.0)
+    assert contract.probe_scales == ("g20x20_d2", "g20x30_d3", "g30x30_d3")
+    assert contract.probe_seeds == (42, 123, 2024)
+    assert contract.comparator_pair == ("sr_mappo_fixed", "sr_mappo_mobile")
+    assert contract.output_root.as_posix() == "outputs/problem2_sr_mappo_v1/g4"
+    assert "mechanism activation" in contract.permitted_claim_boundary
+    assert manifest.probe_scales == contract.probe_scales
+    assert manifest.probe_seeds == contract.probe_seeds
+    assert manifest.validation_access_allowed is False
+    assert manifest.sealed_test_access_allowed is False
+
+
+def test_g4_contract_rejects_g3_endpoint_evidence_paths(tmp_path: Path) -> None:
+    payload = _payload(CONTRACT_PATH)
+    payload["output_root"] = "outputs/problem2_sr_mappo_v1/g3"
+
+    with pytest.raises(G4ContractError, match="G3 output-root"):
+        load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
+
+
+def test_g4_contract_rejects_unbounded_scarcity_ranges(tmp_path: Path) -> None:
+    payload = _payload(CONTRACT_PATH)
+    payload["scarcity_band"].pop("upper")
+
+    with pytest.raises(G4ContractError, match="lower and upper"):
+        load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
+
+
+@pytest.mark.parametrize("seed", [20000, 30000])
+def test_g4_contract_rejects_reserved_probe_seeds(seed: int, tmp_path: Path) -> None:
+    payload = _payload(CONTRACT_PATH)
+    payload["probe_seeds"] = [seed]
+
+    with pytest.raises(G4ContractError, match="validation and sealed"):
+        load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
+
+
+@pytest.mark.parametrize("partition", ["validation", "sealed_test"])
+def test_g4_contract_rejects_validation_and_sealed_probe_ids(
+    partition: str, tmp_path: Path
+) -> None:
+    payload = _payload(MANIFEST_PATH)
+    payload["probe_partitions"][partition] = {"start": 20000, "end": 20000}
+
+    with pytest.raises(G4ContractError, match="validation|sealed"):
+        load_g4_probe_manifest(_write_payload(MANIFEST_PATH, payload, tmp_path))
+
+
+def test_g4_contract_rejects_battery_activation(tmp_path: Path) -> None:
+    payload = _payload(CONTRACT_PATH)
+    payload["resources"]["battery_replenishment_enabled"] = True
+
+    with pytest.raises(G4ContractError, match="battery"):
+        load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
