@@ -16,7 +16,7 @@ the controller completes final review and non-rewriting push verification.
 - Corrective evidence commit:
   `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
 - Generator/code commit:
-  `f53b86b05372a142a9b4796db2e7c3fc9be901a1`
+  `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb`
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`
 - Matrix: `3 scales x 3 seeds x 3 initial-UAV-pesticide levels` per arm
 - Paired diagnostic records: `27`
@@ -68,8 +68,8 @@ duplicate, traversal, nested-manifest, unsupported-file, realistic G3 endpoint
 and execution-flag, and reserved-seed rejections. The regenerated audit reports
 `status=pass` with 10 registered evidence artifacts.
 
-Fresh fix-worker verification before controller persistence returned `70 passed
-in 69.38s` for `tests/g4`, `291 passed in 105.23s` for the full suite, exit `0` for
+Fresh fix-worker verification before controller persistence returned `76 passed
+in 83.09s` for `tests/g4`, `297 passed in 122.71s` for the full suite, exit `0` for
 `git diff --check`, `[0.05, 0.525]` from the G4 generator, and
 `status=pass artifacts=10` from the G4 audit.
 

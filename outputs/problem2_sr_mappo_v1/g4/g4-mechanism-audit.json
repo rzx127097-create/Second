@@ -3,7 +3,7 @@
     0.05,
     0.525
   ],
-  "artifact_manifest_sha256": "6f283429ba345ffd0de085de05ed9ae1a3a3a52229e20ac9fc9e9b4ed64ea0b9",
+  "artifact_manifest_sha256": "ddbe7a9b11402b07e8b3a3bad07acd898e81fe6e45aa6f837e74e74352436076",
   "audit": "g4-mechanism-compliance",
   "claim_boundary": "diagnostic support-probe mechanism activation from limited onboard pesticide and paired descriptive counterfactual deltas only; no vehicle-inventory scarcity claim, G3 actor or checkpoint execution, superiority, efficacy, formal-result, or deployment claim",
   "frozen_contract_sha256": "2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea",
@@ -18,7 +18,7 @@
     {
       "bytes": 2446,
       "path": "activation-summary.json",
-      "sha256": "94c8d64d3932521b15da02b564f5f32af467131f4ad2d8ab4b619deb967abbdc"
+      "sha256": "e3498eb018279442f921e074f168737a495f3e33ec304d42f138194acc07174e"
     },
     {
       "bytes": 57326,
@@ -28,42 +28,42 @@
     {
       "bytes": 90436,
       "path": "fixed/activation-summary.json",
-      "sha256": "bcc3cbf5430b4352a86740033636c05de8a075a1da6f85418237a2dcbb1b1aef"
+      "sha256": "fc06923215f222373e992cf65146d7a260e2a837df3f1d3a4fe80f072d4d950d"
     },
     {
       "bytes": 2116,
       "path": "fixed/provenance.json",
-      "sha256": "aa702712adaed81d3df8c00eaa0c47cdd3b3b5234e7c20c642a7f3ccb5faa55d"
+      "sha256": "f6ca6196ba90c7a61489ccd9a2f12b1a3767e8538a16252d8650e89f4977db68"
     },
     {
       "bytes": 75744,
       "path": "fixed/raw-probe.jsonl",
-      "sha256": "64a9aa4600276bb6cab10727e027f2084e962b6a8bf98b1549e3e12a84196647"
+      "sha256": "71ad2d2bdd5bf7b100fc874239a664499c01ae16dffe1a1d238a5d64d8f48923"
     },
     {
       "bytes": 90211,
       "path": "mobile/activation-summary.json",
-      "sha256": "9002a237aec3fe3045d26d950b4f71f92a8aadf77daaf1ed9b8313789f018361"
+      "sha256": "d5d9f0fada66fb912a28963e68d9ab9ee95310598fa4d3c62a1e232775dcf9ca"
     },
     {
       "bytes": 2116,
       "path": "mobile/provenance.json",
-      "sha256": "aa702712adaed81d3df8c00eaa0c47cdd3b3b5234e7c20c642a7f3ccb5faa55d"
+      "sha256": "f6ca6196ba90c7a61489ccd9a2f12b1a3767e8538a16252d8650e89f4977db68"
     },
     {
       "bytes": 75494,
       "path": "mobile/raw-probe.jsonl",
-      "sha256": "f3e2bf2af73ede37abb7ba7bba18f3aafe5054d93bafbdd31047ac23f9152ffe"
+      "sha256": "a0d284fb89ac930a669c0ba05dc68574886e1adaa36f19bb634dff0274db0e2a"
     },
     {
       "bytes": 376054,
       "path": "probe-matrix-summary.json",
-      "sha256": "14345bbfc8be1a68379cd20f7b1f15ee2d890d820c4ae18e232a4bf45209ab23"
+      "sha256": "0b81084024fcf3e1568370713a21a76a241812193910b1c5655d1b2ede976070"
     },
     {
       "bytes": 2116,
       "path": "provenance.json",
-      "sha256": "aa702712adaed81d3df8c00eaa0c47cdd3b3b5234e7c20c642a7f3ccb5faa55d"
+      "sha256": "f6ca6196ba90c7a61489ccd9a2f12b1a3767e8538a16252d8650e89f4977db68"
     }
   ],
   "paired_deltas": [
@@ -596,7 +596,7 @@
     "probe_manifest": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_probe_manifest.yaml",
     "probe_manifest_sha256": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1",
     "sealed_test_accessed": false,
-    "source_bundle_sha256": "6e4f959610f9a3ab29eda6cdf44bf3da916f8e4e5db9b6323450bb7c26e28878",
+    "source_bundle_sha256": "d2a8a4a4dced015a8f77483d30077b5a24948a97ac1f82b979d6ba968f9df3ed",
     "source_file_sha256": {
       "configs/problem2/g2_deterministic.yaml": "297b602272b40de9778a6c9c768921d13503911d3a42ec7145b3560d807d59f2",
       "docs/evidence/g4/g4_contract.yaml": "2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea",
@@ -604,13 +604,13 @@
       "scripts/audit_g4_mechanism.py": "ea648f2a46abdfc313410b72a93aadfe7ea03423c36aa494a82af958de3680b3",
       "scripts/run_g4_mechanism_probe.py": "101cf174d686cf12bd71025a8571913a761342fa1d32dcfa5f8e6a8e6b1ef811",
       "src/problem2/experiments/g4_activation.py": "566434a9128e2769dffbda0b3569058e4209cebafafbfafafd8b3dc30944b6bc",
-      "src/problem2/experiments/g4_audit.py": "736e806c1d368edb2eed8014f6f832bac0b52b98df8707bd5f9214f6779262f3",
+      "src/problem2/experiments/g4_audit.py": "b89cce63c9eed14fb024fbf59db158829255126e4d32912e4d56f0c6a8872d9b",
       "src/problem2/experiments/g4_contract.py": "26a04b67e8d2e54518ea0f5b5a9d263f552993fe54159f288ce0597415da89a4",
       "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
       "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
     },
-    "source_tree_commit": "f53b86b05372a142a9b4796db2e7c3fc9be901a1",
-    "source_tree_hash": "743d8cd30508af265a9232dd5b52402d7025ede2",
+    "source_tree_commit": "ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb",
+    "source_tree_hash": "78d3d146b06f191998853ef7070b167a5df64a5c",
     "validation_accessed": false
   },
   "status": "pass"

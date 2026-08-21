@@ -226,8 +226,8 @@ non-rewriting push verification.
   (`docs: regenerate g4 onboard scarcity evidence`), prepared on
   `codex/problem2-g4-resource-scarcity`.
 - Generator/code commit bound in the canonical G4 artifacts:
-  `f53b86b05372a142a9b4796db2e7c3fc9be901a1`
-  (`perf: cache g4 source bundle verification`).
+  `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb`
+  (`fix: close g4 artifact boundary gaps`).
 - Executed scarcity axis: `initial_uav_pesticide_l`, sampled at `0.05`,
   `0.2875`, and `0.525 L`, all within the frozen G2 usable UAV capacity
   `1.08 L`.
@@ -241,9 +241,9 @@ non-rewriting push verification.
   that reached service start, while `euclidean_service_start_distance_m` is
   Euclidean separation at service start, not road-travel distance.
 - Canonical G4 evidence was regenerated below
-  `outputs/problem2_sr_mappo_v1/g4` with source commit `f53b86b`, source tree
-  `743d8cd30508af265a9232dd5b52402d7025ede2`, source bundle SHA-256
-  `6e4f959610f9a3ab29eda6cdf44bf3da916f8e4e5db9b6323450bb7c26e28878`, and contract SHA-256
+  `outputs/problem2_sr_mappo_v1/g4` with source commit `ee0d3fa`, source tree
+  `78d3d146b06f191998853ef7070b167a5df64a5c`, source bundle SHA-256
+  `d2a8a4a4dced015a8f77483d30077b5a24948a97ac1f82b979d6ba968f9df3ed`, and contract SHA-256
   `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
 - Hardened audit result: `status=pass`, exact matrix shape `3 x 3 x 3` per
   arm, 27 same-input pairs, 10 manifest artifacts, validation/sealed access
@@ -263,8 +263,8 @@ non-rewriting push verification.
   No efficacy, superiority, formal-result, deployment, vehicle-inventory
   scarcity, or G3 actor-execution claim is permitted.
 - Fresh fix-worker verification before controller persistence:
-  `python -m pytest tests/g4 -q`: `70 passed in 69.38s`;
-  `python -m pytest -q`: `291 passed in 105.23s`;
+  `python -m pytest tests/g4 -q`: `76 passed in 83.09s`;
+  `python -m pytest -q`: `297 passed in 122.71s`;
   `python -m compileall -q src scripts`: exit `0`;
   `git diff --check`: exit `0`;
   `python scripts/run_g4_mechanism_probe.py`: `[0.05, 0.525]`;

@@ -83,3 +83,55 @@ push verification, and final acceptance-state persistence decision.
 - No validation or sealed seed was accessed, no battery replenishment was
   activated, and no efficacy, superiority, deployment, vehicle-inventory
   scarcity, or G3 actor/checkpoint execution claim is supported.
+
+## Fix Round 2
+
+### Findings Addressed
+
+- Broadened recursive G3 execution-flag rejection to cover generic
+  `g3_execution` and actor/checkpoint variants while preserving false values.
+- Added an exact ten-path artifact allowlist to both manifest generation and
+  audit verification. Arbitrary extra JSON/JSONL and missing canonical paths
+  now fail closed.
+- Added recursive rejection for reserved validation/sealed seed IDs encoded as
+  strings, including `"20000"` through `"20049"` and `"30000"` through
+  `"30099"`.
+- Corrected `docs/PROJECT_STATE.md` so its Next Step requires final G4 review,
+  non-rewriting push verification, and persistence before G5.
+
+### TDD RED
+
+The new focused regression run before implementation returned:
+
+```text
+8 failed, 3 passed, 32 deselected in 12.12s
+```
+
+The failures covered generic G3 execution, string seed IDs, arbitrary extra
+JSON/JSONL, exact allowlist enforcement, and legacy tests that still expected
+arbitrary manifest paths to be accepted.
+
+### Verification
+
+```text
+Focused round-2 regressions: 11 passed, 32 deselected in 10.78s
+G4 audit test module: 43 passed in 38.15s
+G4 suite: 76 passed in 83.09s
+Full suite: 297 passed in 122.71s
+python -m compileall -q src scripts: exit 0
+git diff --check: exit 0
+python scripts/run_g4_mechanism_probe.py: [0.05, 0.525]
+python scripts/audit_g4_mechanism.py ...: status=pass artifacts=10
+Exact canonical manifest paths: 10 required paths, no extras
+Canonical provenance source commit: ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb
+```
+
+### Commits
+
+- `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb` - `fix: close g4 artifact boundary gaps`
+- The regenerated canonical evidence and round-2 report are pending the next
+  local persistence commit.
+
+No push was performed. G4 remains an M2 acceptance candidate pending
+controller final review, non-rewriting push verification, and final
+acceptance-state persistence. G5 remains unauthorized.
