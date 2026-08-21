@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 from pathlib import Path
+from pathlib import PureWindowsPath
 from types import MappingProxyType
 from typing import Any, Mapping
 
@@ -119,6 +120,27 @@ def _load(path: Path, loader: type[yaml.SafeLoader]) -> Any:
         raise G4ContractError(f"cannot load G4 YAML: {exc}") from exc
 
 
+def _validate_endpoint_evidence_roots(values: tuple[str, ...]) -> None:
+    canonical_root = Path("outputs/problem2_sr_mappo_v1/g4").resolve()
+    for value in values:
+        candidate = Path(value)
+        windows_candidate = PureWindowsPath(value)
+        if candidate.is_absolute() or windows_candidate.is_absolute():
+            raise G4ContractError(
+                "endpoint evidence root must be relative to the canonical G4 root"
+            )
+        if ".." in windows_candidate.parts:
+            raise G4ContractError(
+                "endpoint evidence root cannot contain traversal components"
+            )
+        try:
+            candidate.resolve().relative_to(canonical_root)
+        except ValueError as exc:
+            raise G4ContractError(
+                "endpoint evidence root must resolve beneath the canonical G4 root"
+            ) from exc
+
+
 def load_g4_contract(path: Path | str) -> G4Contract:
     """Load the fail-closed G4 scarcity and counterfactual contract."""
 
@@ -171,8 +193,7 @@ def load_g4_contract(path: Path | str) -> G4Contract:
     if output_root.as_posix() != "outputs/problem2_sr_mappo_v1/g4":
         raise G4ContractError("output_root must be the frozen G4 output root")
     endpoint_roots = _text_tuple(root["endpoint_evidence_roots"], "endpoint_evidence_roots")
-    if any("/g3" in item or item.endswith("\\g3") for item in endpoint_roots):
-        raise G4ContractError("G3 output-root paths cannot be endpoint evidence")
+    _validate_endpoint_evidence_roots(endpoint_roots)
     resources = _mapping(root["resources"], "resources")
     _require_keys(resources, {"replenished_resource", "battery_replenishment_enabled"}, "resources")
     if _text(resources["replenished_resource"], "resources.replenished_resource") != "pesticide":

@@ -52,6 +52,25 @@ def test_g4_contract_rejects_g3_endpoint_evidence_paths(tmp_path: Path) -> None:
         load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
 
 
+@pytest.mark.parametrize(
+    "endpoint_root",
+    [
+        "outputs/problem2_sr_mappo_v1/other",
+        "outputs/problem2_sr_mappo_v1/G3",
+        "outputs/problem2_sr_mappo_v1/g4/../g3",
+        str((ROOT / "outputs" / "problem2_sr_mappo_v1" / "g4").resolve()),
+    ],
+)
+def test_g4_contract_rejects_endpoint_roots_outside_canonical_g4(
+    endpoint_root: str, tmp_path: Path
+) -> None:
+    payload = _payload(CONTRACT_PATH)
+    payload["endpoint_evidence_roots"] = [endpoint_root]
+
+    with pytest.raises(G4ContractError, match="endpoint evidence root"):
+        load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
+
+
 def test_g4_contract_rejects_unbounded_scarcity_ranges(tmp_path: Path) -> None:
     payload = _payload(CONTRACT_PATH)
     payload["scarcity_band"].pop("upper")
