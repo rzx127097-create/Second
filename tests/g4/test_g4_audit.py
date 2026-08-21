@@ -18,6 +18,18 @@ CONTRACT = ROOT / "docs/evidence/g4/g4_contract.yaml"
 SCALES = ("g20x20_d2", "g20x30_d3", "g30x30_d3")
 SEEDS = (42, 123, 2024)
 LEVELS = (0.05, 0.2875, 0.525)
+EXPECTED_ARTIFACT_PATHS = (
+    "activation-summary.json",
+    "counterfactual-summary.json",
+    "fixed/activation-summary.json",
+    "fixed/provenance.json",
+    "fixed/raw-probe.jsonl",
+    "mobile/activation-summary.json",
+    "mobile/provenance.json",
+    "mobile/raw-probe.jsonl",
+    "probe-matrix-summary.json",
+    "provenance.json",
+)
 
 
 def _sha256(path: Path) -> str:
@@ -267,7 +279,6 @@ def test_g4_audit_rejects_nested_artifact_manifest(
 ) -> None:
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
     _write_json(output_root / "fixed" / "artifact-manifest.json", {"artifacts": []})
-    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="nested artifact manifest"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
@@ -275,13 +286,21 @@ def test_g4_audit_rejects_nested_artifact_manifest(
 
 @pytest.mark.parametrize(
     "flag",
-    ("g3_actor_or_checkpoint_executed", "g3_checkpoint_loaded"),
+    (
+        "g3_execution",
+        "g3_actor_or_checkpoint_executed",
+        "g3_checkpoint_loaded",
+        "g3_actor_loaded",
+    ),
 )
 def test_g4_audit_rejects_truthy_g3_execution_flags(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, flag: str
 ) -> None:
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
-    _write_json(output_root / "extra-boundary.json", {"audit": {flag: True}})
+    provenance_path = output_root / "provenance.json"
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    provenance["nested"] = {"audit": {flag: True}}
+    _write_json(provenance_path, provenance)
     _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="G3.*execution"):
@@ -291,8 +310,8 @@ def test_g4_audit_rejects_truthy_g3_execution_flags(
 @pytest.mark.parametrize(
     ("relative", "payload"),
     (
-        ("extra-seed.json", {"nested": {"scenario_id": 20000}}),
-        ("extra-seed.jsonl", {"records": [30099]}),
+        ("provenance.json", {"nested": {"scenario_id": "20000"}}),
+        ("provenance.json", {"records": ["30099"]}),
     ),
 )
 def test_g4_audit_rejects_reserved_seed_ids_in_extra_manifested_evidence(
@@ -300,10 +319,9 @@ def test_g4_audit_rejects_reserved_seed_ids_in_extra_manifested_evidence(
 ) -> None:
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
     path = output_root / relative
-    if path.suffix == ".jsonl":
-        path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
-    else:
-        _write_json(path, payload)
+    provenance = json.loads(path.read_text(encoding="utf-8"))
+    provenance.update(payload)
+    _write_json(path, provenance)
     _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="reserved.*seed"):
@@ -327,9 +345,18 @@ def test_g4_audit_rejects_validation_or_sealed_access_flags(
 def test_g4_audit_rejects_recorded_hash_drift(tmp_path: Path) -> None:
     output_root = tmp_path / "g4"
     output_root.mkdir()
-    artifact = output_root / "probe.json"
+    artifact = output_root / "activation-summary.json"
     artifact.write_text("original", encoding="utf-8")
-    manifest = build_g4_artifact_manifest(output_root)
+
+    with pytest.raises(ValueError, match="missing expected G4 artifact"):
+        build_g4_artifact_manifest(output_root)
+
+
+def test_g4_audit_rejects_recorded_hash_drift_in_canonical_fixture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, _ = _audit_fixture(tmp_path, monkeypatch)
+    manifest = json.loads((output_root / "artifact-manifest.json").read_text(encoding="utf-8"))
     manifest["artifacts"][0]["sha256"] = "0" * 64
 
     with pytest.raises(ValueError, match="hash mismatch"):
@@ -353,9 +380,8 @@ def test_g4_artifact_manifest_excludes_self_generated_audit_report(tmp_path: Pat
     _write_json(output_root / "probe.json", {"probe": "evidence"})
     _write_json(output_root / "g4-mechanism-audit.json", {"status": "pass"})
 
-    manifest = build_g4_artifact_manifest(output_root)
-
-    assert [entry["path"] for entry in manifest["artifacts"]] == ["probe.json"]
+    with pytest.raises(ValueError, match="unexpected G4 artifact path"):
+        build_g4_artifact_manifest(output_root)
 
 
 def test_g4_artifact_manifest_registers_nested_audit_named_evidence(tmp_path: Path) -> None:
@@ -365,9 +391,34 @@ def test_g4_artifact_manifest_registers_nested_audit_named_evidence(tmp_path: Pa
     _write_json(output_root / "g4-mechanism-audit.json", {"status": "pass"})
     _write_json(nested_report, {"probe": "evidence"})
 
-    manifest = build_g4_artifact_manifest(output_root)
+    with pytest.raises(ValueError, match="unexpected G4 artifact path"):
+        build_g4_artifact_manifest(output_root)
 
-    assert [entry["path"] for entry in manifest["artifacts"]] == ["fixed/g4-mechanism-audit.json"]
+
+@pytest.mark.parametrize("relative", ("extra-boundary.json", "extra-seed.jsonl"))
+def test_g4_artifact_manifest_rejects_extra_json_or_jsonl(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, relative: str
+) -> None:
+    output_root, _ = _audit_fixture(tmp_path, monkeypatch)
+    (output_root / relative).write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unexpected G4 artifact path"):
+        build_g4_artifact_manifest(output_root)
+
+
+def test_g4_audit_requires_exact_canonical_artifact_allowlist(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    manifest_path = output_root / "artifact-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["artifacts"] = [
+        entry for entry in manifest["artifacts"] if entry["path"] != "provenance.json"
+    ]
+    _write_json(manifest_path, manifest)
+
+    with pytest.raises(ValueError, match="exact G4 artifact allowlist"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
 
 
 def test_g4_audit_happy_path_recomputes_counterfactual(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -377,6 +428,7 @@ def test_g4_audit_happy_path_recomputes_counterfactual(tmp_path: Path, monkeypat
 
     assert report["status"] == "pass"
     assert report["hard_boundary"]["validation_accessed"] is False
+    assert tuple(item["path"] for item in report["output_artifact_hashes"]) == EXPECTED_ARTIFACT_PATHS
     assert report_path.exists()
 
 
@@ -456,7 +508,7 @@ def test_g4_audit_rejects_unrecorded_artifact(tmp_path: Path, monkeypatch: pytes
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
     (output_root / "new-output.json").write_text("{}", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="unrecorded G4 artifact"):
+    with pytest.raises(ValueError, match="exact G4 artifact allowlist"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
 
 
@@ -554,12 +606,11 @@ def test_g4_audit_rejects_extra_frozen_raw_matrix_record(
         audit_g4_mechanism(CONTRACT, output_root, report_path)
 
 
-def test_g4_audit_rejects_duplicate_manifest_paths(tmp_path: Path) -> None:
-    output_root = tmp_path / "g4"
-    output_root.mkdir()
-    artifact = output_root / "probe.json"
-    _write_json(artifact, {"probe": "evidence"})
-    manifest = build_g4_artifact_manifest(output_root)
+def test_g4_audit_rejects_duplicate_manifest_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, _ = _audit_fixture(tmp_path, monkeypatch)
+    manifest = json.loads((output_root / "artifact-manifest.json").read_text(encoding="utf-8"))
     manifest["artifacts"].append(dict(manifest["artifacts"][0]))
 
     with pytest.raises(ValueError, match="duplicate"):
@@ -568,13 +619,14 @@ def test_g4_audit_rejects_duplicate_manifest_paths(tmp_path: Path) -> None:
         _verify_manifest(output_root, manifest)
 
 
-def test_g4_audit_rejects_case_variant_manifest_path_alias(tmp_path: Path) -> None:
-    output_root = tmp_path / "g4"
-    output_root.mkdir()
-    artifact = output_root / "probe.json"
-    _write_json(artifact, {"probe": "evidence"})
-    manifest = build_g4_artifact_manifest(output_root)
-    manifest["artifacts"].append({**manifest["artifacts"][0], "path": "PROBE.JSON"})
+def test_g4_audit_rejects_case_variant_manifest_path_alias(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, _ = _audit_fixture(tmp_path, monkeypatch)
+    manifest = json.loads((output_root / "artifact-manifest.json").read_text(encoding="utf-8"))
+    manifest["artifacts"].append(
+        {**manifest["artifacts"][0], "path": "ACTIVATION-SUMMARY.JSON"}
+    )
 
     with pytest.raises(ValueError, match="duplicate"):
         from problem2.experiments.g4_audit import _verify_manifest
@@ -582,12 +634,11 @@ def test_g4_audit_rejects_case_variant_manifest_path_alias(tmp_path: Path) -> No
         _verify_manifest(output_root, manifest)
 
 
-def test_g4_audit_rejects_manifest_byte_drift(tmp_path: Path) -> None:
-    output_root = tmp_path / "g4"
-    output_root.mkdir()
-    artifact = output_root / "probe.json"
-    _write_json(artifact, {"probe": "evidence"})
-    manifest = build_g4_artifact_manifest(output_root)
+def test_g4_audit_rejects_manifest_byte_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, _ = _audit_fixture(tmp_path, monkeypatch)
+    manifest = json.loads((output_root / "artifact-manifest.json").read_text(encoding="utf-8"))
     manifest["artifacts"][0]["bytes"] += 1
 
     with pytest.raises(ValueError, match="byte mismatch"):

@@ -781,8 +781,8 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Begin G5 by freezing the fair pilot protocol, comparison fairness matrix,
-validation-tuning policy, paired-statistics contract, exclusions, and artifact
-schemas. The highest maturity remains M2 implementation and scoped mechanism
-evidence. Formal jobs, validation tuning, sealed-test evaluation, and thesis
+Complete final G4 review, non-rewriting push verification, and final
+acceptance-state persistence before beginning G5. G5 remains unauthorized. The
+highest maturity remains M2 implementation and scoped mechanism evidence.
+Formal jobs, validation tuning, sealed-test evaluation, and thesis
 efficacy/superiority claims remain unauthorized until their later gates.

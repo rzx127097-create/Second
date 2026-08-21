@@ -20,6 +20,20 @@ G2_CONFIG_PATH = ROOT / "configs/problem2/g2_deterministic.yaml"
 CANONICAL_G4_ROOT = (ROOT / "outputs/problem2_sr_mappo_v1/g4").resolve()
 SUPPORTED_G4_SUFFIXES = frozenset({".json", ".jsonl"})
 SELF_GENERATED_AUDIT_REPORT = "g4-mechanism-audit.json"
+EXPECTED_G4_ARTIFACT_PATHS = frozenset(
+    {
+        "activation-summary.json",
+        "counterfactual-summary.json",
+        "fixed/activation-summary.json",
+        "fixed/provenance.json",
+        "fixed/raw-probe.jsonl",
+        "mobile/activation-summary.json",
+        "mobile/provenance.json",
+        "mobile/raw-probe.jsonl",
+        "probe-matrix-summary.json",
+        "provenance.json",
+    }
+)
 ARM_DIRECTORIES = (
     ("fixed", "fixed_support_probe"),
     ("mobile", "mobile_support_probe"),
@@ -58,7 +72,7 @@ def build_g4_artifact_manifest(output_root: str | Path) -> dict[str, Any]:
     root = Path(output_root).resolve()
     manifest_path = root / "artifact-manifest.json"
     audit_report_path = root / SELF_GENERATED_AUDIT_REPORT
-    artifacts = []
+    artifact_paths: dict[str, Path] = {}
     for path in sorted(root.rglob("*")):
         if not path.is_file() or path.resolve() in {
             manifest_path.resolve(), audit_report_path.resolve()
@@ -67,7 +81,21 @@ def build_g4_artifact_manifest(output_root: str | Path) -> dict[str, Any]:
         relative = path.relative_to(root).as_posix()
         if _is_g3_endpoint_reference(relative):
             raise ValueError("G3 artifact paths cannot be endpoint evidence")
-        artifacts.append({"path": relative, "sha256": _sha256(path), "bytes": path.stat().st_size})
+        artifact_paths[relative] = path
+    unexpected = sorted(set(artifact_paths) - EXPECTED_G4_ARTIFACT_PATHS)
+    if unexpected:
+        raise ValueError(f"unexpected G4 artifact path: {unexpected[0]}")
+    missing = sorted(EXPECTED_G4_ARTIFACT_PATHS - set(artifact_paths))
+    if missing:
+        raise ValueError(f"missing expected G4 artifact: {missing[0]}")
+    artifacts = [
+        {
+            "path": relative,
+            "sha256": _sha256(artifact_paths[relative]),
+            "bytes": artifact_paths[relative].stat().st_size,
+        }
+        for relative in sorted(artifact_paths)
+    ]
     return {"schema_version": "g4-artifact-manifest.v1", "artifacts": artifacts}
 
 
@@ -85,14 +113,17 @@ def _is_g3_execution_flag(name: object) -> bool:
     if not isinstance(name, str):
         return False
     normalized = name.casefold()
-    return (
-        normalized.startswith("g3_")
-        and ("actor" in normalized or "checkpoint" in normalized)
-        and any(term in normalized for term in G3_EXECUTION_TERMS)
+    return normalized.startswith("g3_") and any(
+        term in normalized for term in ("execut", "actor", "checkpoint")
     )
 
 
 def _is_reserved_seed_id(value: Any) -> bool:
+    if isinstance(value, str):
+        if not value.isdigit():
+            return False
+        numeric_value = int(value)
+        return 20000 <= numeric_value <= 20049 or 30000 <= numeric_value <= 30099
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return False
     numeric_value = float(value)
@@ -141,13 +172,22 @@ def _verify_manifest(
         recorded_paths.add(normalized)
         resolved_paths.add(resolved_key)
         verified.append({"path": normalized, "sha256": actual_hash, "bytes": path.stat().st_size})
+    if recorded_paths != EXPECTED_G4_ARTIFACT_PATHS:
+        raise ValueError("G4 artifact manifest does not match exact G4 artifact allowlist")
     manifest_path = root / "artifact-manifest.json"
     current_paths = {
         path.relative_to(root).as_posix()
         for path in root.rglob("*")
         if path.is_file() and path.resolve() != manifest_path.resolve()
     }
-    missing_entries = sorted(current_paths - recorded_paths - ignored_paths)
+    current_paths -= ignored_paths
+    unexpected_current = sorted(current_paths - EXPECTED_G4_ARTIFACT_PATHS)
+    if unexpected_current:
+        raise ValueError("G4 output does not match exact G4 artifact allowlist")
+    missing_current = sorted(EXPECTED_G4_ARTIFACT_PATHS - current_paths)
+    if missing_current:
+        raise ValueError("G4 output does not match exact G4 artifact allowlist")
+    missing_entries = sorted(current_paths - recorded_paths)
     if missing_entries:
         raise ValueError(f"unrecorded G4 artifact: {missing_entries[0]}")
     return verified
@@ -208,6 +248,8 @@ def _check_boundary(value: Any) -> None:
     elif isinstance(value, str):
         if _is_g3_endpoint_reference(value):
             raise ValueError("G3 endpoint references cannot be endpoint evidence")
+        if _is_reserved_seed_id(value):
+            raise ValueError("reserved validation or sealed test seed ID is forbidden")
     elif _is_reserved_seed_id(value):
         raise ValueError("reserved validation or sealed seed ID is forbidden")
 
