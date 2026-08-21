@@ -36,6 +36,11 @@ REQUIRED_METRICS = (
 )
 
 
+def _scarcity_levels(contract: G4Contract) -> tuple[float, float, float]:
+    lower, upper = contract.admissible_band
+    return lower, round((lower + upper) / 2.0, 10), upper
+
+
 def validate_activation_band(
     records: Iterable[Mapping[str, Any]],
     expected_levels: Sequence[float],
@@ -128,6 +133,18 @@ def _validate_inputs(contract: G4Contract, manifest: G4ProbeManifest) -> None:
         raise G4ContractError("contract and probe manifest seeds must match")
     if any(20000 <= seed <= 20049 or 30000 <= seed <= 30099 for seed in manifest.probe_seeds):
         raise G4ContractError("validation and sealed probe seeds are forbidden")
+
+
+def _validate_g2_resource_contract(contract: G4Contract, config: G2Config) -> None:
+    if not math.isclose(
+        contract.fixed_vehicle_inventory_l,
+        config.vehicle_inventory_l,
+        rel_tol=0.0,
+        abs_tol=config.tolerance,
+    ):
+        raise G4ContractError("G4 fixed vehicle inventory must match frozen G2 config")
+    if contract.admissible_band[0] < 0.0 or contract.admissible_band[1] > config.usable_capacity_l:
+        raise G4ContractError("G4 scarcity band must remain within usable UAV capacity")
 
 
 def _load_graph(config: G2Config, scale_id: str):
@@ -248,8 +265,8 @@ def _run_one(
         config,
         scale_id,
         seed,
+        config.vehicle_inventory_l,
         scarcity_l,
-        contract.request_trigger_initial_uav_pesticide_l,
     )
     input_fingerprint = _fingerprint({"scale_id": scale_id, "seed": seed, "horizon": horizon, "state": _json_state(state)})
     events = []
@@ -258,6 +275,7 @@ def _run_one(
     euclidean_service_start_distances: list[float] = []
     disabled_steps = 0
     max_conservation_error = 0.0
+    total_requested_l = 0.0
     while not state.terminated:
         disabled_steps += sum(
             uav.pesticide_l <= config.tolerance for uav in state.uavs
@@ -282,6 +300,7 @@ def _run_one(
             payload = dict(event.payload)
             if event.kind == "request_created":
                 request_steps[payload["request_id"]] = event.step
+                total_requested_l += float(payload["requested_l"])
             elif event.kind == "service_started":
                 request_id = event.entity_id
                 if request_id in request_steps:
@@ -294,13 +313,24 @@ def _run_one(
         state = next_state
     counts = {kind: sum(event.kind == kind for event in events) for kind in ("request_created", "request_reserved", "service_completed")}
     sprayed = float(state.ledger.cumulative_sprayed_l)
-    active = all(counts[key] > 0 for key in ("request_created", "request_reserved", "service_completed"))
+    total_transferred_l = float(state.ledger.cumulative_transferred_l)
+    final_vehicle_inventory_l = float(state.vehicle.inventory_l)
+    vehicle_inventory_used_l = config.vehicle_inventory_l - final_vehicle_inventory_l
+    active = (
+        all(counts[key] > 0 for key in ("request_created", "request_reserved", "service_completed"))
+        and total_requested_l > config.tolerance
+        and total_transferred_l > config.tolerance
+    )
     return {
         "scale_id": scale_id,
         "seed": seed,
         "scarcity_level_l": scarcity_l,
-        "initial_vehicle_inventory_l": scarcity_l,
-        "initial_uav_pesticide_l": contract.request_trigger_initial_uav_pesticide_l,
+        "initial_uav_pesticide_l": scarcity_l,
+        "initial_vehicle_inventory_l": config.vehicle_inventory_l,
+        "total_requested_l": total_requested_l,
+        "total_transferred_l": total_transferred_l,
+        "final_vehicle_inventory_l": final_vehicle_inventory_l,
+        "vehicle_inventory_used_l": vehicle_inventory_used_l,
         "support_policy": _support_probe_name(policy),
         "input_fingerprint": input_fingerprint,
         "scarcity_active": active,
@@ -347,7 +377,8 @@ def run_activation_probe(contract: G4Contract, manifest: G4ProbeManifest, *, sup
         raise G4ContractError("support policy must be a frozen fixed or mobile policy")
     root = _safe_output_root(output_root)
     config = load_g2_config(G2_CONFIG_PATH)
-    levels = (contract.admissible_band[0], (contract.admissible_band[0] + contract.admissible_band[1]) / 2.0, contract.admissible_band[1])
+    _validate_g2_resource_contract(contract, config)
+    levels = _scarcity_levels(contract)
     records = []
     raw_lines: list[str] = []
     for scale_id in manifest.probe_scales:
@@ -369,6 +400,14 @@ def run_activation_probe(contract: G4Contract, manifest: G4ProbeManifest, *, sup
         "request_count": sum(record["request_count"] for record in records),
         "reservation_count": sum(record["reservation_count"] for record in records),
         "service_count": sum(record["service_count"] for record in records),
+        "total_requested_l": sum(record["total_requested_l"] for record in records),
+        "total_transferred_l": sum(record["total_transferred_l"] for record in records),
+        "final_vehicle_inventory_l": sum(
+            record["final_vehicle_inventory_l"] for record in records
+        ),
+        "vehicle_inventory_used_l": sum(
+            record["vehicle_inventory_used_l"] for record in records
+        ),
         "started_service_waiting_time_s": sum(
             record["started_service_waiting_time_s"] for record in records
         ),
@@ -391,6 +430,7 @@ def run_activation_probe(contract: G4Contract, manifest: G4ProbeManifest, *, sup
 def run_probe_matrix(contract: G4Contract, manifest: G4ProbeManifest, *, output_root: Path | str) -> dict[str, Any]:
     _validate_inputs(contract, manifest)
     root = _safe_output_root(output_root)
+    _validate_g2_resource_contract(contract, load_g2_config(G2_CONFIG_PATH))
     fixed = run_activation_probe(contract, manifest, support_policy=FixedSupportPolicy(), output_root=root / "fixed")
     mobile = run_activation_probe(contract, manifest, support_policy=MobileSupportPolicy(), output_root=root / "mobile")
     if fixed["activation_window"] != mobile["activation_window"]:

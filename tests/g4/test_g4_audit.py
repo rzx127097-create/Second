@@ -17,7 +17,7 @@ CONTRACT = ROOT / "docs/evidence/g4/g4_contract.yaml"
 
 SCALES = ("g20x20_d2", "g20x30_d3", "g30x30_d3")
 SEEDS = (42, 123, 2024)
-LEVELS = (1.0, 6.5, 12.0)
+LEVELS = (0.05, 0.2875, 0.525)
 
 
 def _sha256(path: Path) -> str:
@@ -46,7 +46,7 @@ def _record(
     *,
     scale_id: str = "g20x20_d2",
     seed: int = 42,
-    scarcity_level_l: float = 6.5,
+    scarcity_level_l: float = 0.2875,
     fingerprint: str = "same-input",
     waiting: float = 10.0,
 ) -> dict:
@@ -55,12 +55,16 @@ def _record(
         "scale_id": scale_id,
         "seed": seed,
         "scarcity_level_l": scarcity_level_l,
-        "initial_vehicle_inventory_l": scarcity_level_l,
-        "initial_uav_pesticide_l": 0.05,
+        "initial_vehicle_inventory_l": 20.0,
+        "initial_uav_pesticide_l": scarcity_level_l,
         "input_fingerprint": fingerprint,
         "request_count": 2,
         "reservation_count": 2,
         "service_count": 2,
+        "total_requested_l": 1.0,
+        "total_transferred_l": 0.5,
+        "final_vehicle_inventory_l": 19.5,
+        "vehicle_inventory_used_l": 0.5,
         "started_service_waiting_time_s": waiting,
         "euclidean_service_start_distance_m": 5.0 if policy == "fixed_support_probe" else 3.0,
         "pesticide_disabled_time_s": 4.0,
@@ -107,7 +111,7 @@ def _audit_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Pat
 
     def summary(rows: list[dict], policy: str) -> dict:
         return {
-        "activation_window": [1.0, 12.0],
+        "activation_window": [0.05, 0.525],
         "scarcity_active": True,
         "records": rows,
         "support_policy": policy,
@@ -115,6 +119,10 @@ def _audit_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Pat
         "request_count": sum(row["request_count"] for row in rows),
         "reservation_count": sum(row["reservation_count"] for row in rows),
         "service_count": sum(row["service_count"] for row in rows),
+        "total_requested_l": sum(row["total_requested_l"] for row in rows),
+        "total_transferred_l": sum(row["total_transferred_l"] for row in rows),
+        "final_vehicle_inventory_l": sum(row["final_vehicle_inventory_l"] for row in rows),
+        "vehicle_inventory_used_l": sum(row["vehicle_inventory_used_l"] for row in rows),
         "started_service_waiting_time_s": sum(row["started_service_waiting_time_s"] for row in rows),
         "euclidean_service_start_distance_m": sum(row["euclidean_service_start_distance_m"] for row in rows),
         "pesticide_disabled_time_s": sum(row["pesticide_disabled_time_s"] for row in rows),
@@ -142,7 +150,7 @@ def _audit_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Pat
     _write_json(
         output_root / "probe-matrix-summary.json",
         {
-            "activation_window": [1.0, 12.0],
+            "activation_window": [0.05, 0.525],
             "arms": [fixed, mobile],
             "paired_inputs": [
                 {"fixed": fixed_row, "mobile": mobile_row}
@@ -156,7 +164,7 @@ def _audit_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Pat
         {
             "schema_version": "g4-activation-index.v1",
             "status": "descriptive",
-            "activation_window": [1.0, 12.0],
+            "activation_window": [0.05, 0.525],
             "arms": {
                 "fixed_support_probe": "fixed/activation-summary.json",
                 "mobile_support_probe": "mobile/activation-summary.json",
@@ -216,16 +224,15 @@ def test_g4_audit_rejects_g3_smoke_artifacts_as_endpoint_evidence(
 def test_g4_audit_rejects_validation_or_sealed_access_flags(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    output_root = tmp_path / "g4"
-    output_root.mkdir()
-    monkeypatch.setattr(g4_audit, "CANONICAL_G4_ROOT", output_root.resolve())
-    _write_json(
-        output_root / "provenance.json",
-        {"validation_accessed": True, "sealed_test_accessed": False, "battery_replenishment_enabled": False},
-    )
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    provenance_path = output_root / "provenance.json"
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    provenance["validation_accessed"] = True
+    _write_json(provenance_path, provenance)
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="validation"):
-        audit_g4_mechanism(CONTRACT, output_root, output_root / "report.json")
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
 
 
 def test_g4_audit_rejects_recorded_hash_drift(tmp_path: Path) -> None:
@@ -275,6 +282,30 @@ def test_g4_audit_happy_path_recomputes_counterfactual(tmp_path: Path, monkeypat
     assert report_path.exists()
 
 
+def test_g4_audit_rejects_missing_artifact_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    (output_root / "artifact-manifest.json").unlink()
+
+    with pytest.raises(ValueError, match="artifact manifest"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
+def test_g4_audit_rejects_g3_endpoint_references_in_string_values(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
+    provenance_path = output_root / "provenance.json"
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    provenance["endpoint_reference"] = "outputs/problem2_sr_mappo_v1/g3/training-smoke.jsonl"
+    _write_json(provenance_path, provenance)
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
+
+    with pytest.raises(ValueError, match="G3.*endpoint evidence"):
+        audit_g4_mechanism(CONTRACT, output_root, report_path)
+
+
 def test_g4_audit_rejects_tampered_counterfactual_even_with_updated_manifest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -297,9 +328,9 @@ def test_g4_audit_rejects_activation_band_mismatch(tmp_path: Path, monkeypatch: 
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
     mobile_path = output_root / "mobile" / "activation-summary.json"
     mobile = json.loads(mobile_path.read_text(encoding="utf-8"))
-    mobile["activation_window"] = [1.0, 11.0]
+    mobile["activation_window"] = [0.05, 0.2875]
     _write_json(mobile_path, mobile)
-    (output_root / "artifact-manifest.json").unlink()
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="activation.*window"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
@@ -317,6 +348,7 @@ def test_g4_audit_rejects_boundary_activation(
     provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
     provenance[field] = True
     _write_json(provenance_path, provenance)
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match=message):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
@@ -368,7 +400,7 @@ def test_g4_audit_rejects_non_finite_counterfactual_metric(tmp_path: Path, monke
     raw["started_service_waiting_time_s"] = float("nan")
     raw_lines[0] = json.dumps(raw)
     raw_path.write_text("\n".join(raw_lines) + "\n", encoding="utf-8")
-    (output_root / "artifact-manifest.json").unlink()
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="finite"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
@@ -384,7 +416,7 @@ def test_g4_audit_rejects_raw_summary_mismatch(
     raw["service_count"] = 99
     raw_lines[0] = json.dumps(raw)
     raw_path.write_text("\n".join(raw_lines) + "\n", encoding="utf-8")
-    (output_root / "artifact-manifest.json").unlink()
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="raw.*summary"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
@@ -396,7 +428,7 @@ def test_g4_audit_rejects_missing_frozen_raw_matrix_record(
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
     raw_path = output_root / "mobile" / "raw-probe.jsonl"
     raw_path.write_text("\n".join(raw_path.read_text(encoding="utf-8").splitlines()[:-1]) + "\n", encoding="utf-8")
-    (output_root / "artifact-manifest.json").unlink()
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="frozen raw matrix"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
@@ -418,7 +450,7 @@ def test_g4_audit_rejects_extra_frozen_raw_matrix_record(
         + "\n",
         encoding="utf-8",
     )
-    (output_root / "artifact-manifest.json").unlink()
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="frozen raw matrix"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)
@@ -474,7 +506,7 @@ def test_g4_audit_rejects_unknown_generator_provenance(
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     summary["lineage"]["source_tree_commit"] = "unknown"
     _write_json(summary_path, summary)
-    (output_root / "artifact-manifest.json").unlink()
+    _write_json(output_root / "artifact-manifest.json", build_g4_artifact_manifest(output_root))
 
     with pytest.raises(ValueError, match="provenance"):
         audit_g4_mechanism(CONTRACT, output_root, report_path)

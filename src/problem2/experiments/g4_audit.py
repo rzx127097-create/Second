@@ -26,6 +26,10 @@ ARM_DIRECTORIES = (
 )
 COUNT_METRICS = ("request_count", "reservation_count", "service_count")
 NUMERIC_METRICS = (
+    "total_requested_l",
+    "total_transferred_l",
+    "final_vehicle_inventory_l",
+    "vehicle_inventory_used_l",
     "started_service_waiting_time_s",
     "euclidean_service_start_distance_m",
     "pesticide_disabled_time_s",
@@ -34,6 +38,11 @@ NUMERIC_METRICS = (
 )
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 GIT_OBJECT_RE = re.compile(r"^[0-9a-f]{40,64}$")
+G3_ENDPOINT_PATTERNS = (
+    "outputs/problem2_sr_mappo_v1/g3",
+    "g3-smoke.json",
+    "training-smoke",
+)
 
 
 def _sha256(path: Path) -> str:
@@ -55,10 +64,15 @@ def build_g4_artifact_manifest(output_root: str | Path) -> dict[str, Any]:
         }:
             continue
         relative = path.relative_to(root).as_posix()
-        if "g3" in {part.lower() for part in Path(relative).parts}:
+        if _is_g3_endpoint_reference(relative):
             raise ValueError("G3 artifact paths cannot be endpoint evidence")
         artifacts.append({"path": relative, "sha256": _sha256(path), "bytes": path.stat().st_size})
     return {"schema_version": "g4-artifact-manifest.v1", "artifacts": artifacts}
+
+
+def _is_g3_endpoint_reference(value: str) -> bool:
+    normalized = value.replace("\\", "/").casefold()
+    return any(pattern in normalized for pattern in G3_ENDPOINT_PATTERNS)
 
 
 def _verify_manifest(
@@ -79,7 +93,7 @@ def _verify_manifest(
             raise ValueError("G4 artifact manifest entry is invalid")
         relative = Path(entry["path"])
         normalized = relative.as_posix()
-        if "g3" in {part.lower() for part in relative.parts}:
+        if _is_g3_endpoint_reference(entry["path"]):
             raise ValueError("G3 artifact paths cannot be endpoint evidence")
         if relative.is_absolute() or ".." in relative.parts:
             raise ValueError("G4 artifact manifest contains path traversal")
@@ -163,6 +177,9 @@ def _check_boundary(value: Any) -> None:
     elif isinstance(value, list):
         for nested in value:
             _check_boundary(nested)
+    elif isinstance(value, str):
+        if _is_g3_endpoint_reference(value):
+            raise ValueError("G3 endpoint references cannot be endpoint evidence")
 
 
 def _git(*args: str) -> str:
@@ -209,7 +226,7 @@ def _require_lineage(lineage: Any, contract: G4Contract) -> dict[str, Any]:
 
 def _levels(contract: G4Contract) -> tuple[float, float, float]:
     lower, upper = contract.admissible_band
-    return lower, (lower + upper) / 2.0, upper
+    return lower, round((lower + upper) / 2.0, 10), upper
 
 
 def _record_key(record: Mapping[str, Any]) -> tuple[str, int, float]:
@@ -240,10 +257,10 @@ def _require_record_semantics(
     key = _record_key(record)
     if record.get("support_policy") != expected_policy:
         raise ValueError(f"G4 raw matrix support_policy must be {expected_policy}")
-    if record.get("initial_vehicle_inventory_l") != key[2]:
+    if record.get("initial_uav_pesticide_l") != key[2]:
         raise ValueError("G4 raw matrix executed scarcity axis does not match scarcity_level_l")
-    if record.get("initial_uav_pesticide_l") != contract.request_trigger_initial_uav_pesticide_l:
-        raise ValueError("G4 raw matrix request-trigger UAV pesticide setting drifted")
+    if record.get("initial_vehicle_inventory_l") != contract.fixed_vehicle_inventory_l:
+        raise ValueError("G4 raw matrix fixed vehicle inventory drifted")
     fingerprint = record.get("input_fingerprint")
     if not isinstance(fingerprint, str) or not fingerprint:
         raise ValueError("G4 raw matrix input fingerprint is invalid")
@@ -261,6 +278,22 @@ def _require_record_semantics(
             raise ValueError(f"G4 raw matrix {name} must be non-negative")
     if record["scarcity_active"] and any(record[name] <= 0 for name in COUNT_METRICS):
         raise ValueError("G4 active record must contain a complete service cycle")
+    if record["scarcity_active"] and (
+        record["total_requested_l"] <= 0 or record["total_transferred_l"] <= 0
+    ):
+        raise ValueError("G4 active record must contain positive demand and transfer")
+    if not math.isclose(
+        float(record["initial_vehicle_inventory_l"]) - float(record["final_vehicle_inventory_l"]),
+        float(record["vehicle_inventory_used_l"]),
+        abs_tol=1.0e-9,
+    ):
+        raise ValueError("G4 raw matrix vehicle inventory accounting drifted")
+    if not math.isclose(
+        float(record["total_transferred_l"]),
+        float(record["vehicle_inventory_used_l"]),
+        abs_tol=1.0e-9,
+    ):
+        raise ValueError("G4 raw matrix transfer and vehicle-use accounting drifted")
     if record["conservation_error_l"] > 1.0e-9:
         raise ValueError("G4 raw matrix conservation error exceeds tolerance")
     _require_lineage(record.get("lineage"), contract)
@@ -308,7 +341,9 @@ def _require_arm(
     for name in COUNT_METRICS:
         if summary.get(name) != sum(record[name] for record in raw_by_key.values()):
             raise ValueError(f"G4 {directory} summary {name} does not match raw records")
-    for name in NUMERIC_METRICS[:-1]:
+    for name in NUMERIC_METRICS:
+        if name == "conservation_error_l":
+            continue
         expected = sum(float(record[name]) for record in raw_by_key.values())
         observed = summary.get(name)
         if not isinstance(observed, (int, float)) or not math.isclose(observed, expected, abs_tol=1.0e-12):
@@ -338,18 +373,19 @@ def audit_g4_mechanism(
         relative = path.relative_to(root).as_posix().lower()
         if path.is_file() and path.suffix.lower() not in SUPPORTED_G4_SUFFIXES:
             raise ValueError(f"unsupported G4 artifact file type: {relative}")
-        if path.is_file() and "g3" in Path(relative).parts:
+        if path.is_file() and _is_g3_endpoint_reference(relative):
             raise ValueError("G3 artifacts cannot be used as endpoint evidence")
     recorded_path = root / "artifact-manifest.json"
-    recorded = _read_json(recorded_path) if recorded_path.exists() else None
-    if recorded is not None:
-        artifacts = recorded.get("artifacts", [])
-        if not isinstance(artifacts, list):
-            raise ValueError("G4 artifact manifest must contain artifacts")
-        for entry in artifacts:
-            if isinstance(entry, dict) and isinstance(entry.get("path"), str):
-                if "g3" in {part.lower() for part in Path(entry["path"]).parts}:
-                    raise ValueError("G3 artifact paths cannot be endpoint evidence")
+    if not recorded_path.exists():
+        raise ValueError("G4 artifact manifest is missing")
+    recorded = _read_json(recorded_path)
+    artifacts = recorded.get("artifacts", [])
+    if not isinstance(artifacts, list):
+        raise ValueError("G4 artifact manifest must contain artifacts")
+    for entry in artifacts:
+        if isinstance(entry, dict) and isinstance(entry.get("path"), str):
+            if _is_g3_endpoint_reference(entry["path"]):
+                raise ValueError("G3 artifact paths cannot be endpoint evidence")
     for path in root.rglob("*.json"):
         if path.resolve() != recorded_path.resolve():
             _check_boundary(_read_json(path))
@@ -406,9 +442,6 @@ def audit_g4_mechanism(
     if counterfactual.get("comparison") != list(contract.comparator_pair):
         raise ValueError("counterfactual diagnostic support-probe labels drifted")
 
-    if recorded is None:
-        recorded = build_g4_artifact_manifest(root)
-        _write_json(recorded_path, recorded)
     ignored = {destination.relative_to(root).as_posix()} if destination.is_relative_to(root) else set()
     verified_artifacts = _verify_manifest(root, recorded, ignored_paths=ignored)
 

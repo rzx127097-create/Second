@@ -9,6 +9,10 @@ DELTA_METRICS = (
     "request_count",
     "reservation_count",
     "service_count",
+    "total_requested_l",
+    "total_transferred_l",
+    "final_vehicle_inventory_l",
+    "vehicle_inventory_used_l",
     "started_service_waiting_time_s",
     "euclidean_service_start_distance_m",
     "pesticide_disabled_time_s",
@@ -65,6 +69,10 @@ def _validate_record(row: Mapping[str, Any]) -> None:
     for name in ("request_count", "reservation_count", "service_count"):
         _nonnegative_count(row.get(name), name)
     for name in (
+        "total_requested_l",
+        "total_transferred_l",
+        "final_vehicle_inventory_l",
+        "vehicle_inventory_used_l",
         "started_service_waiting_time_s",
         "euclidean_service_start_distance_m",
         "pesticide_disabled_time_s",

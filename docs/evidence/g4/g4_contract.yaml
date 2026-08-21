@@ -3,14 +3,12 @@ registry_id: G4-RESOURCE-SCARCITY-COUNTERFACTUAL
 status: design_frozen
 algorithm_name: SR-MAPPO
 problem_description: air_ground_heterogeneous_extension
-scarcity_axis: initial_vehicle_inventory_l
+scarcity_axis: initial_uav_pesticide_l
 scarcity_band:
-  lower: 1.0
-  upper: 12.0
+  lower: 0.05
+  upper: 0.525
   unit: L
-request_trigger:
-  initial_uav_pesticide_l: 0.05
-  unit: L
+fixed_vehicle_inventory_l: 20.0
 probe_scales: [g20x20_d2, g20x30_d3, g30x30_d3]
 probe_seeds: [42, 123, 2024]
 comparator_pair: [fixed_support_probe, mobile_support_probe]
@@ -24,7 +22,7 @@ metrics:
   - sprayed_volume_l
   - conservation_error_l
 output_root: outputs/problem2_sr_mappo_v1/g4
-permitted_claim_boundary: diagnostic support-probe mechanism activation and paired descriptive counterfactual deltas only; no G3 actor or checkpoint execution, superiority, efficacy, formal-result, or deployment claim
+permitted_claim_boundary: diagnostic support-probe mechanism activation from limited onboard pesticide and paired descriptive counterfactual deltas only; no vehicle-inventory scarcity claim, G3 actor or checkpoint execution, superiority, efficacy, formal-result, or deployment claim
 resources:
   replenished_resource: pesticide
   battery_replenishment_enabled: false

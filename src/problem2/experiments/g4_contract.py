@@ -19,13 +19,19 @@ class G4Contract:
     source_path: Path | None
     scarcity_axis: str
     admissible_band: tuple[float, float]
-    request_trigger_initial_uav_pesticide_l: float
+    fixed_vehicle_inventory_l: float
     probe_scales: tuple[str, ...]
     probe_seeds: tuple[int, ...]
     comparator_pair: tuple[str, str]
     metrics: tuple[str, ...]
     output_root: Path
     permitted_claim_boundary: str
+
+    @property
+    def request_trigger_initial_uav_pesticide_l(self) -> float:
+        """Compatibility alias for the lowest executed onboard-pesticide level."""
+
+        return self.admissible_band[0]
 
 
 @dataclass(frozen=True)
@@ -39,14 +45,17 @@ class G4ProbeManifest:
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
-FROZEN_SCARCITY_BAND = (1.0, 12.0)
+FROZEN_SCARCITY_BAND = (0.05, 0.525)
+FROZEN_USABLE_UAV_CAPACITY_L = 1.08
+FROZEN_FIXED_VEHICLE_INVENTORY_L = 20.0
 FROZEN_PROBE_SCALES = ("g20x20_d2", "g20x30_d3", "g30x30_d3")
 FROZEN_PROBE_SEEDS = (42, 123, 2024)
 FROZEN_ENDPOINT_ROOTS = ("outputs/problem2_sr_mappo_v1/g4",)
 FROZEN_CLAIM_BOUNDARY = (
-    "diagnostic support-probe mechanism activation and paired descriptive "
-    "counterfactual deltas only; no G3 actor or checkpoint execution, superiority, "
-    "efficacy, formal-result, or deployment claim"
+    "diagnostic support-probe mechanism activation from limited onboard pesticide "
+    "and paired descriptive counterfactual deltas only; no vehicle-inventory "
+    "scarcity claim, G3 actor or checkpoint execution, superiority, efficacy, "
+    "formal-result, or deployment claim"
 )
 
 
@@ -164,7 +173,7 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         {
             "schema_version", "registry_id", "status", "algorithm_name",
             "problem_description", "scarcity_axis", "scarcity_band",
-            "request_trigger",
+            "fixed_vehicle_inventory_l",
             "probe_scales", "probe_seeds", "comparator_pair", "metrics",
             "output_root", "permitted_claim_boundary", "resources",
             "endpoint_evidence_roots",
@@ -181,8 +190,8 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         raise G4ContractError("the public algorithm name must remain SR-MAPPO")
     if root["problem_description"] != "air_ground_heterogeneous_extension":
         raise G4ContractError("problem_description must remain the air-ground extension")
-    if root["scarcity_axis"] != "initial_vehicle_inventory_l":
-        raise G4ContractError("scarcity_axis must be initial_vehicle_inventory_l")
+    if root["scarcity_axis"] != "initial_uav_pesticide_l":
+        raise G4ContractError("scarcity_axis must be initial_uav_pesticide_l")
 
     band = _mapping(root["scarcity_band"], "scarcity_band")
     if "lower" not in band or "upper" not in band:
@@ -192,22 +201,19 @@ def load_g4_contract(path: Path | str) -> G4Contract:
     upper = _number(band["upper"], "scarcity_band.upper")
     if lower >= upper:
         raise G4ContractError("scarcity_band lower must be less than upper")
+    if lower < 0.0:
+        raise G4ContractError("scarcity_band lower must be nonnegative")
+    if upper > FROZEN_USABLE_UAV_CAPACITY_L:
+        raise G4ContractError("scarcity_band upper must not exceed the usable UAV capacity")
     if (lower, upper) != FROZEN_SCARCITY_BAND:
-        raise G4ContractError("scarcity_band must match the frozen 1.0-12.0 L range")
+        raise G4ContractError("scarcity_band must match the frozen 0.05-0.525 L range")
     if _text(band["unit"], "scarcity_band.unit") != "L":
         raise G4ContractError("scarcity_band.unit must be L")
-    request_trigger = _mapping(root["request_trigger"], "request_trigger")
-    _require_keys(request_trigger, {"initial_uav_pesticide_l", "unit"}, "request_trigger")
-    initial_uav_pesticide_l = _number(
-        request_trigger["initial_uav_pesticide_l"],
-        "request_trigger.initial_uav_pesticide_l",
+    fixed_vehicle_inventory_l = _number(
+        root["fixed_vehicle_inventory_l"], "fixed_vehicle_inventory_l"
     )
-    if initial_uav_pesticide_l != 0.05:
-        raise G4ContractError(
-            "request_trigger.initial_uav_pesticide_l must remain frozen at 0.05 L"
-        )
-    if _text(request_trigger["unit"], "request_trigger.unit") != "L":
-        raise G4ContractError("request_trigger.unit must be L")
+    if fixed_vehicle_inventory_l != FROZEN_FIXED_VEHICLE_INVENTORY_L:
+        raise G4ContractError("fixed_vehicle_inventory_l must remain frozen at 20.0 L")
 
     scales = _text_tuple(root["probe_scales"], "probe_scales")
     if scales != FROZEN_PROBE_SCALES:
@@ -255,7 +261,7 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         source_path=contract_path,
         scarcity_axis=_text(root["scarcity_axis"], "scarcity_axis"),
         admissible_band=(lower, upper),
-        request_trigger_initial_uav_pesticide_l=initial_uav_pesticide_l,
+        fixed_vehicle_inventory_l=fixed_vehicle_inventory_l,
         probe_scales=scales,
         probe_seeds=seeds,
         comparator_pair=pair,

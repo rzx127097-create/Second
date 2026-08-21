@@ -31,9 +31,9 @@ def test_g4_contract_exposes_frozen_boundary() -> None:
     contract = load_g4_contract(CONTRACT_PATH)
     manifest = load_g4_probe_manifest(MANIFEST_PATH)
 
-    assert contract.scarcity_axis == "initial_vehicle_inventory_l"
-    assert contract.admissible_band == (1.0, 12.0)
-    assert contract.request_trigger_initial_uav_pesticide_l == 0.05
+    assert contract.scarcity_axis == "initial_uav_pesticide_l"
+    assert contract.admissible_band == (0.05, 0.525)
+    assert contract.fixed_vehicle_inventory_l == 20.0
     assert contract.probe_scales == ("g20x20_d2", "g20x30_d3", "g30x30_d3")
     assert contract.probe_seeds == (42, 123, 2024)
     assert contract.comparator_pair == ("fixed_support_probe", "mobile_support_probe")
@@ -139,7 +139,7 @@ def test_g4_contract_rejects_battery_activation(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
-        ("scarcity_axis", "initial_uav_pesticide_l", "scarcity_axis"),
+        ("scarcity_axis", "initial_vehicle_inventory_l", "scarcity_axis"),
         ("comparator_pair", ["sr_mappo_fixed", "sr_mappo_mobile"], "comparator_pair"),
     ],
 )
@@ -156,7 +156,9 @@ def test_g4_contract_rejects_final_review_semantic_drift(
 @pytest.mark.parametrize(
     ("mutate", "message"),
     [
-        (lambda payload: payload["scarcity_band"].update(lower=1.1), "scarcity_band"),
+        (lambda payload: payload["scarcity_band"].update(lower=0.06), "scarcity_band"),
+        (lambda payload: payload["scarcity_band"].update(upper=1.09), "usable UAV capacity"),
+        (lambda payload: payload.update(fixed_vehicle_inventory_l=12.0), "fixed_vehicle_inventory_l"),
         (lambda payload: payload.update(probe_scales=["g20x20_d2", "g20x40_d3", "g30x30_d3"]), "probe_scales"),
         (lambda payload: payload.update(probe_seeds=[42, 123, 2025]), "probe_seeds"),
         (lambda payload: payload.update(permitted_claim_boundary="superiority claim is permitted"), "claim boundary"),

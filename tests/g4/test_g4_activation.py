@@ -46,8 +46,21 @@ def test_activation_probe_records_a_fail_closed_scarcity_band(
     assert result["service_count"] > 0
     assert result["conservation_error_l"] <= 1.0e-9
     assert result["lineage"]["probe_manifest"] == str(MANIFEST.source_path)
-    assert result["records"][0]["initial_vehicle_inventory_l"] == 1.0
+    assert result["records"][0]["scarcity_level_l"] == 0.05
+    assert result["records"][0]["initial_vehicle_inventory_l"] == 20.0
     assert result["records"][0]["initial_uav_pesticide_l"] == 0.05
+    assert result["records"][-1]["scarcity_level_l"] == 0.525
+    assert result["records"][-1]["initial_vehicle_inventory_l"] == 20.0
+    assert result["records"][-1]["initial_uav_pesticide_l"] == 0.525
+    for record in result["records"]:
+        assert record["initial_uav_pesticide_l"] == record["scarcity_level_l"]
+        assert record["initial_vehicle_inventory_l"] == 20.0
+        assert record["total_requested_l"] > 0
+        assert record["total_transferred_l"] > 0
+        assert record["vehicle_inventory_used_l"] > 0
+        assert record["final_vehicle_inventory_l"] == pytest.approx(
+            20.0 - record["vehicle_inventory_used_l"]
+        )
     assert (output_root / "raw-probe.jsonl").exists()
     assert (output_root / "provenance.json").exists()
 
@@ -102,23 +115,23 @@ def _band_records(active_levels: set[float]) -> list[dict[str, object]]:
             "scarcity_level_l": level,
             "scarcity_active": level in active_levels,
         }
-        for level in (1.0, 6.5, 12.0)
+        for level in (0.05, 0.2875, 0.525)
     ]
 
 
 def test_validate_activation_band_rejects_no_activation() -> None:
     with pytest.raises(G4ContractError, match="no activation"):
-        validate_activation_band(_band_records(set()), (1.0, 6.5, 12.0))
+        validate_activation_band(_band_records(set()), (0.05, 0.2875, 0.525))
 
 
 def test_validate_activation_band_rejects_one_point_activation() -> None:
     with pytest.raises(G4ContractError, match="at least two"):
-        validate_activation_band(_band_records({6.5}), (1.0, 6.5, 12.0))
+        validate_activation_band(_band_records({0.2875}), (0.05, 0.2875, 0.525))
 
 
 def test_validate_activation_band_rejects_a_gap_between_active_points() -> None:
     with pytest.raises(G4ContractError, match="contiguous"):
-        validate_activation_band(_band_records({1.0, 12.0}), (1.0, 6.5, 12.0))
+        validate_activation_band(_band_records({0.05, 0.525}), (0.05, 0.2875, 0.525))
 
 
 def test_probe_matrix_rejects_mismatched_arm_windows(
@@ -129,9 +142,9 @@ def test_probe_matrix_rejects_mismatched_arm_windows(
 
     def fake_probe(contract, manifest, *, support_policy, output_root):
         return {
-            "activation_window": [1.0, 12.0]
+            "activation_window": [0.05, 0.525]
             if isinstance(support_policy, FixedSupportPolicy)
-            else [6.5, 12.0],
+            else [0.2875, 0.525],
             "records": [],
             "lineage": {},
         }
@@ -188,7 +201,7 @@ def test_run_one_records_service_start_distance_from_post_step_state(
         MANIFEST,
         "g20x20_d2",
         42,
-        1.0,
+        0.05,
         FixedSupportPolicy(),
     )
 
