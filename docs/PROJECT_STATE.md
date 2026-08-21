@@ -699,9 +699,10 @@ G1.1 bounded remediation persistence record:
   remain untrusted until later branch-local verification.
 - G3 heterogeneous-MARL implementation and acceptance passed at M2 on
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
-  canonical smoke and audit artifacts are recorded above. G4 is in local
-  final-review remediation on commit `5a65bbc`; it is not accepted and G5 is
-  not authorized until controller verification and persistence complete.
+  canonical smoke and audit artifacts are recorded above. G4 remains in local
+  final-review remediation through commits `5a65bbc`, `56ff65a`, `75e5bcf`,
+  and `54b23d0`; it is not accepted and G5 is not authorized until controller
+  verification and persistence complete.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,

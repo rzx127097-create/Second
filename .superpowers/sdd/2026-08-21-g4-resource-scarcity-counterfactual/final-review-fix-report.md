@@ -154,3 +154,36 @@ not complete within the available execution window and was stopped; it is not
 recorded as passing. No push was performed. The controller must independently
 verify and push this local evidence/documentation closure before recording an
 actual persistence hash or accepting G4.
+
+## Call-Path Regression Closure
+
+The residual distance test now exercises `_run_one` through an actual
+`service_started` event path. It supplies a pre-step vehicle at `(0, 0)`, a
+post-step service-start vehicle at `(7, 0)`, and a UAV at `(10, 0)`, requiring
+the emitted `euclidean_service_start_distance_m` to be `3.0` from the
+post-step state.
+
+RED evidence was captured by temporarily mutating `_run_one` to pass the
+previous `state` rather than `next_state` at the production call site:
+
+```text
+python -m pytest tests/g4/test_g4_activation.py::test_run_one_records_service_start_distance_from_post_step_state -q
+1 failed
+E       assert 10.0 == 3.0
+```
+
+GREEN evidence after restoring the production call to `next_state`:
+
+```text
+python -m pytest tests/g4/test_g4_activation.py::test_run_one_records_service_start_distance_from_post_step_state -q
+1 passed in 0.80s
+
+python -m pytest tests/g4 -q
+55 passed in 28.32s
+```
+
+`docs/PROJECT_STATE.md` now identifies the complete local remediation chain
+through `54b23d0`, rather than treating `5a65bbc` as the current remediation
+commit. No output regeneration was performed because the production behavior,
+output schema, and frozen inputs are unchanged. No push was performed; G4
+remains pending controller verification, push, and persistence recording.

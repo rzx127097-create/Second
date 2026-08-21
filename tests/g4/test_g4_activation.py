@@ -17,7 +17,8 @@ from problem2.experiments.g4_contract import (
     load_g4_probe_manifest,
 )
 from problem2.experiments.g4_support import FixedSupportPolicy, MobileSupportPolicy
-from problem2.domain import EpisodeState, ServiceRequest, UavState, VehicleState
+from problem2.domain import EpisodeState, Event, ServiceRequest, UavState, VehicleState
+from problem2.resources.ledger import new_ledger
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -149,3 +150,46 @@ def test_service_start_distance_uses_post_step_vehicle_position() -> None:
     )
 
     assert activation._service_start_euclidean_distance(service_start_state, "request-0") == 3.0
+
+
+def test_run_one_records_service_start_distance_from_post_step_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    initial_uav = UavState("uav-0", 10.0, 0.0, 0.05)
+    initial_vehicle = VehicleState("vehicle-0", 0, 0.0, 0.0, 1.0)
+    initial_state = EpisodeState(
+        step=0,
+        uavs=(initial_uav,),
+        vehicle=initial_vehicle,
+        requests=(ServiceRequest("request-0", "uav-0", 0, 0.5),),
+        ledger=new_ledger((initial_uav,), initial_vehicle.inventory_l),
+    )
+    service_start_state = EpisodeState(
+        step=1,
+        uavs=(initial_uav,),
+        vehicle=VehicleState("vehicle-0", 1, 7.0, 0.0, 1.0),
+        requests=initial_state.requests,
+        ledger=initial_state.ledger,
+        last_step_events=(
+            Event(0, "service", "service_started", "request-0"),
+            Event(0, "conservation", "conservation_checked", "pesticide", (("error_l", 0.0),)),
+        ),
+        terminated=True,
+    )
+
+    monkeypatch.setattr(activation, "_load_graph", lambda *_: object())
+    monkeypatch.setattr(activation, "_initial_state", lambda *_: initial_state)
+    monkeypatch.setattr(activation, "build_action_masks", lambda *_: object())
+    monkeypatch.setattr(activation, "step_episode", lambda *_args, **_kwargs: service_start_state)
+
+    record = activation._run_one(
+        CONTRACT,
+        activation.load_g2_config(activation.G2_CONFIG_PATH),
+        MANIFEST,
+        "g20x20_d2",
+        42,
+        1.0,
+        FixedSupportPolicy(),
+    )
+
+    assert record["euclidean_service_start_distance_m"] == 3.0
