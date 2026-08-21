@@ -3,11 +3,11 @@
   "g2_config": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\configs\\problem2\\g2_deterministic.yaml",
   "g2_config_sha256": "297b602272b40de9778a6c9c768921d13503911d3a42ec7145b3560d807d59f2",
   "g4_contract": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_contract.yaml",
-  "g4_contract_sha256": "dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c",
+  "g4_contract_sha256": "2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea",
   "probe_manifest": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_probe_manifest.yaml",
   "probe_manifest_sha256": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1",
   "sealed_test_accessed": false,
-  "source_tree_commit": "317fe18c97d37c92d1a71a597139d2b462c3b2e0",
-  "source_tree_hash": "64d6a06049ff0d3ff6302ee9a3287ca50a1735df",
+  "source_tree_commit": "0f4003f1d9146187f827537e770a307c22ee687a",
+  "source_tree_hash": "9ab9e2ff1cb54c3d23596ae9ee43962d253db191",
   "validation_accessed": false
 }
