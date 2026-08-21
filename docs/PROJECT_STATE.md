@@ -218,8 +218,8 @@ acceptance language below. It does not close G4 or authorize G5 until the
 controller independently verifies the local commits and performs the required
 push/persistence record.
 
-- Fix-generator commit: `5a65bbca1a95bda6db7a4cf9688af755891acac0`
-  (`fix: harden g4 diagnostic evidence contract`); it is local only.
+- Fix-generator commit: `75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f`
+  (`fix: preserve g4 contract diagnostics`); it is local only.
 - Executed scarcity axis: `initial_vehicle_inventory_l`, sampled at `1.0`,
   `6.5`, and `12.0 L`. The separate frozen request-trigger setting is
   `initial_uav_pesticide_l = 0.05 L`.
@@ -230,8 +230,8 @@ push/persistence record.
   that reached service start, while `euclidean_service_start_distance_m` is
   Euclidean separation at service start, not road-travel distance.
 - Canonical G4 evidence was regenerated below
-  `outputs/problem2_sr_mappo_v1/g4` with source commit `5a65bbc`, source tree
-  `1f43f3636952019585f5036b56c85a77ae619959`, and contract SHA-256
+  `outputs/problem2_sr_mappo_v1/g4` with source commit `75e5bcf`, source tree
+  `e49be77ea7c235c0cc6d26714c703506ce85a064`, and contract SHA-256
   `dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c`.
 - Local audit result: `status=pass`, exact matrix shape `3 x 3 x 3` per arm,
   27 same-input pairs, 10 manifest artifacts, validation/sealed access false,

@@ -3,7 +3,7 @@
     1.0,
     12.0
   ],
-  "artifact_manifest_sha256": "57808c9db54c3b1ac1cc8546a930b01704b5389ac0e54be1726d2c29f247bf78",
+  "artifact_manifest_sha256": "ca9f3ec86018329a9bbf61ffa3055c0e4775fdadb5be12170306311396697604",
   "audit": "g4-mechanism-compliance",
   "claim_boundary": "diagnostic support-probe mechanism activation and paired descriptive counterfactual deltas only; no G3 actor or checkpoint execution, superiority, efficacy, formal-result, or deployment claim",
   "frozen_contract_sha256": "dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c",
@@ -18,52 +18,52 @@
     {
       "bytes": 1176,
       "path": "activation-summary.json",
-      "sha256": "fa620b8533880a4fd7f6ef00fd4ee2b4d48afcfda62eea6cc9c56fa4c090ef52"
+      "sha256": "b6eaaf7984571e651e278337c5776406dcecb4692d13d415d200561cdbb94210"
     },
     {
-      "bytes": 40038,
+      "bytes": 39756,
       "path": "counterfactual-summary.json",
-      "sha256": "fa223a50d4b5ecd3335b43296e98973a351e5fe9ca4a8181d6c70eedb5149aa3"
+      "sha256": "ecdd53e44ff4faa26b6fa8c13667ee3efda26ad6f9c065cedee29e94a79721ab"
     },
     {
       "bytes": 46829,
       "path": "fixed/activation-summary.json",
-      "sha256": "b80ea86e5add8d2e57fda67e570254d9c8c835aa4c713917f24cae7bdc8c1115"
+      "sha256": "45a232735cbb0ff38d75d3b23cc789934fc52b4b75c7f88d08e50c56c7dcfec8"
     },
     {
       "bytes": 848,
       "path": "fixed/provenance.json",
-      "sha256": "ec446e46aa4f7f56d4635f2c498228f550b8357f1bc3d221bc6f43489ee9d038"
+      "sha256": "21bba51cbd544929436150c1e3126b3f4903df4bd1d99ffc7667a96910c1ae04"
     },
     {
       "bytes": 38124,
       "path": "fixed/raw-probe.jsonl",
-      "sha256": "6cccbf9e2be659194634e54beea4d8855e29990496ad7a732af67ad23c145bf9"
+      "sha256": "8352bb8d2b2615e1474bfcee324e7c4699b9d8fea499dbe5e0dd312d44024b58"
     },
     {
-      "bytes": 47000,
+      "bytes": 46906,
       "path": "mobile/activation-summary.json",
-      "sha256": "cd439cffb5d1f6838205957da67cf9ef0f0a0882fe9e7f0b03586f960fa97ebb"
+      "sha256": "257c60951836e3b76efebacfdf5e6c0cf4ca282dbc237813570e3738d2d8f4da"
     },
     {
       "bytes": 848,
       "path": "mobile/provenance.json",
-      "sha256": "ec446e46aa4f7f56d4635f2c498228f550b8357f1bc3d221bc6f43489ee9d038"
+      "sha256": "21bba51cbd544929436150c1e3126b3f4903df4bd1d99ffc7667a96910c1ae04"
     },
     {
-      "bytes": 38287,
+      "bytes": 38193,
       "path": "mobile/raw-probe.jsonl",
-      "sha256": "d9297d09435d3b47d102c51a7e2f90a86084dd9227a238fd8200d6ba3557c633"
+      "sha256": "ac09cbe2a52dbd66191825ee0f3e75d57568bf7ae0d58afb715ec82f48e919df"
     },
     {
-      "bytes": 198451,
+      "bytes": 198263,
       "path": "probe-matrix-summary.json",
-      "sha256": "5e732f73617707067b5162513e7f4e7cb38d04021c5b55de10eefde4ea065cb6"
+      "sha256": "7afeae2635a1c2d1f5509a49be99bd2173c7bba410647134a018e0a36563cfe7"
     },
     {
       "bytes": 848,
       "path": "provenance.json",
-      "sha256": "ec446e46aa4f7f56d4635f2c498228f550b8357f1bc3d221bc6f43489ee9d038"
+      "sha256": "21bba51cbd544929436150c1e3126b3f4903df4bd1d99ffc7667a96910c1ae04"
     }
   ],
   "paired_deltas": [
@@ -129,8 +129,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 1.5,
-      "euclidean_service_start_distance_m": 1.5,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 23.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -144,8 +144,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 1.5,
-      "euclidean_service_start_distance_m": 1.5,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 23.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -174,8 +174,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 10.5,
-      "euclidean_service_start_distance_m": 10.5,
+      "euclidean_service_start_distance_change_m": 7.5,
+      "euclidean_service_start_distance_m": 7.5,
       "pesticide_disabled_time_s": 48.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -189,8 +189,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 10.5,
-      "euclidean_service_start_distance_m": 10.5,
+      "euclidean_service_start_distance_change_m": 7.5,
+      "euclidean_service_start_distance_m": 7.5,
       "pesticide_disabled_time_s": 48.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -219,8 +219,8 @@
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
-      "euclidean_service_start_distance_change_m": 2.5,
-      "euclidean_service_start_distance_m": 2.5,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 52.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -234,8 +234,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 2.5,
-      "euclidean_service_start_distance_m": 2.5,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 52.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -264,8 +264,8 @@
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
-      "euclidean_service_start_distance_change_m": 0.6666666666569654,
-      "euclidean_service_start_distance_m": 0.6666666666569654,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 46.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -279,8 +279,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 0.6666666666569654,
-      "euclidean_service_start_distance_m": 0.6666666666569654,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 46.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -309,8 +309,8 @@
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
-      "euclidean_service_start_distance_change_m": 0.3333333333430346,
-      "euclidean_service_start_distance_m": 0.3333333333430346,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 46.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -324,8 +324,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 0.3333333333430346,
-      "euclidean_service_start_distance_m": 0.3333333333430346,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 46.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -354,8 +354,8 @@
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
-      "euclidean_service_start_distance_change_m": 9.0,
-      "euclidean_service_start_distance_m": 9.0,
+      "euclidean_service_start_distance_change_m": 5.0,
+      "euclidean_service_start_distance_m": 5.0,
       "pesticide_disabled_time_s": 86.0,
       "request_count": -2.0,
       "reservation_count": -3.0,
@@ -369,8 +369,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 9.0,
-      "euclidean_service_start_distance_m": 9.0,
+      "euclidean_service_start_distance_change_m": 5.0,
+      "euclidean_service_start_distance_m": 5.0,
       "pesticide_disabled_time_s": 86.0,
       "request_count": -2.0,
       "reservation_count": -3.0,
@@ -399,8 +399,8 @@
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
-      "euclidean_service_start_distance_change_m": 0.8888888888953564,
-      "euclidean_service_start_distance_m": 0.8888888888953564,
+      "euclidean_service_start_distance_change_m": 3.3333333333333335,
+      "euclidean_service_start_distance_m": 3.3333333333333335,
       "pesticide_disabled_time_s": 86.0,
       "request_count": -2.0,
       "reservation_count": -2.0,
@@ -414,8 +414,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 0.8888888888953564,
-      "euclidean_service_start_distance_m": 0.8888888888953564,
+      "euclidean_service_start_distance_change_m": 3.3333333333333335,
+      "euclidean_service_start_distance_m": 3.3333333333333335,
       "pesticide_disabled_time_s": 86.0,
       "request_count": -2.0,
       "reservation_count": -2.0,
@@ -444,8 +444,8 @@
     },
     {
       "conservation_error_l": -1.7763568394002505e-15,
-      "euclidean_service_start_distance_change_m": 0.44444444445737946,
-      "euclidean_service_start_distance_m": 0.44444444445737946,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 52.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -459,8 +459,8 @@
     },
     {
       "conservation_error_l": 0.0,
-      "euclidean_service_start_distance_change_m": 0.44444444445737946,
-      "euclidean_service_start_distance_m": 0.44444444445737946,
+      "euclidean_service_start_distance_change_m": 0.0,
+      "euclidean_service_start_distance_m": 0.0,
       "pesticide_disabled_time_s": 52.0,
       "request_count": -1.0,
       "reservation_count": -2.0,
@@ -488,8 +488,8 @@
     "probe_manifest": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g4\\g4_probe_manifest.yaml",
     "probe_manifest_sha256": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1",
     "sealed_test_accessed": false,
-    "source_tree_commit": "5a65bbca1a95bda6db7a4cf9688af755891acac0",
-    "source_tree_hash": "1f43f3636952019585f5036b56c85a77ae619959",
+    "source_tree_commit": "75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f",
+    "source_tree_hash": "e49be77ea7c235c0cc6d26714c703506ce85a064",
     "validation_accessed": false
   },
   "status": "pass"

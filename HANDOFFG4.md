@@ -29,11 +29,11 @@ confirmation remain required.
 
 ## Local Evidence
 
-- Fixed-generator commit: `5a65bbca1a95bda6db7a4cf9688af755891acac0`
-  (`fix: harden g4 diagnostic evidence contract`).
+- Fixed-generator commit: `75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f`
+  (`fix: preserve g4 contract diagnostics`).
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`.
-- Provenance binds source commit `5a65bbc`, source tree
-  `1f43f3636952019585f5036b56c85a77ae619959`, and contract SHA-256
+- Provenance binds source commit `75e5bcf`, source tree
+  `e49be77ea7c235c0cc6d26714c703506ce85a064`, and contract SHA-256
   `dba968f8ff85e071e7029bd9ce0f1e6c6f4249f4d2cf895170115bd75b4adc6c`.
 - The audit verifies the exact `3 x 3 x 3` raw matrix per arm, raw/summary and
   counterfactual consistency, active service cycle, common activation window,

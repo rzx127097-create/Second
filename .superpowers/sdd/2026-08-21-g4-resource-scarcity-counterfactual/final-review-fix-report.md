@@ -113,3 +113,44 @@ exit 0; no content errors
 This closure is local only. The controller must still independently review the
 commits, push them, verify local/upstream/remote agreement, and record the
 actual persistence hash before G4 is accepted or G5 begins.
+
+## Residual Repair
+
+This bounded repair closes the three re-review findings on the frozen G4
+contract, Windows-safe manifest duplicate detection, and service-start distance
+timing. The regenerated bundle is bound to generator commit
+`75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f` (`fix: preserve g4 contract
+diagnostics`) and source tree `e49be77ea7c235c0cc6d26714c703506ce85a064`.
+
+RED evidence, before the residual implementation:
+
+```text
+python -m pytest tests/g4/test_g4_contract.py::test_g4_contract_rejects_exact_frozen_semantic_drift tests/g4/test_g4_audit.py::test_g4_audit_rejects_case_variant_manifest_path_alias tests/g4/test_g4_activation.py::test_service_start_distance_uses_post_step_vehicle_position -q
+6 failed
+```
+
+GREEN evidence after the implementation:
+
+```text
+python -m pytest tests/g4/test_g4_contract.py::test_g4_contract_rejects_exact_frozen_semantic_drift tests/g4/test_g4_audit.py::test_g4_audit_rejects_case_variant_manifest_path_alias tests/g4/test_g4_activation.py::test_service_start_distance_uses_post_step_vehicle_position -q
+6 passed in 0.87s
+
+python -m pytest tests/g4 -q
+54 passed in 26.73s
+```
+
+Fresh regeneration and audit from `75e5bcf`:
+
+```text
+python scripts/run_g4_mechanism_probe.py
+[1.0, 12.0]
+
+python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json
+status=pass artifacts=10
+```
+
+The full repository suite was started with `python -m pytest -q -n 4` but did
+not complete within the available execution window and was stopped; it is not
+recorded as passing. No push was performed. The controller must independently
+verify and push this local evidence/documentation closure before recording an
+actual persistence hash or accepting G4.

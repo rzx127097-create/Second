@@ -13,7 +13,7 @@ authorized.
 - Local audit: `pass`
 - Public algorithm identity: `SR-MAPPO`
 - Problem identity: air-ground heterogeneous extension
-- Generator commit: `5a65bbca1a95bda6db7a4cf9688af755891acac0`
+- Generator commit: `75e5bcfe64a2fd26c874472f22d43d8dcc6fae9f`
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`
 - Matrix: `3 scales x 3 seeds x 3 vehicle-inventory levels` per arm
 - Paired diagnostic records: `27`
