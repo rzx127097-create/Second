@@ -1,12 +1,20 @@
 {
-  "schema_version": "g4-provenance-index.v1",
+  "schema_version": "g4-provenance.v1",
+  "gate": "G4",
   "status": "descriptive",
-  "contract": "docs/evidence/g4/g4_contract.yaml",
-  "probe_manifest": "docs/evidence/g4/g4_probe_manifest.yaml",
-  "fixed_provenance": "fixed/provenance.json",
-  "mobile_provenance": "mobile/provenance.json",
-  "source_tree_commit": "ea0849bdbfb949e9269861efc06cfb6a1a2ce01a",
+  "algorithm_name": "SR-MAPPO",
+  "problem_description": "air_ground_heterogeneous_extension",
+  "replenished_resource": "pesticide",
+  "battery_replenishment_enabled": false,
   "validation_accessed": false,
   "sealed_test_accessed": false,
-  "battery_replenishment_enabled": false
+  "output_root": "outputs/problem2_sr_mappo_v1/g4",
+  "source_tree_commit": "ea0849bdbfb949e9269861efc06cfb6a1a2ce01a",
+  "source_tree_hash": "cfedb950b5da1d3380b9663b2611f30e983892c2",
+  "g2_config": "configs/problem2/g2_deterministic.yaml",
+  "g2_config_sha256": "297b602272b40de9778a6c9c768921d13503911d3a42ec7145b3560d807d59f2",
+  "g4_contract": "docs/evidence/g4/g4_contract.yaml",
+  "g4_contract_sha256": "6e9049414421dcf03be373fe7c53bae5ed4576c2b9e94bc45168a266cfeb936a",
+  "probe_manifest": "docs/evidence/g4/g4_probe_manifest.yaml",
+  "probe_manifest_sha256": "f6b2ba647d5b7302c200f816acd995978d5695dcee27a35a34995d5c7dc5b4f1"
 }

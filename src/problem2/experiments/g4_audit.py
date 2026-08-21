@@ -14,6 +14,7 @@ CONTRACT_PATH = ROOT / "docs/evidence/g4/g4_contract.yaml"
 PROBE_MANIFEST_PATH = ROOT / "docs/evidence/g4/g4_probe_manifest.yaml"
 CANONICAL_G4_ROOT = (ROOT / "outputs/problem2_sr_mappo_v1/g4").resolve()
 SUPPORTED_G4_SUFFIXES = frozenset({".json", ".jsonl"})
+SELF_GENERATED_AUDIT_REPORT = "g4-mechanism-audit.json"
 
 
 def _sha256(path: Path) -> str:
@@ -25,7 +26,11 @@ def build_g4_artifact_manifest(output_root: str | Path) -> dict[str, Any]:
     manifest_path = root / "artifact-manifest.json"
     artifacts = []
     for path in sorted(root.rglob("*")):
-        if not path.is_file() or path.resolve() == manifest_path.resolve():
+        if (
+            not path.is_file()
+            or path.resolve() == manifest_path.resolve()
+            or path.name == SELF_GENERATED_AUDIT_REPORT
+        ):
             continue
         relative = path.relative_to(root).as_posix()
         if "/g3/" in f"/{relative}/" or relative.startswith("g3/"):

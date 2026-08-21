@@ -1,74 +1,90 @@
-# G4 Handoff: Resource-Scarcity Counterfactual Mechanism
+# HANDOFF G4
 
 Date: 2026-08-21
+Repository: `C:/Users/RZX/Documents/ChatGPT/Second`
 Branch: `codex/problem2-g4-resource-scarcity`
 
 ## Gate Result
 
-G4 passes its scoped mechanism-activation acceptance at M2 implementation
-evidence. The evidence is descriptive and auditable; it does not promote the
-project to formal-pilot, formal-experiment, or deployment evidence.
+G4 passed at the existing `M2` evidence boundary. The frozen resource-scarcity
+probe activated across the registered pesticide initial-volume band, and the
+fixed/mobile SR-MAPPO counterfactual produced same-input descriptive paired
+deltas. This is mechanism evidence only; it does not promote the project to
+formal treatment-effect evidence.
 
-The frozen public method name remains `SR-MAPPO`, and Problem 2 remains its
-air-ground heterogeneous extension. The only replenished resource is
-pesticide. Battery replenishment is inactive.
+Permitted claim:
 
-## Permitted Claim
+> Under the frozen G2 physical semantics and G4 development probe protocol,
+> pesticide scarcity activated over `[1.0, 12.0] L` for the registered probe
+> scales and seeds, and the resource-matched fixed-support and road-constrained
+> mobile-support SR-MAPPO arms yielded 27 paired descriptive records with
+> conservation error within the recorded numerical tolerance.
 
-The frozen G4 probe set demonstrates that the pesticide scarcity mechanism is
-active across the declared band and provides same-input fixed-versus-mobile
-counterfactual deltas for `sr_mappo_fixed` and `sr_mappo_mobile`. These deltas
-may be used to document mechanism activation and motivate the next pilot.
-
-No claim of superiority, significant improvement, treatment efficacy, formal
-experiment, real deployment, or universal optimality is permitted from G4.
+This claim does not establish that mobile replenishment improves treatment,
+that SR-MAPPO is superior, that a result is statistically significant, or that
+the simulation represents real deployment.
 
 ## Frozen Interface
 
-- Contract: `docs/evidence/g4/g4_contract.yaml` (`g4.v1`).
-- Probe manifest: `docs/evidence/g4/g4_probe_manifest.yaml`.
-- Scarcity axis: initial UAV pesticide, `1.0-12.0 L` inclusive.
+- Public algorithm name: `SR-MAPPO`.
+- Problem identity: air-ground heterogeneous extension of SR-MAPPO.
+- Comparator pair: `sr_mappo_fixed` and `sr_mappo_mobile`.
+- Scarcity axis: initial UAV pesticide volume, `initial_uav_pesticide_l`.
+- Frozen activation band: `[1.0, 12.0] L`.
 - Probe scales: `g20x20_d2`, `g20x30_d3`, `g30x30_d3`.
 - Probe seeds: `42`, `123`, `2024`.
-- Horizons: `150`, `180`, and `220` physical decision steps respectively.
-- Counterfactual arms: `sr_mappo_fixed` and `sr_mappo_mobile`.
-- Validation and sealed partitions are empty and inaccessible.
-
-The probes reuse the frozen G2 physical/service/conservation semantics and the
-frozen G3 learning-interface lineage. G3 smoke artifacts are lineage inputs
-only and are not G4 endpoint evidence.
+- Replenished resource: pesticide only.
+- Battery replenishment: inactive.
+- Validation and sealed-test probe partitions: empty and inaccessible.
+- Canonical output root: `outputs/problem2_sr_mappo_v1/g4`.
+- Contract: `docs/evidence/g4/g4_contract.yaml`.
+- Probe manifest: `docs/evidence/g4/g4_probe_manifest.yaml`.
 
 ## Verified Evidence
 
-The canonical bundle is under
-`outputs/problem2_sr_mappo_v1/g4`. It contains fixed/mobile activation
-summaries and provenance, a paired counterfactual summary, a probe-matrix
-summary, a provenance index, an artifact manifest, and the fail-closed audit
-report. The audit recomputes the counterfactual, verifies SHA-256 hashes, and
-reports `status=pass` with activation band `[1.0, 12.0]`.
+- `outputs/problem2_sr_mappo_v1/g4/activation-summary.json`: root activation
+  index, status `descriptive`, band `[1.0, 12.0]`.
+- `outputs/problem2_sr_mappo_v1/g4/fixed/activation-summary.json` and
+  `mobile/activation-summary.json`: complete fixed/mobile activation records.
+- `outputs/problem2_sr_mappo_v1/g4/counterfactual-summary.json`: 27 paired
+  records, equal activation counts of 27 per arm, and descriptive deltas.
+- `outputs/problem2_sr_mappo_v1/g4/provenance.json`: root lineage and boundary
+  flags for the canonical bundle.
+- `outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`: audit status
+  `pass`; recorded artifact hashes and hard-boundary checks.
+- `outputs/problem2_sr_mappo_v1/g4/artifact-manifest.json`: hash and byte
+  registration for every supported G4 JSON/JSONL artifact.
+- `docs/audits/g4-mechanism-compliance.md`: source-to-claim compliance map.
 
-The paired summary has 27 fixed/mobile input-matched pairs and equal activation
-counts of 27 per arm. Conservation errors remain within the recorded
-floating-point residuals. These are mechanism-probe observations, not formal
-evaluation results.
+The counterfactual output is descriptive. It contains no p-values, confidence
+intervals, significance labels, formal endpoint decision, or superiority
+claim.
 
 ## Protected Boundaries
 
-- No validation scenario was accessed or tuned.
-- No sealed-test scenario was accessed or unlocked.
-- Battery replenishment remains false.
-- No G3 smoke output is accepted as G4 endpoint evidence.
-- OSM data remains simulation input for road-constrained modeling, not field
-  deployment evidence.
-- First-problem repositories, outputs, and Word thesis files were not edited.
+- No G3 smoke or G3 endpoint artifact is accepted as G4 evidence.
+- No validation scenario or sealed-test scenario was read.
+- No validation tuning, sealed-test unlock, or formal experiment occurred.
+- Battery replenishment remains disabled.
+- The OSM road data remains simulation input for road-constrained modeling,
+  not deployment evidence.
+- No external protected asset or thesis Word file was modified.
+- G4 outputs remain beneath the frozen problem-2 output root.
 
-## Exact G5 Entry Condition
+## G5 Entry Condition
 
-G5 may begin only after this handoff and its persistence record are pushed and
-the final local/upstream/remote hash check agrees. G5 must first freeze a fair
-pilot protocol using the same environment, pesticide budget, horizon,
-scenario/seed identities, observability, and information conditions for every
-comparison arm. Any validation tuning must be restricted to the declared
-validation partition, and formal or sealed evaluation remains prohibited until
-the G5 pilot and method/statistics freeze are independently verified.
+G5 may begin only after the G4 content and persistence records are present in
+`docs/PROJECT_STATE.md` and the three Git references agree. The G5 entry
+check must then freeze, before any formal job:
 
+1. the pilot scenarios, resource budgets, horizons, seeds, and information
+   conditions shared by every comparison;
+2. the fairness matrix for `sr_mappo_mobile`, `sr_mappo_fixed`,
+   `sr_mappo_astar`, `mappo_mobile`, and `sr_mappo_two_stage`;
+3. the validation-tuning policy, with sealed-test access still disabled;
+4. the paired statistical estimands, exclusion rules, and artifact schemas;
+5. an independent audit confirming the frozen methods and statistics before
+   any formal training or evaluation output is accepted.
+
+G5 remains a pilot-methods gate. Formal jobs, validation tuning, sealed
+evaluation, and thesis claims remain unauthorized until their later gates.

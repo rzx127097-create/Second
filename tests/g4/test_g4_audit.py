@@ -141,6 +141,17 @@ def test_g4_audit_rejects_recorded_hash_drift(tmp_path: Path) -> None:
         _verify_manifest(output_root, manifest)
 
 
+def test_g4_artifact_manifest_excludes_self_generated_audit_report(tmp_path: Path) -> None:
+    output_root = tmp_path / "g4"
+    output_root.mkdir()
+    _write_json(output_root / "probe.json", {"probe": "evidence"})
+    _write_json(output_root / "g4-mechanism-audit.json", {"status": "pass"})
+
+    manifest = build_g4_artifact_manifest(output_root)
+
+    assert [entry["path"] for entry in manifest["artifacts"]] == ["probe.json"]
+
+
 def test_g4_audit_happy_path_recomputes_counterfactual(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output_root, report_path = _audit_fixture(tmp_path, monkeypatch)
 
