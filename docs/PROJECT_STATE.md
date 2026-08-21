@@ -269,6 +269,16 @@ claims.
   `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`:
   `status=pass artifacts=10`.
 
+Persistence status:
+
+- Acceptance-state commit
+  `189e22744579001915919af24ed2bdfd099ff2f2`
+  (`docs: accept g4 after final verification`) was pushed to
+  `origin/codex/problem2-g4-resource-scarcity`.
+- After the push, `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
+  `git ls-remote origin refs/heads/codex/problem2-g4-resource-scarcity` all
+  returned `189e22744579001915919af24ed2bdfd099ff2f2`.
+
 G5 is the next authorized gate. It may begin as a pilot-protocol freeze gate
 and must pre-register fair
 pilot scenarios, comparison budgets, validation-tuning rules, paired

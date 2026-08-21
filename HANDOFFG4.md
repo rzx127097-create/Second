@@ -60,6 +60,16 @@ scarcity, G3 actor execution, or deployment evidence.
 - Final controller verification was rerun on the accepted tree with the same
   canonical output root and no validation or sealed-test access.
 
+## Persistence
+
+- Acceptance-state commit
+  `189e22744579001915919af24ed2bdfd099ff2f2`
+  (`docs: accept g4 after final verification`) was pushed to
+  `origin/codex/problem2-g4-resource-scarcity`.
+- After the push, `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
+  `git ls-remote origin refs/heads/codex/problem2-g4-resource-scarcity` all
+  returned `189e22744579001915919af24ed2bdfd099ff2f2`.
+
 ## Claim Boundary
 
 The only permitted claim is that the diagnostic support probes exercised the
