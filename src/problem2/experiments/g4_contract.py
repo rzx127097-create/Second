@@ -213,10 +213,10 @@ def load_g4_contract(path: Path | str) -> G4Contract:
     if scales != FROZEN_PROBE_SCALES:
         raise G4ContractError("probe_scales must match the frozen G4 probe scales")
     seeds = _integer_tuple(root["probe_seeds"], "probe_seeds")
-    if seeds != FROZEN_PROBE_SEEDS:
-        raise G4ContractError("probe_seeds must match the frozen G4 probe seeds")
     if any(20000 <= seed <= 20049 or 30000 <= seed <= 30099 for seed in seeds):
         raise G4ContractError("validation and sealed probe seeds are forbidden")
+    if seeds != FROZEN_PROBE_SEEDS:
+        raise G4ContractError("probe_seeds must match the frozen G4 probe seeds")
     pair = _text_tuple(root["comparator_pair"], "comparator_pair")
     if pair != ("fixed_support_probe", "mobile_support_probe"):
         raise G4ContractError("comparator_pair must be the diagnostic support-probe pair")
@@ -238,9 +238,9 @@ def load_g4_contract(path: Path | str) -> G4Contract:
     if output_root.as_posix() != "outputs/problem2_sr_mappo_v1/g4":
         raise G4ContractError("output_root must be the frozen G4 output root")
     endpoint_roots = _text_tuple(root["endpoint_evidence_roots"], "endpoint_evidence_roots")
+    _validate_endpoint_evidence_roots(endpoint_roots)
     if endpoint_roots != FROZEN_ENDPOINT_ROOTS:
         raise G4ContractError("endpoint_evidence_roots must match the frozen G4 output root")
-    _validate_endpoint_evidence_roots(endpoint_roots)
     resources = _mapping(root["resources"], "resources")
     _require_keys(resources, {"replenished_resource", "battery_replenishment_enabled"}, "resources")
     if _text(resources["replenished_resource"], "resources.replenished_resource") != "pesticide":
