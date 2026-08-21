@@ -39,6 +39,15 @@ class G4ProbeManifest:
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+FROZEN_SCARCITY_BAND = (1.0, 12.0)
+FROZEN_PROBE_SCALES = ("g20x20_d2", "g20x30_d3", "g30x30_d3")
+FROZEN_PROBE_SEEDS = (42, 123, 2024)
+FROZEN_ENDPOINT_ROOTS = ("outputs/problem2_sr_mappo_v1/g4",)
+FROZEN_CLAIM_BOUNDARY = (
+    "diagnostic support-probe mechanism activation and paired descriptive "
+    "counterfactual deltas only; no G3 actor or checkpoint execution, superiority, "
+    "efficacy, formal-result, or deployment claim"
+)
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -183,6 +192,8 @@ def load_g4_contract(path: Path | str) -> G4Contract:
     upper = _number(band["upper"], "scarcity_band.upper")
     if lower >= upper:
         raise G4ContractError("scarcity_band lower must be less than upper")
+    if (lower, upper) != FROZEN_SCARCITY_BAND:
+        raise G4ContractError("scarcity_band must match the frozen 1.0-12.0 L range")
     if _text(band["unit"], "scarcity_band.unit") != "L":
         raise G4ContractError("scarcity_band.unit must be L")
     request_trigger = _mapping(root["request_trigger"], "request_trigger")
@@ -199,7 +210,11 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         raise G4ContractError("request_trigger.unit must be L")
 
     scales = _text_tuple(root["probe_scales"], "probe_scales")
+    if scales != FROZEN_PROBE_SCALES:
+        raise G4ContractError("probe_scales must match the frozen G4 probe scales")
     seeds = _integer_tuple(root["probe_seeds"], "probe_seeds")
+    if seeds != FROZEN_PROBE_SEEDS:
+        raise G4ContractError("probe_seeds must match the frozen G4 probe seeds")
     if any(20000 <= seed <= 20049 or 30000 <= seed <= 30099 for seed in seeds):
         raise G4ContractError("validation and sealed probe seeds are forbidden")
     pair = _text_tuple(root["comparator_pair"], "comparator_pair")
@@ -223,6 +238,8 @@ def load_g4_contract(path: Path | str) -> G4Contract:
     if output_root.as_posix() != "outputs/problem2_sr_mappo_v1/g4":
         raise G4ContractError("output_root must be the frozen G4 output root")
     endpoint_roots = _text_tuple(root["endpoint_evidence_roots"], "endpoint_evidence_roots")
+    if endpoint_roots != FROZEN_ENDPOINT_ROOTS:
+        raise G4ContractError("endpoint_evidence_roots must match the frozen G4 output root")
     _validate_endpoint_evidence_roots(endpoint_roots)
     resources = _mapping(root["resources"], "resources")
     _require_keys(resources, {"replenished_resource", "battery_replenishment_enabled"}, "resources")
@@ -230,6 +247,9 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         raise G4ContractError("the replenished resource must be pesticide")
     if resources["battery_replenishment_enabled"] is not False:
         raise G4ContractError("battery replenishment must remain disabled")
+    claim_boundary = _text(root["permitted_claim_boundary"], "permitted_claim_boundary")
+    if claim_boundary != FROZEN_CLAIM_BOUNDARY:
+        raise G4ContractError("claim boundary must match the frozen diagnostic-only wording")
 
     return G4Contract(
         source_path=contract_path,
@@ -241,7 +261,7 @@ def load_g4_contract(path: Path | str) -> G4Contract:
         comparator_pair=pair,
         metrics=metrics,
         output_root=output_root,
-        permitted_claim_boundary=_text(root["permitted_claim_boundary"], "permitted_claim_boundary"),
+        permitted_claim_boundary=claim_boundary,
     )
 
 

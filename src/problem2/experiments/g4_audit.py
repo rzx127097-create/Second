@@ -72,14 +72,13 @@ def _verify_manifest(
         raise ValueError("G4 artifact manifest must contain artifacts")
     verified = []
     recorded_paths: set[str] = set()
+    resolved_paths: set[str] = set()
     ignored_paths = ignored_paths or set()
     for entry in artifacts:
         if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
             raise ValueError("G4 artifact manifest entry is invalid")
         relative = Path(entry["path"])
         normalized = relative.as_posix()
-        if normalized in recorded_paths:
-            raise ValueError(f"duplicate G4 artifact manifest path: {normalized}")
         if "g3" in {part.lower() for part in relative.parts}:
             raise ValueError("G3 artifact paths cannot be endpoint evidence")
         if relative.is_absolute() or ".." in relative.parts:
@@ -91,12 +90,16 @@ def _verify_manifest(
             raise ValueError("G4 artifact path escapes output root") from exc
         if not path.is_file():
             raise ValueError(f"recorded G4 artifact is missing: {normalized}")
+        resolved_key = str(path).casefold()
+        if normalized in recorded_paths or resolved_key in resolved_paths:
+            raise ValueError(f"duplicate G4 artifact manifest path: {normalized}")
         actual_hash = _sha256(path)
         if actual_hash != entry.get("sha256"):
             raise ValueError(f"G4 artifact hash mismatch: {normalized}")
         if entry.get("bytes") != path.stat().st_size:
             raise ValueError(f"G4 artifact byte mismatch: {normalized}")
         recorded_paths.add(normalized)
+        resolved_paths.add(resolved_key)
         verified.append({"path": normalized, "sha256": actual_hash, "bytes": path.stat().st_size})
     manifest_path = root / "artifact-manifest.json"
     current_paths = {

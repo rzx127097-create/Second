@@ -17,6 +17,7 @@ from problem2.experiments.g4_contract import (
     load_g4_probe_manifest,
 )
 from problem2.experiments.g4_support import FixedSupportPolicy, MobileSupportPolicy
+from problem2.domain import EpisodeState, ServiceRequest, UavState, VehicleState
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -137,3 +138,14 @@ def test_probe_matrix_rejects_mismatched_arm_windows(
     monkeypatch.setattr(activation, "run_activation_probe", fake_probe)
     with pytest.raises(G4ContractError, match="arm activation windows"):
         run_probe_matrix(CONTRACT, MANIFEST, output_root=output_root)
+
+
+def test_service_start_distance_uses_post_step_vehicle_position() -> None:
+    service_start_state = EpisodeState(
+        step=1,
+        uavs=(UavState("uav-0", 10.0, 0.0, 0.05),),
+        vehicle=VehicleState("vehicle-0", 1, 7.0, 0.0, 1.0),
+        requests=(ServiceRequest("request-0", "uav-0", 0, 0.5),),
+    )
+
+    assert activation._service_start_euclidean_distance(service_start_state, "request-0") == 3.0

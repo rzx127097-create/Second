@@ -151,3 +151,22 @@ def test_g4_contract_rejects_final_review_semantic_drift(
 
     with pytest.raises(G4ContractError, match=message):
         load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda payload: payload["scarcity_band"].update(lower=1.1), "scarcity_band"),
+        (lambda payload: payload.update(probe_scales=["g20x20_d2", "g20x40_d3", "g30x30_d3"]), "probe_scales"),
+        (lambda payload: payload.update(probe_seeds=[42, 123, 2025]), "probe_seeds"),
+        (lambda payload: payload.update(permitted_claim_boundary="superiority claim is permitted"), "claim boundary"),
+    ],
+)
+def test_g4_contract_rejects_exact_frozen_semantic_drift(
+    mutate, message: str, tmp_path: Path
+) -> None:
+    payload = _payload(CONTRACT_PATH)
+    mutate(payload)
+
+    with pytest.raises(G4ContractError, match=message):
+        load_g4_contract(_write_payload(CONTRACT_PATH, payload, tmp_path))

@@ -216,6 +216,14 @@ def _fingerprint(payload: object) -> str:
     return hashlib.sha256(rendered.encode("utf-8")).hexdigest()
 
 
+def _service_start_euclidean_distance(state: EpisodeState, request_id: str) -> float:
+    """Measure UAV-vehicle separation from the state where service actually starts."""
+
+    request = next(request for request in state.requests if request.request_id == request_id)
+    uav = next(uav for uav in state.uavs if uav.uav_id == request.uav_id)
+    return math.hypot(uav.x_m - state.vehicle.x_m, uav.y_m - state.vehicle.y_m)
+
+
 def _support_probe_name(policy: Any) -> str:
     if isinstance(policy, FixedSupportPolicy):
         return "fixed_support_probe"
@@ -278,16 +286,8 @@ def _run_one(
                 request_id = event.entity_id
                 if request_id in request_steps:
                     started_service_waiting_time += (event.step - request_steps[request_id]) * config.dt_s
-                started_request = next(
-                    request
-                    for request in next_state.requests
-                    if request.request_id == request_id
-                )
-                uav = next(
-                    uav for uav in state.uavs if uav.uav_id == started_request.uav_id
-                )
                 euclidean_service_start_distances.append(
-                    math.hypot(uav.x_m - state.vehicle.x_m, uav.y_m - state.vehicle.y_m)
+                    _service_start_euclidean_distance(next_state, request_id)
                 )
             if event.kind == "conservation_checked":
                 max_conservation_error = max(max_conservation_error, float(payload["error_l"]))

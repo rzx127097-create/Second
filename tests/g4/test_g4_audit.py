@@ -438,6 +438,20 @@ def test_g4_audit_rejects_duplicate_manifest_paths(tmp_path: Path) -> None:
         _verify_manifest(output_root, manifest)
 
 
+def test_g4_audit_rejects_case_variant_manifest_path_alias(tmp_path: Path) -> None:
+    output_root = tmp_path / "g4"
+    output_root.mkdir()
+    artifact = output_root / "probe.json"
+    _write_json(artifact, {"probe": "evidence"})
+    manifest = build_g4_artifact_manifest(output_root)
+    manifest["artifacts"].append({**manifest["artifacts"][0], "path": "PROBE.JSON"})
+
+    with pytest.raises(ValueError, match="duplicate"):
+        from problem2.experiments.g4_audit import _verify_manifest
+
+        _verify_manifest(output_root, manifest)
+
+
 def test_g4_audit_rejects_manifest_byte_drift(tmp_path: Path) -> None:
     output_root = tmp_path / "g4"
     output_root.mkdir()
