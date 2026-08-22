@@ -3,7 +3,7 @@
 Date: 2026-08-22
 Repository: `C:/Users/RZX/Documents/ChatGPT/Second`
 Branch: `codex/problem2-g5-pilot-freeze`
-Current HEAD: `877c4660d17f5c14451b83727248d67f70a2b8d4`
+Current recorded content HEAD: `e2508eddef0b1d20ae9ddd282807395511e1b58d`
 Remote: `origin/codex/problem2-g5-pilot-freeze`
 
 ## Read This First
@@ -12,14 +12,13 @@ This document is a self-contained handoff for a new conversation with no
 prior context. Read it together with `docs/PROJECT_STATE.md` before making
 changes. The authoritative project is the `Second` repository above.
 
-The current state is **G4 accepted at M2; G5 has only a written design and has
-not started implementation**. The next authorized work is:
+The current state is **G4 accepted at M2; the G5 design and executable plan are
+persisted; G5 implementation has not started**. The next authorized work is:
 
-1. obtain/confirm the user's review and approval of the three written G5-G7
-   specifications;
-2. use the `writing-plans` workflow to write the separate executable G5
-   implementation plan;
-3. execute that plan only after the plan exists and is reviewed as required.
+1. execute Task 1 of
+   `docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`;
+2. reconcile and push one exact G4 generator commit/tree/source-bundle tuple;
+3. begin G5 registry/algorithm work only after that reconciliation is recorded.
 
 Do not start G6 formal jobs, do not access validation or sealed scenarios, and
 do not claim that any method is superior. Do not assume that the old G4
@@ -509,8 +508,9 @@ manifests.
 ## Current Unfinished Work
 
 - G4 provenance/hash discrepancy has not been reconciled.
-- User review/approval of the three written G5-G7 specifications is pending.
-- The separate executable G5 implementation plan does not yet exist.
+- The executable G5 plan exists and is persisted at commit
+  `e2508eddef0b1d20ae9ddd282807395511e1b58d`; none of its implementation tasks
+  has started.
 - The five new algorithm implementations (PPO/IPPO, MADDPG, IQL, and the
   complete cross-method experiment adapters) are not yet implemented in this
   branch.
@@ -523,16 +523,13 @@ manifests.
 
 ## Immediate Next Action for a New Conversation
 
-1. Read this file, `docs/PROJECT_STATE.md`, and the three linked G5-G7 specs.
-2. Confirm whether the user approves the written specifications or requests
-   edits.
-3. If approved, invoke `writing-plans` and author the separate executable
-   G5 plan at:
+1. Read this file, `docs/PROJECT_STATE.md`, the three linked G5-G7 specs, and
    `docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`.
-4. Do not write implementation code until that plan and its review gate are
-   complete.
-5. Start implementation with G4 lineage reconciliation, not with formal
-   training.
+2. Execute only Task 1: G4 lineage reconciliation and its focused verification.
+3. Commit and push the reconciliation, then record local/upstream/remote hash
+   parity in `docs/PROJECT_STATE.md`.
+4. Stop at any failed lineage or G4 regression gate; do not begin pilots.
+5. Do not start formal training, validation tuning, or sealed evaluation.
 
 ## Persistence of This Handoff
 

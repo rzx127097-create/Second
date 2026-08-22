@@ -30,9 +30,10 @@ real deployment evidence.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G4 onboard-pesticide scarcity activation and diagnostic
   support-probe counterfactual is accepted at M2. The written G5-G7 gate
-  specifications are persisted for user review; G5 implementation and its
-  executable plan have not started. Formal jobs, sealed evaluation, and
-  efficacy/superiority claims remain unauthorized.
+  specifications and the executable G5 plan are persisted; G5 implementation
+  has not started. The first implementation task is the blocking G4 lineage
+  reconciliation. Formal jobs, sealed evaluation, and efficacy/superiority
+  claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -336,11 +337,59 @@ Persistence status:
 - after the push, local HEAD, upstream HEAD, and `git ls-remote` all matched
   `a12cbdd0bf479d93bd1788497d82447313933d39`.
 
-This record does not pass G5 or raise maturity. Per the architectural design
-workflow, the user must review the three written specifications before the G5
-executable implementation plan is authored.
+This record does not pass G5 or raise maturity. The user authorized entry into
+the G5 workflow on 2026-08-22, and the executable plan record below supersedes
+the earlier pending-plan status.
 
-## HANDOFFG5 Record
+## G5 Executable Plan Record
+
+The reviewed G5/G6/G7 design is decomposed into the executable plan
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`, SHA-256
+`DBAC425E908E9DCB79C21174484B1DD5ED430CF028876A56AD12C1C719FED11E`.
+The plan contains 12 gated tasks and 87 executable TDD/verification steps. It
+starts with G4 lineage reconciliation and then covers G5 registries, five
+heterogeneous algorithms, physical metrics and controllers, the exact
+375-training-job graph, orchestration/recovery/validation, paired statistics,
+CPU/CUDA smoke, development pilots, validation tuning, and G6/G7 manifest
+freezing while sealed access remains disabled.
+
+Environment inspection during planning found an RTX 4060 Laptop GPU with
+8188 MiB and driver 572.70, while the current host Python intentionally uses
+the G3 evidence lock `torch==2.13.0+cpu`. The official PyTorch index contains
+the matching Windows CPython 3.11 CUDA build `torch==2.13.0+cu126`; the plan
+therefore preserves the G3 lock and creates an isolated `.venv-g5` with a
+separate G5 CUDA lock before GPU smoke. No dependency was installed or replaced
+during planning.
+
+Fresh verification before the plan-content push:
+
+- `python -m pytest -q`: `297 passed in 141.49s`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: exit `0`;
+- plan self-review: 12 tasks, 87 executable steps, zero placeholder patterns;
+- formula-symbol audit findings were confined to literal code paths,
+  identifiers, function names, and configuration keys.
+
+Persistence status:
+
+- plan-content commit
+  `e2508eddef0b1d20ae9ddd282807395511e1b58d`
+  (`docs: add g5 implementation plan`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the push, local HEAD, upstream HEAD, and `git ls-remote` all matched
+  `e2508eddef0b1d20ae9ddd282807395511e1b58d`.
+
+This plan record does not pass G5, change maturity, authorize validation before
+candidate-manifest freezing, or authorize formal/sealed execution.
+
+The current `HANDOFFG5.md` is synchronized to the executable-plan state with
+SHA-256
+`066428AEC27BCCEB0D133A8542BB0998FE2E13012F4C5CAE9202915447C64743`.
+It directs a context-free worker to execute only plan Task 1 first and retains
+the prohibition on pilots, formal training, validation tuning, and sealed
+evaluation until their declared gates.
+
+## Original HANDOFFG5 Record
 
 The self-contained G5 handoff for a new context is
 `HANDOFFG5.md`, SHA-256
@@ -348,8 +397,10 @@ The self-contained G5 handoff for a new context is
 It records the completed G0-G4 evidence, G4 lineage blocker, written G5-G7
 design hashes, five-algorithm heterogeneous contract, declared `375`/`42,500`
 design counts, G5 work packages, pilot protocol, verification requirements,
-and the exact next action for a context-free conversation. It explicitly states
-that G5 implementation and the executable plan have not started.
+and the exact next action for a context-free conversation. At that historical
+checkpoint it stated that G5 implementation and the executable plan had not
+started; the executable-plan record above supersedes that current-status
+statement without deleting the original evidence record.
 
 Persistence status:
 
@@ -807,8 +858,8 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Obtain user review/approval of the three G5-G7 written specifications.
-- After approval, write the separate executable G5 implementation plan.
+- Execute Task 1 of the persisted G5 plan and reconcile the G4 provenance/hash
+  discrepancy before accepting any G5 pilot artifact.
 - Implement and freeze the G5 pilot protocol, algorithms, baselines,
   validation-tuning rules, and paired-statistics contract before formal jobs.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
@@ -873,11 +924,17 @@ G1.1 bounded remediation persistence record:
   deployment.
 - Python cache files may still exist in the local working directory after tests,
   but `.gitignore` excludes them from GitHub evidence and commit boundaries.
+- The host Python is intentionally CPU-only (`torch==2.13.0+cpu`) for the G3
+  evidence lock even though an RTX 4060 Laptop GPU is visible. G5 must create
+  the isolated `.venv-g5` with the separately verified CUDA 12.6 wheel before
+  CUDA smoke; it must not mutate the Codex/Hermes host environment.
 
 ## Next Step
 
-Ask the user to review the three persisted G5-G7 specifications. After explicit
-approval, use the writing-plans workflow to author the separate executable G5
-implementation plan. The highest maturity remains M2 implementation and scoped
-mechanism evidence. Formal jobs, sealed-test evaluation, and thesis
-efficacy/superiority claims remain unauthorized until their later gates.
+Execute Task 1 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: audit and reconcile the
+accepted G4 commit/tree/source-bundle/artifact lineage, commit and push the
+repair, and record its verified remote hash before any G5 pilot work begins.
+The highest maturity remains M2 implementation and scoped mechanism evidence.
+Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
+remain unauthorized until their later gates.
