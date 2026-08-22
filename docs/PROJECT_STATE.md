@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-21
+Last updated: 2026-08-22
 
 ## Final Goal
 
@@ -20,7 +20,7 @@ real deployment evidence.
 - Authoritative repository for future work:
   `C:/Users/RZX/Documents/ChatGPT/Second`.
 - GitHub remote: `https://github.com/rzx127097-create/Second.git`.
-- Current branch: `codex/problem2-g4-resource-scarcity`.
+- Current branch: `codex/problem2-g5-pilot-freeze`.
 - Current branch base at start of G0:
   `2643753855c385253951dfad2c225be0b09b7e00`
   (`origin/main`, commit message `docs: mark section 4.2 delivery complete`).
@@ -29,9 +29,10 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G4 onboard-pesticide scarcity activation and diagnostic
-  support-probe counterfactual is accepted at M2. G5 pilot-protocol freezing
-  is the next authorized gate. Formal jobs, validation tuning, sealed
-  evaluation, and efficacy/superiority claims remain unauthorized.
+  support-probe counterfactual is accepted at M2. The written G5-G7 gate
+  specifications are persisted for user review; G5 implementation and its
+  executable plan have not started. Formal jobs, sealed evaluation, and
+  efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -284,6 +285,60 @@ and must pre-register fair
 pilot scenarios, comparison budgets, validation-tuning rules, paired
 statistical estimands, exclusions, and artifact schemas before any formal or
 sealed evaluation is accepted.
+
+## G5-G7 Written Design Record
+
+The approved-in-chat G5-G7 architecture has been split into three formal
+written specifications for user review:
+
+- `docs/superpowers/specs/2026-08-22-g5-pilot-freeze-design.md`, SHA-256
+  `1F6C4A8ECC90D63D9D81A0858286F555BA3E3365342A26BF77423E72C53EC0FD`;
+- `docs/superpowers/specs/2026-08-22-g6-formal-jobs-design.md`, SHA-256
+  `958975DAA4F8875DFC59280B5B4A03A1F11AD922683A4CCCC7FA45F48CB11B20`;
+- `docs/superpowers/specs/2026-08-22-g7-sealed-analysis-design.md`, SHA-256
+  `CD6BC6EE8F7A2BFE9C2ED6829CEFC36B813558B2FA8FAF9BFAFAED5A2E276005`.
+
+The design freezes these main boundaries:
+
+- G5 implements and pilots all five heterogeneous algorithms, Problem-2
+  comparators, vehicle heuristics, remove-one ablations, sensitivity support,
+  orchestration, validation, recovery, and statistics code before freezing
+  the G6/G7 manifests;
+- G6 executes exactly 375 deduplicated immutable formal training jobs and
+  validation-based checkpoint selection without sealed-test access;
+- G7 consumes the one permitted sealed unlock, executes exactly 42,500
+  deduplicated sealed episode evaluations, and locks paired statistics and
+  mechanism/ablation/sensitivity summaries for G8;
+- the five-algorithm family is SR-MAPPO, MAPPO, PPO implemented as
+  heterogeneous IPPO, MADDPG, and IQL, with explicit UAV/vehicle observation,
+  action, mask, network, optimizer, transition, and checkpoint handling for
+  every method.
+
+The specification self-review found no placeholder, unbalanced code fence,
+gate leakage, or unresolved matrix-count contradiction. The formula-symbol
+audit found only literal underscore-containing code paths/identifiers inside
+backticks; formula-like prose and equations use editable LaTeX notation.
+
+Fresh verification before the design-content push:
+
+- `python -m pytest -q`: `297 passed in 171.36s`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: exit `0`;
+- sealed scenarios were not accessed and no protected external asset was
+  modified.
+
+Persistence status:
+
+- design-content commit
+  `a12cbdd0bf479d93bd1788497d82447313933d39`
+  (`docs: define g5-g7 experiment gates`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the push, local HEAD, upstream HEAD, and `git ls-remote` all matched
+  `a12cbdd0bf479d93bd1788497d82447313933d39`.
+
+This record does not pass G5 or raise maturity. Per the architectural design
+workflow, the user must review the three written specifications before the G5
+executable implementation plan is authored.
 
 ## Superseded Pre-Final-Review G4 Record
 
@@ -726,8 +781,10 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Freeze the G5 pilot protocol, baseline fairness matrix, validation-tuning
-  rules, and paired-statistics contract before any formal matrix jobs.
+- Obtain user review/approval of the three G5-G7 written specifications.
+- After approval, write the separate executable G5 implementation plan.
+- Implement and freeze the G5 pilot protocol, algorithms, baselines,
+  validation-tuning rules, and paired-statistics contract before formal jobs.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -735,7 +792,7 @@ G1.1 bounded remediation persistence record:
 
 - `Second` is now the authoritative repository for all future second-problem
   code and documentation records.
-- The current working branch is `codex/problem2-g4-resource-scarcity`.
+- The current working branch is `codex/problem2-g5-pilot-freeze`.
 - G1.1 was accepted at M1; G2 deterministic implementation now passes at M2
   with content and persistence push records verified. Candidate-branch reports
   remain untrusted until later branch-local verification.
@@ -743,9 +800,9 @@ G1.1 bounded remediation persistence record:
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
   canonical smoke and audit artifacts are recorded above. G4 is accepted at
   M2 as diagnostic support-probe mechanism evidence for onboard UAV pesticide
-  scarcity after corrective evidence commit
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; G5 pilot-protocol freezing is
-  the next authorized gate.
+  scarcity; its long-hash/provenance narrative discrepancy is recorded below
+  and must be reconciled before G5 pilots. G5 pilot-protocol freezing is the
+  next authorized gate.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -765,6 +822,12 @@ G1.1 bounded remediation persistence record:
 
 ## Known Issues
 
+- The accepted G4 narrative records a nonexistent long object
+  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; short hash `4e81567` resolves
+  to `4e8156712986a28f81315968fd7640b6e7ed5ad6`. Canonical G4 provenance also
+  binds source commit `09d361994100741a9ae834b63ba07c9b5db953e7`, while the
+  handoff names `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb`. G5 entry is
+  blocked until one true lineage is audited and persisted consistently.
 - The candidate branch still contains unaccepted M2/M3/M4 wording and forbidden
   names; it was not merged or used as G2 evidence.
 - The candidate branch contains M2/M3/M4 wording and forbidden-name mentions in
@@ -787,9 +850,8 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Begin G5 by freezing the fair pilot protocol, comparison fairness matrix,
-validation-tuning policy, paired-statistics contract, exclusions, and artifact
-schemas. The highest maturity remains M2 implementation and scoped mechanism
-evidence.
-Formal jobs, validation tuning, sealed-test evaluation, and thesis
+Ask the user to review the three persisted G5-G7 specifications. After explicit
+approval, use the writing-plans workflow to author the separate executable G5
+implementation plan. The highest maturity remains M2 implementation and scoped
+mechanism evidence. Formal jobs, sealed-test evaluation, and thesis
 efficacy/superiority claims remain unauthorized until their later gates.
