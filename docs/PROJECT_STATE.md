@@ -340,6 +340,32 @@ This record does not pass G5 or raise maturity. Per the architectural design
 workflow, the user must review the three written specifications before the G5
 executable implementation plan is authored.
 
+## HANDOFFG5 Record
+
+The self-contained G5 handoff for a new context is
+`HANDOFFG5.md`, SHA-256
+`0681C3A0DB2B5CF1523F20F547B34CF77C1405DDFE5B45F280DAABA35C9A5AB9`.
+It records the completed G0-G4 evidence, G4 lineage blocker, written G5-G7
+design hashes, five-algorithm heterogeneous contract, declared `375`/`42,500`
+design counts, G5 work packages, pilot protocol, verification requirements,
+and the exact next action for a context-free conversation. It explicitly states
+that G5 implementation and the executable plan have not started.
+
+Persistence status:
+
+- HANDOFF content commit
+  `80fccb1350a4c3f1df221730335be1fb1263496b`
+  (`docs: add g5 implementation handoff`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the push, local HEAD, upstream HEAD, and `git ls-remote` all matched
+  `80fccb1350a4c3f1df221730335be1fb1263496b`;
+- verification before the content push: `python -m pytest -q` returned
+  `297 passed in 161.36s`, `python -m compileall -q src scripts` exited `0`,
+  and `git diff --check` exited `0`.
+
+This handoff record does not pass G5, change the maturity level, authorize
+validation tuning, or authorize formal/sealed evaluation.
+
 ## Superseded Pre-Final-Review G4 Record
 
 The following historical record is superseded by the final-review remediation
