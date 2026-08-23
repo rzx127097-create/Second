@@ -34,15 +34,15 @@ scarcity, G3 actor execution, or deployment evidence.
 
 ## Verified Evidence
 
-- Corrective evidence commit:
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
-  (`docs: regenerate g4 onboard scarcity evidence`).
+- Canonical evidence content commit:
+  `189e22744579001915919af24ed2bdfd099ff2f2`
+  (`docs: accept g4 after final verification`).
 - Generator/code commit bound in the canonical artifacts:
-  `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb`
-  (`fix: close g4 artifact boundary gaps`).
+  `09d361994100741a9ae834b63ba07c9b5db953e7`
+  (`docs: finalize g4 round 2 report`).
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`.
-- Provenance binds source commit `ee0d3fa`, source tree
-  `78d3d146b06f191998853ef7070b167a5df64a5c`, source bundle SHA-256
+- Provenance binds source commit `09d361994100741a9ae834b63ba07c9b5db953e7`, source tree
+  `5a61825001e92fae112579ae05f5c778deedcab3`, source bundle SHA-256
   `d2a8a4a4dced015a8f77483d30077b5a24948a97ac1f82b979d6ba968f9df3ed`, and
   contract SHA-256 `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
 - The audit verifies the exact `3 x 3 x 3` raw matrix per arm, raw/summary and

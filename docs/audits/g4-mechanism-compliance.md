@@ -13,10 +13,10 @@ treatment-effect evidence. G5 is the next authorized gate.
 - Hardened audit: `status=pass`, final acceptance recorded
 - Public algorithm identity: `SR-MAPPO`
 - Problem identity: air-ground heterogeneous extension
-- Corrective evidence commit:
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
+- Canonical evidence content commit:
+  `189e22744579001915919af24ed2bdfd099ff2f2`
 - Generator/code commit:
-  `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb`
+  `09d361994100741a9ae834b63ba07c9b5db953e7`
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`
 - Matrix: `3 scales x 3 seeds x 3 initial-UAV-pesticide levels` per arm
 - Paired diagnostic records: `27`

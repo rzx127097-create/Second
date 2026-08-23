@@ -221,13 +221,13 @@ mobile-treatment efficacy claims, SR-MAPPO superiority claims,
 vehicle-inventory scarcity claims, G3 actor-execution claims, or deployment
 claims.
 
-- Content/evidence commit:
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`
-  (`docs: regenerate g4 onboard scarcity evidence`), prepared on
+- Canonical evidence content commit:
+  `189e22744579001915919af24ed2bdfd099ff2f2`
+  (`docs: accept g4 after final verification`), prepared on
   `codex/problem2-g4-resource-scarcity`.
 - Generator/code commit bound in the canonical G4 artifacts:
-  `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb`
-  (`fix: close g4 artifact boundary gaps`).
+  `09d361994100741a9ae834b63ba07c9b5db953e7`
+  (`docs: finalize g4 round 2 report`).
 - Executed scarcity axis: `initial_uav_pesticide_l`, sampled at `0.05`,
   `0.2875`, and `0.525 L`, all within the frozen G2 usable UAV capacity
   `1.08 L`.
@@ -240,9 +240,9 @@ claims.
 - Metric semantics: `started_service_waiting_time_s` counts waits for requests
   that reached service start, while `euclidean_service_start_distance_m` is
   Euclidean separation at service start, not road-travel distance.
-- Canonical G4 evidence was regenerated below
-  `outputs/problem2_sr_mappo_v1/g4` with source commit `ee0d3fa`, source tree
-  `78d3d146b06f191998853ef7070b167a5df64a5c`, source bundle SHA-256
+- Canonical G4 evidence is preserved below
+  `outputs/problem2_sr_mappo_v1/g4` with source commit `09d361994100741a9ae834b63ba07c9b5db953e7`, source tree
+  `5a61825001e92fae112579ae05f5c778deedcab3`, source bundle SHA-256
   `d2a8a4a4dced015a8f77483d30077b5a24948a97ac1f82b979d6ba968f9df3ed`, and contract SHA-256
   `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
 - Hardened audit result: `status=pass`, exact matrix shape `3 x 3 x 3` per
@@ -286,6 +286,33 @@ and must pre-register fair
 pilot scenarios, comparison budgets, validation-tuning rules, paired
 statistical estimands, exclusions, and artifact schemas before any formal or
 sealed evaluation is accepted.
+
+## G5 Phase 0: G4 Lineage Reconciliation
+
+The G4 entry lineage blocker is resolved by
+`docs/audits/g4-lineage-reconciliation.md` and
+`scripts/audit_g4_lineage.py`. The canonical bundle is preserved because every
+embedded lineage resolves to one exact tuple:
+
+- generator commit: `09d361994100741a9ae834b63ba07c9b5db953e7`;
+- generator tree: `5a61825001e92fae112579ae05f5c778deedcab3`;
+- source bundle SHA-256: `d2a8a4a4dced015a8f77483d30077b5a24948a97ac1f82b979d6ba968f9df3ed`;
+- G4 contract SHA-256: `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`;
+- artifact manifest SHA-256/bytes: `7ec50bd98dedf948cca03179decb09f89071df3cb8d64b699726bc7434a6f56c` / `1718`;
+- canonical artifact count: `10`.
+
+The current G4 handoff, compliance audit, and this acceptance section now
+reference the same tuple. The nonexistent long object previously recorded in
+the narrative is no longer an accepted evidence identifier. Phase-0 fresh
+verification returned `78 passed` for
+`python -m pytest tests/g4 tests/g5/test_g4_lineage_reconciliation.py -q`,
+`status=pass artifacts=10` from the G4 CLI, `status=pass` from the lineage
+CLI, exit `0` from `python -m compileall -q src scripts`, and no content errors
+from `git diff --check`. No G5 pilot, validation, formal job, or sealed-test
+access occurred.
+
+The phase content commit and its remote parity are recorded in the required
+follow-up persistence commit before Task 2 begins.
 
 ## G5-G7 Written Design Record
 
@@ -899,12 +926,9 @@ G1.1 bounded remediation persistence record:
 
 ## Known Issues
 
-- The accepted G4 narrative records a nonexistent long object
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5`; short hash `4e81567` resolves
-  to `4e8156712986a28f81315968fd7640b6e7ed5ad6`. Canonical G4 provenance also
-  binds source commit `09d361994100741a9ae834b63ba07c9b5db953e7`, while the
-  handoff names `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb`. G5 entry is
-  blocked until one true lineage is audited and persisted consistently.
+- The accepted G4 lineage is reconciled to one generator commit/tree/source-bundle
+  tuple; the reconciliation report is recorded in
+  `docs/audits/g4-lineage-reconciliation.md`.
 - The candidate branch still contains unaccepted M2/M3/M4 wording and forbidden
   names; it was not merged or used as G2 evidence.
 - The candidate branch contains M2/M3/M4 wording and forbidden-name mentions in
