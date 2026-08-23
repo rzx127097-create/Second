@@ -65,7 +65,7 @@
 - `G4LineageReport.status` is `pass` only when one exact generator commit/tree/file-hash/bundle-hash tuple is consistent across canonical artifacts and current documentation.
 - The repair decision is deterministic: preserve the current canonical bundle only if all embedded hashes reproduce from its recorded clean generator; otherwise regenerate from the intended clean generator `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb` and replace the canonical bundle through the existing G4 generator/auditor.
 
-- [ ] **Step 1: Write failing lineage tests**
+- [x] **Step 1: Write failing lineage tests**
 
 ```python
 def test_lineage_audit_rejects_nonexistent_recorded_commit(repo_copy):
@@ -83,11 +83,11 @@ def test_lineage_audit_requires_one_exact_generator_tuple(repository_root):
     assert len(report.source_trees) == 1
 ```
 
-- [ ] **Step 2: Run `python -m pytest tests/g5/test_g4_lineage_reconciliation.py -q` and confirm failure because the reconciliation auditor does not exist**
-- [ ] **Step 3: Implement the fail-closed auditor and run it against the current canonical bundle**
-- [ ] **Step 4: Apply the deterministic repair branch selected by the audit, rerun the G4 generator only when required, and update the reconciliation report, handoff, and project state with real full hashes**
-- [ ] **Step 5: Run the focused test, `python -m pytest tests/g4 tests/g5/test_g4_lineage_reconciliation.py -q`, the G4 CLI audit, `python -m compileall -q src scripts`, and `git diff --check`**
-- [ ] **Step 6: Commit and push the G4 reconciliation content**
+- [x] **Step 2: Run `python -m pytest tests/g5/test_g4_lineage_reconciliation.py -q` and confirm failure because the reconciliation auditor does not exist**
+- [x] **Step 3: Implement the fail-closed auditor and run it against the current canonical bundle**
+- [x] **Step 4: Apply the deterministic repair branch selected by the audit, rerun the G4 generator only when required, and update the reconciliation report, handoff, and project state with real full hashes**
+- [x] **Step 5: Run the focused test, `python -m pytest tests/g4 tests/g5/test_g4_lineage_reconciliation.py -q`, the G4 CLI audit, `python -m compileall -q src scripts`, and `git diff --check`**
+- [x] **Step 6: Commit and push the G4 reconciliation content**
 
 ```powershell
 git add scripts/audit_g4_lineage.py tests/g5/test_g4_lineage_reconciliation.py docs/audits/g4-lineage-reconciliation.md HANDOFFG4.md docs/PROJECT_STATE.md outputs/problem2_sr_mappo_v1/g4
@@ -95,7 +95,7 @@ git commit -m "fix: reconcile g4 evidence lineage"
 git push origin codex/problem2-g5-pilot-freeze
 ```
 
-- [ ] **Step 7: Record the pushed content hash and verification in `docs/PROJECT_STATE.md`, commit `docs: record g4 lineage persistence`, push, and verify local HEAD, upstream HEAD, and `git ls-remote` match**
+- [x] **Step 7: Record the pushed content hash and verification in `docs/PROJECT_STATE.md`, commit `docs: record g4 lineage persistence`, push, and verify local HEAD, upstream HEAD, and `git ls-remote` match**
 
 ### Task 2: Freeze the G5 registry, fairness, budget-selection, and partition contracts
 
