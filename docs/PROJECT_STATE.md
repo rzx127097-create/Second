@@ -29,10 +29,11 @@ real deployment evidence.
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G5 Phase 1 registry, fairness, budget-selection, and partition
-  contracts are accepted at M2. G4 onboard-pesticide scarcity activation and
-  diagnostic support-probe counterfactual remain the preceding accepted
-  evidence. Formal jobs, validation tuning, sealed evaluation, and
-  efficacy/superiority claims remain unauthorized.
+  contracts and Phase 2 shared heterogeneous algorithm/checkpoint protocol are
+  accepted at M2. G4 onboard-pesticide scarcity activation and diagnostic
+  support-probe counterfactual remain the preceding accepted evidence. Formal
+  jobs, validation tuning, sealed evaluation, and efficacy/superiority claims
+  remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -388,9 +389,71 @@ Persistence status:
 - no pilot, validation tuning, formal job, sealed-test access, protected
   external write, or Word-file edit occurred.
 
-Phase 1 authorizes only Task 3 shared heterogeneous algorithm protocol work.
-Task 3 must remain test-first and cannot start until this pushed hash record is
-itself committed, pushed, and verified against the remote branch.
+Phase 1 authorized Task 3 shared heterogeneous algorithm protocol work. Its
+implementation and persistence hash are now verified; Task 4 is the next
+authorized work.
+
+## G5 Task 3: Shared Heterogeneous Protocol
+
+Task 3 adds the method-neutral two-role protocol and persistence primitives at
+M2. It does not implement any of the five learning algorithms, run pilots, or
+access validation or sealed scenarios.
+
+Implemented contracts:
+
+- `HeterogeneousAlgorithm` exposes role-local `act`, `observe`, `update`,
+  evaluation mode, state, and diagnostics operations;
+- `ActionResult` binds sampled actions to the exact behavior-time masks, and
+  `RoleBatch` requires that binding so an independently substituted legal mask
+  cannot enter replay;
+- role-local `RoleNetwork`, serializable diagnostics, and `JointReplayBuffer`
+  preserve mask, transition identity, ring position, size, and replay RNG;
+- `g5-training-checkpoint-v1` writes through a same-directory temporary file,
+  reloads and hashes before replacement, retains `<checkpoint>.previous`,
+  captures Python/NumPy/CPU-Torch/CUDA RNG state, and rejects incomplete,
+  extra, malformed, or drifted provenance;
+- G3 `g3-checkpoint-v1` save/load behavior remains unchanged.
+
+Fresh verification:
+
+- TDD RED for the initial APIs: 2 collection errors for the missing protocol
+  modules/functions;
+- review-fix RED: `11 failed, 15 passed` for the three integrity regressions;
+- exact-mask binding RED: one direct-construction bypass test failed before the
+  final fix;
+- G5 Task 3 focused suite: `27 passed`;
+- G3 regression suite: `63 passed`;
+- host full regression: `347 passed in 190.86s`;
+- compileall and `git diff --check`: exit `0`.
+
+Independent review found and required fixes for three integrity issues: exact
+behavior-mask provenance, complete fail-closed checkpoint provenance, and
+replay defensive copies. Two scoped re-reviews marked all three addressed and
+found no new Critical or Important issue. The checkpoint provenance contract
+is exactly `source_commit` (40 lowercase hexadecimal characters),
+`source_bundle_sha256`, `config_hash`, `protocol_hash`, and `ancestry_hash`
+(each 64 lowercase hexadecimal characters).
+
+The isolated `.venv-g5` full repository suite remains unable to collect the
+legacy chapter-4.2 artifact test because the exact G5 lock intentionally omits
+Pillow; the required G5 and G3 suites pass in that environment, and the host
+environment supplies Pillow for the complete regression.
+
+Persistence status:
+
+- implementation commits `7254c1f74aaa55c3113d01d2325588e39a742e38`,
+  `3f5f218ff6cde06d75942c5b7b6c8e2df888e8b5`, and
+  `618afdcff25cb4853507a7cd10f0c8e0bd9699c1`
+  (final subject `fix: close g5 protocol review gaps`) were pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the implementation push, local HEAD, upstream HEAD, and
+  `git ls-remote` all returned
+  `618afdcff25cb4853507a7cd10f0c8e0bd9699c1`;
+- no pilot, validation tuning, formal job, sealed-test access, protected
+  external write, or Word-file edit occurred.
+
+Task 4 on-policy algorithm adaptation is the next authorized work. Task 3's
+protocol and checkpoint interfaces are now the required shared boundary.
 
 ## G5-G7 Written Design Record
 
@@ -966,8 +1029,8 @@ G1.1 bounded remediation persistence record:
 
 ## Pending Tasks
 
-- Execute Task 3 of the persisted G5 plan: define the shared heterogeneous
-  algorithm, transition, replay, and checkpoint protocol with TDD.
+- Execute Task 4 of the persisted G5 plan: adapt SR-MAPPO and implement the
+  same-source MAPPO and role-local PPO/IPPO algorithms with TDD.
 - Implement later G5 algorithms, baselines, orchestration, statistics, smoke,
   pilots, and validation tuning only in the plan's declared order.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
@@ -1037,11 +1100,11 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Execute Task 3 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: define the shared
-heterogeneous algorithm, transition, replay, and checkpoint protocol using
-test-first development. Keep pilots, validation tuning, formal jobs, and
-sealed-test evaluation unauthorized until their later gates.
+Execute Task 4 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: adapt SR-MAPPO and
+implement same-source MAPPO and role-local PPO/IPPO with test-first
+development. Keep pilots, validation tuning, formal jobs, and sealed-test
+evaluation unauthorized until their later gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.

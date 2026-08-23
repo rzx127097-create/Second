@@ -184,7 +184,7 @@ git push origin codex/problem2-g5-pilot-freeze
 - `save_training_checkpoint(path, state, provenance) -> CheckpointRecord` writes to a same-filesystem temporary path, flushes, verifies reload and SHA-256, atomically renames, and retains the previous valid checkpoint.
 - `load_training_checkpoint(path: Path, algorithm_factory: Callable[[], HeterogeneousAlgorithm], expected_hashes: Mapping[str, str]) -> tuple[HeterogeneousAlgorithm, CheckpointRecord]` rejects source/config/protocol/ancestry drift.
 
-- [ ] **Step 1: Write failing protocol-conformance tests with a minimal fake two-role algorithm**
+- [x] **Step 1: Write failing protocol-conformance tests with a minimal fake two-role algorithm**
 
 ```python
 @pytest.mark.parametrize("role,shape", [("uav", (2, 6)), ("vehicle", (1, 5))])
@@ -194,11 +194,11 @@ def test_protocol_never_selects_masked_action(two_role_algorithm, batch, role, s
     assert batch.masks[role][np.arange(shape[0]), result.actions[role]].all()
 ```
 
-- [ ] **Step 2: Write failing checkpoint tests for hash-after-reload, method-specific state, replay/rollout position, all RNG states, atomic replacement, and uninterrupted-versus-resumed next-update equivalence**
-- [ ] **Step 3: Run both focused files and confirm the new protocol/checkpoint APIs are absent**
-- [ ] **Step 4: Implement the protocol, shared networks/replay/diagnostics, and versioned G5 checkpoint adapter while preserving G3 checkpoint loading**
-- [ ] **Step 5: Run focused tests plus `.venv-g5/Scripts/python.exe -m pytest tests/g3 -q` to prove backward compatibility**
-- [ ] **Step 6: Commit `feat: add shared g5 heterogeneous algorithm protocol`, push, and persist the verified hash**
+- [x] **Step 2: Write failing checkpoint tests for hash-after-reload, method-specific state, replay/rollout position, all RNG states, atomic replacement, and uninterrupted-versus-resumed next-update equivalence**
+- [x] **Step 3: Run both focused files and confirm the new protocol/checkpoint APIs are absent**
+- [x] **Step 4: Implement the protocol, shared networks/replay/diagnostics, and versioned G5 checkpoint adapter while preserving G3 checkpoint loading**
+- [x] **Step 5: Run focused tests plus `.venv-g5/Scripts/python.exe -m pytest tests/g3 -q` to prove backward compatibility**
+- [x] **Step 6: Commit `feat: add shared g5 heterogeneous algorithm protocol`, push, and persist the verified hash**
 
 ### Task 4: Adapt SR-MAPPO and implement same-source MAPPO and role-local PPO/IPPO
 
