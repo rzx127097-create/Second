@@ -54,6 +54,15 @@ FAIRNESS_FLAGS = {
     "same_evaluation_budget",
     "no_future_information",
 }
+STABILITY_FLAGS = {
+    "observation_normalization",
+    "return_normalization",
+    "orthogonal_initialization",
+    "layer_normalization",
+    "value_clipping",
+    "huber_value_loss",
+    "learning_rate_decay",
+}
 LINEAGE_BLOBS = {
     "source/locust_rl_selected/agents/sr_mappo_agent.py": "fe3479f0a86f7957f3329650f24da1f561f40759",
     "source/locust_rl_selected/agents/mappo_agent.py": "e73a1be28469afc410ffadca7a48dbf9992e1a94",
@@ -118,6 +127,49 @@ def test_contract_registers_exact_learning_methods_and_problem2_conditions() -> 
     assert contract.conditions == PROBLEM2_CONDITIONS
     assert contract.algorithm_name == "SR-MAPPO"
     assert contract.problem_description == "air_ground_heterogeneous_extension"
+
+
+def test_contract_freezes_exact_on_policy_stability_differences() -> None:
+    contract = load_g5_contract(ROOT)
+
+    assert set(contract.stability_components) == {
+        "sr_mappo_mobile",
+        "mappo_mobile",
+        "ippo_mobile",
+    }
+    assert set(contract.stability_components["sr_mappo_mobile"]) == STABILITY_FLAGS
+    assert all(contract.stability_components["sr_mappo_mobile"].values())
+    assert not any(contract.stability_components["mappo_mobile"].values())
+    assert not any(contract.stability_components["ippo_mobile"].values())
+    with pytest.raises(TypeError):
+        contract.stability_components["mappo_mobile"]["value_clipping"] = True
+
+
+@pytest.mark.parametrize(
+    ("method_id", "flag", "value"),
+    [
+        ("sr_mappo_mobile", "value_clipping", False),
+        ("mappo_mobile", "layer_normalization", True),
+        ("ippo_mobile", "return_normalization", True),
+    ],
+)
+def test_contract_rejects_on_policy_stability_drift(
+    tmp_path: Path,
+    method_id: str,
+    flag: str,
+    value: bool,
+) -> None:
+    root = _copy_contract_root(tmp_path)
+    _mutate_yaml(
+        root,
+        "configs/problem2/g5/methods.yaml",
+        lambda payload: payload["on_policy_stability_components"][method_id].__setitem__(
+            flag, value
+        ),
+    )
+
+    with pytest.raises(G5ContractError, match="stability"):
+        load_g5_contract(root)
 
 
 def test_problem1_lineage_resolves_exact_commit_and_blobs() -> None:

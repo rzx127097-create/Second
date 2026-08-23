@@ -52,6 +52,20 @@ FAIRNESS_FLAGS = (
     "same_evaluation_budget",
     "no_future_information",
 )
+STABILITY_FLAGS = (
+    "observation_normalization",
+    "return_normalization",
+    "orthogonal_initialization",
+    "layer_normalization",
+    "value_clipping",
+    "huber_value_loss",
+    "learning_rate_decay",
+)
+ON_POLICY_METHODS = (
+    "sr_mappo_mobile",
+    "mappo_mobile",
+    "ippo_mobile",
+)
 METRIC_NAMES = (
     "reduction_rate",
     "success_at_0_85",
@@ -126,6 +140,7 @@ class G5Contract:
     problem_description: str
     methods: tuple[str, ...]
     conditions: tuple[str, ...]
+    stability_components: Mapping[str, Mapping[str, bool]]
     partitions: Mapping[str, tuple[int, ...]]
     fairness: Mapping[str, bool]
     primary_budget: str
@@ -394,9 +409,24 @@ def _load_protocol(root: Path) -> tuple[str, str, dict[str, tuple[int, ...]], bo
     return algorithm_name, problem_description, partitions, validation_accessed, sealed_accessed
 
 
-def _load_methods(root: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def _load_methods(
+    root: Path,
+) -> tuple[
+    tuple[str, ...],
+    tuple[str, ...],
+    Mapping[str, Mapping[str, bool]],
+]:
     payload = _load_yaml(root, "configs/problem2/g5/methods.yaml")
-    _header(payload, "G5-METHODS", "methods", {"learning_algorithms", "problem2_conditions"})
+    _header(
+        payload,
+        "G5-METHODS",
+        "methods",
+        {
+            "learning_algorithms",
+            "on_policy_stability_components",
+            "problem2_conditions",
+        },
+    )
     methods: list[str] = []
     for index, raw in enumerate(_sequence(payload["learning_algorithms"], "learning_algorithms")):
         item = _mapping(raw, f"learning_algorithms[{index}]")
@@ -417,7 +447,37 @@ def _load_methods(root: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
         raise G5ContractError("learning algorithms do not match the exact G5 method family")
     if tuple(conditions) != PROBLEM2_CONDITIONS:
         raise G5ContractError("Problem-2 conditions do not match the frozen family")
-    return tuple(methods), tuple(conditions)
+    raw_stability = _mapping(
+        payload["on_policy_stability_components"],
+        "methods.on_policy_stability_components",
+    )
+    _require_keys(
+        raw_stability,
+        set(ON_POLICY_METHODS),
+        "methods.on_policy_stability_components",
+    )
+    stability: dict[str, Mapping[str, bool]] = {}
+    for method_id in ON_POLICY_METHODS:
+        raw_flags = _mapping(
+            raw_stability[method_id],
+            f"methods.on_policy_stability_components.{method_id}",
+        )
+        _require_keys(
+            raw_flags,
+            set(STABILITY_FLAGS),
+            f"methods.on_policy_stability_components.{method_id}",
+        )
+        expected = method_id == "sr_mappo_mobile"
+        flags = {
+            flag: _strict_bool(
+                raw_flags[flag],
+                f"methods.on_policy_stability_components.{method_id}.{flag}",
+                expected,
+            )
+            for flag in STABILITY_FLAGS
+        }
+        stability[method_id] = MappingProxyType(flags)
+    return tuple(methods), tuple(conditions), MappingProxyType(stability)
 
 
 def _canonical_hash(method: str, candidate_id: str, parameters: Mapping[str, Any]) -> str:
@@ -781,7 +841,7 @@ def _validate_dependency_locks(root: Path) -> None:
 def load_g5_contract(root: Path) -> G5Contract:
     repository_root = Path(root).resolve()
     algorithm_name, problem_description, partitions, validation_accessed, sealed_accessed = _load_protocol(repository_root)
-    methods, conditions = _load_methods(repository_root)
+    methods, conditions, stability_components = _load_methods(repository_root)
     tuning_candidates = _load_tuning(repository_root)
     _load_budget(repository_root)
     _load_pilot(repository_root, partitions)
@@ -805,6 +865,7 @@ def load_g5_contract(root: Path) -> G5Contract:
         problem_description=problem_description,
         methods=methods,
         conditions=conditions,
+        stability_components=stability_components,
         partitions=MappingProxyType(dict(partitions)),
         fairness=fairness,
         primary_budget=primary_budget,

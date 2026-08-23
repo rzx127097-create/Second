@@ -22,6 +22,31 @@ learning_algorithms:
     display_name: IQL
     algorithm_family: off_policy_role_local_q
     role_handling: shared_uav_q_separate_vehicle_q
+on_policy_stability_components:
+  sr_mappo_mobile:
+    observation_normalization: true
+    return_normalization: true
+    orthogonal_initialization: true
+    layer_normalization: true
+    value_clipping: true
+    huber_value_loss: true
+    learning_rate_decay: true
+  mappo_mobile:
+    observation_normalization: false
+    return_normalization: false
+    orthogonal_initialization: false
+    layer_normalization: false
+    value_clipping: false
+    huber_value_loss: false
+    learning_rate_decay: false
+  ippo_mobile:
+    observation_normalization: false
+    return_normalization: false
+    orthogonal_initialization: false
+    layer_normalization: false
+    value_clipping: false
+    huber_value_loss: false
+    learning_rate_decay: false
 problem2_conditions:
   - id: sr_mappo_mobile
     condition_type: learned_mobile_support
