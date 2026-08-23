@@ -219,12 +219,12 @@ def test_protocol_never_selects_masked_action(two_role_algorithm, batch, role, s
 - MAPPO uses the same heterogeneous actors, critic, rollout, and budget interface and differs only in the exact stability flags declared by `methods.yaml`.
 - IPPO uses a shared UAV local actor/value pair and a separate vehicle local actor/value pair; neither local value function accepts structured critic-only state.
 
-- [ ] **Step 1: Write failing parameterized tests for both roles, stored-mask log-prob replay, GAE gold values, actor/critic information boundaries, optimizer isolation, deterministic evaluation freeze, and complete checkpoints for all three methods**
-- [ ] **Step 2: Write a configuration-diff test proving SR-MAPPO versus MAPPO differs only in the frozen stability groups**
-- [ ] **Step 3: Run `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_on_policy_algorithms.py -q` and confirm expected failures**
-- [ ] **Step 4: Adapt SR-MAPPO to the protocol without changing its accepted G3 mathematics; implement MAPPO as a same-source configuration adapter**
-- [ ] **Step 5: Implement role-local IPPO values and updates with the same masks, interactions, horizons, and diagnostics**
-- [ ] **Step 6: Run the focused suite, G3 regression, compileall, and diff hygiene**
+- [x] **Step 1: Write failing parameterized tests for both roles, stored-mask log-prob replay, GAE gold values, actor/critic information boundaries, optimizer isolation, deterministic evaluation freeze, and complete checkpoints for all three methods**
+- [x] **Step 2: Write a configuration-diff test proving SR-MAPPO versus MAPPO differs only in the frozen stability groups**
+- [x] **Step 3: Run `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_on_policy_algorithms.py -q` and confirm expected failures**
+- [x] **Step 4: Adapt SR-MAPPO to the protocol without changing its accepted G3 mathematics; implement MAPPO as a same-source configuration adapter**
+- [x] **Step 5: Implement role-local IPPO values and updates with the same masks, interactions, horizons, and diagnostics**
+- [x] **Step 6: Run the focused suite, G3 regression, compileall, and diff hygiene**
 - [ ] **Step 7: Commit `feat: implement g5 on-policy comparison algorithms`, push, and persist the verified hash**
 
 ### Task 5: Implement heterogeneous discrete MADDPG and IQL

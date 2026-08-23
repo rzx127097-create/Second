@@ -145,6 +145,10 @@ class RolloutBatch:
     def records(self) -> list[dict[str, Any]]:
         return self.transitions
 
+    @property
+    def finished(self) -> bool:
+        return self._finished
+
     def __len__(self) -> int:
         return len(self.transitions)
 
@@ -194,6 +198,10 @@ class RolloutBatch:
         truncated = np.asarray(
             [bool(record["truncated"]) for record in self.transitions], dtype=bool
         )
+        valid_sample = np.asarray(
+            [bool(record.get("valid_sample", record.get("valid", True))) for record in self.transitions],
+            dtype=bool,
+        )
         next_values, last_value = self._next_values()
         self.advantages, self.returns = compute_gae(
             rewards,
@@ -204,6 +212,7 @@ class RolloutBatch:
             next_values,
             gamma,
             gae_lambda,
+            valid_sample,
         )
         for index, record in enumerate(self.transitions):
             record["advantage"] = np.float32(self.advantages[index])
@@ -253,3 +262,40 @@ class RolloutBatch:
             team_valid = bool(record.get("valid_sample", record.get("valid", True)))
             result.append(actor_valid and team_valid)
         return np.asarray(result, dtype=bool)
+
+    def state_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": "g5-central-rollout-v1",
+            "transitions": copy.deepcopy(self.transitions),
+            "last_value": self.last_value,
+            "advantages": self.advantages.copy(),
+            "returns": self.returns.copy(),
+            "normalized_advantages": self.normalized_advantages.copy(),
+            "finished": self._finished,
+        }
+
+    @classmethod
+    def from_state_dict(cls, state: Mapping[str, Any]) -> "RolloutBatch":
+        if not isinstance(state, Mapping) or state.get("schema_version") != "g5-central-rollout-v1":
+            raise ValueError("unsupported centralized rollout schema")
+        batch = cls(last_value=state.get("last_value"))
+        transitions = state.get("transitions")
+        if not isinstance(transitions, list):
+            raise ValueError("centralized rollout transitions must be a list")
+        for transition in transitions:
+            batch.add(transition)
+        batch.advantages = np.asarray(state.get("advantages"), dtype=np.float32).copy()
+        batch.returns = np.asarray(state.get("returns"), dtype=np.float32).copy()
+        batch.normalized_advantages = np.asarray(
+            state.get("normalized_advantages"), dtype=np.float32
+        ).copy()
+        batch._finished = bool(state.get("finished", False))
+        expected = len(batch.transitions)
+        for name, values in (
+            ("advantages", batch.advantages),
+            ("returns", batch.returns),
+            ("normalized_advantages", batch.normalized_advantages),
+        ):
+            if values.size not in (0, expected):
+                raise ValueError(f"centralized rollout {name} length does not match transitions")
+        return batch

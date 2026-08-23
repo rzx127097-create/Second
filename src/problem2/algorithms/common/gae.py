@@ -23,6 +23,7 @@ def compute_gae(
     next_values: Sequence[float] | np.ndarray | None,
     gamma: float,
     gae_lambda: float,
+    valid_sample: Sequence[bool] | np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute team GAE using explicit per-transition next-state values.
 
@@ -44,6 +45,12 @@ def compute_gae(
         raise ValueError("terminated must match rewards length")
     if len(truncated_array) != len(rewards_array):
         raise ValueError("truncated must match rewards length")
+    if valid_sample is None:
+        valid_array = np.ones(len(rewards_array), dtype=bool)
+    else:
+        valid_array = np.asarray(valid_sample)
+        if valid_array.dtype != np.bool_ or valid_array.ndim != 1 or len(valid_array) != len(rewards_array):
+            raise ValueError("valid_sample must be a one-dimensional boolean vector matching rewards")
 
     gamma = float(gamma)
     gae_lambda = float(gae_lambda)
@@ -76,6 +83,9 @@ def compute_gae(
     gae = 0.0
     trace_done = terminated_array | truncated_array
     for index in range(steps - 1, -1, -1):
+        if not valid_array[index]:
+            gae = 0.0
+            continue
         bootstrap = 0.0 if terminated_array[index] else 1.0
         delta = (
             rewards_array[index]
@@ -87,4 +97,5 @@ def compute_gae(
         advantages[index] = gae
 
     returns = advantages + values_array
+    returns[~valid_array] = 0.0
     return advantages.astype(np.float32), returns.astype(np.float32)

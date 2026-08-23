@@ -133,6 +133,53 @@ def test_trainer_updates_roles_with_isolated_optimizers_and_counts() -> None:
     assert trainer.learning_rates()["uav"] < 1e-3
 
 
+def test_return_normalized_value_clipping_keeps_critic_gradient_in_one_domain() -> None:
+    torch = pytest.importorskip("torch")
+    torch.manual_seed(0)
+    algorithm = _algorithm(hidden_dim=128)
+    trainer = SRMAPPOTrainer(algorithm, learning_rate=1e-3)
+    batch = _batch()
+    for step, record in enumerate(batch.transitions):
+        critic_state = np.full(185, step * 0.1, dtype=np.float32)
+        next_critic_state = np.full(185, (step + 1) * 0.1, dtype=np.float32)
+        record["critic_state"] = critic_state
+        record["value"] = float(algorithm.value(critic_state).detach().cpu())
+        record["next_value"] = float(
+            algorithm.value(next_critic_state).detach().cpu()
+        )
+    batch.finish(gamma=0.99, gae_lambda=0.95)
+    before = [parameter.detach().clone() for parameter in algorithm.critic.parameters()]
+
+    loss, valid_count = trainer._update_critic(batch)
+
+    assert valid_count == 3
+    assert np.isfinite(loss)
+    assert any(
+        not torch.equal(left, right.detach())
+        for left, right in zip(before, algorithm.critic.parameters())
+    )
+
+
+def test_trainer_update_counts_follow_valid_minibatches_and_epochs() -> None:
+    torch = pytest.importorskip("torch")
+    torch.manual_seed(1234)
+    algorithm = _algorithm()
+    trainer = SRMAPPOTrainer(
+        algorithm,
+        learning_rate=1e-3,
+        minibatch_size=2,
+    )
+
+    metrics = trainer.update(_batch(), epochs=2)
+
+    assert metrics["critic_valid_samples"] == 3
+    assert metrics["uav_valid_samples"] == 5
+    assert metrics["vehicle_valid_samples"] == 3
+    assert metrics["critic_updates"] == 4
+    assert metrics["uav_actor_updates"] == 6
+    assert metrics["vehicle_actor_updates"] == 4
+
+
 def test_trainer_excludes_team_invalid_samples_from_all_updates() -> None:
     torch = pytest.importorskip("torch")
     torch.manual_seed(1234)
