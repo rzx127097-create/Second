@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 ## Final Goal
 
@@ -30,10 +30,10 @@ real deployment evidence.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G4 onboard-pesticide scarcity activation and diagnostic
   support-probe counterfactual is accepted at M2. The written G5-G7 gate
-  specifications and the executable G5 plan are persisted; G5 implementation
-  has not started. The first implementation task is the blocking G4 lineage
-  reconciliation. Formal jobs, sealed evaluation, and efficacy/superiority
-  claims remain unauthorized.
+  specifications and the executable G5 plan are persisted. G5 Phase 0 G4
+  lineage reconciliation is accepted and pushed; Task 2 is the next
+  implementation entry. Formal jobs, sealed evaluation, and
+  efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -313,6 +313,17 @@ access occurred.
 
 The phase content commit and its remote parity are recorded in the required
 follow-up persistence commit before Task 2 begins.
+
+Persistence verification for this phase:
+
+- Content commit: `cc3dc9115e6d963b01834ec17d7cd8915084ff3f`
+  (`fix: reconcile g4 evidence lineage`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`.
+- `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
+  `git ls-remote origin refs/heads/codex/problem2-g5-pilot-freeze` all returned
+  `cc3dc9115e6d963b01834ec17d7cd8915084ff3f` before this persistence commit.
+- Phase status: accepted at M2 provenance consistency; no G5 pilot,
+  validation, formal job, or sealed-test access occurred.
 
 ## G5-G7 Written Design Record
 
@@ -955,10 +966,11 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Execute Task 1 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: audit and reconcile the
-accepted G4 commit/tree/source-bundle/artifact lineage, commit and push the
-repair, and record its verified remote hash before any G5 pilot work begins.
+Execute Task 2 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: freeze the G5 registry,
+fairness, budget-selection, and partition contracts. Keep formal jobs,
+validation tuning, and sealed-test evaluation unauthorized until the required
+contracts and their pushed verification records exist.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
