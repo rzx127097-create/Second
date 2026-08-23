@@ -28,13 +28,13 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Phase 1 registry, fairness, budget-selection, and partition
-  contracts and Phase 2 shared heterogeneous algorithm/checkpoint protocol are
-  accepted at M2. The Task-4 prerequisite correction now also freezes the exact
-  on-policy stability-component differences. G4 onboard-pesticide scarcity
-  activation and diagnostic support-probe counterfactual remain the preceding
-  accepted evidence. Formal jobs, validation tuning, sealed evaluation, and
-  efficacy/superiority claims remain unauthorized.
+- Current gate: G5 Tasks 1-4 are accepted at M2. The registry, fairness,
+  budget-selection, partition, shared heterogeneous protocol/checkpoint, exact
+  on-policy stability-component, and SR-MAPPO/MAPPO/PPO-IPPO implementation
+  boundaries are persisted. G4 onboard-pesticide scarcity activation and
+  diagnostic support-probe counterfactual remain the preceding accepted
+  mechanism evidence. No G5 pilot has run. Formal jobs, validation tuning,
+  sealed evaluation, and efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -455,8 +455,9 @@ Persistence status:
 - no pilot, validation tuning, formal job, sealed-test access, protected
   external write, or Word-file edit occurred.
 
-Task 4 on-policy algorithm adaptation is the next authorized work. Task 3's
-protocol and checkpoint interfaces are now the required shared boundary.
+Task 3's protocol and checkpoint interfaces remain the required shared
+boundary. Task 4 consumed that boundary as recorded below; Task 5 is the
+current next authorized work.
 
 ## G5 Task 4 Prerequisite: On-Policy Stability Contract Correction
 
@@ -493,7 +494,79 @@ Persistence status:
 - no pilot, validation tuning, formal job, sealed-test access, protected
   external write, or Word-file edit occurred.
 
-Task 4 on-policy algorithm implementation remains the next authorized work.
+Task 4 on-policy algorithm implementation is recorded below.
+
+## G5 Task 4: On-Policy Comparison Algorithms
+
+Task 4 implements the protocol-conforming on-policy comparison family at M2:
+`sr_mappo_mobile`, `mappo_mobile`, and `ippo_mobile`. It does not run a pilot,
+access validation or sealed scenarios, or support an algorithm-ranking claim.
+
+Implemented and verified boundaries:
+
+- `build_algorithm` constructs every frozen `c01-c04` candidate for all three
+  methods and rejects unregistered methods or candidates;
+- SR-MAPPO retains shared UAV and separate vehicle actors, a centralized team
+  critic, GAE/PPO, and all frozen stability groups; same-source MAPPO reuses the
+  same implementation and differs only through the registered stability flags;
+- PPO uses the `ippo_mobile` implementation identity with shared UAV and
+  separate vehicle role-local actor/value pairs and no centralized critic
+  input;
+- `OnPolicyEnvelope` is the sole algorithm training-ingest boundary. It binds
+  exact behavior actions, masks, replayed log probabilities, team reward,
+  team/role validity, identities, candidate-slot mapping, normalization
+  versions, and centralized or role-local value inputs;
+- invalid team or role-agent samples cut the matching GAE trace, produce
+  neutral targets, and cannot contaminate preceding valid targets;
+- frozen clip radii, role-valid advantage populations, shuffled minibatches,
+  sample-weighted metrics, deterministic evaluation freeze, and exact update
+  counts are executable and tested;
+- G5 method state is validated completely before live mutation, includes
+  networks, optimizers, schedulers, normalizers, pending envelopes, counters,
+  trainer RNG, and frozen configuration, and reproduces the next update after
+  checkpoint recovery;
+- non-finite envelope data, losses, or gradients fail closed, with transactional
+  rollback protecting parameters and optimizer state;
+- the G3 return-normalized critic regression now compares current predictions,
+  old values, and return targets in one normalized domain while keeping physical
+  critic output and GAE semantics unchanged.
+
+TDD and review evidence:
+
+- review-fix RED progressed through `15 failed, 23 passed`, a missing-envelope
+  collection error, targeted resume/rollback failures, `49 failed, 33 passed`,
+  and `10 failed, 101 passed` before the corresponding fixes;
+- three scoped fix rounds closed behavior binding, frozen candidate/clip
+  execution, fail-closed resume, finite rollback, metric aggregation,
+  team-valid GAE, and type-exact checkpoint findings;
+- the final independent scoped review returned `Ready`, with no open Critical
+  or Important finding.
+
+Fresh controller verification on the pushed content commit:
+
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5 -q`:
+  `165 passed in 19.72s`;
+- `.venv-g5/Scripts/python.exe -m pytest tests/g3 -q`:
+  `65 passed in 22.72s`;
+- host `python -m pytest -q`: `464 passed in 140.02s`;
+- `.venv-g5/Scripts/python.exe -m compileall -q src scripts`: exit `0`;
+- G5 contract audit: `status=pass`, all 17 fairness flags true, validation and
+  sealed access false, and actual sealed unlock count `0`;
+- `git diff --check`: exit `0`.
+
+Persistence status:
+
+- content commit `0593f17edad38a892115a375c1ac836cf8081e19`
+  (`feat: implement g5 on-policy comparison algorithms`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the content push, local HEAD, upstream HEAD, and `git ls-remote` all
+  returned `0593f17edad38a892115a375c1ac836cf8081e19`;
+- the user-owned `_tmp_docx_assets/` path remains untracked and untouched; no
+  pilot, validation tuning, formal job, sealed-test access, protected external
+  write, or Word-file edit occurred.
+
+Task 5 heterogeneous discrete MADDPG and IQL implementation is the next
+authorized work. G5 as a whole remains open at M2.
 
 ## G5-G7 Written Design Record
 
@@ -1066,11 +1139,14 @@ G1.1 bounded remediation persistence record:
 - Reconciled the G4 evidence lineage, then froze and verified the G5 Phase 1
   method, partition, fairness, tuning, budget, metric, statistics, exclusion,
   checkpoint-selection, dependency, and Problem-1 lineage contracts.
+- Implemented and independently reviewed the G5 Task 4 SR-MAPPO, same-source
+  MAPPO, and role-local PPO/IPPO comparison algorithms with behavior-bound
+  rollout, exact checkpoint resume, and validity-aware GAE contracts.
 
 ## Pending Tasks
 
-- Execute Task 4 of the persisted G5 plan: adapt SR-MAPPO and implement the
-  same-source MAPPO and role-local PPO/IPPO algorithms with TDD.
+- Execute Task 5 of the persisted G5 plan: implement heterogeneous discrete
+  MADDPG and IQL with TDD against the shared protocol.
 - Implement later G5 algorithms, baselines, orchestration, statistics, smoke,
   pilots, and validation tuning only in the plan's declared order.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
@@ -1088,10 +1164,11 @@ G1.1 bounded remediation persistence record:
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
   canonical smoke and audit artifacts are recorded above. G4 is accepted at
   M2 as diagnostic support-probe mechanism evidence for onboard UAV pesticide
-  scarcity. Its long-hash/provenance narrative discrepancy is reconciled, and
-  the G5 Phase 1 experiment contracts, shared algorithm protocol, and exact
-  on-policy stability differences are frozen; Task 4 on-policy algorithm
-  implementation is the next authorized work.
+  scarcity. Its long-hash/provenance narrative discrepancy is reconciled. The
+  G5 experiment contracts, shared algorithm protocol, exact on-policy stability
+  differences, and Task 4 SR-MAPPO/MAPPO/PPO-IPPO implementations are frozen;
+  Task 5 heterogeneous discrete MADDPG/IQL implementation is the next
+  authorized work.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -1141,11 +1218,11 @@ G1.1 bounded remediation persistence record:
 
 ## Next Step
 
-Execute Task 4 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: adapt SR-MAPPO and
-implement same-source MAPPO and role-local PPO/IPPO with test-first
-development. Keep pilots, validation tuning, formal jobs, and sealed-test
-evaluation unauthorized until their later gates.
+Execute Task 5 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: implement
+heterogeneous discrete MADDPG and IQL with test-first development against the
+accepted shared protocol. Keep pilots, validation tuning, formal jobs, and
+sealed-test evaluation unauthorized until their later gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.

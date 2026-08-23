@@ -225,7 +225,7 @@ def test_protocol_never_selects_masked_action(two_role_algorithm, batch, role, s
 - [x] **Step 4: Adapt SR-MAPPO to the protocol without changing its accepted G3 mathematics; implement MAPPO as a same-source configuration adapter**
 - [x] **Step 5: Implement role-local IPPO values and updates with the same masks, interactions, horizons, and diagnostics**
 - [x] **Step 6: Run the focused suite, G3 regression, compileall, and diff hygiene**
-- [ ] **Step 7: Commit `feat: implement g5 on-policy comparison algorithms`, push, and persist the verified hash**
+- [x] **Step 7: Commit `feat: implement g5 on-policy comparison algorithms`, push, and persist the verified hash**
 
 ### Task 5: Implement heterogeneous discrete MADDPG and IQL
 
