@@ -35,7 +35,11 @@ class JointReplayBuffer:
         self.size = min(self.size + 1, self.capacity)
 
     def rows(self) -> list[RoleBatch]:
-        return [row for row in self._data if row is not None]
+        return [
+            RoleBatch.from_state_dict(row.state_dict())
+            for row in self._data
+            if row is not None
+        ]
 
     def sample(self, count: int) -> list[RoleBatch]:
         if isinstance(count, bool) or not isinstance(count, int) or count <= 0 or count > self.size:

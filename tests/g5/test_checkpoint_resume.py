@@ -57,7 +57,8 @@ class ResumableTwoRoleAlgorithm(HeterogeneousAlgorithm):
 
 def _provenance(**overrides: str) -> dict[str, str]:
     values = {
-        "source_hash": "a" * 64,
+        "source_commit": "a" * 40,
+        "source_bundle_sha256": "b" * 64,
         "config_hash": "b" * 64,
         "protocol_hash": "c" * 64,
         "ancestry_hash": "d" * 64,
@@ -97,13 +98,44 @@ def test_checkpoint_hash_is_calculated_after_verified_reload_and_full_state_is_p
     assert restored.state_dict() == algorithm.state_dict()
 
 
-@pytest.mark.parametrize("key", ["source_hash", "config_hash", "protocol_hash", "ancestry_hash"])
+@pytest.mark.parametrize("key", ["source_commit", "source_bundle_sha256", "config_hash", "protocol_hash", "ancestry_hash"])
 def test_checkpoint_rejects_hash_drift(tmp_path: Path, key: str) -> None:
     path = tmp_path / "training.pt"
     save_training_checkpoint(path, _state(_factory()), _provenance())
     expected = _provenance(**{key: "e" * 64})
 
     with pytest.raises(ValueError, match=key):
+        load_training_checkpoint(path, _factory, expected)
+
+
+@pytest.mark.parametrize(
+    "provenance",
+    [
+        {key: value for key, value in _provenance().items() if key != "config_hash"},
+        {**_provenance(), "unexpected_hash": "e" * 64},
+        _provenance(source_commit="A" * 40),
+        _provenance(source_bundle_sha256="z" * 64),
+    ],
+)
+def test_checkpoint_rejects_non_exact_provenance_schema(tmp_path: Path, provenance: dict[str, str]) -> None:
+    with pytest.raises(ValueError, match="provenance"):
+        save_training_checkpoint(tmp_path / "training.pt", _state(_factory()), provenance)
+
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        {},
+        {"source_commit": "a" * 40},
+        {**_provenance(), "unexpected_hash": "e" * 64},
+        _provenance(protocol_hash="UPPER" + "c" * 59),
+    ],
+)
+def test_checkpoint_rejects_non_exact_expected_hash_schema(tmp_path: Path, expected: dict[str, str]) -> None:
+    path = tmp_path / "training.pt"
+    save_training_checkpoint(path, _state(_factory()), _provenance())
+
+    with pytest.raises(ValueError, match="expected_hashes"):
         load_training_checkpoint(path, _factory, expected)
 
 

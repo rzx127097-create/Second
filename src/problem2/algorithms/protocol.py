@@ -69,6 +69,7 @@ class RoleBatch:
     truncated: bool
     scenario_id: str
     transition_id: str
+    action_result: ActionResult | None = None
 
     def __post_init__(self) -> None:
         observations = _role_mapping(self.observations, "observations")
@@ -77,6 +78,9 @@ class RoleBatch:
         rewards = _role_mapping(self.rewards, "rewards")
         next_observations = _role_mapping(self.next_observations, "next_observations")
         next_masks = _role_mapping(self.next_masks, "next_masks")
+        behavior = self.action_result
+        if behavior is not None and not isinstance(behavior, ActionResult):
+            raise TypeError("action_result must be an ActionResult")
         for role in ROLES:
             if observations[role].ndim != 2 or next_observations[role].ndim != 2:
                 raise ValueError(f"{role} observations must be two-dimensional role-local arrays")
@@ -97,6 +101,11 @@ class RoleBatch:
                 raise ValueError(f"{role} actions contain an illegal behavior action")
             if rewards[role].shape != actions[role].shape or not np.isfinite(rewards[role]).all():
                 raise ValueError(f"{role} rewards must be finite and align with actions")
+            if behavior is not None and (
+                not np.array_equal(actions[role], behavior.actions[role])
+                or not np.array_equal(masks[role], behavior.masks[role])
+            ):
+                raise ValueError(f"{role} actions and masks must exactly match ActionResult")
         if not isinstance(self.terminated, (bool, np.bool_)) or not isinstance(self.truncated, (bool, np.bool_)):
             raise ValueError("terminated and truncated must be booleans")
         if self.terminated and self.truncated:
@@ -105,15 +114,53 @@ class RoleBatch:
         _identifier(self.transition_id, "transition_id")
         for name, value in (("observations", observations), ("masks", masks), ("actions", actions), ("rewards", rewards), ("next_observations", next_observations), ("next_masks", next_masks)):
             object.__setattr__(self, name, value)
+        if behavior is not None:
+            object.__setattr__(self, "action_result", ActionResult(actions=actions, masks=masks))
+
+    @classmethod
+    def from_action_result(
+        cls,
+        action_result: ActionResult,
+        *,
+        observations: Mapping[str, Any],
+        rewards: Mapping[str, Any],
+        next_observations: Mapping[str, Any],
+        next_masks: Mapping[str, Any],
+        terminated: bool,
+        truncated: bool,
+        scenario_id: str,
+        transition_id: str,
+    ) -> "RoleBatch":
+        """Build a transition from the exact behavior output of ``act``."""
+
+        if not isinstance(action_result, ActionResult):
+            raise TypeError("action_result must be an ActionResult")
+        return cls(
+            observations=observations,
+            masks=action_result.masks,
+            actions=action_result.actions,
+            rewards=rewards,
+            next_observations=next_observations,
+            next_masks=next_masks,
+            terminated=terminated,
+            truncated=truncated,
+            scenario_id=scenario_id,
+            transition_id=transition_id,
+            action_result=action_result,
+        )
 
     def state_dict(self) -> dict[str, Any]:
-        return {"schema_version": ROLE_BATCH_SCHEMA_VERSION, "observations": deepcopy(self.observations), "masks": deepcopy(self.masks), "actions": deepcopy(self.actions), "rewards": deepcopy(self.rewards), "next_observations": deepcopy(self.next_observations), "next_masks": deepcopy(self.next_masks), "terminated": bool(self.terminated), "truncated": bool(self.truncated), "scenario_id": self.scenario_id, "transition_id": self.transition_id}
+        return {"schema_version": ROLE_BATCH_SCHEMA_VERSION, "observations": deepcopy(self.observations), "masks": deepcopy(self.masks), "actions": deepcopy(self.actions), "rewards": deepcopy(self.rewards), "next_observations": deepcopy(self.next_observations), "next_masks": deepcopy(self.next_masks), "terminated": bool(self.terminated), "truncated": bool(self.truncated), "scenario_id": self.scenario_id, "transition_id": self.transition_id, "behavior_action_result": None if self.action_result is None else {"actions": deepcopy(self.action_result.actions), "masks": deepcopy(self.action_result.masks)}}
 
     @classmethod
     def from_state_dict(cls, state: Mapping[str, Any]) -> "RoleBatch":
         if not isinstance(state, Mapping) or state.get("schema_version") != ROLE_BATCH_SCHEMA_VERSION:
             raise ValueError("unsupported role batch schema")
-        return cls(**{key: state[key] for key in ("observations", "masks", "actions", "rewards", "next_observations", "next_masks", "terminated", "truncated", "scenario_id", "transition_id")})
+        fields = {key: state[key] for key in ("observations", "masks", "actions", "rewards", "next_observations", "next_masks", "terminated", "truncated", "scenario_id", "transition_id")}
+        behavior = state.get("behavior_action_result")
+        if behavior is not None:
+            fields["action_result"] = ActionResult(**behavior)
+        return cls(**fields)
 
 
 class HeterogeneousAlgorithm(ABC):

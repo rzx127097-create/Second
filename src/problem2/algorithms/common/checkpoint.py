@@ -7,6 +7,7 @@ import random
 import tempfile
 import copy
 import hashlib
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,13 @@ import torch
 
 CHECKPOINT_FORMAT_VERSION = "g3-checkpoint-v1"
 TRAINING_CHECKPOINT_FORMAT_VERSION = "g5-training-checkpoint-v1"
+TRAINING_PROVENANCE_FIELDS = {
+    "source_commit": 40,
+    "source_bundle_sha256": 64,
+    "config_hash": 64,
+    "protocol_hash": 64,
+    "ancestry_hash": 64,
+}
 
 
 @dataclass(frozen=True)
@@ -57,14 +65,34 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _validate_training_provenance(
+    provenance: Mapping[str, Any], *, label: str
+) -> dict[str, str]:
+    if not isinstance(provenance, Mapping):
+        raise ValueError(f"{label} must be a mapping")
+    if set(provenance) != set(TRAINING_PROVENANCE_FIELDS):
+        raise ValueError(
+            f"{label} must contain exactly: "
+            + ", ".join(sorted(TRAINING_PROVENANCE_FIELDS))
+        )
+    normalized: dict[str, str] = {}
+    for key, length in TRAINING_PROVENANCE_FIELDS.items():
+        value = provenance[key]
+        if not isinstance(value, str) or re.fullmatch(rf"[0-9a-f]{{{length}}}", value) is None:
+            raise ValueError(f"{label}.{key} must be a lowercase {length}-character hexadecimal hash")
+        normalized[key] = value
+    return normalized
+
+
 def _load_training_payload(path: Path) -> dict[str, Any]:
     payload = torch.load(path, map_location="cpu", weights_only=False)
     if not isinstance(payload, dict) or payload.get("format_version") != TRAINING_CHECKPOINT_FORMAT_VERSION:
         raise ValueError("unsupported G5 training checkpoint format")
     if not isinstance(payload.get("state"), dict):
         raise ValueError("training checkpoint state must be a mapping")
-    if not isinstance(payload.get("provenance"), dict):
-        raise ValueError("training checkpoint provenance must be a mapping")
+    payload["provenance"] = _validate_training_provenance(
+        payload.get("provenance"), label="training checkpoint provenance"
+    )
     if not isinstance(payload["state"].get("rng"), dict):
         raise ValueError("training checkpoint RNG state is missing")
     return payload
@@ -85,14 +113,14 @@ def save_training_checkpoint(path: Path, state: Mapping[str, Any], provenance: M
     """Persist a verified G5 checkpoint and retain ``<path>.previous`` on rotation."""
 
     destination = Path(path)
-    if not isinstance(state, Mapping) or not isinstance(provenance, Mapping):
-        raise TypeError("training checkpoint state and provenance must be mappings")
+    if not isinstance(state, Mapping):
+        raise TypeError("training checkpoint state must be a mapping")
     if "algorithm" not in state or not isinstance(state["algorithm"], Mapping):
         raise ValueError("training checkpoint state must include algorithm state")
     destination.parent.mkdir(parents=True, exist_ok=True)
     stored_state = copy.deepcopy(dict(state))
     stored_state["rng"] = _rng_state()
-    payload = {"format_version": TRAINING_CHECKPOINT_FORMAT_VERSION, "state": stored_state, "provenance": copy.deepcopy(dict(provenance))}
+    payload = {"format_version": TRAINING_CHECKPOINT_FORMAT_VERSION, "state": stored_state, "provenance": _validate_training_provenance(provenance, label="provenance")}
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent)
     temporary = Path(temporary_name)
     previous = Path(f"{destination}.previous")
@@ -122,9 +150,8 @@ def load_training_checkpoint(path: Path, algorithm_factory: Callable[[], Any], e
 
     source = Path(path)
     payload = _load_training_payload(source)
-    if not isinstance(expected_hashes, Mapping):
-        raise TypeError("expected_hashes must be a mapping")
-    mismatches = [key for key, expected in expected_hashes.items() if payload["provenance"].get(key) != expected]
+    expected = _validate_training_provenance(expected_hashes, label="expected_hashes")
+    mismatches = [key for key, value in expected.items() if payload["provenance"][key] != value]
     if mismatches:
         raise ValueError("training checkpoint provenance mismatch: " + ", ".join(sorted(mismatches)))
     algorithm = algorithm_factory()
@@ -209,6 +236,7 @@ def load_checkpoint(
 __all__ = [
     "CHECKPOINT_FORMAT_VERSION",
     "TRAINING_CHECKPOINT_FORMAT_VERSION",
+    "TRAINING_PROVENANCE_FIELDS",
     "CheckpointRecord",
     "load_checkpoint",
     "load_training_checkpoint",

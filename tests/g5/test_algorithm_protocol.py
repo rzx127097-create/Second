@@ -124,6 +124,46 @@ def test_role_batch_preserves_exact_behavior_data_and_rejects_masked_actions(bat
         )
 
 
+def test_role_batch_rejects_a_different_legal_mask_than_its_action_result(batch) -> None:
+    behavior = ActionResult(actions=batch.actions, masks=batch.masks)
+    different_but_legal = copy.deepcopy(batch.masks)
+    different_but_legal["uav"][0] = [True, True, False]
+
+    with pytest.raises(ValueError, match="ActionResult"):
+        RoleBatch(
+            observations=batch.observations,
+            masks=different_but_legal,
+            actions=batch.actions,
+            rewards=batch.rewards,
+            next_observations=batch.next_observations,
+            next_masks=batch.next_masks,
+            terminated=False,
+            truncated=False,
+            scenario_id=batch.scenario_id,
+            transition_id="development-10000:mask-drift",
+            action_result=behavior,
+        )
+
+
+def test_role_batch_from_action_result_retains_the_exact_behavior_mask(batch) -> None:
+    behavior = ActionResult(actions=batch.actions, masks=batch.masks)
+
+    transition = RoleBatch.from_action_result(
+        behavior,
+        observations=batch.observations,
+        rewards=batch.rewards,
+        next_observations=batch.next_observations,
+        next_masks=batch.next_masks,
+        terminated=False,
+        truncated=False,
+        scenario_id=batch.scenario_id,
+        transition_id="development-10000:from-result",
+    )
+
+    assert transition.actions["uav"].tolist() == behavior.actions["uav"].tolist()
+    assert transition.masks["uav"].tolist() == behavior.masks["uav"].tolist()
+
+
 def test_protocol_exposes_required_two_role_operations(two_role_algorithm, batch) -> None:
     two_role_algorithm.observe(batch)
     two_role_algorithm.set_evaluation(True)
@@ -155,6 +195,16 @@ def test_replay_state_contains_ring_position_size_rng_schema_and_independent_row
     assert [row.transition_id for row in restored.sample(2)] == [
         row.transition_id for row in replay.sample(2)
     ]
+
+
+def test_replay_rows_do_not_expose_internal_transition_arrays(batch) -> None:
+    replay = JointReplayBuffer(capacity=1, seed=13)
+    replay.append(batch)
+
+    leaked = replay.rows()[0]
+    leaked.masks["uav"][0, 0] = False
+
+    assert replay.rows()[0].masks["uav"][0, 0]
 
 
 def test_shared_role_network_accepts_role_local_observations_only() -> None:
