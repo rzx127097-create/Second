@@ -5,7 +5,32 @@ from torch import Tensor
 from torch.distributions import Categorical
 
 
-def masked_categorical(logits: Tensor, mask: Tensor) -> Categorical:
+class MaskedCategorical(Categorical):
+    """Categorical distribution that rejects replay against a forbidden action."""
+
+    def __init__(self, *, logits: Tensor, behavior_mask: Tensor) -> None:
+        self.behavior_mask = behavior_mask
+        super().__init__(logits=logits)
+
+    def log_prob(self, value: Tensor) -> Tensor:
+        actions = torch.as_tensor(value, device=self.behavior_mask.device)
+        if actions.shape != self.behavior_mask.shape[:-1]:
+            raise ValueError("action shape does not match behavior mask")
+        if torch.is_floating_point(actions):
+            if not torch.equal(actions, actions.to(dtype=torch.long)):
+                raise ValueError("actions must be integer indices")
+        elif actions.dtype == torch.bool:
+            raise ValueError("actions must be integer indices")
+        actions = actions.to(dtype=torch.long)
+        if (actions < 0).any() or (actions >= self.behavior_mask.shape[-1]).any():
+            raise ValueError("action is outside the behavior mask")
+        allowed = self.behavior_mask.gather(-1, actions.unsqueeze(-1)).squeeze(-1)
+        if not allowed.all():
+            raise ValueError("action selects a masked behavior action")
+        return super().log_prob(actions)
+
+
+def masked_categorical(logits: Tensor, mask: Tensor) -> MaskedCategorical:
     """Build a categorical distribution from the exact behavior-time mask."""
 
     logits = torch.as_tensor(logits)
@@ -23,4 +48,7 @@ def masked_categorical(logits: Tensor, mask: Tensor) -> Categorical:
         raise ValueError("each row must have at least one valid action")
 
     masked_logits = logits.masked_fill(~mask, float("-inf"))
-    return Categorical(logits=masked_logits)
+    return MaskedCategorical(logits=masked_logits, behavior_mask=mask)
+
+
+__all__ = ["MaskedCategorical", "masked_categorical"]
