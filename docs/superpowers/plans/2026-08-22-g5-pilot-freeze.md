@@ -156,7 +156,7 @@ $g5AuditTemp = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::
 .venv-g5/Scripts/python.exe -m compileall -q src scripts
 git diff --check
 ```
-- [ ] **Step 8: Commit, push, record the pushed hash in project state, and push the persistence record before algorithm implementation begins**
+- [x] **Step 8: Commit, push, record the pushed hash in project state, and push the persistence record before algorithm implementation begins**
 
 ```powershell
 git add requirements-g5.lock pyproject.toml .gitignore src/problem2/experiments/g5_contract.py configs/problem2/g5 docs/evidence/g5 docs/evidence/g1/scenario_seed_manifest.yaml tests/g5/test_g5_contracts.py scripts/audit_g5_contracts.py docs/PROJECT_STATE.md

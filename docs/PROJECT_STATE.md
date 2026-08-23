@@ -28,11 +28,10 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G4 onboard-pesticide scarcity activation and diagnostic
-  support-probe counterfactual is accepted at M2. The written G5-G7 gate
-  specifications and the executable G5 plan are persisted. G5 Phase 0 G4
-  lineage reconciliation is accepted and pushed; Task 2 is the next
-  implementation entry. Formal jobs, sealed evaluation, and
+- Current gate: G5 Phase 1 registry, fairness, budget-selection, and partition
+  contracts are accepted at M2. G4 onboard-pesticide scarcity activation and
+  diagnostic support-probe counterfactual remain the preceding accepted
+  evidence. Formal jobs, validation tuning, sealed evaluation, and
   efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
@@ -324,6 +323,74 @@ Persistence verification for this phase:
   `cc3dc9115e6d963b01834ec17d7cd8915084ff3f` before this persistence commit.
 - Phase status: accepted at M2 provenance consistency; no G5 pilot,
   validation, formal job, or sealed-test access occurred.
+
+## G5 Phase 1: Experiment Contract Freeze
+
+G5 Phase 1 freezes the registries and fail-closed loaders needed before any
+algorithm implementation or pilot execution. It does not run a pilot and does
+not raise maturity beyond `M2`.
+
+Frozen contract boundaries:
+
+- learning algorithms are exactly `sr_mappo_mobile`, `mappo_mobile`,
+  `ippo_mobile`, `maddpg_mobile`, and `iql_mobile`; Problem-2 comparison
+  conditions remain registered separately;
+- development identities are training seeds `51001`, `51002`, `51003` and
+  scenarios `10000-10019`; formal training, validation, and sealed identities
+  remain unchanged and pairwise disjoint;
+- validation and sealed access flags remain false, and sealed actual unlock
+  count remains `0`;
+- the primary fairness budget is environment interactions, all 17 frozen
+  fairness invariants are true, and candidate selection uses four immutable
+  configurations per learning algorithm;
+- formal-budget candidates remain `[50000, 100000, 200000]`, with a maximum
+  projected slowest-job runtime of 12 hours and 20 checkpoints;
+- `requirements-g3.lock` remains CPU-only, while the isolated `.venv-g5`
+  resolves `torch==2.13.0+cu126` and supports both CPU and RTX 4060 CUDA tensor
+  execution;
+- eight Problem-1 source blobs resolve read-only at commit
+  `1ca9e5ccc5f77ed775cd2b607dd70d635720accf`; runtime, checkpoint, and result
+  imports from the protected repository remain prohibited.
+
+Fresh verification before the content push:
+
+- TDD CLI RED: `20 passed, 1 failed`, with the sole failure caused by the
+  missing `scripts/audit_g5_contracts.py`; after implementation the G5 suite
+  returned `21 passed`;
+- required `.venv-g5` focused suite: `70 passed in 21.55s`;
+- full host regression: `320 passed in 181.64s`;
+- G1 registry audit: `status=pass`, 10 files, 21 metrics, 12 parameters,
+  5 sources, 0 errors, and one warning for four pending external sources;
+- candidate-branch audit: `status=pass`, base `2643753`, candidate `52a92c0`,
+  and 210 inventoried changed paths; this remains an execution-only audit and
+  does not accept candidate maturity claims;
+- G5 contract CLI: `status=pass`, 16 contract hashes, all fairness flags true,
+  validation access false, sealed access false, and actual unlock count `0`;
+- CUDA/CPU check: `torch==2.13.0+cu126`, NVIDIA GeForce RTX 4060 Laptop GPU,
+  CPU and CUDA tensor operations passed;
+- compileall and `git diff --check` exited `0`.
+
+The formula-symbol scanner reported 31 findings in the executable plan. Each
+finding was context-checked as a code identifier, path, configuration key, or
+literal test example because the scanner does not remove Markdown code spans;
+there was no prose formula or mojibake defect to rewrite. A full test run from
+`.venv-g5` is not a declared gate and stops during collection because the
+legacy chapter-4.2 artifact test imports Pillow, which is present in the host
+document environment but intentionally absent from the exact G5 lock.
+
+Persistence status:
+
+- content commit `cc6d0985895a4ab3e9c85a6d19b963ed5a58e2dd`
+  (`feat: freeze g5 experiment contracts`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the content push, local HEAD, upstream HEAD, and `git ls-remote` all
+  returned `cc6d0985895a4ab3e9c85a6d19b963ed5a58e2dd`;
+- no pilot, validation tuning, formal job, sealed-test access, protected
+  external write, or Word-file edit occurred.
+
+Phase 1 authorizes only Task 3 shared heterogeneous algorithm protocol work.
+Task 3 must remain test-first and cannot start until this pushed hash record is
+itself committed, pushed, and verified against the remote branch.
 
 ## G5-G7 Written Design Record
 
@@ -893,13 +960,16 @@ G1.1 bounded remediation persistence record:
   states, pesticide ledger, transactional replay, and fail-closed audit CLIs.
 - Regenerated six cache pairs, the 183-event deterministic trace, audit report,
   and 14-entry artifact manifest from clean generator commit `d4dc97d`.
+- Reconciled the G4 evidence lineage, then froze and verified the G5 Phase 1
+  method, partition, fairness, tuning, budget, metric, statistics, exclusion,
+  checkpoint-selection, dependency, and Problem-1 lineage contracts.
 
 ## Pending Tasks
 
-- Execute Task 1 of the persisted G5 plan and reconcile the G4 provenance/hash
-  discrepancy before accepting any G5 pilot artifact.
-- Implement and freeze the G5 pilot protocol, algorithms, baselines,
-  validation-tuning rules, and paired-statistics contract before formal jobs.
+- Execute Task 3 of the persisted G5 plan: define the shared heterogeneous
+  algorithm, transition, replay, and checkpoint protocol with TDD.
+- Implement later G5 algorithms, baselines, orchestration, statistics, smoke,
+  pilots, and validation tuning only in the plan's declared order.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -915,9 +985,9 @@ G1.1 bounded remediation persistence record:
   implementation commit `092b7f3e965a24979bac65c8304cd9d7dc142f73`; the
   canonical smoke and audit artifacts are recorded above. G4 is accepted at
   M2 as diagnostic support-probe mechanism evidence for onboard UAV pesticide
-  scarcity; its long-hash/provenance narrative discrepancy is recorded below
-  and must be reconciled before G5 pilots. G5 pilot-protocol freezing is the
-  next authorized gate.
+  scarcity. Its long-hash/provenance narrative discrepancy is reconciled, and
+  the G5 Phase 1 experiment contracts are frozen; shared algorithm-protocol
+  implementation is the next authorized work.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -959,18 +1029,19 @@ G1.1 bounded remediation persistence record:
   deployment.
 - Python cache files may still exist in the local working directory after tests,
   but `.gitignore` excludes them from GitHub evidence and commit boundaries.
-- The host Python is intentionally CPU-only (`torch==2.13.0+cpu`) for the G3
-  evidence lock even though an RTX 4060 Laptop GPU is visible. G5 must create
-  the isolated `.venv-g5` with the separately verified CUDA 12.6 wheel before
-  CUDA smoke; it must not mutate the Codex/Hermes host environment.
+- The host Python remains intentionally CPU-only for the G3 evidence lock. The
+  isolated `.venv-g5` now contains the separately verified CUDA 12.6 wheel and
+  must remain the G5 environment without mutating the Codex/Hermes host
+  environment. Its exact G5 lock omits the legacy Pillow document dependency,
+  so cross-gate full regressions continue in the host environment.
 
 ## Next Step
 
-Execute Task 2 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: freeze the G5 registry,
-fairness, budget-selection, and partition contracts. Keep formal jobs,
-validation tuning, and sealed-test evaluation unauthorized until the required
-contracts and their pushed verification records exist.
+Execute Task 3 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: define the shared
+heterogeneous algorithm, transition, replay, and checkpoint protocol using
+test-first development. Keep pilots, validation tuning, formal jobs, and
+sealed-test evaluation unauthorized until their later gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
