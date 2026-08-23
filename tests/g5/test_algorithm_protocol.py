@@ -66,16 +66,18 @@ def two_role_algorithm() -> FakeTwoRoleAlgorithm:
 
 @pytest.fixture
 def batch() -> RoleBatch:
-    return RoleBatch(
+    return RoleBatch.from_action_result(
+        ActionResult(
+            actions={"uav": np.array([0, 1]), "vehicle": np.array([0])},
+            masks={
+                "uav": np.array([[True, False, True], [False, True, False]]),
+                "vehicle": np.array([[True, False]]),
+            },
+        ),
         observations={
             "uav": np.zeros((2, 6), dtype=np.float32),
             "vehicle": np.zeros((1, 5), dtype=np.float32),
         },
-        masks={
-            "uav": np.array([[True, False, True], [False, True, False]]),
-            "vehicle": np.array([[True, False]]),
-        },
-        actions={"uav": np.array([0, 1]), "vehicle": np.array([0])},
         rewards={"uav": np.array([1.0, 1.0]), "vehicle": np.array([1.0])},
         next_observations={
             "uav": np.ones((2, 6), dtype=np.float32),
@@ -101,15 +103,14 @@ def test_protocol_never_selects_masked_action(two_role_algorithm, batch, role, s
 
 def test_role_batch_preserves_exact_behavior_data_and_rejects_masked_actions(batch) -> None:
     original = copy.deepcopy(batch.masks)
-    batch.masks["uav"][0, 2] = False
 
     restored = RoleBatch.from_state_dict(batch.state_dict())
 
     assert restored.transition_id == "development-10000:0"
     assert restored.scenario_id == "development-10000"
-    assert restored.state_dict()["masks"]["uav"].tolist() == [[True, False, False], [False, True, False]]
+    assert restored.state_dict()["masks"]["uav"].tolist() == [[True, False, True], [False, True, False]]
     assert original["vehicle"].tolist() == [[True, False]]
-    with pytest.raises(ValueError, match="illegal"):
+    with pytest.raises(TypeError, match="action_result"):
         RoleBatch(
             observations=batch.observations,
             masks=original,
@@ -121,6 +122,22 @@ def test_role_batch_preserves_exact_behavior_data_and_rejects_masked_actions(bat
             truncated=False,
             scenario_id=batch.scenario_id,
             transition_id="development-10000:illegal",
+        )
+
+
+def test_role_batch_direct_constructor_cannot_bypass_action_result_binding(batch) -> None:
+    with pytest.raises(TypeError, match="action_result"):
+        RoleBatch(
+            observations=batch.observations,
+            masks=batch.masks,
+            actions=batch.actions,
+            rewards=batch.rewards,
+            next_observations=batch.next_observations,
+            next_masks=batch.next_masks,
+            terminated=False,
+            truncated=False,
+            scenario_id=batch.scenario_id,
+            transition_id="development-10000:direct-bypass",
         )
 
 

@@ -69,7 +69,7 @@ class RoleBatch:
     truncated: bool
     scenario_id: str
     transition_id: str
-    action_result: ActionResult | None = None
+    action_result: ActionResult
 
     def __post_init__(self) -> None:
         observations = _role_mapping(self.observations, "observations")
@@ -79,7 +79,7 @@ class RoleBatch:
         next_observations = _role_mapping(self.next_observations, "next_observations")
         next_masks = _role_mapping(self.next_masks, "next_masks")
         behavior = self.action_result
-        if behavior is not None and not isinstance(behavior, ActionResult):
+        if not isinstance(behavior, ActionResult):
             raise TypeError("action_result must be an ActionResult")
         for role in ROLES:
             if observations[role].ndim != 2 or next_observations[role].ndim != 2:
@@ -114,8 +114,7 @@ class RoleBatch:
         _identifier(self.transition_id, "transition_id")
         for name, value in (("observations", observations), ("masks", masks), ("actions", actions), ("rewards", rewards), ("next_observations", next_observations), ("next_masks", next_masks)):
             object.__setattr__(self, name, value)
-        if behavior is not None:
-            object.__setattr__(self, "action_result", ActionResult(actions=actions, masks=masks))
+        object.__setattr__(self, "action_result", ActionResult(actions=actions, masks=masks))
 
     @classmethod
     def from_action_result(
@@ -150,7 +149,7 @@ class RoleBatch:
         )
 
     def state_dict(self) -> dict[str, Any]:
-        return {"schema_version": ROLE_BATCH_SCHEMA_VERSION, "observations": deepcopy(self.observations), "masks": deepcopy(self.masks), "actions": deepcopy(self.actions), "rewards": deepcopy(self.rewards), "next_observations": deepcopy(self.next_observations), "next_masks": deepcopy(self.next_masks), "terminated": bool(self.terminated), "truncated": bool(self.truncated), "scenario_id": self.scenario_id, "transition_id": self.transition_id, "behavior_action_result": None if self.action_result is None else {"actions": deepcopy(self.action_result.actions), "masks": deepcopy(self.action_result.masks)}}
+        return {"schema_version": ROLE_BATCH_SCHEMA_VERSION, "observations": deepcopy(self.observations), "masks": deepcopy(self.masks), "actions": deepcopy(self.actions), "rewards": deepcopy(self.rewards), "next_observations": deepcopy(self.next_observations), "next_masks": deepcopy(self.next_masks), "terminated": bool(self.terminated), "truncated": bool(self.truncated), "scenario_id": self.scenario_id, "transition_id": self.transition_id, "behavior_action_result": {"actions": deepcopy(self.action_result.actions), "masks": deepcopy(self.action_result.masks)}}
 
     @classmethod
     def from_state_dict(cls, state: Mapping[str, Any]) -> "RoleBatch":
@@ -158,8 +157,9 @@ class RoleBatch:
             raise ValueError("unsupported role batch schema")
         fields = {key: state[key] for key in ("observations", "masks", "actions", "rewards", "next_observations", "next_masks", "terminated", "truncated", "scenario_id", "transition_id")}
         behavior = state.get("behavior_action_result")
-        if behavior is not None:
-            fields["action_result"] = ActionResult(**behavior)
+        if not isinstance(behavior, Mapping):
+            raise ValueError("role batch state must include behavior_action_result")
+        fields["action_result"] = ActionResult(**behavior)
         return cls(**fields)
 
 
