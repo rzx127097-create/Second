@@ -1,0 +1,16 @@
+schema_version: g5.v1
+registry_id: G5-CHECKPOINT-SELECTION
+status: design_frozen
+candidate_manifest_hashed_before_validation: true
+candidates_per_learning_algorithm: 4
+validation_scenarios: {start: 20000, end: 20049}
+equal_environment_interactions: true
+selection_order:
+  - mean_validation_reduction_rate
+  - higher_success_probability
+  - lower_interaction_count
+  - lexicographically_smaller_config_hash
+candidate_edits_after_validation_access: false
+validation_accessed: false
+sealed_accessed: false
+actual_unlock_count: 0

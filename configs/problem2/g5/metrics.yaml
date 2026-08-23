@@ -1,0 +1,14 @@
+schema_version: g5.v1
+contract_id: G5-METRICS
+status: design_frozen
+metrics:
+  - {name: reduction_rate, type: number, unit: '1', category: primary_outcome, definition: one_minus_final_total_pest_divided_by_initial_total_pest_plus_epsilon}
+  - {name: success_at_0_85, type: boolean, unit: '1', category: primary_outcome, definition: reduction_rate_at_least_threshold, threshold: 0.85}
+  - {name: rendezvous_distance_m, type: number, unit: m, category: mechanism, definition: shortest_feasible_road_network_route_from_support_at_reservation_to_selected_service_node}
+  - {name: vehicle_service_travel_m, type: number, unit: m, category: mechanism, definition: actual_road_distance_traveled_for_service_including_replanning_detours}
+  - {name: waiting_steps, type: integer, unit: step, category: mechanism, definition: total_pending_or_reserved_request_exposure_including_unresolved_terminal_requests}
+  - {name: completed_request_waiting_steps, type: integer, unit: step, category: mechanism, definition: creation_to_service_start_wait_for_requests_that_start_service}
+  - {name: pesticide_disabled_steps, type: integer, unit: uav_step, category: mechanism, definition: summed_uav_steps_without_sufficient_usable_pesticide_for_positive_spray}
+  - {name: return_steps, type: integer, unit: uav_step, category: mechanism, definition: summed_uav_steps_following_declared_rendezvous_or_return_behavior}
+  - {name: effective_spray_steps, type: integer, unit: uav_step, category: mechanism, definition: legal_spray_actions_applying_positive_pesticide_to_field}
+  - {name: decision_runtime_s, type: number, unit: s, category: operational, definition: synchronized_policy_or_controller_decision_time_excluding_environment_and_file_io}

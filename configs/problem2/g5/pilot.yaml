@@ -1,0 +1,12 @@
+schema_version: g5.v1
+contract_id: G5-PILOT
+status: design_frozen
+training_seed_ids: [51001, 51002, 51003]
+scenario_ids:
+  start: 10000
+  end: 10019
+scales: [g20x20_d2, g30x50_d4]
+coverage: all_learning_methods_and_condition_types
+formal_training_performed: false
+validation_accessed: false
+sealed_accessed: false

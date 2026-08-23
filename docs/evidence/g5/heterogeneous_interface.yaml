@@ -1,0 +1,11 @@
+schema_version: g5.v1
+registry_id: G5-HETEROGENEOUS-INTERFACE
+status: design_frozen
+algorithm_name: SR-MAPPO
+problem_description: air_ground_heterogeneous_extension
+roles:
+  uav: {count: 2, shared_parameters: true, observation_dim: 179, action_names: [up, down, left, right, stay, spray]}
+  vehicle: {count: 1, shared_parameters: false, observation_dim: 28, action_names: [hold, slot-0, slot-1, slot-2, slot-3]}
+critic: {structured_state_dim: 185, actors_receive_critic_only_state: false}
+transition: {stores_exact_behavior_mask: true, shared_team_reward: true, deterministic_evaluation_freezes_state: true}
+resources: {replenished_resource: pesticide, battery_replenishment_enabled: false}

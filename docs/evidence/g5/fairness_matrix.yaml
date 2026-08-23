@@ -1,0 +1,27 @@
+schema_version: g5.v1
+registry_id: G5-FAIRNESS-MATRIX
+status: design_frozen
+primary_budget: environment_interactions
+reported_budgets: [optimizer_updates, trainable_parameter_count, wall_clock_runtime_s, decision_runtime_s]
+invariants:
+  same_environment: true
+  same_environment_interactions: true
+  same_episode_horizon: true
+  same_training_scenes: true
+  same_training_seeds: true
+  same_evaluation_scenarios: true
+  same_role_observations: true
+  same_action_masks: true
+  same_team_reward: true
+  same_information_conditions: true
+  same_total_pesticide: true
+  same_initial_vehicle_inventory: true
+  same_transfer_rate: true
+  same_service_cap: true
+  same_setup_time: true
+  same_evaluation_budget: true
+  no_future_information: true
+algorithm_specific_tuning:
+  equal_candidate_count: true
+  equal_environment_interactions: true
+  candidates_hashed_before_validation: true

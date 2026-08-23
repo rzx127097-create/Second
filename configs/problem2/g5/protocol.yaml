@@ -1,0 +1,28 @@
+schema_version: g5.v1
+contract_id: G5-PROTOCOL
+status: design_frozen
+algorithm_name: SR-MAPPO
+problem_description: air_ground_heterogeneous_extension
+output_root: outputs/problem2_sr_mappo_v1/g5
+resources:
+  replenished_resource: pesticide
+  battery_replenishment_enabled: false
+partitions:
+  development_training:
+    seeds: [51001, 51002, 51003]
+  development_scenarios:
+    start: 10000
+    end: 10019
+  formal_training:
+    seeds: [42, 123, 2024, 3407, 7919]
+  validation:
+    start: 20000
+    end: 20049
+  sealed_test:
+    start: 30000
+    end: 30099
+access:
+  validation_accessed: false
+  validation_tuning_authorized: false
+  sealed_accessed: false
+  actual_unlock_count: 0

@@ -1,6 +1,13 @@
 schema_version: g1.v1
 registry_id: G1-SCENARIO-SEEDS
 status: design_frozen
+development:
+  training_seeds: [51001, 51002, 51003]
+  scenario_range:
+    start: 10000
+    end: 10019
+  purpose: g5_development_smoke_and_pilot
+  tuning_allowed: true
 partitions:
   training:
     seeds: [42, 123, 2024, 3407, 7919]

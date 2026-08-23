@@ -1,0 +1,19 @@
+schema_version: g5.v1
+contract_id: G5-STATISTICS
+status: design_frozen
+independent_replication_unit: training_seed
+paired_within_unit: scenario_id
+primary_outcomes: [reduction_rate, success_at_0_85]
+success_threshold: 0.85
+bootstrap:
+  kind: hierarchical_paired
+  replicates: 10000
+  rng_seed: 20260822
+  interval: percentile_95
+practical_equivalence_margins:
+  reduction_rate: 0.02
+  success_at_0_85: 0.05
+multiplicity:
+  method: holm
+  applied_separately_by_confirmatory_family: true
+training_reward_is_diagnostic_only: true

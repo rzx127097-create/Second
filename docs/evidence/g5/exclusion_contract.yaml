@@ -1,0 +1,17 @@
+schema_version: g5.v1
+registry_id: G5-EXCLUSION-CONTRACT
+status: design_frozen
+allowed_reasons:
+  - identity_or_hash_mismatch
+  - non_finite_output
+  - corrupt_or_truncated_artifact
+  - impossible_resource_conservation
+  - wrong_scenario_partition
+  - incomplete_horizon_without_valid_termination
+  - failed_deterministic_replay
+forbidden_reasons:
+  - poor_performance
+  - long_waiting
+  - failure_to_reach_0_85
+  - unfavorable_method_ranking
+retry_uses_identical_identity: true

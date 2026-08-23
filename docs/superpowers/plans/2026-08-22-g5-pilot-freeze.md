@@ -131,9 +131,9 @@ git push origin codex/problem2-g5-pilot-freeze
 - MADDPG candidates keep network capacity, replay capacity, discount, exploration endpoints, and interaction budget fixed. Their four `(actor_lr, critic_lr, tau, batch_size)` candidates are `(1e-4, 3e-4, 0.005, 64)`, `(3e-4, 3e-4, 0.005, 64)`, `(1e-4, 1e-3, 0.010, 128)`, and `(3e-4, 1e-3, 0.010, 128)`.
 - IQL candidates keep network capacity, replay capacity, discount, initial/final exploration, and interaction budget fixed. Their four `(learning_rate, target_update_interval, epsilon_decay, batch_size)` candidates are `(1e-4, 100, 0.999, 64)`, `(3e-4, 100, 0.999, 64)`, `(3e-4, 250, 0.995, 128)`, and `(5e-4, 250, 0.995, 128)`.
 
-- [ ] **Step 1: Write failing tests for the exact CUDA dependency lock, unchanged G3 CPU lock, exact methods, Problem-1 blob resolution, partition disjointness, fairness invariants, candidate immutability, budget-rule edge cases, metric definitions, and sealed denial**
-- [ ] **Step 2: Run `python -m pytest tests/g5/test_g5_contracts.py -q` and confirm missing-contract failures**
-- [ ] **Step 3: Create the isolated G5 environment, install the G5 lock, and verify CPU/CUDA execution without modifying the host environment**
+- [x] **Step 1: Write failing tests for the exact CUDA dependency lock, unchanged G3 CPU lock, exact methods, Problem-1 blob resolution, partition disjointness, fairness invariants, candidate immutability, budget-rule edge cases, metric definitions, and sealed denial**
+- [x] **Step 2: Run `python -m pytest tests/g5/test_g5_contracts.py -q` and confirm missing-contract failures**
+- [x] **Step 3: Create the isolated G5 environment, install the G5 lock, and verify CPU/CUDA execution without modifying the host environment**
 
 ```powershell
 py -3.11 -m venv .venv-g5
@@ -141,10 +141,10 @@ py -3.11 -m venv .venv-g5
 .venv-g5/Scripts/python.exe -c "import torch; assert torch.__version__ == '2.13.0+cu126'; assert torch.cuda.is_available(); print(torch.__version__, torch.cuda.get_device_name(0))"
 ```
 
-- [ ] **Step 4: Implement strict loaders and create the canonical YAML registries with exact values from the G5 design**
-- [ ] **Step 5: Add development seeds/scenarios to the G1 seed registry without changing formal, validation, or sealed identities**
-- [ ] **Step 6: Implement `scripts/audit_g5_contracts.py` to print hashes, methods, partitions, fairness booleans, and `sealed_accessed=false`**
-- [ ] **Step 7: Run the focused suite and exact registry/document checks from `.venv-g5`**
+- [x] **Step 4: Implement strict loaders and create the canonical YAML registries with exact values from the G5 design**
+- [x] **Step 5: Add development seeds/scenarios to the G1 seed registry without changing formal, validation, or sealed identities**
+- [x] **Step 6: Implement `scripts/audit_g5_contracts.py` to print hashes, methods, partitions, fairness booleans, and `sealed_accessed=false`**
+- [x] **Step 7: Run the focused suite and exact registry/document checks from `.venv-g5`**
 
 ```powershell
 $g5AuditTemp = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) ("g5-contract-" + [guid]::NewGuid()))

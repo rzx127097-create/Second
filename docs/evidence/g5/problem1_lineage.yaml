@@ -1,0 +1,18 @@
+schema_version: g5.v1
+registry_id: G5-PROBLEM1-LINEAGE
+status: design_frozen
+repository_path: C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper
+source_commit: 1ca9e5ccc5f77ed775cd2b607dd70d635720accf
+read_only: true
+runtime_import_allowed: false
+checkpoint_import_allowed: false
+output_or_result_import_allowed: false
+sources:
+  - {path: source/locust_rl_selected/agents/sr_mappo_agent.py, blob_id: fe3479f0a86f7957f3329650f24da1f561f40759, adopted_concept: sr_mappo_math_and_stability, destination: src/problem2/algorithms/sr_mappo}
+  - {path: source/locust_rl_selected/agents/mappo_agent.py, blob_id: e73a1be28469afc410ffadca7a48dbf9992e1a94, adopted_concept: mappo_baseline_semantics, destination: src/problem2/algorithms/mappo}
+  - {path: source/locust_rl_selected/agents/ippo_agent.py, blob_id: e46b1dc8f673310587d2a1888d5cb77a322d906a, adopted_concept: independent_ppo_semantics, destination: src/problem2/algorithms/ippo}
+  - {path: source/locust_rl_selected/agents/maddpg_agent.py, blob_id: 4371654da593b6d69e8e5853113fd6dbdbc2181f, adopted_concept: maddpg_update_semantics, destination: src/problem2/algorithms/maddpg}
+  - {path: source/locust_rl_selected/agents/iql_agent.py, blob_id: 0327d210e6d9c2fd21c48324963e4a4d0dd80953, adopted_concept: iql_update_semantics, destination: src/problem2/algorithms/iql}
+  - {path: source/locust_rl_selected/training/trainer.py, blob_id: 935aed90b16a897f4449673f530f0aa31a1536e3, adopted_concept: training_loop_lineage, destination: src/problem2/training}
+  - {path: scripts/run_sr_mappo_ablation.py, blob_id: bfda945b554f3a299765aeef2a5df23b7b2d88d1, adopted_concept: ablation_orchestration_lineage, destination: src/problem2/experiments}
+  - {path: scripts/run_sr_mappo_sensitivity.py, blob_id: 9281a0dc76647e4ed534d36f165b058cd8a354a8, adopted_concept: sensitivity_orchestration_lineage, destination: src/problem2/experiments}

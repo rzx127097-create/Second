@@ -1,0 +1,56 @@
+schema_version: g5.v1
+contract_id: G5-TUNING-CANDIDATES
+status: design_frozen
+immutable: true
+selection_rule:
+  primary: mean_validation_reduction_rate
+  tie_breakers:
+    - higher_success_probability
+    - lower_interaction_count
+    - lexicographically_smaller_config_hash
+candidate_sets:
+  sr_mappo_mobile:
+    - candidate_id: c01
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 32, ppo_epochs: 2, minibatch_size: 64}
+    - candidate_id: c02
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 64, ppo_epochs: 2, minibatch_size: 64}
+    - candidate_id: c03
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 64, ppo_epochs: 4, minibatch_size: 128}
+    - candidate_id: c04
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 128, ppo_epochs: 4, minibatch_size: 128}
+  mappo_mobile:
+    - candidate_id: c01
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 32, ppo_epochs: 2, minibatch_size: 64}
+    - candidate_id: c02
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 64, ppo_epochs: 2, minibatch_size: 64}
+    - candidate_id: c03
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 64, ppo_epochs: 4, minibatch_size: 128}
+    - candidate_id: c04
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 128, ppo_epochs: 4, minibatch_size: 128}
+  ippo_mobile:
+    - candidate_id: c01
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 32, ppo_epochs: 2, minibatch_size: 64}
+    - candidate_id: c02
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 64, ppo_epochs: 2, minibatch_size: 64}
+    - candidate_id: c03
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 64, ppo_epochs: 4, minibatch_size: 128}
+    - candidate_id: c04
+      parameters: {learning_rate: 0.0003, clip_radius: 0.20, entropy_coefficient: 0.010, discount: 0.99, gae_lambda: 0.95, hidden_width: 128, hidden_depth: 2, rollout_horizon: 128, ppo_epochs: 4, minibatch_size: 128}
+  maddpg_mobile:
+    - candidate_id: c01
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, exploration_initial: 1.0, exploration_final: 0.05, actor_lr: 0.0001, critic_lr: 0.0003, tau: 0.005, batch_size: 64}
+    - candidate_id: c02
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, exploration_initial: 1.0, exploration_final: 0.05, actor_lr: 0.0003, critic_lr: 0.0003, tau: 0.005, batch_size: 64}
+    - candidate_id: c03
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, exploration_initial: 1.0, exploration_final: 0.05, actor_lr: 0.0001, critic_lr: 0.001, tau: 0.010, batch_size: 128}
+    - candidate_id: c04
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, exploration_initial: 1.0, exploration_final: 0.05, actor_lr: 0.0003, critic_lr: 0.001, tau: 0.010, batch_size: 128}
+  iql_mobile:
+    - candidate_id: c01
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, epsilon_initial: 1.0, epsilon_final: 0.05, learning_rate: 0.0001, target_update_interval: 100, epsilon_decay: 0.999, batch_size: 64}
+    - candidate_id: c02
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, epsilon_initial: 1.0, epsilon_final: 0.05, learning_rate: 0.0003, target_update_interval: 100, epsilon_decay: 0.999, batch_size: 64}
+    - candidate_id: c03
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, epsilon_initial: 1.0, epsilon_final: 0.05, learning_rate: 0.0003, target_update_interval: 250, epsilon_decay: 0.995, batch_size: 128}
+    - candidate_id: c04
+      parameters: {hidden_width: 128, hidden_depth: 2, replay_capacity: 100000, discount: 0.99, epsilon_initial: 1.0, epsilon_final: 0.05, learning_rate: 0.0005, target_update_interval: 250, epsilon_decay: 0.995, batch_size: 128}

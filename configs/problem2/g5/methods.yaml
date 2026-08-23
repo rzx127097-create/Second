@@ -1,0 +1,53 @@
+schema_version: g5.v1
+contract_id: G5-METHODS
+status: design_frozen
+learning_algorithms:
+  - id: sr_mappo_mobile
+    display_name: SR-MAPPO
+    algorithm_family: on_policy_centralized_value
+    role_handling: shared_uav_actor_separate_vehicle_actor
+  - id: mappo_mobile
+    display_name: MAPPO
+    algorithm_family: on_policy_centralized_value
+    role_handling: shared_uav_actor_separate_vehicle_actor
+  - id: ippo_mobile
+    display_name: PPO
+    algorithm_family: on_policy_role_local_value
+    role_handling: shared_uav_actor_separate_vehicle_actor
+  - id: maddpg_mobile
+    display_name: MADDPG
+    algorithm_family: off_policy_centralized_q
+    role_handling: shared_uav_actor_separate_vehicle_actor
+  - id: iql_mobile
+    display_name: IQL
+    algorithm_family: off_policy_role_local_q
+    role_handling: shared_uav_q_separate_vehicle_q
+problem2_conditions:
+  - id: sr_mappo_mobile
+    condition_type: learned_mobile_support
+    vehicle_policy: learned
+    vehicle_trainable: true
+  - id: sr_mappo_fixed
+    condition_type: resource_matched_stationary_control
+    vehicle_policy: fixed_support
+    vehicle_trainable: false
+  - id: sr_mappo_astar
+    condition_type: classical_vehicle_control
+    vehicle_policy: rolling_astar
+    vehicle_trainable: false
+  - id: mappo_mobile
+    condition_type: same_source_learning_control
+    vehicle_policy: learned
+    vehicle_trainable: true
+  - id: sr_mappo_two_stage
+    condition_type: staged_learning_control
+    vehicle_policy: learned_two_stage
+    vehicle_trainable: true
+  - id: sr_mappo_nearest
+    condition_type: classical_vehicle_control
+    vehicle_policy: nearest_feasible
+    vehicle_trainable: false
+  - id: sr_mappo_urgency
+    condition_type: classical_vehicle_control
+    vehicle_policy: urgency_priority
+    vehicle_trainable: false
