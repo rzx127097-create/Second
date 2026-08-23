@@ -30,10 +30,11 @@ real deployment evidence.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
 - Current gate: G5 Phase 1 registry, fairness, budget-selection, and partition
   contracts and Phase 2 shared heterogeneous algorithm/checkpoint protocol are
-  accepted at M2. G4 onboard-pesticide scarcity activation and diagnostic
-  support-probe counterfactual remain the preceding accepted evidence. Formal
-  jobs, validation tuning, sealed evaluation, and efficacy/superiority claims
-  remain unauthorized.
+  accepted at M2. The Task-4 prerequisite correction now also freezes the exact
+  on-policy stability-component differences. G4 onboard-pesticide scarcity
+  activation and diagnostic support-probe counterfactual remain the preceding
+  accepted evidence. Formal jobs, validation tuning, sealed evaluation, and
+  efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -456,6 +457,43 @@ Persistence status:
 
 Task 4 on-policy algorithm adaptation is the next authorized work. Task 3's
 protocol and checkpoint interfaces are now the required shared boundary.
+
+## G5 Task 4 Prerequisite: On-Policy Stability Contract Correction
+
+Task 4 plan review found that its required SR-MAPPO-versus-MAPPO
+configuration-diff proof could not be constructed from the accepted G5
+registry: `methods.yaml` registered the method family but did not freeze the
+stability-component values named by Task 4. The preceding contract layer was
+therefore corrected before algorithm implementation.
+
+The corrected contract freezes all seven executable flags for the three
+on-policy methods. `sr_mappo_mobile` requires every flag true;
+`mappo_mobile` and `ippo_mobile` require every flag false. The strict loader
+rejects missing, extra, non-boolean, or drifted flags and exposes nested
+read-only mappings.
+
+Fresh verification before the content push:
+
+- TDD RED: `4 failed, 21 passed`, caused by the absent registry field and
+  loader property;
+- corrected G5 contract suite: `25 passed`;
+- G5/G1 registry regression: `74 passed in 15.39s`;
+- G5 contract CLI: `status=pass`, validation access false, sealed access
+  false, and actual unlock count `0`;
+- compileall and `git diff --check`: exit `0`.
+
+Persistence status:
+
+- correction commit
+  `6504f671a942f74452a3c4e170202d35e3cbfea9`
+  (`fix: freeze g5 on-policy stability contract`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the push, local HEAD, upstream HEAD, and `git ls-remote` all returned
+  `6504f671a942f74452a3c4e170202d35e3cbfea9`;
+- no pilot, validation tuning, formal job, sealed-test access, protected
+  external write, or Word-file edit occurred.
+
+Task 4 on-policy algorithm implementation remains the next authorized work.
 
 ## G5-G7 Written Design Record
 
@@ -1051,7 +1089,8 @@ G1.1 bounded remediation persistence record:
   canonical smoke and audit artifacts are recorded above. G4 is accepted at
   M2 as diagnostic support-probe mechanism evidence for onboard UAV pesticide
   scarcity. Its long-hash/provenance narrative discrepancy is reconciled, and
-  the G5 Phase 1 experiment contracts are frozen; shared algorithm-protocol
+  the G5 Phase 1 experiment contracts, shared algorithm protocol, and exact
+  on-policy stability differences are frozen; Task 4 on-policy algorithm
   implementation is the next authorized work.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
