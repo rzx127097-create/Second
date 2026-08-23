@@ -444,7 +444,9 @@ Persistence status:
 - implementation commits `7254c1f74aaa55c3113d01d2325588e39a742e38`,
   `3f5f218ff6cde06d75942c5b7b6c8e2df888e8b5`, and
   `618afdcff25cb4853507a7cd10f0c8e0bd9699c1`
-  (final subject `fix: close g5 protocol review gaps`) were pushed to
+  (subjects `feat: add shared g5 heterogeneous algorithm protocol`,
+  `fix: close g5 protocol review gaps`, and `fix: require bound g5 behavior
+  results`) were pushed to
   `origin/codex/problem2-g5-pilot-freeze`;
 - after the implementation push, local HEAD, upstream HEAD, and
   `git ls-remote` all returned
