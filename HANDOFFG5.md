@@ -1,539 +1,302 @@
-# HANDOFF G5
+# HANDOFF G5: TASK 5
 
-Date: 2026-08-22
+Date: 2026-08-24
 Repository: `C:/Users/RZX/Documents/ChatGPT/Second`
 Branch: `codex/problem2-g5-pilot-freeze`
-Current recorded content HEAD: `e2508eddef0b1d20ae9ddd282807395511e1b58d`
 Remote: `origin/codex/problem2-g5-pilot-freeze`
-
-## Read This First
-
-This document is a self-contained handoff for a new conversation with no
-prior context. Read it together with `docs/PROJECT_STATE.md` before making
-changes. The authoritative project is the `Second` repository above.
-
-The current state is **G4 accepted at M2; the G5 design and executable plan are
-persisted; G5 implementation has not started**. The next authorized work is:
-
-1. execute Task 1 of
-   `docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`;
-2. reconcile and push one exact G4 generator commit/tree/source-bundle tuple;
-3. begin G5 registry/algorithm work only after that reconciliation is recorded.
-
-Do not start G6 formal jobs, do not access validation or sealed scenarios, and
-do not claim that any method is superior. Do not assume that the old G4
-handoff's source-commit narrative is correct; the discrepancy below is a hard
-G5 entry blocker.
-
-## Project Identity and Non-Negotiable Rules
-
-- Scientific problem: road-constrained air-ground heterogeneous cooperative
-  pesticide spraying with a mobile pesticide replenishment vehicle.
-- Public flagship algorithm name: **SR-MAPPO**.
-- Problem 2 wording: the air-ground heterogeneous extension of SR-MAPPO.
-- Forbidden public algorithm names: HAPPO and `AG-SR-MAPPO`.
-- Replenished resource: pesticide only.
-- Battery replenishment: inactive unless a separate activation audit is passed
-  and recorded; no such activation exists now.
-- OSM/GraphML roads: offline simulation input for road-constrained modeling,
-  not evidence of real field deployment.
-- Protected first-problem repository:
-  `C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper`.
-- Protected base project and OSM inputs: `D:/Pycharm/Locust_rl`.
-- Protected planning evidence:
-  `C:/Users/RZX/Desktop/论文/小论文/第二个问题/分析`.
-- Do not modify external Word files unless explicitly requested.
-- All Problem-2 output evidence belongs below
-  `outputs/problem2_sr_mappo_v1`.
-- Preserve user changes in protected repositories. Never force-push or reset
-  unrelated work.
-
-## Maturity and Claim Boundary
-
-Current highest maturity is `M2`: implementation and scoped mechanism evidence.
-The following wording is currently permitted:
-
-- G2/G3 implementation tests verify deterministic and heterogeneous MARL
-  interfaces and invariants.
-- G4 diagnostic support probes exercised the frozen onboard-pesticide scarcity
-  mechanism and emitted paired descriptive deltas.
-- The G5-G7 workflow is designed and specifies later pilots and experiments.
-
-The following claims are not permitted yet:
-
-- mobile support improves treatment;
-- SR-MAPPO outperforms MAPPO, PPO, MADDPG, IQL, A*, or any heuristic;
-- formal experiments show a result;
-- a result is statistically significant or deployment-verified;
-- the simulation demonstrates real agricultural deployment;
-- any method is universally optimal.
-
-Maturity rules remain:
-
-| Level | Evidence | Permitted result wording |
-|---|---|---|
-| M0 | concept only | planned/proposed |
-| M1 | frozen specification | design completed |
-| M2 | implementation plus tests | implementation verified |
-| M3 | independent multi-seed pilot | pilot results indicate |
-| M4 | frozen formal matrix and sealed paired evidence | formal experiments show, within stated scope |
-
-## Completed Gates
-
-### G0/G1: repository isolation and evidence registration
-
-`Second` is the authoritative repository. G1 registered parameter, literature,
-experiment, scenario, job-identity, raw-table, validated-table,
-artifact-manifest, sealed-lock, and output-root contracts under
-`docs/evidence/g1/`. Candidate code from
-`origin/feature/problem2-code-framework` was audited read-only and was not
-accepted automatically.
-
-Important frozen registries:
-
-- formal methods in the original G1 matrix:
-  `sr_mappo_mobile`, `sr_mappo_fixed`, `sr_mappo_astar`, `mappo_mobile`,
-  `sr_mappo_two_stage`;
-- training seeds: `42`, `123`, `2024`, `3407`, `7919`;
-- validation scenario IDs: `20000-20049`, tuning/checkpoint selection allowed;
-- sealed scenario IDs: `30000-30099`, tuning forbidden and locked;
-- job identity serialization:
-  `method|scale|training_seed|config_hash|git_commit`, hashed with SHA-256;
-- sealed lock: maximum unlock count `1`, actual unlock count `0`, unlock gate
-  `G7`.
-
-### G2: deterministic physical foundation
-
-G2 validates offline GraphML loading, metric projection, road rasterization,
-four-connected topology, physical motion, service state transitions, resource
-ledger conservation, deterministic replay, and artifact provenance.
-
-Key G2 values:
-
-- source GraphML SHA-256:
-  `B3AF36EFBFC87FFF30BD61D204283DC40C5B8C83A80BA0EE09F3DA5EF52A9462`;
-- projection: `EPSG:4326` to `EPSG:32643`;
-- physical step: `1.0 s`;
-- UAV speed: `5.0 m/s`;
-- vehicle speed: `8.0 m/s`;
-- UAV nominal capacity: `1.2 L`;
-- usable fraction: `0.9`;
-- usable UAV capacity/service cap: `1.08 L`;
-- spray flow: `1.2 L/min`;
-- vehicle pesticide inventory: `20.0 L`;
-- transfer rate: `4.0 L/min`;
-- setup time: `10.0 s`;
-- request margin: `10.0 s`;
-- rendezvous radius: `15.0 m`;
-- battery replenishment: `false`.
-
-G2 scale/horizon protocol:
-
-| Scale | Maximum physical decision steps |
-|---|---:|
-| `g20x20_d2` | 150 |
-| `g20x30_d3` | 180 |
-| `g20x40_d3` | 220 |
-| `g30x30_d3` | 220 |
-| `g30x40_d4` | 280 |
-| `g30x50_d4` | 350 |
-
-G2 verification recorded in project state: `python -m pytest tests/g2 -q`
-returned `102 passed`; full historical regression returned `158 passed` at
-the G2 checkpoint; compile and deterministic road/audit checks passed.
-
-### G3: heterogeneous MARL interface
-
-G3 passed at M2. The current verified interface is:
-
-- `N=2` homogeneous UAVs sharing one UAV actor;
-- one separate vehicle actor;
-- structured centralized team critic during training;
-- UAV observation dimension `179`;
-- vehicle observation dimension `28`;
-- critic state dimension `185`;
-- UAV actions: `up`, `down`, `left`, `right`, `stay`, `spray`;
-- vehicle action contract: `hold` plus candidate slots `slot-0..slot-3`;
-- exact stored masks and old masked log-probabilities;
-- team GAE and valid-sample filtering;
-- role-separated normalization and frozen evaluation statistics;
-- checkpoint round trip including optimizer/scheduler/RNG state.
-
-G3 config SHA-256:
-`421eff64d1161f78c9029dfc6d133b9b66247f3cf905b9577e55965584195f93`.
-Implementation commit bound to the canonical smoke:
-`092b7f3e965a24979bac65c8304cd9d7dc142f73`.
-G3 acceptance was `17/17`; `python -m pytest tests/g3 -q` returned
-`63 passed`; full historical regression returned `221 passed` at the G3
-checkpoint.
-
-The G3 smoke is engineering evidence only. It is not a treatment pilot or
-formal endpoint result.
-
-### G4: onboard-pesticide scarcity diagnostic
-
-G4 passed at M2 as a diagnostic support-probe mechanism gate. It used:
-
-- scarcity axis `initial_uav_pesticide_l` at `0.05`, `0.2875`, and `0.525 L`;
-- fixed vehicle inventory `20.0 L`, not a vehicle-inventory scarcity sweep;
-- `fixed_support_probe` versus `mobile_support_probe`;
-- probe scales `g20x20_d2`, `g20x30_d3`, `g30x30_d3`;
-- probe seeds `42`, `123`, `2024`;
-- no G3 actor/checkpoint execution;
-- no validation or sealed scenario access;
-- waiting metric `started_service_waiting_time_s` for requests reaching service
-  start;
-- distance metric `euclidean_service_start_distance_m`, explicitly not road
-  route distance.
-
-Canonical output root:
-`outputs/problem2_sr_mappo_v1/g4`.
-The accepted diagnostic claim is only mechanism activation and paired
-descriptive deltas under G2 semantics.
-
-## G4 Entry Reconciliation Blocker
-
-The old G4 handoff and parts of `docs/PROJECT_STATE.md` contain inconsistent
-source identifiers. Do not silently choose one identifier.
-
-Observed facts on the current Git history:
-
-- short hash `4e81567` resolves to
-  `4e8156712986a28f81315968fd7640b6e7ed5ad6`;
-- the recorded string
-  `4e81567aef9eaf7eca676471370bd4b7f3a1a4e5` is not a Git object;
-- the canonical G4 `outputs/.../g4/provenance.json` currently binds source
-  commit `09d361994100741a9ae834b63ba07c9b5db953e7` and source tree
-  `5a61825001e92fae112579ae05f5c778deedcab3`;
-- the G4 handoff instead names generator commit
-  `ee0d3fafdbb8714ed84eb8ede26d5dc82ebbf0bb` and source tree
-  `78d3d146b06f191998853ef7070b167a5df64a5c`;
-- `ee0d3faf...` is an existing Git commit, but that alone does not prove it
-  generated the canonical output.
-
-**Required G5 first action:** audit the source bundle, provenance, artifact
-manifest, G4 contract, handoff, and Git trees; determine the true generator
-for the accepted artifacts; then either correct the narrative to the actual
-provenance or regenerate the bundle from the intended clean generator. Produce
-one exact commit/tree/file-hash/bundle-hash tuple across all records. Commit,
-push, and record the reconciliation before any G5 pilot is accepted.
-
-## Written G5-G7 Design Already Persisted
-
-The three specifications were authored and pushed for user review. They are
-design artifacts, not an implementation pass and not a G5 plan.
-
-| Specification | SHA-256 | Scope |
-|---|---|---|
-| `docs/superpowers/specs/2026-08-22-g5-pilot-freeze-design.md` | `1F6C4A8ECC90D63D9D81A0858286F555BA3E3365342A26BF77423E72C53EC0FD` | algorithms, baselines, pilots, freezes, statistics |
-| `docs/superpowers/specs/2026-08-22-g6-formal-jobs-design.md` | `958975DAA4F8875DFC59280B5B4A03A1F11AD922683A4CCCC7FA45F48CB11B20` | immutable formal jobs, recovery, validation, checkpoint selection |
-| `docs/superpowers/specs/2026-08-22-g7-sealed-analysis-design.md` | `CD6BC6EE8F7A2BFE9C2ED6829CEFC36B813558B2FA8FAF9BFAFAED5A2E276005` | one-time sealed unlock, paired statistics, mechanism audit |
-
-Design content commit:
-`a12cbdd0bf479d93bd1788497d82447313933d39`.
-State persistence commit:
-`877c4660d17f5c14451b83727248d67f70a2b8d4`.
-Both were pushed to `origin/codex/problem2-g5-pilot-freeze`.
-
-The user has not yet explicitly approved the written specifications in this
-handoff context. A new conversation should ask for that review before invoking
-`writing-plans` or writing `docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`.
-
-## G5 Frozen Design Intent
-
-### Five algorithms: all explicitly heterogeneous
-
-Every algorithm must support both UAVs and the vehicle. Heterogeneous action
-spaces are not special handling reserved only for MADDPG/IQL.
-
-| Public name | Code method ID | Required role handling |
-|---|---|---|
-| SR-MAPPO | `sr_mappo_mobile` | shared UAV actor, separate vehicle actor, structured centralized value critic, PPO/GAE, SR stability groups enabled |
-| MAPPO | `mappo_mobile` | same heterogeneous source framework; only declared SR stability groups disabled |
-| PPO | `ippo_mobile` | independent role-local PPO actors/critics; no centralized critic state in actors |
-| MADDPG | `maddpg_mobile` | separate role actors, centralized role Q critics, target networks, replay, masked discrete relaxation |
-| IQL | `iql_mobile` | separate role Q networks, role-local masked epsilon-greedy behavior, replay, target networks |
-
-All five share environment transitions, observations, masks, reward, physical
-horizon, training/evaluation scenario identities, and declared interaction
-budget. Their method-specific update mathematics may differ, but no method may
-receive future demand, hidden pest state, or illegal unmasked actions.
-
-Problem 1 is lineage only. The first-problem source commit is
-`1ca9e5ccc5f77ed775cd2b607dd70d635720accf`; current dirty user changes there
-are protected. G5 must register source paths and blob IDs, inherit tested
-mathematics where appropriate, and implement a controlled Problem-2 extension
-inside `Second`. No first-problem runtime import, checkpoint, log, result, or
-output is admissible as Problem-2 evidence.
-
-### Required Problem-2 comparison family
-
-The primary five-condition family is:
-
-1. `sr_mappo_mobile`;
-2. `sr_mappo_fixed`;
-3. `sr_mappo_astar`;
-4. `mappo_mobile`;
-5. `sr_mappo_two_stage`.
-
-`sr_mappo_fixed` is a resource-matched stationary causal control, not a
-heuristic. `sr_mappo_astar` retains the learned UAV policy and uses a rolling,
-road-constrained A* vehicle controller. `sr_mappo_two_stage` uses a frozen,
-versioned two-stage schedule with the same total interaction budget as joint
-training.
-
-Recommended classical vehicle controllers are:
-
-- rolling A* with urgency and service feasibility;
-- nearest feasible request by road distance;
-- urgency/waiting/pesticide-endurance priority dispatch.
-
-All heuristic policies must use current observable state only, deterministic
-tie-breaking, frozen replan rules, and no future information. A* route lengths
-must agree with Dijkstra on test graphs.
-
-### Experiment families
-
-G5 must implement and test support for:
-
-1. five-algorithm convergence speed and stability;
-2. five-algorithm six-scale endpoint comparison;
-3. the required Problem-2 family above;
-4. SR-MAPPO versus classical heuristics;
-5. full SR-MAPPO versus five remove-one stability groups;
-6. algorithmic and mechanism sensitivity/boundary analysis.
-
-Remove-one conditions are exactly:
-
-- no observation normalization;
-- no return normalization;
-- no network stabilization (orthogonal initialization and layer normalization
-  together);
-- no robust value update (value clipping and Huber value loss together);
-- no learning-rate decay.
-
-Sensitivity center is deduplicated with the primary job. Algorithmic axes use
-`g30x30_d3` and the five formal training seeds. Mechanism axes use frozen
-nominal checkpoints and registered levels for initial onboard pesticide,
-vehicle speed, transfer rate, setup time, and rendezvous radius. Sensitivity
-cannot select a new primary configuration after sealed access.
-
-### Exact G5/G6/G7 workload declared by the design
-
-The written design declares this deduplicated formal training count:
-
-```text
-150 base five-algorithm jobs
-+ 90 fixed/A*/two-stage Problem-2 jobs
-+ 60 nearest/urgency heuristic jobs
-+ 25 remove-one ablation jobs
-+ 50 noncenter algorithmic-sensitivity jobs
-= 375 unique training jobs
-```
-
-G7 declares `42,500` unique sealed episode rows after deduplication:
-
-- `37,500` nominal rows from `375` trained cells x `100` sealed scenarios;
-- `5,000` mechanism-sensitivity rows from ten noncenter conditions across
-  five nominal SR-MAPPO checkpoints and `100` scenarios.
-
-These counts are design assertions that G5 code must generate and audit. They
-are not completed experiment results.
-
-### Statistics and evidence chain
-
-Primary outcomes:
-
-- reduction rate;
-- probability of `reduction_rate >= 0.85`.
-
-Training seed is the independent replication level. Scenarios are paired
-within seed, not independent training replications. The locked design uses
-10,000 hierarchical paired-bootstrap replicates with RNG seed `20260822`:
-resample training seeds, then shared scenarios within selected seeds. Report
-observed paired differences and percentile 95% intervals.
-
-Practical-equivalence margins:
-
-- `0.02` reduction-rate units;
-- `0.05` success-probability units.
-
-Holm correction is pre-registered by comparison family. Technical exclusions
-are limited to identity/hash mismatch, non-finite/corrupt/truncated artifacts,
-wrong partitions, impossible conservation, invalid termination, or failed
-deterministic replay. Poor performance, failure to reach 0.85, or an
-unfavorable ranking is never an exclusion reason.
-
-Evidence must flow only as:
-
-```text
-source parameter/literature
--> frozen configuration and Git commit
--> run ID and raw episode log
--> validated long-format table
--> paired statistical summary
--> figure/table artifact manifest
--> thesis statement
-```
-
-## G5 Gate Work Packages
-
-The G5 implementation plan must decompose at least these packages:
-
-1. reconcile G4 provenance and write the reconciliation audit;
-2. register first-problem lineage with source commit/blob IDs;
-3. extend shared algorithm protocols and role-specific observation/action/mask
-   handling;
-4. implement/adapt all five algorithm families with role-specific networks,
-   optimizers, replay/rollout transitions, target networks where needed, and
-   checkpoints;
-5. implement fixed support, rolling A*, nearest, urgency, and two-stage
-   controllers with tests;
-6. implement shared job identity, config hashing, matrix generation,
-   deduplication, atomic checkpointing, recovery, and output-root confinement;
-7. implement raw episode, validated long-table, metric-semantic, and artifact
-   validators;
-8. implement convergence/stability summaries, ablation flags, sensitivity
-   matrices, hierarchical bootstrap, Holm correction, and negative-result
-   diagnostics;
-9. run development-only smoke tests, then small/largest-scale pilots;
-10. freeze validation tuning rules and run validation scenarios only after
-    candidate configs and tie-break rules are hashed;
-11. freeze all G6/G7 manifests without sealed access;
-12. produce `HANDOFFG5.md` update, gate report, commit, push, and state record.
-
-## G5 Pilot Protocol
-
-The written design declares this order:
-
-1. unit/integration smoke for every method and condition;
-2. short end-to-end smoke;
-3. development pilots on `g20x20_d2` and `g30x50_d4`;
-4. freeze candidate configurations and tuning rule;
-5. validation tuning on `20000-20049` with sealed access disabled;
-6. rerun selected configurations on the development pilot matrix;
-7. freeze code, methods, configs, checkpoint selection, statistics,
-   exclusions, manifests, and hashes.
-
-Development-only pilot IDs in the design are training seeds `51001`, `51002`,
-`51003` and scenario IDs `10000-10019`. They must be registered as disjoint
-from formal training, validation, and sealed IDs. Formal seeds remain
-`42, 123, 2024, 3407, 7919`.
-
-G5 may produce M3 pilot evidence only if the complete independent pilot and
-its evidence chain pass. It cannot produce formal sealed conclusions.
-
-## Planned Repository Ownership
-
-The design proposes these G5 ownership boundaries:
-
-```text
-src/problem2/
-  algorithms/protocol.py
-  algorithms/common/
-  algorithms/sr_mappo/
-  algorithms/mappo/
-  algorithms/ippo/
-  algorithms/maddpg/
-  algorithms/iql/
-  heuristics/
-  training/
-  evaluation/
-  experiments/
-  statistics/
-configs/problem2/g5/
-docs/evidence/g5/
-scripts/
-tests/g5/
-outputs/problem2_sr_mappo_v1/g5/
-```
-
-Existing G2/G3/G4 code remains the base. Extend it in place where the tested
-contracts already exist; do not duplicate five training scripts or import the
-protected first-problem project at runtime.
-
-## Required Verification Before G5 Acceptance
-
-At minimum, test:
-
-- all five algorithms with both role observations, actions, masks, updates,
-  and checkpoints;
-- gradient/optimizer isolation and critic-information isolation;
-- masked log-prob replay, GAE, normalization freeze, and checkpoint round trip;
-- MADDPG masked discrete relaxation, target/replay behavior;
-- IQL masked bootstrap, epsilon-greedy behavior, target/replay behavior;
-- heuristic A* versus Dijkstra, deterministic ties, feasibility, and no future
-  leakage;
-- exact ablation and one-factor sensitivity diffs;
-- job matrix count `375`, dependency references, and no unsafe deduplication;
-- atomic interrupted-run resume equivalence;
-- raw/validated schema, metric semantics, conservation, partition, hash, and
-  artifact audits;
-- bootstrap reproducibility and Holm correction on hand-computable fixtures;
-- sealed-test denial in every G5 executable;
-- source cleanliness and protected-asset preservation.
-
-Before claiming G5 complete, run at least:
+Task-4 persistence baseline: `dc8fbb09852370f6d99dee4aa34e4ed9f2d69bb4`
+
+## Purpose
+
+This is the context-free continuation record for the next conversation. The
+only authorized work is **G5 Task 5: implement heterogeneous discrete MADDPG
+and IQL** from
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`.
+
+Do not redo Tasks 1-4. Do not start Task 6. Do not run a pilot, tune on
+validation scenarios, access sealed scenarios, queue formal jobs, or make an
+efficacy/superiority claim. Stop after Task 5 is implemented, reviewed,
+verified, committed, pushed, and recorded in `docs/PROJECT_STATE.md`.
+
+## Mandatory Startup
+
+Read these files completely before editing:
+
+1. `AGENTS.md`;
+2. `docs/PROJECT_STATE.md`;
+3. this handoff;
+4. `docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`, especially Task 5;
+5. `docs/superpowers/specs/2026-08-22-g5-pilot-freeze-design.md`;
+6. the applicable local skills, including `using-superpowers`,
+   `sr-mappo-problem2`, `executing-plans`, `test-driven-development`,
+   `requesting-code-review`, and `verification-before-completion` when
+   available.
+
+Use PowerShell from the repository root and inspect state before changes:
 
 ```powershell
-python -m pytest -q
-python -m compileall -q src scripts
+git status --short --branch
+git branch --show-current
+git rev-parse HEAD
+git rev-parse '@{upstream}'
+git ls-remote --heads origin codex/problem2-g5-pilot-freeze
 git diff --check
 ```
 
-Also run the new G5 registry/job/algorithm/audit CLIs and record their exact
-outputs. A passing pre-existing test suite alone does not pass G5.
+The Task-4 persistence baseline above must be an ancestor of the current HEAD.
+The current local, upstream, and remote branch heads must match before Task 5
+starts. Do not reset back to the baseline because handoff/state commits follow
+it. The only known unrelated working-tree item is the user-owned untracked
+directory `_tmp_docx_assets/`; do not inspect, stage, modify, delete, or clean
+it. Stop if there are other unexplained changes that overlap Task 5.
 
-## G5 Acceptance and G6 Transition
+## Research Identity And Boundary
 
-G5 passes only when:
+- Public flagship name: **SR-MAPPO**.
+- Problem 2 is the air-ground heterogeneous extension of SR-MAPPO.
+- Do not introduce HAPPO or rename the method to `AG-SR-MAPPO`.
+- The replenished resource is pesticide only. Battery replenishment is
+  inactive.
+- OSM roads are simulation inputs, not evidence of real field deployment.
+- Keep all future Problem-2 outputs below `outputs/problem2_sr_mappo_v1`.
+- Do not modify the protected first-problem repository, base project/OSM
+  inputs, planning evidence, external Word files, or other output roots.
 
-1. G4 lineage is reconciled and pushed;
-2. all five algorithms and both roles pass the shared acceptance suite;
-3. Problem-2, heuristic, ablation, and sensitivity paths complete bounded
-   pilots with finite validated artifacts;
-4. validation candidates and selection rules were frozen before validation
-   access;
-5. code, configs, methods, checkpoint selection, statistics, exclusions, and
-   G6/G7 manifests have immutable hashes;
-6. sealed lock remains actual count `0` and no sealed scenario was accessed;
-7. full tests, compile checks, audits, and clean-source checks pass;
-8. content and persistence commits are pushed and recorded in
-   `docs/PROJECT_STATE.md`.
+The current highest maturity is `M2`: implementation and scoped mechanism
+evidence. G5 remains open. No G5 pilot, validation tuning, formal job, or
+sealed-test access has occurred; sealed unlock count is `0`.
 
-Any scientific code, configuration, estimator, exclusion, or checkpoint rule
-change after a freeze returns the project to G5 and invalidates dependent G6
-manifests.
+Permitted wording is limited to implementation and test verification. It is
+not permitted to claim that mobile support improves treatment, that SR-MAPPO
+or another algorithm is superior, that formal experiments show a result, that
+any result is statistically significant, or that simulation verifies a real
+deployment.
 
-## Current Unfinished Work
+## Completed G5 Work
 
-- G4 provenance/hash discrepancy has not been reconciled.
-- The executable G5 plan exists and is persisted at commit
-  `e2508eddef0b1d20ae9ddd282807395511e1b58d`; none of its implementation tasks
-  has started.
-- The five new algorithm implementations (PPO/IPPO, MADDPG, IQL, and the
-  complete cross-method experiment adapters) are not yet implemented in this
-  branch.
-- Heuristic, ablation, sensitivity, job orchestration, formal validation, and
-  paired-statistics code are not yet accepted.
-- No formal second-problem raw logs, validated tables, paired statistics, or
-  locked figures exist.
-- Engineering parameter source records remain provisional/pending where noted
-  in the G1 registry.
+- **Task 1:** reconciled G4 lineage to one accepted
+  commit/tree/source-bundle tuple and recorded the audit.
+- **Task 2:** froze strict G5 registries and contracts for methods,
+  candidates, fairness, budgets, partitions, metrics, statistics, exclusions,
+  dependency lock, and Problem-1 lineage. The isolated `.venv-g5` exists; the
+  host dependency environment remains unchanged.
+- **Task 3:** added `HeterogeneousAlgorithm`, behavior-bound `RoleBatch`,
+  `JointReplayBuffer`, diagnostics, and atomic versioned checkpoint/resume
+  support while preserving G3 checkpoint behavior.
+- **Task 4:** implemented `sr_mappo_mobile`, same-source `mappo_mobile`, and
+  role-local `ippo_mobile`, including all frozen `c01-c04` candidates,
+  behavior-bound `OnPolicyEnvelope`, validity-aware GAE, frozen evaluation,
+  transactional update failure handling, and exact resume.
 
-## Immediate Next Action for a New Conversation
+Task-4 content commit:
+`0593f17edad38a892115a375c1ac836cf8081e19`.
+Task-4 persistence commit/baseline:
+`dc8fbb09852370f6d99dee4aa34e4ed9f2d69bb4`.
 
-1. Read this file, `docs/PROJECT_STATE.md`, the three linked G5-G7 specs, and
-   `docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`.
-2. Execute only Task 1: G4 lineage reconciliation and its focused verification.
-3. Commit and push the reconciliation, then record local/upstream/remote hash
-   parity in `docs/PROJECT_STATE.md`.
-4. Stop at any failed lineage or G4 regression gate; do not begin pilots.
-5. Do not start formal training, validation tuning, or sealed evaluation.
+Fresh Task-4 verification recorded before persistence:
 
-## Persistence of This Handoff
+- G5 suite: `165 passed`;
+- G3 suite: `65 passed`;
+- host full regression: `464 passed`;
+- G5 contract audit: `status=pass`, validation/sealed access false, unlock
+  count `0`;
+- final independent review: `Ready`.
 
-This handoff must be committed and pushed as its own content commit. Then
-`docs/PROJECT_STATE.md` must record its path, commit, verification, and remote
-hash in a second persistence commit. Do not report the handoff as persisted
-until both checks are complete.
+## Task 5 Exact Scope
+
+Create only the planned algorithm files plus narrowly necessary shared
+protocol/replay changes:
+
+```text
+src/problem2/algorithms/maddpg/__init__.py
+src/problem2/algorithms/maddpg/algorithm.py
+src/problem2/algorithms/maddpg/networks.py
+src/problem2/algorithms/maddpg/trainer.py
+src/problem2/algorithms/iql/__init__.py
+src/problem2/algorithms/iql/algorithm.py
+src/problem2/algorithms/iql/networks.py
+src/problem2/algorithms/iql/trainer.py
+tests/g5/test_off_policy_algorithms.py
+```
+
+Extend `src/problem2/algorithms/__init__.py` so `build_algorithm` constructs
+`maddpg_mobile` and `iql_mobile` for every frozen `c01-c04` candidate. Modify
+`src/problem2/algorithms/protocol.py`,
+`src/problem2/algorithms/common/replay.py`, exports, and existing focused tests
+only as required to establish a strict off-policy contract. Preserve all
+accepted on-policy and G3 behavior.
+
+Required MADDPG behavior:
+
+- one shared UAV discrete actor and one separate vehicle discrete actor;
+- centralized role-Q critics, matching target actors/critics, replay, and
+  soft target updates;
+- straight-through masked Gumbel-Softmax actor updates;
+- `masked_straight_through_gumbel(logits, mask, temperature) -> Tensor` gives
+  every illegal action exactly zero mass and exactly zero actor gradient;
+- actor gradients reach only the selected role actor, with role optimizer and
+  parameter isolation;
+- deterministic evaluation uses masked actor argmax.
+
+Required IQL behavior:
+
+- one shared UAV Q/target-Q network and one separate vehicle Q/target-Q
+  network;
+- role-local masked epsilon-greedy behavior, replay, and frozen target updates;
+- `masked_bootstrap_max(q, mask)` excludes illegal actions and rejects any
+  all-false mask;
+- role parameters, optimizers, targets, exploration state, and replay resume
+  remain isolated and complete;
+- deterministic evaluation uses masked greedy actions with epsilon exactly
+  `0` and must not mutate exploration state.
+
+Both algorithms must use the same behavior-bound role actions/masks, shared
+team reward, identities, candidate-slot mapping, validity semantics,
+interaction budget, local actor observations, and information conditions as
+the accepted G5 contract. Checkpoints must contain every method-specific
+network, target, optimizer, schedule/exploration counter, replay position,
+replay RNG, trainer RNG, pending state, configuration, and diagnostics needed
+for uninterrupted-versus-resumed next-update equivalence.
+
+## Critical Integration Hazard
+
+Resolve this contract issue with failing tests before production code:
+
+- `HeterogeneousAlgorithm.observe` currently advertises only
+  `OnPolicyEnvelope`;
+- `JointReplayBuffer` currently stores only `RoleBatch`;
+- `RoleBatch` lacks the current/next structured global state required by
+  MADDPG centralized role-Q critics.
+
+The conservative resolution is a strict typed `OffPolicyEnvelope` or a
+reviewed general transition protocol. It must wrap the exact behavior-bound
+`RoleBatch` and carry current/next structured state, shared team reward,
+team/role validity, masks, role and agent identities, and vehicle candidate
+mapping. It must validate and serialize through replay and checkpoints.
+
+Widen the abstract `observe` surface without weakening `OnPolicyEnvelope`.
+Existing on-policy algorithms must continue to reject raw `RoleBatch` and
+off-policy envelopes. Off-policy algorithms must reject on-policy envelopes
+and incomplete/raw transition data. Do not place critic-only structured state
+in actor forward signatures.
+
+Audit `JointReplayBuffer.load_state_dict` as part of this change. Require exact
+keys and types, validate all contents before mutating live state, make
+defensive copies, preserve ring slots/insertion index/size/RNG/masks, reject
+impossible sparse layouts or malformed RNG state, and prove deterministic
+sampling after resume. Do not weaken the accepted behavior-mask binding.
+
+## Frozen Candidate Grid
+
+The authoritative registry is
+`configs/problem2/g5/tuning_candidates.yaml`. Do not tune or alter it.
+
+MADDPG fixed values: hidden network `128 x 2`, replay capacity `100000`,
+discount `0.99`, exploration `1.0 -> 0.05`.
+
+| Candidate | Actor LR | Critic LR | Tau | Batch |
+|---|---:|---:|---:|---:|
+| `c01` | `1e-4` | `3e-4` | `0.005` | `64` |
+| `c02` | `3e-4` | `3e-4` | `0.005` | `64` |
+| `c03` | `1e-4` | `1e-3` | `0.010` | `128` |
+| `c04` | `3e-4` | `1e-3` | `0.010` | `128` |
+
+IQL fixed values: hidden network `128 x 2`, replay capacity `100000`, discount
+`0.99`, epsilon `1.0 -> 0.05`.
+
+| Candidate | Learning Rate | Target Interval | Epsilon Decay | Batch |
+|---|---:|---:|---:|---:|
+| `c01` | `1e-4` | `100` | `0.999` | `64` |
+| `c02` | `3e-4` | `100` | `0.999` | `64` |
+| `c03` | `3e-4` | `250` | `0.995` | `128` |
+| `c04` | `5e-4` | `250` | `0.995` | `128` |
+
+## Required Execution Order
+
+1. Inspect the accepted protocol, replay, checkpoint, factory, registry, and
+   on-policy rejection tests. Write down the exact off-policy envelope/replay
+   state contract before implementation.
+2. Write failing MADDPG tests for both roles, joint-action critic inputs,
+   behavior masks, illegal-action zero mass/gradient, role gradient isolation,
+   target updates, replay/checkpoint round trip, resume equivalence, and
+   deterministic evaluation.
+3. Write failing IQL tests for both roles, masked epsilon-greedy behavior,
+   all-false rejection, illegal bootstrap exclusion, role isolation, target
+   updates, replay/checkpoint round trip, resume equivalence, and epsilon-zero
+   evaluation.
+4. Run the focused suite and record the expected RED caused by missing
+   modules/interfaces.
+5. Implement the minimum strict shared off-policy contract, MADDPG, IQL, and
+   factory extensions. Keep configuration immutable and fail closed on
+   malformed/non-finite state, loss, gradient, or checkpoint input.
+6. Run focused regression while implementing, then request an independent
+   code review. Fix every Critical/Important finding with a reproducing test
+   and repeat review until no such finding remains.
+7. Run the complete verification below on final content. Inspect the diff,
+   forbidden names, partition access, and working tree manually.
+8. Commit with the exact subject
+   `feat: implement heterogeneous maddpg and iql`, push it, and verify local,
+   upstream, and remote parity.
+9. Update `docs/PROJECT_STATE.md` with scope, TDD evidence, review result,
+   verification counts, content commit, remote parity, maturity boundary,
+   access statement, and the next authorized task. Commit and push that
+   persistence record separately, then verify parity again.
+
+## Required Verification
+
+Use `.venv-g5` for the exact G5 lock and host Python for the full legacy
+regression:
+
+```powershell
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_off_policy_algorithms.py -q
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_algorithm_protocol.py tests/g5/test_checkpoint_resume.py -q
+.venv-g5/Scripts/python.exe -m pytest tests/g3 -q
+.venv-g5/Scripts/python.exe -m pytest tests/g5 -q
+python -m pytest -q
+.venv-g5/Scripts/python.exe -m compileall -q src scripts
+.venv-g5/Scripts/python.exe scripts/audit_g5_contracts.py
+git diff --check
+```
+
+Also run targeted leakage/identity checks such as:
+
+```powershell
+rg -n "HAPPO|AG-SR-MAPPO|30000|30099|validation|sealed" src/problem2/algorithms tests/g5/test_off_policy_algorithms.py
+git status --short --branch
+git diff --stat
+git diff -- src/problem2/algorithms tests/g5/test_off_policy_algorithms.py
+```
+
+Literal forbidden-name and partition strings may appear only in explicit
+fail-closed tests/audits, never as a new method or accessed scenario. Report
+actual command output; do not copy the old pass counts as fresh evidence.
+
+## Stop Conditions
+
+Stop Task 5 and record the blocker without advancing the gate if any of these
+occurs:
+
+- local/upstream/remote history differs unexpectedly;
+- unexplained user changes overlap Task 5;
+- the strict off-policy transition cannot carry centralized critic state
+  without weakening actor isolation or on-policy rejection;
+- illegal MADDPG actions receive nonzero mass or gradient;
+- IQL bootstraps from an illegal action or accepts an all-false mask;
+- replay/checkpoint restoration is partial, mutates before validation, or does
+  not reproduce deterministic sampling/next update;
+- any focused, G3, G5, full-regression, compile, contract, or diff check fails;
+- implementation would require Task 6 environment/controller work, a pilot,
+  validation data, sealed data, a protected external write, or a registry
+  change not explicitly authorized by the plan.
+
+Task 5 completion does not pass G5 or raise maturity above `M2`. After a clean
+Task-5 content and persistence push, Task 6 becomes the next candidate work,
+but do not begin it in the same task without new user authorization.
+
+## Required Final Report
+
+Report the exact Task-5 result, changed files, RED/GREEN/review evidence,
+verification counts, content commit, persistence commit, local/upstream/remote
+parity, highest maturity, validation/sealed access state, protected paths left
+untouched, blockers, and the next authorized task. Never claim more evidence
+than the recorded gate supports.
