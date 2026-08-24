@@ -82,7 +82,6 @@ class Problem2CooperativeEnv:
         field_summary: Iterable[float] = (),
         initial_total_pest: float | None = None,
         final_total_pest: float | None = None,
-        reduction_epsilon: float | None = None,
     ) -> None:
         if not isinstance(initial_state, EpisodeState):
             raise TypeError("initial_state must be an EpisodeState")
@@ -105,14 +104,12 @@ class Problem2CooperativeEnv:
         self.field_summary = field
         self.initial_total_pest = initial_total_pest
         self.final_total_pest = final_total_pest
-        self.reduction_epsilon = reduction_epsilon
         self._initial_vehicle_inventory_l = initial_state.vehicle.inventory_l
         self._state = initial_state
         self._dispatch: _Dispatch | None = None
         self._metrics = EpisodeMetrics(
             initial_state,
             tolerance=config.tolerance,
-            reduction_epsilon=reduction_epsilon,
         )
         self._current_view: dict[str, Any] | None = None
         self._candidate_nodes: dict[str, tuple[int, float]] = {}
@@ -310,7 +307,6 @@ class Problem2CooperativeEnv:
         self._metrics = EpisodeMetrics(
             self.initial_state,
             tolerance=self.config.tolerance,
-            reduction_epsilon=self.reduction_epsilon,
         )
         return self._make_view()
 

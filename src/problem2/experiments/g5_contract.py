@@ -98,6 +98,10 @@ CONTRACT_FILES = (
 )
 FORBIDDEN_NAME_RE = re.compile(r"(?i)(?:\bHAPPO\b|AG-SR-MAPPO)")
 SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
+REDUCTION_RATE_DEFINITION = (
+    "one_minus_final_total_pest_divided_by_initial_total_pest_plus_epsilon"
+)
+REDUCTION_RATE_EPSILON = 1.0e-12
 
 
 class G5ContractError(ValueError):
@@ -122,6 +126,7 @@ class MetricDefinition:
     unit: str
     category: str
     definition: str
+    epsilon: float | None = None
     threshold: float | None = None
 
 
@@ -612,25 +617,39 @@ def _load_metrics(root: Path) -> Mapping[str, MetricDefinition]:
     result: dict[str, MetricDefinition] = {}
     for index, raw in enumerate(_sequence(payload["metrics"], "metrics.metrics")):
         item = _mapping(raw, f"metrics[{index}]")
-        allowed = {"name", "type", "unit", "category", "definition", "threshold"}
-        required = allowed if item.get("name") == "success_at_0_85" else allowed - {"threshold"}
+        required = {"name", "type", "unit", "category", "definition"}
+        if item.get("name") == "reduction_rate":
+            required.add("epsilon")
+        elif item.get("name") == "success_at_0_85":
+            required.add("threshold")
         _require_keys(item, required, f"metrics[{index}]")
         name = _text(item["name"], f"metrics[{index}].name")
         if name in result:
             raise G5ContractError(f"duplicate metric: {name}")
         threshold = _number(item["threshold"], f"metrics[{index}].threshold") if "threshold" in item else None
+        epsilon = (
+            _number(item["epsilon"], f"metrics[{index}].epsilon", positive=True)
+            if "epsilon" in item
+            else None
+        )
         result[name] = MetricDefinition(
             name=name,
             value_type=_text(item["type"], f"metrics[{index}].type"),
             unit=_text(item["unit"], f"metrics[{index}].unit"),
             category=_text(item["category"], f"metrics[{index}].category"),
             definition=_text(item["definition"], f"metrics[{index}].definition"),
+            epsilon=epsilon,
             threshold=threshold,
         )
     if tuple(result) != METRIC_NAMES:
         raise G5ContractError("formal G5 metric registry order or membership drifted")
     if result["success_at_0_85"].threshold != 0.85:
         raise G5ContractError("primary success threshold drifted")
+    reduction = result["reduction_rate"]
+    if reduction.definition != REDUCTION_RATE_DEFINITION:
+        raise G5ContractError("reduction_rate definition drifted")
+    if reduction.epsilon != REDUCTION_RATE_EPSILON:
+        raise G5ContractError("reduction_rate epsilon drifted")
     return MappingProxyType(result)
 
 

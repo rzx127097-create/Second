@@ -359,3 +359,140 @@ This fix round did not run a pilot, access validation or sealed scenarios,
 modify frozen registries or `docs/PROJECT_STATE.md`, write protected external
 assets, or raise the project above M2. The untracked `_tmp_docx_assets/`
 directory remained untouched. The fix commit is local only and is not pushed.
+
+## Fix Round 2
+
+Date: 2026-08-25
+Starting commit: `60486832ef7bb10e9b1c90a70b0c33d4f8197542`
+
+### Contract Correction
+
+Fix Round 1 required a caller-supplied positive denominator epsilon because the
+metric registry defined the symbol but did not freeze a numeric value. That
+left the primary outcome variable across callers. Before any pilot or result
+row exists, the controller authorized one narrowly scoped contract migration:
+
+- `configs/problem2/g5/metrics.yaml` now freezes the reduction denominator
+  epsilon as exactly `1.0e-12` on the `reduction_rate` definition;
+- `MetricDefinition` exposes `epsilon`, and `load_g5_contract` requires it only
+  on `reduction_rate`, requires it to be finite and positive, and rejects any
+  value other than `1.0e-12`;
+- the loader also validates the exact registered reduction definition, and
+  rejects a missing epsilon or an epsilon attached to another metric;
+- `EpisodeMetrics` loads the canonical epsilon from the strict contract and
+  computes `1 - final_total_pest / (initial_total_pest + 1.0e-12)`;
+- `EpisodeMetrics` and `Problem2CooperativeEnv` no longer accept a caller
+  epsilon, so a method, run, or comparison cannot override the primary metric.
+
+This section supersedes the caller-supplied epsilon boundary described in Fix
+Round 1. No existing result required migration because no G5 pilot, validation
+evaluation, formal run, or sealed-test result exists.
+
+### Changed Shared Files And Rationale
+
+- `configs/problem2/g5/metrics.yaml`: authorized pre-pilot freeze of the one
+  missing numeric primary-metric parameter.
+- `src/problem2/experiments/g5_contract.py`: strict schema, exact-value
+  validation, and immutable `MetricDefinition` exposure for that parameter.
+- `src/problem2/evaluation/metrics.py`: consume the contract-owned epsilon and
+  remove caller selection.
+- `src/problem2/training/cooperative_env.py`: remove the epsilon pass-through
+  from the Task 6 outcome boundary.
+- `tests/g5/test_environment_metrics.py`: canonical-formula and no-override
+  behavior coverage.
+- `tests/g5/test_g5_contracts.py`: presence, exactness, missing, extra,
+  non-finite, non-positive, and drift fail-closed coverage.
+
+No other shared registry, algorithm, environment physics, output, or evidence
+schema changed.
+
+### Fix-Round RED
+
+The following tests were added or changed before registry or production edits:
+
+```powershell
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_environment_metrics.py::test_primary_outcomes_use_contract_epsilon_and_exact_registered_formula tests/g5/test_g5_contracts.py::test_metric_registry_freezes_primary_and_mechanism_semantics tests/g5/test_g5_contracts.py::test_metric_registry_rejects_missing_extra_or_drifted_epsilon -q
+```
+
+Observed output:
+
+```text
+3 failed, 5 passed in 4.12s
+```
+
+Exit code: `1`. The failures showed that primary outcomes still required caller
+input, `MetricDefinition` did not expose epsilon, and a registry with no epsilon
+still loaded successfully. The other mutation cases already failed closed for
+their pre-existing unknown-key or finite-number checks.
+
+### Fix-Round GREEN
+
+The same focused selectors after the minimal correction returned:
+
+```text
+8 passed in 3.71s
+```
+
+Exit code: `0`.
+
+Complete environment/metric and G5 contract focused verification:
+
+```powershell
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_environment_metrics.py tests/g5/test_g5_contracts.py -q
+```
+
+```text
+46 passed in 16.70s
+```
+
+Exit code: `0`.
+
+### Fix-Round Regression And Audit Verification
+
+```powershell
+.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q
+```
+
+```text
+290 passed in 44.61s
+```
+
+```powershell
+python -m pytest tests/g2 tests/g4 -q
+```
+
+```text
+178 passed in 93.04s (0:01:33)
+```
+
+Both test commands exited `0`.
+
+```powershell
+.venv-g5/Scripts/python.exe scripts/audit_g5_contracts.py
+```
+
+The audit exited `0` with `status=pass`, validation and sealed access false,
+actual unlock count `0`, and the corrected `configs/problem2/g5/metrics.yaml`
+SHA-256 `c1761358f1bd4638ff879cc29acf9dac3c754e149f0d0fe2a4d51323ab6ec8bb`.
+
+```powershell
+.venv-g5/Scripts/python.exe -m compileall -q src scripts
+git diff --check
+```
+
+Both commands exited `0`. The diff check emitted only working-copy LF-to-CRLF
+notices and no whitespace error.
+
+### Boundary
+
+This remains M2 contract and implementation evidence. The fix round did not
+run pilots or formal jobs, read validation or sealed scenarios, change access
+or unlock state, write outputs, modify `docs/PROJECT_STATE.md`, touch protected
+external assets or Word files, or support an efficacy or superiority claim.
+The untracked `_tmp_docx_assets/` directory remained untouched. The fix commit
+is local only and is not pushed.
+
+The formula-symbol audit of this report returned exit `1` with 32 findings.
+Every finding was context-checked as a literal schema/test identifier or a
+historical code span because the scanner does not remove Markdown code spans;
+no prose-notation or mojibake defect was identified. No Word file was modified.

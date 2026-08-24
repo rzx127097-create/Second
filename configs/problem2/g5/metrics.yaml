@@ -2,7 +2,7 @@ schema_version: g5.v1
 contract_id: G5-METRICS
 status: design_frozen
 metrics:
-  - {name: reduction_rate, type: number, unit: '1', category: primary_outcome, definition: one_minus_final_total_pest_divided_by_initial_total_pest_plus_epsilon}
+  - {name: reduction_rate, type: number, unit: '1', category: primary_outcome, definition: one_minus_final_total_pest_divided_by_initial_total_pest_plus_epsilon, epsilon: 1.0e-12}
   - {name: success_at_0_85, type: boolean, unit: '1', category: primary_outcome, definition: reduction_rate_at_least_threshold, threshold: 0.85}
   - {name: rendezvous_distance_m, type: number, unit: m, category: mechanism, definition: shortest_feasible_road_network_route_from_support_at_reservation_to_selected_service_node}
   - {name: vehicle_service_travel_m, type: number, unit: m, category: mechanism, definition: actual_road_distance_traveled_for_service_including_replanning_detours}

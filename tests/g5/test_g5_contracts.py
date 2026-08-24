@@ -303,12 +303,42 @@ def test_metric_registry_freezes_primary_and_mechanism_semantics() -> None:
         "effective_spray_steps",
         "decision_runtime_s",
     )
-    assert contract.metrics["reduction_rate"].category == "primary_outcome"
+    reduction = contract.metrics["reduction_rate"]
+    assert reduction.category == "primary_outcome"
+    assert reduction.epsilon == 1.0e-12
     assert contract.metrics["success_at_0_85"].threshold == 0.85
+    assert contract.metrics["success_at_0_85"].epsilon is None
     assert contract.metrics["rendezvous_distance_m"].unit == "m"
     assert "shortest_feasible_road_network_route" in contract.metrics["rendezvous_distance_m"].definition
     assert "unresolved_terminal_requests" in contract.metrics["waiting_steps"].definition
     assert "excluding_environment_and_file_io" in contract.metrics["decision_runtime_s"].definition
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda payload: payload["metrics"][0].pop("epsilon", None), "missing keys"),
+        (
+            lambda payload: payload["metrics"][1].__setitem__("epsilon", 1.0e-12),
+            "unknown keys",
+        ),
+        (
+            lambda payload: payload["metrics"][0].__setitem__("epsilon", float("nan")),
+            "finite",
+        ),
+        (lambda payload: payload["metrics"][0].__setitem__("epsilon", 0.0), "epsilon"),
+        (lambda payload: payload["metrics"][0].__setitem__("epsilon", -1.0e-12), "epsilon"),
+        (lambda payload: payload["metrics"][0].__setitem__("epsilon", 1.0e-9), "epsilon"),
+    ],
+)
+def test_metric_registry_rejects_missing_extra_or_drifted_epsilon(
+    tmp_path: Path, mutate, message: str
+) -> None:
+    candidate = _copy_contract_root(tmp_path)
+    _mutate_yaml(candidate, "configs/problem2/g5/metrics.yaml", mutate)
+
+    with pytest.raises(G5ContractError, match=message):
+        load_g5_contract(candidate)
 
 
 @pytest.mark.parametrize(

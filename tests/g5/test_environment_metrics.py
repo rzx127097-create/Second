@@ -228,27 +228,34 @@ def test_metrics_count_positive_spray_disabled_and_return_uav_time_from_real_eve
     assert record.resource_residual_l == pytest.approx(0.0, abs=1e-12)
 
 
-def test_primary_outcomes_use_explicit_epsilon_and_exact_registered_formula() -> None:
-    _, state = _detour_fixture()
+def test_primary_outcomes_use_contract_epsilon_and_exact_registered_formula() -> None:
+    graph, state = _detour_fixture()
     final = replace(state, terminated=True)
 
-    available = EpisodeMetrics(state, reduction_epsilon=1.0).finalize(
+    available = EpisodeMetrics(state).finalize(
         final,
         initial_total_pest=100.0,
         final_total_pest=10.0,
     )
     unavailable = EpisodeMetrics(state).finalize(final)
 
-    assert available.reduction_rate == pytest.approx(1.0 - 10.0 / 101.0)
+    assert available.reduction_rate == 1.0 - 10.0 / (100.0 + 1.0e-12)
     assert available.success_at_0_85 is True
     assert available.primary_outcomes_available
     assert unavailable.reduction_rate is None
     assert unavailable.success_at_0_85 is None
     with pytest.raises(ValueError, match="both be supplied"):
         EpisodeMetrics(state).finalize(final, initial_total_pest=100.0)
-    with pytest.raises(ValueError, match="reduction_epsilon"):
-        EpisodeMetrics(state).finalize(
-            final, initial_total_pest=100.0, final_total_pest=10.0
+    with pytest.raises(TypeError, match="reduction_epsilon"):
+        EpisodeMetrics(state, reduction_epsilon=1.0)
+    with pytest.raises(TypeError, match="reduction_epsilon"):
+        Problem2CooperativeEnv(
+            state,
+            graph,
+            CONFIG,
+            max_steps=1,
+            scenario_id=10000,
+            reduction_epsilon=1.0,
         )
     with pytest.raises(ValueError, match="finite"):
         EpisodeMetrics(state).finalize(
