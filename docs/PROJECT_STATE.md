@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-24
+Last updated: 2026-08-25
 
 ## Final Goal
 
@@ -28,13 +28,14 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Tasks 1-4 are accepted at M2. The registry, fairness,
-  budget-selection, partition, shared heterogeneous protocol/checkpoint, exact
-  on-policy stability-component, and SR-MAPPO/MAPPO/PPO-IPPO implementation
-  boundaries are persisted. G4 onboard-pesticide scarcity activation and
-  diagnostic support-probe counterfactual remain the preceding accepted
-  mechanism evidence. No G5 pilot has run. Formal jobs, validation tuning,
-  sealed evaluation, and efficacy/superiority claims remain unauthorized.
+- Current gate: G5 Tasks 1-6 are accepted at M2. The registry, fairness,
+  budget-selection, partition, shared heterogeneous protocol/checkpoint, five
+  learning algorithms, physical G2-to-G3 adapter, direct episode metrics, and
+  fixed/A*/nearest/urgency/two-stage support-controller boundaries are
+  persisted. G4 onboard-pesticide scarcity activation and diagnostic
+  support-probe counterfactual remain the preceding accepted mechanism
+  evidence. No G5 pilot has run. Formal jobs, validation tuning, sealed
+  evaluation, and efficacy/superiority claims remain unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -1247,6 +1248,98 @@ implementation work; no pilot, validation tuning, formal job, or sealed-test
 access is authorized. No external protected asset or Word file was modified
 while creating this handoff.
 
+## G5 Task 6: Physical Adapter, Metrics, And Support Controllers
+
+Task 6 is implemented, independently reviewed, verified, and content-persisted
+at the existing `M2` maturity boundary. It does not run a pilot, access
+validation or sealed scenarios, queue a formal job, or support an efficacy,
+superiority, significance, or deployment claim.
+
+Implemented boundaries:
+
+- `Problem2CooperativeEnv` reuses the accepted G2 road, physical motion,
+  service-state, and pesticide-ledger components while emitting the verified
+  G3 role observations and behavior-time masks. A sampled vehicle request slot
+  and its mapping remain unchanged; deterministic road direction is recorded
+  separately as physical execution detail.
+- Adapter-owned reservation events record request ID, origin road state,
+  selected service road node, sampled slot, and shortest feasible road-route
+  length. Episode metrics separately accumulate this rendezvous distance and
+  realized service travel, including route detours.
+- `EpisodeMetrics` directly records pending/reserved waiting through the
+  terminal boundary, completed-request wait, pesticide-disabled UAV-time,
+  return UAV-time, positive effective spray steps, partial/zero service,
+  transfer/inventory totals, conservation residual, and decision-only runtime.
+- Primary outcomes require explicit finite initial/final pest totals. The
+  registered denominator epsilon is frozen as `1.0e-12`; the strict G5 loader
+  rejects missing, extra, non-finite, non-positive, or drifted values, and
+  callers cannot override it.
+- Deterministic evaluation reloads the strict partition contract before reset,
+  denies validation/sealed access, deep-snapshots policy state, and restores it
+  on success, mutation, reset failure, or action failure before returning the
+  byte-identity proof.
+- Fixed, rolling-A*, nearest, and urgency controllers use current observable
+  request/road state only with deterministic ties and service feasibility.
+  Fixed support enforces exact mobile-resource matching at construction; A*
+  exposes an auditable frozen replanning cadence and agrees with Dijkstra on
+  the tested graph panel.
+- The two-stage schedule requires positive stage budgets summing exactly to
+  the joint SR-MAPPO interaction budget and records both budgets in checkpoint
+  ancestry under method ID `sr_mappo_two_stage`.
+
+TDD and independent review evidence:
+
+- Initial RED: two collection errors because the Task-6 evaluation and
+  heuristic modules did not exist; initial focused GREEN: `20 passed`.
+- Review fix round 1 reproduced `7 failed, 8 passed` for environment/metric
+  cases and `7 failed, 10 passed` for controller cases, then closed deep
+  policy restoration, strict partition reuse, A* cadence, and non-bypassable
+  fixed-resource matching. Scoped re-review left only the missing numeric
+  metric epsilon open.
+- Review fix round 2 reproduced `3 failed, 5 passed`, froze and enforced the
+  canonical epsilon, and returned `8 passed`; the scoped re-review marked the
+  last finding addressed with no new Critical or Important breakage.
+- Two Minor observations remain deferred in the SDD ledger for the later
+  whole-branch review: fail-closed handling of an active A* route that becomes
+  unreachable, and an environment-level fixed-controller integration test.
+
+Fresh controller verification on content head
+`044209c84803b0ab9e9c6ff51dddbca83ff03228`:
+
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_environment_metrics.py tests/g5/test_heuristics.py tests/g5/test_g5_contracts.py -q`:
+  `63 passed in 18.74s`.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q`:
+  `290 passed in 46.35s`.
+- Host `python -m pytest tests/g2 tests/g4 -q`:
+  `178 passed in 95.16s`.
+- `.venv-g5/Scripts/python.exe -m compileall -q src scripts`: exit `0`.
+- `.venv-g5/Scripts/python.exe scripts/audit_g5_contracts.py`:
+  `status=pass`, all 17 fairness flags true, validation/sealed access false,
+  actual unlock count `0`, and metric-contract SHA-256
+  `c1761358f1bd4638ff879cc29acf9dac3c754e149f0d0fe2a4d51323ab6ec8bb`.
+- `git diff 02b4b0fa2a842645bf7007596a19644b9664c193..HEAD --check`:
+  exit `0`.
+
+Persistence status:
+
+- Content commits `a5918b76f8c11ee91dc5be1681776cf73ac42c8c`
+  (`feat: add g5 environment metrics and support controllers`),
+  `60486832ef7bb10e9b1c90a70b0c33d4f8197542`
+  (`fix: harden g5 evaluation and support contracts`), and
+  `044209c84803b0ab9e9c6ff51dddbca83ff03228`
+  (`fix: freeze g5 reduction epsilon`) were pushed to
+  `origin/codex/problem2-g5-pilot-freeze`.
+- After the content push, local HEAD, upstream HEAD, and `git ls-remote` all
+  returned `044209c84803b0ab9e9c6ff51dddbca83ff03228`.
+- The user-owned `_tmp_docx_assets/` path remains untracked and untouched. No
+  protected external asset, OSM input, first-problem file, output artifact, or
+  Word file was modified.
+
+Task 7 is the next authorized work: generate exact experiment families,
+configuration diffs, and the deduplicated 375-job graph. Task 7 is not started
+by this persistence record, and pilots, validation tuning, formal execution,
+and sealed access remain unauthorized.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:
@@ -1287,16 +1380,19 @@ while creating this handoff.
 - Implemented and independently reviewed the G5 Task 4 SR-MAPPO, same-source
   MAPPO, and role-local PPO/IPPO comparison algorithms with behavior-bound
   rollout, exact checkpoint resume, and validity-aware GAE contracts.
-- Rewrote and pushed the context-free G5 handoff so the next conversation
-  starts at Task 5 with the frozen off-policy scope, protocol hazard, candidate
-  grids, verification sequence, and M2 stop boundary.
+- Implemented and independently reviewed G5 Task 5 heterogeneous discrete
+  MADDPG/IQL with strict off-policy replay, role-valid updates, deterministic
+  evaluation, and checkpoint compatibility.
+- Implemented and independently reviewed G5 Task 6 physical environment,
+  direct metric, partition, evaluation-freeze, fixed/A*/nearest/urgency, and
+  two-stage budget-ancestry contracts; content commits are pushed at M2.
 
 ## Pending Tasks
 
-- Execute Task 5 of the persisted G5 plan: implement heterogeneous discrete
-  MADDPG and IQL with TDD against the shared protocol.
-- Implement later G5 algorithms, baselines, orchestration, statistics, smoke,
-  pilots, and validation tuning only in the plan's declared order.
+- Execute Task 7 of the persisted G5 plan: generate exact experiment families,
+  configuration diffs, and the deduplicated 375-job graph.
+- Implement later G5 orchestration, statistics, smoke, pilots, and validation
+  tuning only in the plan's declared order.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -1314,9 +1410,10 @@ while creating this handoff.
   M2 as diagnostic support-probe mechanism evidence for onboard UAV pesticide
   scarcity. Its long-hash/provenance narrative discrepancy is reconciled. The
   G5 experiment contracts, shared algorithm protocol, exact on-policy stability
-  differences, and Task 4 SR-MAPPO/MAPPO/PPO-IPPO implementations are frozen;
-  Task 5 heterogeneous discrete MADDPG/IQL implementation is the next
-  authorized work.
+  differences, five learning algorithms, and Task-6 environment/metric/support
+  controllers are frozen at M2. The reduction denominator epsilon is contract
+  owned at `1.0e-12`; Task 7 experiment-family and job-graph generation is the
+  next authorized work.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -1366,11 +1463,12 @@ while creating this handoff.
 
 ## Next Step
 
-Execute Task 5 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: implement
-heterogeneous discrete MADDPG and IQL with test-first development against the
-accepted shared protocol. Keep pilots, validation tuning, formal jobs, and
-sealed-test evaluation unauthorized until their later gates.
+Execute Task 7 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: generate exact
+experiment families, configuration diffs, and the deduplicated 375-job graph
+with test-first development against the accepted Task-6 adapters. Keep pilots,
+validation tuning, formal jobs, and sealed-test evaluation unauthorized until
+their later tasks and gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
