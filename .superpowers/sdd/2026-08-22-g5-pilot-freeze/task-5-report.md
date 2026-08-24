@@ -299,3 +299,52 @@ The minor reviewer findings concerning replay-capacity type validation,
 stronger Gumbel-gradient assertions, and explicit replay ring/resume test
 coverage remain deferred by controller. No registry, pilot, or full-suite
 execution was performed.
+
+## Fix Round 2
+
+Scoped re-review found that adding `role_update_count` to the strict
+`g5-iql-trainer-v1` state without a migration path made pre-fix v1 trainer
+states unloadable. The schema remains v1 for compatibility. Exact legacy v1
+states that omit only `role_update_count` now load with both role counters
+initialized to zero; new states retain strict role-counter validation.
+
+TDD RED for the legacy checkpoint reproducer:
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5/test_off_policy_algorithms.py::test_iql_loads_pre_fix_v1_trainer_state_with_safe_role_counters -q
+```
+
+Observed output: `1 failed` during nested trainer validation with
+`ValueError: invalid IQL trainer state schema`.
+
+TDD GREEN for the compatibility path:
+
+```text
+.                                                                        [100%]
+1 passed in 7.59s
+```
+
+The new-state regression also verifies that a malformed `role_update_count`
+mapping is still rejected by the trainer loader.
+
+Focused amended tests:
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5/test_off_policy_algorithms.py -q
+```
+
+```text
+......................                                                   [100%]
+22 passed in 11.24s
+```
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5/test_algorithm_protocol.py tests/g5/test_checkpoint_resume.py -q
+```
+
+```text
+...........................                                              [100%]
+27 passed in 4.64s
+```
+
+No full suite, registry change, or pilot execution was performed.

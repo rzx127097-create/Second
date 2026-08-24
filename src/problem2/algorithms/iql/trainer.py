@@ -14,6 +14,8 @@ from .networks import masked_bootstrap_max
 
 
 class IQLTrainer:
+    _STATE_SCHEMA_VERSION = "g5-iql-trainer-v1"
+
     def __init__(self, algorithm: Any, *, learning_rate: float, discount: float, target_update_interval: int, batch_size: int) -> None:
         self.algorithm = algorithm
         self.learning_rate = self._positive_float(learning_rate, "learning_rate")
@@ -106,9 +108,32 @@ class IQLTrainer:
         result["updates"] = float(self.update_count)
         return result
 
+    @classmethod
+    def _migrate_legacy_state(cls, state: Mapping[str, Any]) -> Mapping[str, Any]:
+        legacy_keys = {
+            "schema_version",
+            "optimizers",
+            "learning_rate",
+            "discount",
+            "target_update_interval",
+            "batch_size",
+            "update_count",
+            "target_update_count",
+        }
+        if (
+            isinstance(state, Mapping)
+            and state.get("schema_version") == cls._STATE_SCHEMA_VERSION
+            and set(state) == legacy_keys
+        ):
+            migrated = dict(state)
+            migrated["role_update_count"] = {"uav": 0, "vehicle": 0}
+            return migrated
+        return state
+
     def validate_state(self, state: Mapping[str, Any]) -> None:
+        state = self._migrate_legacy_state(state)
         expected = {"schema_version", "optimizers", "learning_rate", "discount", "target_update_interval", "batch_size", "update_count", "role_update_count", "target_update_count"}
-        if not isinstance(state, Mapping) or set(state) != expected or state.get("schema_version") != "g5-iql-trainer-v1":
+        if not isinstance(state, Mapping) or set(state) != expected or state.get("schema_version") != self._STATE_SCHEMA_VERSION:
             raise ValueError("invalid IQL trainer state schema")
         if state["learning_rate"] != self.learning_rate or state["discount"] != self.discount or state["target_update_interval"] != self.target_update_interval or state["batch_size"] != self.batch_size:
             raise ValueError("IQL trainer frozen configuration drift")
@@ -134,7 +159,7 @@ class IQLTrainer:
 
     def state_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": "g5-iql-trainer-v1",
+            "schema_version": self._STATE_SCHEMA_VERSION,
             "optimizers": {role: deepcopy(optimizer.state_dict()) for role, optimizer in self.optimizers.items()},
             "learning_rate": self.learning_rate,
             "discount": self.discount,
@@ -146,6 +171,7 @@ class IQLTrainer:
         }
 
     def load_state_dict(self, state: Mapping[str, Any]) -> None:
+        state = self._migrate_legacy_state(state)
         self.validate_state(state)
         for role, optimizer in self.optimizers.items():
             optimizer.load_state_dict(deepcopy(state["optimizers"][role]))

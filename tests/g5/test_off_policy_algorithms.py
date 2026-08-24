@@ -243,6 +243,27 @@ def test_iql_target_update_interval_is_role_local(contract) -> None:
         torch.testing.assert_close(value, vehicle_before[key], rtol=0, atol=0)
 
 
+def test_iql_loads_pre_fix_v1_trainer_state_with_safe_role_counters(contract) -> None:
+    algorithm = build_algorithm("iql_mobile", contract, "cpu", candidate_id="c01")
+    state = copy.deepcopy(algorithm.state_dict())
+    del state["trainer"]["role_update_count"]
+
+    restored = build_algorithm("iql_mobile", contract, "cpu", candidate_id="c01")
+    restored.load_state_dict(state)
+
+    assert restored.trainer.role_update_count == {"uav": 0, "vehicle": 0}
+    assert restored.trainer.state_dict()["schema_version"] == "g5-iql-trainer-v1"
+
+
+def test_iql_new_v1_state_rejects_malformed_role_update_count(contract) -> None:
+    algorithm = build_algorithm("iql_mobile", contract, "cpu", candidate_id="c01")
+    state = copy.deepcopy(algorithm.state_dict())
+    state["trainer"]["role_update_count"] = {"uav": 0}
+
+    with pytest.raises(ValueError, match="role update counters"):
+        algorithm.trainer.load_state_dict(state["trainer"])
+
+
 @pytest.mark.parametrize("method_id", METHOD_IDS)
 def test_deterministic_evaluation_does_not_mutate_exploration_or_replay(contract, method_id: str) -> None:
     algorithm = build_algorithm(method_id, contract, "cpu", candidate_id="c01")
