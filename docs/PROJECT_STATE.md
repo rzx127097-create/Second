@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 ## Final Goal
 
@@ -568,6 +568,52 @@ Persistence status:
 Task 5 heterogeneous discrete MADDPG and IQL implementation is the next
 authorized work. G5 as a whole remains open at M2.
 
+## G5 Task 5 Context-Free Handoff Record
+
+`HANDOFFG5.md` is rewritten as the current self-contained continuation record
+for a conversation with no prior context. It authorizes only Task 5
+heterogeneous discrete MADDPG/IQL implementation and explicitly forbids Task 6,
+pilots, validation tuning, formal jobs, sealed-test access, and
+efficacy/superiority claims.
+
+The handoff records the Task-4 persistence baseline, Tasks 1-4 completion
+summary, exact Task-5 files and interfaces, frozen `c01-c04` MADDPG/IQL grids,
+TDD/review/verification order, commit/push/state requirements, M2 claim
+boundary, and stop conditions. It also identifies the accepted protocol hazard:
+the abstract `observe` boundary is currently on-policy-only while
+`JointReplayBuffer` stores `RoleBatch`, which lacks MADDPG current/next
+structured critic state. Task 5 must resolve that hazard with a strict typed
+off-policy envelope or reviewed general transition protocol without weakening
+`OnPolicyEnvelope`, actor information isolation, behavior-mask binding, or
+checkpoint/replay integrity.
+
+Document verification before the content push:
+
+- `git diff --check`: exit `0`;
+- `audit_formula_symbols.py HANDOFFG5.md`: exit `0`, no findings;
+- stale-current-state scan found no remaining instruction to start Task 1,
+  seek design approval, or defer code implementation;
+- staged diff contained only `HANDOFFG5.md`; the user-owned untracked
+  `_tmp_docx_assets/` directory remained untouched.
+
+Persistence status:
+
+- handoff content commit
+  `316e0e60e9982a33ba810670fa8fb22cc20334bc`
+  (`docs: update g5 task 5 handoff`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`;
+- after the content push, local HEAD, upstream HEAD, and `git ls-remote` all
+  returned `316e0e60e9982a33ba810670fa8fb22cc20334bc`;
+- current handoff SHA-256:
+  `D681387F91FC7BB57105C1A69EECE71F4B9D98D5B2F0F87EA14F2BDD20BB623E`;
+- no source/configuration file changed, so no code test suite was rerun for
+  this documentation-only handoff update;
+- no pilot, validation tuning, formal job, sealed-test access, protected
+  external write, or Word-file edit occurred.
+
+This handoff record does not complete Task 5, pass G5, or raise maturity above
+M2. Task 5 remains the only next authorized work.
+
 ## G5-G7 Written Design Record
 
 The approved-in-chat G5-G7 architecture has been split into three formal
@@ -663,12 +709,11 @@ Persistence status:
 This plan record does not pass G5, change maturity, authorize validation before
 candidate-manifest freezing, or authorize formal/sealed execution.
 
-The current `HANDOFFG5.md` is synchronized to the executable-plan state with
-SHA-256
-`066428AEC27BCCEB0D133A8542BB0998FE2E13012F4C5CAE9202915447C64743`.
-It directs a context-free worker to execute only plan Task 1 first and retains
-the prohibition on pilots, formal training, validation tuning, and sealed
-evaluation until their declared gates.
+At the executable-plan checkpoint, `HANDOFFG5.md` had SHA-256
+`066428AEC27BCCEB0D133A8542BB0998FE2E13012F4C5CAE9202915447C64743`
+and directed a context-free worker to Task 1. That handoff is a historical
+snapshot and is superseded by the Task-5 handoff record above; it must not be
+used as the current continuation instruction.
 
 ## Original HANDOFFG5 Record
 
@@ -1142,6 +1187,9 @@ G1.1 bounded remediation persistence record:
 - Implemented and independently reviewed the G5 Task 4 SR-MAPPO, same-source
   MAPPO, and role-local PPO/IPPO comparison algorithms with behavior-bound
   rollout, exact checkpoint resume, and validity-aware GAE contracts.
+- Rewrote and pushed the context-free G5 handoff so the next conversation
+  starts at Task 5 with the frozen off-policy scope, protocol hazard, candidate
+  grids, verification sequence, and M2 stop boundary.
 
 ## Pending Tasks
 
