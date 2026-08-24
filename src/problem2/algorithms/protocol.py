@@ -16,6 +16,7 @@ from problem2.environment.action_masks import validate_candidate_slot_mapping
 ROLES = ("uav", "vehicle")
 ROLE_BATCH_SCHEMA_VERSION = "g5-role-batch-v1"
 ON_POLICY_ENVELOPE_SCHEMA_VERSION = "g5-on-policy-envelope-v1"
+OFF_POLICY_ENVELOPE_SCHEMA_VERSION = "g5-off-policy-envelope-v1"
 
 
 def _role_mapping(value: Mapping[str, Any], name: str) -> dict[str, np.ndarray]:
@@ -286,6 +287,111 @@ class OnPolicyEnvelope:
         return cls(role_batch=RoleBatch.from_state_dict(state["role_batch"]), **values)
 
 
+@dataclass(frozen=True)
+class OffPolicyEnvelope:
+    """Strict behavior-bound transition for replay-based algorithms."""
+
+    role_batch: RoleBatch
+    critic_state: Any
+    next_critic_state: Any
+    team_reward: Any
+    valid_sample: bool
+    valid_actor_sample: Mapping[str, Any]
+    agent_ids: Mapping[str, Any]
+    candidate_mapping: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.role_batch, RoleBatch):
+            raise TypeError("role_batch must be behavior-bound RoleBatch")
+        critic_state = np.asarray(self.critic_state)
+        next_critic_state = np.asarray(self.next_critic_state)
+        if (
+            critic_state.ndim != 1
+            or next_critic_state.ndim != 1
+            or critic_state.shape != next_critic_state.shape
+            or not critic_state.size
+        ):
+            raise ValueError("critic states must be equally shaped nonempty vectors")
+        _finite_numeric(critic_state, "critic_state")
+        _finite_numeric(next_critic_state, "next_critic_state")
+
+        team_reward = _finite_scalar(self.team_reward, "team_reward")
+        if not isinstance(self.valid_sample, (bool, np.bool_)):
+            raise ValueError("valid_sample must be a boolean")
+        validity = _role_mapping(self.valid_actor_sample, "valid_actor_sample")
+        if not isinstance(self.agent_ids, Mapping) or set(self.agent_ids) != set(ROLES):
+            raise ValueError("agent_ids must contain exactly both roles")
+        for role in ROLES:
+            count = self.role_batch.actions[role].size
+            if validity[role].reshape(-1).size != count or validity[role].dtype != np.bool_:
+                raise ValueError(f"{role} valid samples must be boolean and align with actions")
+            ids = list(self.agent_ids[role])
+            if (
+                len(ids) != count
+                or any(not isinstance(item, str) or not item.strip() for item in ids)
+                or len(set(ids)) != len(ids)
+            ):
+                raise ValueError(f"{role} agent identities must be non-empty and unique")
+            if not np.allclose(self.role_batch.rewards[role], team_reward, rtol=0.0, atol=0.0):
+                raise ValueError(f"{role} rewards must equal the declared team_reward")
+
+        if not isinstance(self.candidate_mapping, Mapping) or set(self.candidate_mapping) != {"vehicle"}:
+            raise ValueError("candidate_mapping must contain vehicle slots only")
+        mapping = list(self.candidate_mapping["vehicle"])
+        vehicle_mask = self.role_batch.masks["vehicle"][0, 1:]
+        try:
+            mapping = list(validate_candidate_slot_mapping(mapping, vehicle_mask))
+        except ValueError as error:
+            raise ValueError("vehicle candidate mapping must match exact candidate mask") from error
+
+        object.__setattr__(self, "critic_state", critic_state.astype(np.float32, copy=True))
+        object.__setattr__(self, "next_critic_state", next_critic_state.astype(np.float32, copy=True))
+        object.__setattr__(self, "team_reward", team_reward)
+        object.__setattr__(self, "valid_sample", bool(self.valid_sample))
+        object.__setattr__(self, "valid_actor_sample", {role: validity[role].reshape(-1).astype(bool) for role in ROLES})
+        object.__setattr__(self, "agent_ids", {role: list(self.agent_ids[role]) for role in ROLES})
+        object.__setattr__(self, "candidate_mapping", {"vehicle": tuple(mapping)})
+
+    def state_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": OFF_POLICY_ENVELOPE_SCHEMA_VERSION,
+            "role_batch": self.role_batch.state_dict(),
+            "critic_state": deepcopy(self.critic_state),
+            "next_critic_state": deepcopy(self.next_critic_state),
+            "team_reward": self.team_reward,
+            "valid_sample": self.valid_sample,
+            "valid_actor_sample": deepcopy(self.valid_actor_sample),
+            "agent_ids": deepcopy(self.agent_ids),
+            "candidate_mapping": deepcopy(self.candidate_mapping),
+        }
+
+    @classmethod
+    def from_state_dict(cls, state: Mapping[str, Any]) -> "OffPolicyEnvelope":
+        expected = {
+            "schema_version",
+            "role_batch",
+            "critic_state",
+            "next_critic_state",
+            "team_reward",
+            "valid_sample",
+            "valid_actor_sample",
+            "agent_ids",
+            "candidate_mapping",
+        }
+        if not isinstance(state, Mapping) or set(state) != expected or state.get("schema_version") != OFF_POLICY_ENVELOPE_SCHEMA_VERSION:
+            raise ValueError("unsupported or incomplete off-policy envelope schema")
+        return cls(
+            role_batch=RoleBatch.from_state_dict(state["role_batch"]),
+            critic_state=state["critic_state"],
+            next_critic_state=state["next_critic_state"],
+            team_reward=state["team_reward"],
+            valid_sample=state["valid_sample"],
+            valid_actor_sample=state["valid_actor_sample"],
+            agent_ids=state["agent_ids"],
+            candidate_mapping=state["candidate_mapping"],
+        )
+
+
 class HeterogeneousAlgorithm(ABC):
     """Method-independent two-role learning surface used by collection and resume."""
 
@@ -314,4 +420,4 @@ class HeterogeneousAlgorithm(ABC):
     def diagnostics(self) -> Any: ...
 
 
-__all__ = ["ActionResult", "HeterogeneousAlgorithm", "ON_POLICY_ENVELOPE_SCHEMA_VERSION", "OnPolicyEnvelope", "ROLE_BATCH_SCHEMA_VERSION", "ROLES", "RoleBatch"]
+__all__ = ["ActionResult", "HeterogeneousAlgorithm", "OFF_POLICY_ENVELOPE_SCHEMA_VERSION", "ON_POLICY_ENVELOPE_SCHEMA_VERSION", "OffPolicyEnvelope", "OnPolicyEnvelope", "ROLE_BATCH_SCHEMA_VERSION", "ROLES", "RoleBatch"]
