@@ -25,6 +25,7 @@ class IQLTrainer:
             "vehicle": torch.optim.Adam(algorithm.vehicle_q.parameters(), lr=self.learning_rate),
         }
         self.update_count = 0
+        self.role_update_count = {"uav": 0, "vehicle": 0}
         self.target_update_count = {"uav": 0, "vehicle": 0}
         algorithm._trainer = self
 
@@ -92,7 +93,8 @@ class IQLTrainer:
         torch.nn.utils.clip_grad_norm_(q_network.parameters(), 10.0)
         optimizer.step()
         self.update_count += 1
-        if self.update_count % self.target_update_interval == 0:
+        self.role_update_count[role] += 1
+        if self.role_update_count[role] % self.target_update_interval == 0:
             self._soft_update(role)
         return {"role": role, "loss": float(loss.detach().cpu())}
 
@@ -105,13 +107,16 @@ class IQLTrainer:
         return result
 
     def validate_state(self, state: Mapping[str, Any]) -> None:
-        expected = {"schema_version", "optimizers", "learning_rate", "discount", "target_update_interval", "batch_size", "update_count", "target_update_count"}
+        expected = {"schema_version", "optimizers", "learning_rate", "discount", "target_update_interval", "batch_size", "update_count", "role_update_count", "target_update_count"}
         if not isinstance(state, Mapping) or set(state) != expected or state.get("schema_version") != "g5-iql-trainer-v1":
             raise ValueError("invalid IQL trainer state schema")
         if state["learning_rate"] != self.learning_rate or state["discount"] != self.discount or state["target_update_interval"] != self.target_update_interval or state["batch_size"] != self.batch_size:
             raise ValueError("IQL trainer frozen configuration drift")
         if isinstance(state["update_count"], bool) or not isinstance(state["update_count"], int) or state["update_count"] < 0:
             raise ValueError("IQL update count must be nonnegative")
+        role_updates = state["role_update_count"]
+        if not isinstance(role_updates, Mapping) or set(role_updates) != {"uav", "vehicle"} or any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in role_updates.values()):
+            raise ValueError("IQL role update counters are invalid")
         updates = state["target_update_count"]
         if not isinstance(updates, Mapping) or set(updates) != {"uav", "vehicle"} or any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in updates.values()):
             raise ValueError("IQL target update counters are invalid")
@@ -136,6 +141,7 @@ class IQLTrainer:
             "target_update_interval": self.target_update_interval,
             "batch_size": self.batch_size,
             "update_count": self.update_count,
+            "role_update_count": deepcopy(self.role_update_count),
             "target_update_count": deepcopy(self.target_update_count),
         }
 
@@ -144,6 +150,7 @@ class IQLTrainer:
         for role, optimizer in self.optimizers.items():
             optimizer.load_state_dict(deepcopy(state["optimizers"][role]))
         self.update_count = int(state["update_count"])
+        self.role_update_count = dict(state["role_update_count"])
         self.target_update_count = dict(state["target_update_count"])
 
 

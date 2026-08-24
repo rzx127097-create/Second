@@ -66,7 +66,9 @@ environment error.
   exactly zero relaxed mass and zero actor gradient.
 - IQL uses shared UAV and separate vehicle role-local Q/target-Q networks,
   role-specific replay and optimizers, masked epsilon-greedy behavior, and
-  masked bootstrap maxima that reject all-false masks.
+  masked bootstrap maxima that reject all-false masks. Target-update cadence
+  is checkpointed per role, so the frozen interval is measured independently
+  for the UAV and vehicle learners.
 - Deterministic evaluation uses masked actor argmax or masked Q argmax and
   does not mutate exploration or replay state. Checkpoint state includes
   method networks, target networks, optimizer state, exploration counters,
@@ -83,8 +85,25 @@ Focused off-policy suite after implementation and resume-test addition:
 Observed output:
 
 ```text
-.................                                                        [100%]
-17 passed in 12.38s
+..................                                                       [100%]
+18 passed in 16.03s
+```
+
+Follow-up role-local target-update regression (test-first correction):
+
+```powershell
+pytest -q tests/g5/test_off_policy_algorithms.py::test_iql_target_update_interval_is_role_local
+```
+
+RED observed output: `1 failed`; the pre-fix assertion observed
+`{'uav': 0, 'vehicle': 1}` after one update for each role, while the expected
+role-local counters were `{'uav': 0, 'vehicle': 0}`.
+
+GREEN observed output:
+
+```text
+.                                                                        [100%]
+1 passed in 9.01s
 ```
 
 Protocol and checkpoint regressions:
@@ -97,7 +116,7 @@ Observed output:
 
 ```text
 ...........................                                              [100%]
-27 passed in 5.99s
+27 passed in 9.30s
 ```
 
 G3 regression:
@@ -109,8 +128,8 @@ G3 regression:
 Observed output:
 
 ```text
-......................................................                   [100%]
-65 passed in 35.22s
+.................................................................        [100%]
+65 passed in 25.65s
 ```
 
 G5 regression:
@@ -123,9 +142,9 @@ Observed output:
 
 ```text
 ........................................................................ [ 39%]
-........................................................................ [ 79%]
-......................................                                   [100%]
-182 passed in 31.73s
+........................................................................ [ 78%]
+.......................................                                  [100%]
+183 passed in 27.17s
 ```
 
 Compilation and contract audit:
@@ -173,10 +192,10 @@ Per instruction, the full suite was not rerun.
 - The final host full regression is incomplete because it was intentionally
   interrupted; the focused, protocol/checkpoint, G3, and G5 suites are the
   completed evidence for this handoff.
-- Repository-generated Python caches and `.pytest_cache` were not staged. The
-  shell safety policy blocked recursive cache deletion; the isolated
-  `.venv-g5` dependency environment was left intact. No cache is part of the
-  implementation commit.
+- Repository-generated Python caches, `.pytest_cache`, and the generated
+  `.egg-info` directory were removed after verification. The isolated
+  `.venv-g5` dependency environment was left intact and no generated cache or
+  environment file is part of the implementation commit.
 - No pilot or later-gate execution was performed, and the M2 stop boundary is
   unchanged.
 
@@ -191,3 +210,92 @@ caf4277 feat: implement heterogeneous maddpg and iql
 The report is recorded as a separate handoff-only documentation commit after
 the implementation commit so this report can contain the verified
 implementation hash.
+
+## Fix Round 1
+
+The reviewer identified two important validity and scheduling defects. Both
+were verified against the current data flow before implementation:
+
+1. MADDPG discarded `valid_actor_sample` in `_batch_tensors`, so invalid role
+   samples still reached the selected role critic and actor updates.
+2. IQL used the aggregate `update_count` for target synchronization, so the
+   UAV and vehicle target intervals depended on update-call ordering instead
+   of each role's own optimizer-update count.
+
+TDD RED for the MADDPG validity reproducer:
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5/test_off_policy_algorithms.py::test_maddpg_excludes_invalid_role_samples_from_updates -q
+```
+
+Observed output: `2 failed`; both parameterizations reported nonzero critic
+and actor losses for an all-invalid selected role (`critic_loss` 3.3317897 /
+2.4670615 and nonzero `actor_loss`).
+
+TDD GREEN for the MADDPG validity fix:
+
+```text
+..                                                                       [100%]
+2 passed in 9.71s
+```
+
+The fix retains team validity and additionally requires all stored
+role-validity entries for the selected role before critic, actor, and target
+updates. IQL now persists and uses `role_update_count` independently for UAV
+and vehicle target scheduling.
+
+Dedicated IQL cadence regression:
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5/test_off_policy_algorithms.py::test_iql_target_update_interval_is_role_local -q
+```
+
+```text
+.                                                                        [100%]
+1 passed in 10.47s
+```
+
+Amended verification:
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5/test_off_policy_algorithms.py -q
+```
+
+```text
+....................                                                     [100%]
+20 passed in 10.59s
+```
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5/test_algorithm_protocol.py tests/g5/test_checkpoint_resume.py -q
+```
+
+```text
+...........................                                              [100%]
+27 passed in 3.82s
+```
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g3 -q
+```
+
+```text
+.................................................................        [100%]
+65 passed in 23.24s
+```
+
+```powershell
+.venv-g5\Scripts\python.exe -m pytest tests/g5 -q
+```
+
+```text
+........................................................................ [ 38%]
+........................................................................ [ 77%]
+.........................                                [100%]
+185 passed in 29.50s
+```
+
+The minor reviewer findings concerning replay-capacity type validation,
+stronger Gumbel-gradient assertions, and explicit replay ring/resume test
+coverage remain deferred by controller. No registry, pilot, or full-suite
+execution was performed.

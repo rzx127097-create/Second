@@ -75,6 +75,8 @@ class MADDPGTrainer:
             "reward": self._tensor([row.team_reward for row in rows]),
             "done": self._tensor([row.role_batch.terminated or row.role_batch.truncated for row in rows]),
             "valid": torch.as_tensor([row.valid_sample for row in rows], dtype=torch.bool, device=self.algorithm.device),
+            "uav_valid": torch.as_tensor(np.asarray([row.valid_actor_sample["uav"] for row in rows]), dtype=torch.bool, device=self.algorithm.device),
+            "vehicle_valid": torch.as_tensor(np.asarray([row.valid_actor_sample["vehicle"] for row in rows]), dtype=torch.bool, device=self.algorithm.device),
         }
 
     def _target_actions(self, tensors: Mapping[str, Tensor]) -> tuple[Tensor, Tensor]:
@@ -89,7 +91,7 @@ class MADDPGTrainer:
         if role not in ("uav", "vehicle"):
             raise ValueError("MADDPG role must be uav or vehicle")
         tensors = self._batch_tensors(rows)
-        valid = tensors["valid"]
+        valid = tensors["valid"] & tensors[f"{role}_valid"].all(dim=-1)
         if not valid.any():
             return {"role": role, "critic_loss": 0.0, "actor_loss": 0.0}
         tensors = {key: value[valid] if value.ndim > 0 and value.shape[0] == valid.shape[0] else value for key, value in tensors.items()}

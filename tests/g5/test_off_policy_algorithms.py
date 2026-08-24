@@ -54,7 +54,12 @@ def _masks() -> dict[str, np.ndarray]:
     }
 
 
-def _envelope(step: int = 0, *, valid: bool = True) -> OffPolicyEnvelope:
+def _envelope(
+    step: int = 0,
+    *,
+    valid: bool = True,
+    valid_actor_sample: dict[str, list[bool]] | None = None,
+) -> OffPolicyEnvelope:
     observations = _observations(float(step) * 0.1)
     masks = _masks()
     action_result = ActionResult(
@@ -81,7 +86,7 @@ def _envelope(step: int = 0, *, valid: bool = True) -> OffPolicyEnvelope:
         next_critic_state=np.full(185, (step + 1) * 0.1, dtype=np.float32),
         team_reward=1.5 + step,
         valid_sample=valid,
-        valid_actor_sample={"uav": [True, True], "vehicle": [True]},
+        valid_actor_sample=valid_actor_sample or {"uav": [True, True], "vehicle": [True]},
         agent_ids={"uav": ["uav-0", "uav-1"], "vehicle": ["vehicle-0"]},
         candidate_mapping={"vehicle": [None, "request-1", None, None]},
     )
@@ -164,6 +169,27 @@ def test_maddpg_update_is_role_isolated_and_moves_targets(contract) -> None:
         torch.testing.assert_close(value, actor_before[key], rtol=0, atol=0)
 
 
+@pytest.mark.parametrize("role", ["uav", "vehicle"])
+def test_maddpg_excludes_invalid_role_samples_from_updates(contract, role: str) -> None:
+    torch = pytest.importorskip("torch")
+    valid_actor_sample = {"uav": [True, True], "vehicle": [True]}
+    valid_actor_sample[role] = [False] * len(valid_actor_sample[role])
+    algorithm = build_algorithm("maddpg_mobile", contract, "cpu", candidate_id="c01")
+    algorithm.observe(_envelope(valid_actor_sample=valid_actor_sample))
+    actor = algorithm.uav_actor if role == "uav" else algorithm.vehicle_actor
+    critic = algorithm.uav_critic if role == "uav" else algorithm.vehicle_critic
+    actor_before = copy.deepcopy(actor.state_dict())
+    critic_before = copy.deepcopy(critic.state_dict())
+
+    metrics = algorithm.trainer.update_role(role, algorithm.replay.sample(1))
+
+    assert metrics == {"role": role, "critic_loss": 0.0, "actor_loss": 0.0}
+    for key, value in actor.state_dict().items():
+        torch.testing.assert_close(value, actor_before[key], rtol=0, atol=0)
+    for key, value in critic.state_dict().items():
+        torch.testing.assert_close(value, critic_before[key], rtol=0, atol=0)
+
+
 def test_maddpg_joint_critic_requires_structured_state_and_joint_actions(contract) -> None:
     torch = pytest.importorskip("torch")
     algorithm = build_algorithm("maddpg_mobile", contract, "cpu", candidate_id="c01")
@@ -197,6 +223,24 @@ def test_iql_role_replay_and_target_update_are_isolated(contract) -> None:
     for key, value in algorithm.vehicle_target_q.state_dict().items():
         torch.testing.assert_close(value, before[key], rtol=0, atol=0)
     assert any(not torch.equal(before[key], value) for key, value in algorithm.uav_target_q.state_dict().items())
+
+
+def test_iql_target_update_interval_is_role_local(contract) -> None:
+    torch = pytest.importorskip("torch")
+    algorithm = build_algorithm("iql_mobile", contract, "cpu", candidate_id="c01")
+    algorithm.observe(_envelope())
+    algorithm.trainer.target_update_interval = 2
+    uav_before = copy.deepcopy(algorithm.uav_target_q.state_dict())
+    vehicle_before = copy.deepcopy(algorithm.vehicle_target_q.state_dict())
+
+    algorithm.trainer.update_role("uav", algorithm.uav_replay.sample(1))
+    algorithm.trainer.update_role("vehicle", algorithm.vehicle_replay.sample(1))
+
+    assert algorithm.trainer.target_update_count == {"uav": 0, "vehicle": 0}
+    for key, value in algorithm.uav_target_q.state_dict().items():
+        torch.testing.assert_close(value, uav_before[key], rtol=0, atol=0)
+    for key, value in algorithm.vehicle_target_q.state_dict().items():
+        torch.testing.assert_close(value, vehicle_before[key], rtol=0, atol=0)
 
 
 @pytest.mark.parametrize("method_id", METHOD_IDS)
