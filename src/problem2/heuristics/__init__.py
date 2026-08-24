@@ -99,6 +99,8 @@ class ControllerDecision:
     selected_service_node: int | None
     route_length_m: float
     decision_runtime_s: float
+    replanned: bool = False
+    plan_version: int = 0
 
     def __post_init__(self) -> None:
         if isinstance(self.sampled_slot, bool) or not isinstance(self.sampled_slot, int) or not 0 <= self.sampled_slot <= 4:
@@ -107,6 +109,14 @@ class ControllerDecision:
             value = float(getattr(self, name))
             if not math.isfinite(value) or value < 0.0:
                 raise ValueError(f"{name} must be finite and nonnegative")
+        if type(self.replanned) is not bool:
+            raise ValueError("replanned must be boolean")
+        if (
+            isinstance(self.plan_version, bool)
+            or not isinstance(self.plan_version, int)
+            or self.plan_version < 0
+        ):
+            raise ValueError("plan_version must be a nonnegative integer")
         if self.sampled_slot == 0:
             if self.request_id is not None or self.selected_service_node is not None:
                 raise ValueError("hold decisions cannot identify a request or service node")

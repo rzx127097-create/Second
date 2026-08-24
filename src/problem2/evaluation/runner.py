@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import replace
 import hashlib
 import pickle
@@ -71,13 +72,13 @@ def evaluate_episode(
     deterministic: bool = True,
 ) -> EpisodeRecord:
     assert_partition_allowed(partition, scenario_id)
-    original = policy.state_dict()
+    original = deepcopy(policy.state_dict())
     original_training = original.get("training")
     if type(original_training) is not bool:
         raise ValueError("policy state must expose an exact training flag")
-    policy.set_evaluation(True)
-    before = _state_identity(policy.state_dict())
     try:
+        policy.set_evaluation(True)
+        before = _state_identity(policy.state_dict())
         view = environment.reset(scenario_id=scenario_id)
         while not environment.state.terminated:
             started = perf_counter()
@@ -88,7 +89,6 @@ def evaluate_episode(
             view = environment.step(result, decision_runtime_s=decision_runtime_s)
         after = _state_identity(policy.state_dict())
         if before != after:
-            policy.load_state_dict(original)
             raise RuntimeError(
                 "deterministic evaluation mutated learning, normalization, or exploration state"
             )
@@ -99,7 +99,7 @@ def evaluate_episode(
             evaluation_state_byte_identical=True,
         )
     finally:
-        policy.set_evaluation(not original_training)
+        policy.load_state_dict(original)
 
 
 __all__ = ["PolicyAdapter", "evaluate_episode"]

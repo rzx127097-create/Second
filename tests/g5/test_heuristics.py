@@ -84,6 +84,16 @@ def test_astar_path_lengths_match_dijkstra_on_hand_checked_graph_pairs() -> None
         assert path[0] == pair[0]
         assert path[-1] == pair[1]
 
+    second = make_raster_graph(
+        [(0, 0), (1, 0), (2, 0), (2, 1), (2, 2)],
+        [(0, 1), (1, 2), (2, 3), (3, 4)],
+        shape=(3, 3),
+    )
+    for start, goal, literal_distance in ((0, 3, 30.0), (1, 4, 30.0)):
+        _, distance = astar_path_and_distance(second, start, goal)
+        assert distance == pytest.approx(literal_distance)
+        assert distance == pytest.approx(dijkstra_distance(second, start, goal))
+
 
 def test_nearest_controller_uses_deterministic_request_identity_tie_break() -> None:
     graph = _graph()
@@ -153,6 +163,70 @@ def test_active_dispatch_preserves_original_sampled_slot_and_mapping() -> None:
     assert decision.selected_service_node == 4
 
 
+def test_astar_controller_uses_request_identity_for_deterministic_ties() -> None:
+    graph = _graph()
+    requests = (_request("b", 0, 2), _request("a", 1, 2))
+
+    decision = RollingAStarController(replan_interval_steps=2).decide(
+        _observation(graph, requests)
+    )
+
+    assert decision.sampled_slot == 2
+    assert decision.request_id == "a"
+    assert decision.selected_service_node == 2
+
+
+def test_astar_controller_executes_frozen_replan_cadence_without_slot_drift() -> None:
+    graph = _graph()
+    request = _request("active", 2, 4)
+    controller = RollingAStarController(replan_interval_steps=2)
+
+    step_4 = controller.decide(
+        _observation(
+            graph,
+            (request,),
+            step=4,
+            active_request_id="active",
+            active_sampled_slot=3,
+            selected_service_node=4,
+        )
+    )
+    step_5 = controller.decide(
+        _observation(
+            graph,
+            (request,),
+            step=5,
+            active_request_id="active",
+            active_sampled_slot=3,
+            selected_service_node=4,
+        )
+    )
+    step_6 = controller.decide(
+        _observation(
+            graph,
+            (request,),
+            step=6,
+            active_request_id="active",
+            active_sampled_slot=3,
+            selected_service_node=4,
+        )
+    )
+
+    assert [step_4.replanned, step_5.replanned, step_6.replanned] == [True, False, True]
+    assert [step_4.plan_version, step_5.plan_version, step_6.plan_version] == [1, 1, 2]
+    assert {step_4.sampled_slot, step_5.sampled_slot, step_6.sampled_slot} == {3}
+    assert {step_4.selected_service_node, step_5.selected_service_node, step_6.selected_service_node} == {4}
+    assert controller.state_dict() == {
+        "active_request_id": "active",
+        "active_sampled_slot": 3,
+        "cached_route_length_m": 40.0,
+        "last_replan_step": 6,
+        "plan_version": 2,
+        "replan_interval_steps": 2,
+        "selected_service_node": 4,
+    }
+
+
 def test_controller_public_decisions_accept_observable_state_only() -> None:
     assert list(inspect.signature(RollingAStarController.decide).parameters) == [
         "self",
@@ -177,20 +251,41 @@ def test_fixed_support_requires_exact_resource_and_service_matching() -> None:
         service_cap_l=1.08,
         transfer_rate_lpm=4.0,
         setup_time_s=10.0,
-    )
-
-    controller.assert_resource_matched(
         mobile_initial_inventory_l=20.0,
         mobile_service_cap_l=1.08,
         mobile_transfer_rate_lpm=4.0,
         mobile_setup_time_s=10.0,
     )
+
+    assert controller.initial_inventory_l == 20.0
+
+
+@pytest.mark.parametrize(
+    "field,bad_value",
+    [
+        ("mobile_initial_inventory_l", 19.0),
+        ("mobile_service_cap_l", 1.0),
+        ("mobile_transfer_rate_lpm", 8.0),
+        ("mobile_setup_time_s", 30.0),
+    ],
+)
+def test_fixed_support_denies_unmatched_resources_at_construction(field, bad_value) -> None:
+    values = {
+        "mobile_initial_inventory_l": 20.0,
+        "mobile_service_cap_l": 1.08,
+        "mobile_transfer_rate_lpm": 4.0,
+        "mobile_setup_time_s": 10.0,
+    }
+    values[field] = bad_value
+
     with pytest.raises(ValueError, match="resource-matched"):
-        controller.assert_resource_matched(
-            mobile_initial_inventory_l=19.0,
-            mobile_service_cap_l=1.08,
-            mobile_transfer_rate_lpm=4.0,
-            mobile_setup_time_s=10.0,
+        FixedSupportController(
+            support_node=2,
+            initial_inventory_l=20.0,
+            service_cap_l=1.08,
+            transfer_rate_lpm=4.0,
+            setup_time_s=10.0,
+            **values,
         )
 
 
@@ -202,6 +297,10 @@ def test_fixed_support_dispatches_only_requests_serviceable_at_its_frozen_node()
         service_cap_l=1.08,
         transfer_rate_lpm=4.0,
         setup_time_s=10.0,
+        mobile_initial_inventory_l=20.0,
+        mobile_service_cap_l=1.08,
+        mobile_transfer_rate_lpm=4.0,
+        mobile_setup_time_s=10.0,
     )
     requests = (_request("not-here", 0, 4), _request("at-support", 1, 2))
 

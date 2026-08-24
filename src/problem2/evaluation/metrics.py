@@ -4,9 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+from pathlib import Path
 from typing import Iterable, Mapping
 
 from problem2.domain import Action, EpisodeState, Event, RequestStatus
+from problem2.experiments.g5_contract import load_g5_contract
+
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+REDUCTION_RATE_DEFINITION = (
+    "one_minus_final_total_pest_divided_by_initial_total_pest_plus_epsilon"
+)
 
 
 @dataclass(frozen=True)
@@ -49,10 +57,23 @@ def _finite_nonnegative(value: float, name: str) -> float:
 
 
 class EpisodeMetrics:
-    def __init__(self, initial_state: EpisodeState, *, tolerance: float = 1e-9) -> None:
+    def __init__(
+        self,
+        initial_state: EpisodeState,
+        *,
+        tolerance: float = 1e-9,
+        reduction_epsilon: float | None = None,
+    ) -> None:
         if not isinstance(initial_state, EpisodeState):
             raise TypeError("initial_state must be an EpisodeState")
         self.tolerance = _finite_nonnegative(tolerance, "tolerance")
+        self.reduction_epsilon = (
+            None
+            if reduction_epsilon is None
+            else _finite_nonnegative(reduction_epsilon, "reduction_epsilon")
+        )
+        if self.reduction_epsilon is not None and self.reduction_epsilon <= 0.0:
+            raise ValueError("reduction_epsilon must be positive")
         self._created = {
             request.request_id: request.created_step for request in initial_state.requests
         }
@@ -164,7 +185,18 @@ class EpisodeMetrics:
             final_pest = _finite_nonnegative(final_total_pest, "final_total_pest")
             if initial_pest <= 0.0:
                 raise ValueError("initial_total_pest must be positive")
-            reduction_rate = 1.0 - final_pest / initial_pest
+            if self.reduction_epsilon is None:
+                raise ValueError(
+                    "reduction_epsilon must be explicitly supplied for primary outcomes"
+                )
+            definition = load_g5_contract(REPOSITORY_ROOT).metrics[
+                "reduction_rate"
+            ].definition
+            if definition != REDUCTION_RATE_DEFINITION:
+                raise ValueError("frozen reduction_rate metric definition is invalid")
+            reduction_rate = 1.0 - final_pest / (
+                initial_pest + self.reduction_epsilon
+            )
             if not math.isfinite(reduction_rate):
                 raise ValueError("reduction_rate must be finite")
             success = reduction_rate >= 0.85

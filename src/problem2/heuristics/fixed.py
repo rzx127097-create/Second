@@ -16,6 +16,10 @@ class FixedSupportController:
     service_cap_l: float
     transfer_rate_lpm: float
     setup_time_s: float
+    mobile_initial_inventory_l: float
+    mobile_service_cap_l: float
+    mobile_transfer_rate_lpm: float
+    mobile_setup_time_s: float
     tolerance: float = 1e-9
 
     def __post_init__(self) -> None:
@@ -26,11 +30,21 @@ class FixedSupportController:
             "service_cap_l",
             "transfer_rate_lpm",
             "setup_time_s",
+            "mobile_initial_inventory_l",
+            "mobile_service_cap_l",
+            "mobile_transfer_rate_lpm",
+            "mobile_setup_time_s",
             "tolerance",
         ):
             value = float(getattr(self, name))
             if not math.isfinite(value) or value < 0.0:
                 raise ValueError(f"{name} must be finite and nonnegative")
+        self.assert_resource_matched(
+            mobile_initial_inventory_l=self.mobile_initial_inventory_l,
+            mobile_service_cap_l=self.mobile_service_cap_l,
+            mobile_transfer_rate_lpm=self.mobile_transfer_rate_lpm,
+            mobile_setup_time_s=self.mobile_setup_time_s,
+        )
 
     def assert_resource_matched(
         self,
@@ -46,11 +60,7 @@ class FixedSupportController:
             (self.transfer_rate_lpm, mobile_transfer_rate_lpm),
             (self.setup_time_s, mobile_setup_time_s),
         )
-        if any(
-            not math.isfinite(float(observed))
-            or abs(float(expected) - float(observed)) > self.tolerance
-            for expected, observed in pairs
-        ):
+        if any(float(expected) != float(observed) for expected, observed in pairs):
             raise ValueError("fixed support must remain resource-matched to mobile support")
 
     def decide(self, observation: DispatchObservation) -> ControllerDecision:

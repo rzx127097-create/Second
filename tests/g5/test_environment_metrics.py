@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+import shutil
 
 import numpy as np
 import pytest
+import yaml
 
 from problem2.algorithms.protocol import ActionResult
 from problem2.config import load_g2_config
@@ -17,6 +19,7 @@ from problem2.domain import (
     VehicleState,
 )
 from problem2.evaluation.metrics import EpisodeMetrics
+import problem2.evaluation.partitions as partitions_module
 from problem2.evaluation.partitions import PartitionAccessError, assert_partition_allowed
 from problem2.evaluation.runner import evaluate_episode
 from problem2.resources.ledger import apply_transfer, new_ledger
@@ -225,24 +228,28 @@ def test_metrics_count_positive_spray_disabled_and_return_uav_time_from_real_eve
     assert record.resource_residual_l == pytest.approx(0.0, abs=1e-12)
 
 
-def test_primary_outcomes_require_complete_explicit_finite_pest_totals() -> None:
+def test_primary_outcomes_use_explicit_epsilon_and_exact_registered_formula() -> None:
     _, state = _detour_fixture()
     final = replace(state, terminated=True)
 
-    available = EpisodeMetrics(state).finalize(
+    available = EpisodeMetrics(state, reduction_epsilon=1.0).finalize(
         final,
         initial_total_pest=100.0,
         final_total_pest=10.0,
     )
     unavailable = EpisodeMetrics(state).finalize(final)
 
-    assert available.reduction_rate == pytest.approx(0.9)
+    assert available.reduction_rate == pytest.approx(1.0 - 10.0 / 101.0)
     assert available.success_at_0_85 is True
     assert available.primary_outcomes_available
     assert unavailable.reduction_rate is None
     assert unavailable.success_at_0_85 is None
     with pytest.raises(ValueError, match="both be supplied"):
         EpisodeMetrics(state).finalize(final, initial_total_pest=100.0)
+    with pytest.raises(ValueError, match="reduction_epsilon"):
+        EpisodeMetrics(state).finalize(
+            final, initial_total_pest=100.0, final_total_pest=10.0
+        )
     with pytest.raises(ValueError, match="finite"):
         EpisodeMetrics(state).finalize(
             final, initial_total_pest=float("nan"), final_total_pest=0.0
@@ -365,3 +372,89 @@ def test_evaluation_identity_is_canonical_across_mapping_order() -> None:
 
     assert record.evaluation_state_byte_identical
     assert record.evaluation_state_before == record.evaluation_state_after
+
+
+class _AliasedFailingPolicy(_FrozenPolicy):
+    def state_dict(self) -> dict:
+        return {
+            "training": self.training,
+            "normalizer": self.normalizer,
+            "exploration": self.exploration,
+        }
+
+    def act(self, observations, masks, deterministic=False) -> ActionResult:
+        del observations, masks, deterministic
+        self.normalizer += 10.0
+        self.exploration["step"] += 10
+        raise RuntimeError("act failed")
+
+
+class _ModeMutatingPolicy(_FrozenPolicy):
+    def set_evaluation(self, enabled: bool) -> None:
+        super().set_evaluation(enabled)
+        self.exploration["step"] += 1
+
+
+class _ResetFailureEnvironment:
+    def reset(self, *, scenario_id=None):
+        del scenario_id
+        raise RuntimeError("reset failed")
+
+
+def test_evaluation_deep_restores_aliased_state_after_act_exception() -> None:
+    graph = make_raster_graph([(0, 0)], [])
+    uav = UavState("uav-0", 5.0, 35.0, pesticide_l=0.0)
+    vehicle = VehicleState("vehicle-0", 0, 5.0, 35.0, inventory_l=1.0)
+    state = EpisodeState(0, (uav,), vehicle, ledger=new_ledger((uav,), 1.0))
+    environment = Problem2CooperativeEnv(state, graph, CONFIG, max_steps=1, scenario_id=10000)
+    policy = _AliasedFailingPolicy()
+
+    with pytest.raises(RuntimeError, match="act failed"):
+        evaluate_episode(environment, policy, "development", 10000)
+
+    assert policy.training is True
+    assert policy.normalizer.tolist() == [3.0, 4.0]
+    assert policy.exploration == {"epsilon": 0.2, "step": 7}
+
+
+def test_evaluation_restores_complete_original_state_after_reset_exception() -> None:
+    policy = _ModeMutatingPolicy()
+
+    with pytest.raises(RuntimeError, match="reset failed"):
+        evaluate_episode(_ResetFailureEnvironment(), policy, "development", 10000)
+
+    assert policy.training is True
+    assert policy.normalizer.tolist() == [3.0, 4.0]
+    assert policy.exploration == {"epsilon": 0.2, "step": 7}
+
+
+def _copy_g5_contract_root(tmp_path: Path) -> Path:
+    candidate = tmp_path / "repo"
+    shutil.copytree(ROOT / "configs", candidate / "configs")
+    shutil.copytree(ROOT / "docs" / "evidence", candidate / "docs" / "evidence")
+    for name in ("requirements-g2.lock", "requirements-g3.lock", "requirements-g5.lock"):
+        shutil.copy2(ROOT / name, candidate / name)
+    return candidate
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda payload: payload["access"].__setitem__("validation_accessed", True),
+        lambda payload: payload["access"].__setitem__("validation_tuning_authorized", True),
+        lambda payload: payload["access"].__setitem__("actual_unlock_count", 1),
+        lambda payload: payload["partitions"]["development_scenarios"].__setitem__("end", 10018),
+    ],
+)
+def test_partition_guard_reloads_strict_contract_and_denies_drift(
+    tmp_path: Path, monkeypatch, mutate
+) -> None:
+    candidate = _copy_g5_contract_root(tmp_path)
+    protocol_path = candidate / "configs" / "problem2" / "g5" / "protocol.yaml"
+    payload = yaml.safe_load(protocol_path.read_text(encoding="utf-8"))
+    mutate(payload)
+    protocol_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr(partitions_module, "REPOSITORY_ROOT", candidate, raising=False)
+
+    with pytest.raises(PartitionAccessError, match="frozen G5 contract"):
+        assert_partition_allowed("development", 10000)

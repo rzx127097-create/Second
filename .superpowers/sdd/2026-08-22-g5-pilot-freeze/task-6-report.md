@@ -249,3 +249,113 @@ subagents.
   deployment is supported.
 - Validation remains inaccessible and sealed-test access remains forbidden.
   Task 7, pilots, formal jobs, and project-state persistence were not started.
+
+## Fix Round 1
+
+Date: 2026-08-25
+Starting Task 6 commit: `a5918b76f8c11ee91dc5be1681776cf73ac42c8c`
+
+### Review Findings Closed
+
+1. `evaluate_episode` now deep-copies the complete policy state before mode
+   changes and restores that snapshot through `load_state_dict` in `finally`.
+   Restoration covers successful returns, detected mutation, `reset()` failure,
+   and `act()` failure without a second potentially stateful mode mutation.
+2. `RollingAStarController.replan_interval_steps` now controls an observable-only
+   cadence. First dispatch and due interval steps replan, intervening steps use
+   the cached route, and the original active request slot and service node remain
+   unchanged. Decisions expose `replanned` and `plan_version`; `state_dict()`
+   exposes the complete cadence audit state.
+3. The partition guard now reloads `load_g5_contract(REPOSITORY_ROOT)` before
+   every authorization. Exact development/validation/sealed ranges, validation
+   access and tuning flags, sealed access, and unlock count are therefore
+   revalidated before environment reset. Any strict-contract drift fails closed
+   as `PartitionAccessError`.
+4. `FixedSupportController` construction now requires the mobile inventory,
+   service cap, transfer rate, and setup time and rejects any exact mismatch.
+   Resource matching is no longer an optional caller-side pre-assertion.
+5. The primary outcome now implements the registered formula exactly as
+   `1 - final_total_pest / (initial_total_pest + reduction_epsilon)`. The strict
+   G5 metric definition is reloaded and checked before calculation. Because the
+   registry contains no numeric epsilon, primary outcomes require an explicit
+   finite positive `reduction_epsilon`; no constant was invented.
+
+### Fix-Round RED
+
+Commands run before production edits:
+
+```powershell
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_environment_metrics.py -q
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_heuristics.py -q
+```
+
+Observed results:
+
+```text
+7 failed, 8 passed in 1.71s
+7 failed, 10 passed in 1.29s
+```
+
+The environment/metrics failures were the missing epsilon contract, aliased
+state leakage after `act()`, auxiliary-mode state leakage after `reset()`, and
+four accepted strict-contract drift cases. The heuristic failures were missing
+cadence metadata/state and the absent mandatory mobile-resource constructor
+contract.
+
+### Fix-Round GREEN
+
+Each finding was checked independently after its minimal implementation:
+
+```text
+policy success/mutation/reset/act restoration: 4 passed in 0.83s
+strict partition guard and four drift cases: 5 passed in 5.50s
+registered epsilon outcome formula: 1 passed in 1.97s
+A* cadence, request-ID tie, and active-slot preservation: 3 passed in 0.75s
+fixed exact resource matching and dispatch: 6 passed in 0.75s
+```
+
+The first metric implementation attempt produced one expected boundary-ordering
+failure: a missing-epsilon error masked a non-finite pest-total error. Pest
+inputs are now validated before the explicit epsilon requirement; no test was
+weakened. The final complete focused runs were:
+
+```powershell
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_environment_metrics.py -q
+.venv-g5/Scripts/python.exe -m pytest tests/g5/test_heuristics.py -q
+```
+
+```text
+15 passed in 8.98s
+17 passed in 0.81s
+```
+
+### Fix-Round Regression Verification
+
+```powershell
+python -m pytest tests/g2 tests/g4 -q
+```
+
+```text
+178 passed in 92.30s (0:01:32)
+```
+
+```powershell
+.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q
+```
+
+```text
+284 passed in 42.32s
+```
+
+```powershell
+.venv-g5/Scripts/python.exe -m compileall -q src scripts
+git diff --check
+```
+
+Both commands exited `0`. `git diff --check` emitted only Git's working-copy
+LF-to-CRLF notices and no whitespace error.
+
+This fix round did not run a pilot, access validation or sealed scenarios,
+modify frozen registries or `docs/PROJECT_STATE.md`, write protected external
+assets, or raise the project above M2. The untracked `_tmp_docx_assets/`
+directory remained untouched. The fix commit is local only and is not pushed.
