@@ -1234,6 +1234,11 @@ conversation. It supersedes the historical Task-5 instruction in
 `HANDOFFG5.md` without deleting that provenance record. The handoff SHA-256 is
 `64100B02435EC7591710BAE4D56A8D137581A509E996F193B36AF5E924040A96`.
 
+Handoff content commit `96ec0f1a7e748c488eb7b7c83a14c648dae60b0a`
+(`docs: add g5 task 6 handoff`) was pushed to
+`origin/codex/problem2-g5-pilot-freeze`; local HEAD, upstream HEAD, and
+`git ls-remote` matched this hash before the persistence-record commit.
+
 It records the final Task-5 implementation/review/verification chain, the
 current branch and three-way parity, the protected `_tmp_docx_assets/` path,
 the M2 boundary, and the exact Task-6 files, interfaces, metric semantics,
