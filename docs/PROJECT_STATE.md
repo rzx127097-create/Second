@@ -1227,6 +1227,21 @@ adapter, formal metrics, and support controllers. G5 pilots and all later
 validation/formal/sealed execution remain prohibited until their declared
 tasks are completed in order.
 
+## G5 Task 6 Context-Free Handoff
+
+`HANDOFFG6.md` is the current context-free continuation record for the next
+conversation. It supersedes the historical Task-5 instruction in
+`HANDOFFG5.md` without deleting that provenance record. The handoff SHA-256 is
+`64100B02435EC7591710BAE4D56A8D137581A509E996F193B36AF5E924040A96`.
+
+It records the final Task-5 implementation/review/verification chain, the
+current branch and three-way parity, the protected `_tmp_docx_assets/` path,
+the M2 boundary, and the exact Task-6 files, interfaces, metric semantics,
+TDD order, stop conditions, and persistence contract. Task 6 remains G5
+implementation work; no pilot, validation tuning, formal job, or sealed-test
+access is authorized. No external protected asset or Word file was modified
+while creating this handoff.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:
