@@ -1147,6 +1147,86 @@ G1.1 bounded remediation persistence record:
   `1ca9e5ccc5f77ed775cd2b607dd70d635720accf` with the same 13 pre-existing
   modified/untracked paths recorded at G0.
 
+## G5 Task 5: Heterogeneous Discrete MADDPG and IQL
+
+Task 5 is implemented and reviewed at the existing `M2` maturity boundary.
+It does not run pilots, validation tuning, formal jobs, sealed evaluation, or
+support efficacy/superiority claims. The public flagship identity remains
+`SR-MAPPO`; no HAPPO or `AG-SR-MAPPO` method was added, and pesticide remains
+the only replenished resource.
+
+Implementation scope:
+
+- `OffPolicyEnvelope` extends the accepted behavior-bound `RoleBatch` with
+  current/next structured centralized state, shared team reward, team/role
+  validity, role identities, and vehicle candidate mapping while preserving
+  on-policy envelope rejection and actor information isolation.
+- `JointReplayBuffer` now stores off-policy envelopes and validates exact
+  schema, ring layout, insertion position, size, defensive copies, masks, and
+  RNG state before restoration mutation.
+- MADDPG implements a shared UAV discrete actor, separate vehicle actor,
+  centralized role-Q critics and matching targets, replay, soft target updates,
+  masked straight-through Gumbel-Softmax, role-validity filtering, and masked
+  deterministic evaluation.
+- IQL implements shared UAV and separate vehicle Q/target-Q networks,
+  role-local masked epsilon-greedy behavior, independent target schedules,
+  replay/checkpoint state, legacy v1 trainer-state migration, masked bootstrap
+  maxima, and epsilon-zero deterministic evaluation.
+- `build_algorithm` constructs every frozen `c01-c04` candidate for
+  `maddpg_mobile` and `iql_mobile` without changing the registries.
+
+TDD and review evidence:
+
+- Focused RED was a collection failure caused by the missing IQL module.
+- Initial GREEN: `17 passed` focused off-policy tests; the first independent
+  review found two Important issues for role validity and role-local target
+  cadence.
+- Fix round 1 added reproducing tests and closed both findings;
+  `20 passed` focused and `185 passed` G5 tests were recorded.
+- Scoped re-review found one Important legacy-checkpoint compatibility
+  regression. Fix round 2 added explicit v1 migration and strict new-state
+  validation; scoped re-review marked the finding addressed with no new
+  Critical/Important issue.
+- Three Minor observations remain deferred in the SDD ledger: replay-capacity
+  exact-type validation, a stronger non-constant Gumbel-gradient assertion,
+  and explicit replay ring/resume coverage.
+
+Fresh controller verification on final content:
+
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_off_policy_algorithms.py -q`:
+  `22 passed`.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_algorithm_protocol.py tests/g5/test_checkpoint_resume.py -q`:
+  `27 passed`.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g3 -q`: `65 passed`.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5 -q`: `187 passed`.
+- Host `python -m pytest -q`: `486 passed in 187.37s`.
+- `.venv-g5/Scripts/python.exe -m compileall -q src scripts` exited `0`;
+  `scripts/audit_g5_contracts.py` returned `status=pass`, validation and
+  sealed access `false`, and actual unlock count `0`; `git diff --check`
+  exited `0`.
+- No pilot, validation scenario, formal job, sealed scenario, protected
+  external asset, or Word file was accessed or modified.
+
+Persistence status:
+
+- Content implementation commit
+  `caf4277ed1c178565f8bf3995d60871e24fe02d4`
+  (`feat: implement heterogeneous maddpg and iql`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`.
+- Review-fix commits `9b2518bf8795a071a909812f201a535a1e2979aa`
+  (`fix: harden g5 off-policy validity and target cadence`) and
+  `52baca35f2c8d6dd3892445fe686b8fa6cf95522`
+  (`fix: preserve g5 iql checkpoint compatibility`) were pushed to the same
+  branch. The report record is `9c617d3fcc302c323cd1bcd4e348f902f6f36c5c`.
+- After the content chain push, local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-g5-pilot-freeze` all return
+  `52baca35f2c8d6dd3892445fe686b8fa6cf95522`.
+
+Task 6 is the next authorized work: implement the physical training/evaluation
+adapter, formal metrics, and support controllers. G5 pilots and all later
+validation/formal/sealed execution remain prohibited until their declared
+tasks are completed in order.
+
 ## Completed Tasks
 
 - Completed A-E initial orchestration analysis with four read-only subagents:
