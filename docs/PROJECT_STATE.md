@@ -28,16 +28,18 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Tasks 1-9 are accepted at M2. The registry, fairness,
+- Current gate: G5 Tasks 1-10 are accepted at M2. The registry, fairness,
   budget-selection, partition, shared heterogeneous protocol/checkpoint, five
   learning algorithms, physical G2-to-G3 adapter, direct episode metrics,
   fixed/A*/nearest/urgency/two-stage support-controller boundaries, and the
   deterministic 375-job experiment graph are persisted. G4 onboard-pesticide
   scarcity activation and diagnostic support-probe counterfactual remain the
-  preceding accepted mechanism evidence. No G5 pilot has run. Formal jobs,
-  validation tuning, sealed evaluation, and efficacy/superiority claims remain
-  unauthorized. Task9 statistics are pure adapters over validated mappings;
-  no pilot, formal training, validation tuning, or sealed evaluation occurred.
+  preceding accepted mechanism evidence. Task10 development smoke acceptance
+  has passed for all five methods and all 17 condition types on CPU, plus one
+  CUDA job per method. Formal jobs, validation tuning, sealed evaluation, and
+  efficacy/superiority claims remain unauthorized. Task9 statistics are pure
+  adapters over validated mappings; Task10 smoke is engineering acceptance
+  only and is not pilot, formal, validation, or sealed evidence.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -1653,13 +1655,56 @@ Persistence status:
   environment. Its exact G5 lock omits the legacy Pillow document dependency,
   so cross-gate full regressions continue in the host environment.
 
+## G5 Task 10: Shared CPU/CUDA Smoke Acceptance Record
+
+Task10 is accepted at M2 as a development-only engineering smoke gate. The
+runner binds the algorithm to `method`, rejects non-development training seeds
+and validation/sealed partitions, fails closed on contract/preflight errors,
+and requires uninterrupted policy/metric/diagnostic digests for resume
+equivalence. All smoke manifests use `g5-smoke-artifact-v1` with method,
+algorithm, condition, partition, seed, provenance, and artifact hashes.
+
+Fresh verification:
+
+- `python -m pytest tests/g5/test_end_to_end_smoke.py -q`: `15 passed`.
+- CPU smoke command with `--all-methods --all-condition-types`: `85 jobs`,
+  `status=pass`.
+- CUDA smoke command from the isolated G5 environment: `5 jobs`,
+  `status=pass`; preflight recorded the RTX 4060 Laptop GPU, Torch `2.13.0+cu126`,
+  CUDA `12.6`, deterministic flags, and non-zero peak memory for every method.
+- Persisted audit status: `smoke-audit.json` `pass/85`,
+  `smoke-audit-cpu.json` `pass/85`, and `smoke-audit-cuda.json` `pass/5`.
+- Audit of `outputs/problem2_sr_mappo_v1/g5/smoke`: `85` job directories,
+  homogeneous schema and identity fields, hash/path consistency, and
+  `validation_accessed=false`, `sealed_accessed=false`,
+  `battery_replenishment_enabled=false` for every manifest.
+- `python scripts/audit_g5_contracts.py`: `status=pass`, validation/sealed
+  access false, `actual_unlock_count=0`; `compileall` and `git diff --check`
+  passed.
+
+Review and persistence:
+
+- Scoped Task10 review and fix review closed all runtime findings; the final
+  audit rerun corrected the fail-closed probe files before persistence.
+- Content and smoke-artifact commits through
+  `dc6ceab29bedcba9936617d6022fae37b10f2ee5` were pushed to
+  `origin/codex/problem2-g5-pilot-freeze` without force-push. Local HEAD,
+  upstream HEAD, and `git ls-remote` all match this hash before this state
+  record.
+- No validation scenario, sealed scenario, formal training job, or protected
+  external asset was accessed. `_tmp_docx_assets/` remains untracked and
+  untouched.
+
+Task10 does not raise maturity above M2 and does not authorize formal claims.
+
 ## Next Step
 
-Execute Task 10 smoke acceptance from
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md` using the accepted Task9
-statistics and Task8 evidence boundaries. Keep pilots, validation tuning,
-formal jobs, and sealed-test evaluation unauthorized until their later tasks
-and gates.
+Task 11 is now the next authorized work: run the development pilot matrix on
+`g20x20_d2` and `g30x50_d4` with training seeds `51001-51003` and scenarios
+`10000-10019`, measure conservative runtime by method/scale, select the exact
+frozen formal budget, and freeze four hashed validation candidates per learning
+algorithm. Task11 must remain development-only; validation tuning, G6 formal
+jobs, and G7 sealed evaluation remain unauthorized until later tasks and gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
