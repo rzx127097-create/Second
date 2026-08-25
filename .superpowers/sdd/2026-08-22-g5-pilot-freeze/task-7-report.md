@@ -87,3 +87,45 @@ Post-review correction: `protocol_hash` is now bound to the exact frozen
 `configs/problem2/g5/protocol.yaml` SHA-256, matching the existing partition
 adapter contract. The correction was pushed as commit
 `6355cc2` without rewriting the earlier implementation commit.
+
+## Fix Round 1
+
+The canonical G1 serialization is retained by
+`canonical_training_serialization`; the authoritative training identity is now
+the lowercase SHA-256 digest of that exact serialization. All 375 jobs verify
+by recomputing the digest from their five identity fields. Deduplication also
+recomputes both candidate digests and rejects tampered records.
+
+Task 7 family references are serialized in `g6-training-jobs.json` with the
+experiment identity, family, condition, canonical digest, and deterministic
+job index. The manifest contains `645` raw references and each pointer resolves
+to the indexed job digest. The summary records the exact decomposition
+`150 + 90 + 60 + 25 + 50 = 375`, raw family reference counts, source commit,
+source-tree hash, protocol hash, registry hashes, and all 25 config hashes.
+
+The families, ablations, and sensitivity registries are now strict-loaded by
+`load_g5_contract` and their canonical file hashes are included in every
+config hash. Registry drift fails closed. Git provenance fails closed when Git
+is unavailable or the tracked source tree is dirty (output-only manifest drift
+is permitted during regeneration). The generated source tuple is:
+
+```text
+source_commit=cc245a404470d5e62d6964c7ec4d4d70fdce14d8
+source_tree_sha256=ff11c425ce25e2fd627e2e8d6967f211fe7226fec804cc57d3358bbab08c14ad
+protocol_hash=63b8637ec0cb2d8cccde5e030e6b5d61ca5b812e075f5da3ac7c4f4a4c24bfe4
+```
+
+Fix-round verification:
+
+- `python -m pytest tests/g5/test_experiment_matrix.py -q`: `8 passed in 6.26s`.
+- Generator twice into independent roots: `byte_identical=True files=7`.
+- Canonical digest audit: `375` jobs, all digest recomputations true.
+- Reference resolution audit: `645` references, every job index resolves.
+- Registry drift test, strict ablation/sensitivity tests, and malformed identity tests pass.
+- `python -m compileall -q src scripts`: exit `0`; `git diff --check`: exit `0`.
+- Sealed/result payload scan: clean; no pilot, validation, formal, or sealed execution.
+
+Fix-round content commits pushed without force-push:
+`32dedfd` (identity/registry/provenance implementation), `2c9edc7`
+(output-only drift provenance guard), and `cc245a4` (focused regression test).
+The regenerated manifest artifacts are pending their final content commit.

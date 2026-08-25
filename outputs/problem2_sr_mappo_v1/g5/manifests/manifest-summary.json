@@ -1,11 +1,65 @@
 {
+  "decomposition": {
+    "algorithm_scale": 150,
+    "problem2_required": 90,
+    "sr_mappo_ablation": 25,
+    "sr_mappo_sensitivity": 50,
+    "total": 375,
+    "vehicle_heuristics": 60
+  },
   "files": {
     "development-smoke.json": "ff85a34467958ac58567730a537d5877103bb0fbe869e9e50cee9efc3222a210",
-    "g6-training-jobs.json": "2f4edee486a888666eec1f0210facdefd144113d45f5db5e9abf2be3e62c13a9",
+    "g6-training-jobs.json": "8c1f3fc28913f4652967b91dffc9454a86943a8e6c28d0f4f60857d9caffa24c",
     "g6-validation-evaluations.json": "4e57689500337d11f86da351ae65314500a6012286b671988f68b66fd3863936",
     "g7-analysis.json": "0e91e59df68046c79d0b274514fd453024f843eb4a314c218c846debae0e7129",
     "g7-sealed-evaluations.json": "47ab883d64e932081d82be303b2a49303341ad5b7ea04bce8146a22309e59fe0",
     "pilot-manifest.json": "52f6fde87712df522d976137d05e7025f5e85243c61566e33895588e40447991"
   },
-  "job_count": 375
+  "job_count": 375,
+  "provenance": {
+    "config_hashes": [
+      "01fc0a7cd28a0ad21ac23a14d85c1e2f049632bc018ec5c2b74efedbda589114",
+      "124bafc998dd69ee7d7864d177c2f6334debd5549a2bab6c08311364cb0e2a10",
+      "1660b85c747d403958cb13d2ca3b10b67876dbd17ee6e753cf2f2b3c36bc4551",
+      "2aee1b16c7a6fb79e38f351b197b7f8667b5c5c8fc190c7f5c9ef54881154721",
+      "2b9bf50b67353c7845237fabc7cc318f6c2d317e9aaaaf2458028fb1d2148f2e",
+      "2d7412d793ff5271542f681a72425a9a54df8dbb5a07a72736e2d92707ad9a21",
+      "326289a389524129070907294f5f6d066ab8135d484747de08f50361d6bafc6e",
+      "4c1a51effecaec6eb3a47ae0a7108b03286d50cc6f9aa8ac38a9c20e7b62513c",
+      "5029d102ec715b9f26d78263218424a592bfe14fc971697deb9c968b697ecad0",
+      "5c7ccd7fcf8fac14a640b837aa6bc752cbb89090479dfe0e27c288627d49b360",
+      "603a38f8e02ace585d11de5a12ee9c20de86d4441edca94cfb144bfd27fdb884",
+      "65f2684326960e71740ea3c93d206eee01a079688e2a3e6aae9c1aeec8abe1a2",
+      "747a1eac14d35af299a674b3556cad31df62647ee61bca29c418803f0e274097",
+      "792874b1e7be62e7817ab6b5adf946f2d210a523370180a077eeb4304d570ca1",
+      "8836346a5620003607e6998ca2577ee073753b248af1668a1a919d03ec407cdf",
+      "8a8fb408d0d79d51ed6775b358848d2450c954b8b80a76c75992fe869d165508",
+      "8ceea61a8443922b500c057d45622f42eb6e7309cf456f5b26f2f28deb0ffb32",
+      "94efaed30689e64c21b76121519de494df3989315d07085a07b58a0c943d4353",
+      "a694a7b29b805e45ec6f3c70060f6f1cca190727c468b768698d9181f8b22490",
+      "ad634ef30946eeb520a005c14b47a69d9e03d26d5316c3797bc58fdd8aa2878a",
+      "b042bd5ececb7b4004813b18df6ef428380ecfa147c3c655046f52cff352469b",
+      "c09f0f9b97eacfb9e994b2aa8d2c05e0f34e8442cb4588b611fd58ef2db2a9bc",
+      "d0cfef7b2f96a13b2569ec7584fccd082de7210948b8b6c57558602a94e214b5",
+      "d872bc819aff652c15cabf795507730e8524d924b02d643a88e0326aa1307ec4",
+      "ffdeb406261d65f09d9a021b51af266d8671b32733d05d307ba2c3a85fca54d7"
+    ],
+    "protocol_hash": "63b8637ec0cb2d8cccde5e030e6b5d61ca5b812e075f5da3ac7c4f4a4c24bfe4",
+    "registry_hashes": {
+      "configs/problem2/g5/ablations.yaml": "2d7222ee9e24a561ec1d6b267c6e6906cfa7f6ab64ca3ebeb7b2bb1686b02787",
+      "configs/problem2/g5/families.yaml": "2530a5703659afa90ad4310ef4ae3a0b131983f48627565bfba9a9edbb4cb91a",
+      "configs/problem2/g5/sensitivity.yaml": "b376151abbc7943d3a78669a5bf7fcb40e45eb8fea20667f8c1bfb2730f7b370"
+    },
+    "source_commit": "cc245a404470d5e62d6964c7ec4d4d70fdce14d8",
+    "source_tree_sha256": "ff11c425ce25e2fd627e2e8d6967f211fe7226fec804cc57d3358bbab08c14ad"
+  },
+  "raw_reference_counts": {
+    "algorithm_convergence": 150,
+    "algorithm_scale": 150,
+    "problem2_required": 150,
+    "sr_mappo_ablation": 30,
+    "sr_mappo_sensitivity": 75,
+    "vehicle_heuristics": 90
+  },
+  "reference_count": 645
 }
