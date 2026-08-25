@@ -29,6 +29,15 @@ def _finite(value: Any, name: str) -> None:
         raise ValidationError(f"{name} must be finite")
 
 
+def _number(value: Any, name: str, *, nonnegative: bool = False) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        raise ValidationError(f"{name} must be a finite number")
+    result = float(value)
+    if nonnegative and result < 0.0:
+        raise ValidationError(f"{name} must be non-negative")
+    return result
+
+
 def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, str] | None = None) -> dict[str, Any]:
     if not isinstance(row, dict):
         raise ValidationError("episode row must be an object")
@@ -74,21 +83,23 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
     if row["action_uav"] not in range(6) or row["action_vehicle_slot"] not in range(4):
         raise ValidationError("illegal action")
     for key in ("initial_total_pest", "final_total_pest"):
-        if not isinstance(row[key], (int, float)) or row[key] <= 0:
+        _number(row[key], key)
+        if row[key] <= 0:
             raise ValidationError(f"{key} must be positive")
     expected_rate = 1.0 - float(row["final_total_pest"]) / (float(row["initial_total_pest"]) + REDUCTION_RATE_EPSILON)
     if not math.isclose(float(row["reduction_rate"]), expected_rate, rel_tol=1e-9, abs_tol=1e-12):
         raise ValidationError("reduction rate mismatch")
     if not isinstance(row["success_at_0_85"], bool) or row["success_at_0_85"] != (float(row["reduction_rate"]) >= 0.85):
         raise ValidationError("success threshold mismatch")
-    if row["battery_replenishment_l"] != 0.0:
+    _number(row["reduction_rate"], "reduction_rate")
+    _number(row["resource_conservation_residual_l"], "resource_conservation_residual_l")
+    if _number(row["battery_replenishment_l"], "battery_replenishment_l") != 0.0:
         raise ValidationError("battery replenishment must be zero")
     expected_residual = float(row["pesticide_initial_l"]) - float(row["pesticide_remaining_l"]) - float(row["pesticide_transferred_l"])
     if abs(float(row["resource_conservation_residual_l"]) - expected_residual) > 1e-9:
         raise ValidationError("resource conservation residual")
     for key in ("pesticide_initial_l", "pesticide_remaining_l", "pesticide_transferred_l", "rendezvous_distance_m", "vehicle_service_travel_m", "waiting_steps", "completed_request_waiting_steps", "pesticide_disabled_steps", "return_steps", "effective_spray_steps", "decision_runtime_s"):
-        if row[key] < 0:
-            raise ValidationError(f"{key} must be non-negative")
+        _number(row[key], key, nonnegative=True)
     if not isinstance(row["source_locator"], str) or not row["source_locator"]:
         raise ValidationError("source locator is required")
     return dict(row)
@@ -146,16 +157,15 @@ def validate_artifact_manifest(record: dict[str, Any], *, output_root: str | Non
         raise ValidationError("artifact ID is invalid")
     if not isinstance(record["output_path"], str) or not record["output_path"]:
         raise ValidationError("artifact output path is invalid")
-    for field in ("generator_commit", "generator_sha256", "output_sha256"):
+    generator_commit = record["generator_commit"]
+    if generator_commit is not None and (not isinstance(generator_commit, str) or not _HASH40.fullmatch(generator_commit)):
+        raise ValidationError("generator commit is invalid")
+    for field in ("generator_sha256", "output_sha256"):
         value = record[field]
-        if value is not None and not isinstance(value, str):
+        if value is not None and (not isinstance(value, str) or not _HASH64.fullmatch(value)):
             raise ValidationError(f"{field} is invalid")
     for field in ("generator", "generator_version"):
         if not isinstance(record[field], str) or not record[field]:
-            raise ValidationError(f"{field} is invalid")
-        if field == "generator_commit" and value is not None and not _HASH40.fullmatch(value):
-            raise ValidationError("generator commit is invalid")
-        if field != "generator_commit" and value is not None and not _HASH64.fullmatch(value):
             raise ValidationError(f"{field} is invalid")
     if output_root is not None:
         from pathlib import Path
