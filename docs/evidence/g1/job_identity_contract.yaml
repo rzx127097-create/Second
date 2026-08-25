@@ -1,0 +1,24 @@
+schema_version: g1.v1
+registry_id: G1-JOB-IDENTITY
+status: design_frozen
+identity_fields:
+  - method
+  - scale
+  - training_seed
+  - config_hash
+  - git_commit
+serialization:
+  separator: '|'
+  order: identity_fields
+  format: method|scale|training_seed|config_hash|git_commit
+  hash_algorithm: SHA-256
+states: [pending, running, completed, failed, stale]
+required_recovery_fields:
+  - run_id
+  - identity
+  - state
+  - started_at
+  - updated_at
+  - config_hash
+  - git_commit
+sealed_test_creation_gate: G7

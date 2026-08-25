@@ -1,0 +1,29 @@
+schema_version: g1.v1
+registry_id: G1-ARTIFACT-MANIFEST
+status: design_frozen
+required_fields:
+  - artifact_id
+  - artifact_type
+  - source_paths
+  - source_hashes
+  - generator
+  - generator_commit
+  - generator_sha256
+  - generator_version
+  - output_path
+  - output_sha256
+  - created_at
+  - data_status
+record_schema:
+  artifact_id: {type: string, required: true}
+  artifact_type: {type: string, allowed: [figure, table, text_block], required: true}
+  source_paths: {type: list, required: true}
+  source_hashes: {type: list, required: true}
+  generator: {type: string, required: true}
+  generator_commit: {type: git_commit_or_null, required: true, non_null_when: [validated, locked_summary]}
+  generator_sha256: {type: sha256_or_null, required: true, non_null_when: [validated, locked_summary]}
+  generator_version: {type: string_or_null, required: true, non_null_when: [validated, locked_summary]}
+  output_path: {type: string, required: true}
+  output_sha256: {type: sha256_or_null, required: true, non_null_when: [validated, locked_summary]}
+  created_at: {type: utc_datetime_or_null, required: true, non_null_when: [validated, locked_summary]}
+  data_status: {type: string, allowed: [design_only, validated, locked_summary], required: true}

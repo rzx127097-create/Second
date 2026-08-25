@@ -1,0 +1,20 @@
+schema_version: g1.v1
+registry_id: G1-SCENARIO-SEEDS
+status: design_frozen
+partitions:
+  training:
+    seeds: [42, 123, 2024, 3407, 7919]
+    purpose: training
+    tuning_allowed: true
+  validation:
+    start: 20000
+    end: 20049
+    purpose: checkpoint_selection_and_algorithm_tuning
+    tuning_allowed: true
+  sealed_test:
+    start: 30000
+    end: 30099
+    purpose: sealed_test
+    tuning_allowed: false
+    locked: true
+overlap_policy: disjoint

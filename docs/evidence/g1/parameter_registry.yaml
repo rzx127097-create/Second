@@ -1,0 +1,214 @@
+schema_version: g1.v1
+registry_id: G1-PARAMETERS
+status: design_frozen
+parameters:
+  - id: uav.pesticide_capacity
+    name: onboard_pesticide_capacity
+    symbol: C_uav
+    meaning: Nominal onboard pesticide capacity
+    value: 1.2
+    unit: L
+    min: 0.8
+    max: 1.6
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.2
+    source_unit: L
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: uav.usable_fraction
+    name: usable_pesticide_fraction
+    symbol: f_uav
+    meaning: Fraction of nominal onboard pesticide available to the policy
+    value: 0.9
+    unit: "1"
+    min: 0.7
+    max: 1.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 0.9
+    source_unit: "1"
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: uav.spray_flow
+    name: spray_flow
+    symbol: q_spray
+    meaning: Pesticide spray flow
+    value: 1.2
+    unit: L/min
+    min: 0.6
+    max: 2.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.2
+    source_unit: L/min
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: uav.speed
+    name: uav_speed
+    symbol: v_uav
+    meaning: UAV translational speed
+    value: 5.0
+    unit: m/s
+    min: 3.0
+    max: 8.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 5.0
+    source_unit: m/s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: vehicle.inventory
+    name: vehicle_pesticide_inventory
+    symbol: C_vehicle
+    meaning: Initial mobile support pesticide inventory
+    value: 20.0
+    unit: L
+    min: 10.0
+    max: 40.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 20.0
+    source_unit: L
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: vehicle.speed
+    name: vehicle_speed
+    symbol: v_vehicle
+    meaning: Road-constrained vehicle speed
+    value: 8.0
+    unit: m/s
+    min: 4.0
+    max: 12.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 8.0
+    source_unit: m/s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: vehicle.transfer_rate
+    name: pesticide_transfer_rate
+    symbol: q_transfer
+    meaning: Transfer flow during a service event
+    value: 4.0
+    unit: L/min
+    min: 2.0
+    max: 8.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 4.0
+    source_unit: L/min
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: service.setup_time
+    name: service_setup_time
+    symbol: t_setup
+    meaning: Fixed setup time before transfer
+    value: 10.0
+    unit: s
+    min: 5.0
+    max: 30.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 10.0
+    source_unit: s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: service.transfer_cap
+    name: pesticide_transfer_cap_per_service
+    symbol: C_service
+    meaning: Maximum pesticide volume transferred in one completed service event
+    value: 1.08
+    unit: L
+    min: 0.56
+    max: 1.6
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.08
+    source_unit: L
+    conversion: uav.pesticide_capacity * uav.usable_fraction = 1.2 L * 0.9
+    status: provisional
+    scope: development_and_pilot
+  - id: service.request_safety_margin
+    name: request_safety_margin
+    symbol: t_request_margin
+    meaning: Time margin added to estimated service delay when triggering a request
+    value: 10.0
+    unit: s
+    min: 0.0
+    max: 60.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 10.0
+    source_unit: s
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: service.rendezvous_radius
+    name: rendezvous_radius
+    symbol: r_service
+    meaning: Maximum air-ground service rendezvous distance
+    value: 15.0
+    unit: m
+    min: 5.0
+    max: 30.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 15.0
+    source_unit: m
+    conversion: identity
+    status: provisional
+    scope: development_and_pilot
+  - id: simulation.dt
+    name: physical_decision_step
+    symbol: Delta_t
+    meaning: Physical duration represented by one decision step
+    value: 1.0
+    unit: s
+    min: 0.5
+    max: 2.0
+    source_type: assumption
+    source_id: SRC-ASSUMPTION-001
+    source_value: 1.0
+    source_unit: s
+    conversion: identity
+    status: provisional
+    scope: all_simulation
+service_transfer_contract:
+  service_cap_parameter_id: service.transfer_cap
+  transfer_volume_l:
+    operation: minimum
+    operands:
+      - uav_free_capacity_l
+      - service_cap_l
+      - vehicle_remaining_inventory_l
+  accounting_boundary: service_completion
+request_trigger_contract:
+  safety_margin_parameter_id: service.request_safety_margin
+  remaining_spray_endurance_s:
+    operation: divide
+    numerator: uav_remaining_pesticide_l
+    denominator: spray_flow_l_per_s
+  spray_flow_conversion:
+    source_parameter_id: uav.spray_flow
+    from_unit: L/min
+    to_unit: L/s
+    operation: divide_by_60
+  request_when:
+    left: remaining_spray_endurance_s
+    operator: less_than_or_equal
+    right:
+      operation: sum
+      operands:
+        - estimated_time_to_service_s
+        - request_safety_margin_s
+  zero_spray_flow_policy: do_not_trigger_from_endurance_rule
+  active_request_policy: at_most_one_active_request_per_uav

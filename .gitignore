@@ -1,0 +1,6 @@
+# Python bytecode and test caches are generated artifacts, not project evidence.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
