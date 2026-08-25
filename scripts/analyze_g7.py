@@ -20,7 +20,7 @@ def _checked_path(path: Path) -> Path:
         resolved.relative_to(root)
     except ValueError as exc:
         raise ValueError("input/output must be under the frozen output root") from exc
-    if any(part.lower() in {"raw", "sealed", "sealed_test"} for part in resolved.parts):
+    if any(any(token in part.lower() for token in ("raw", "sealed")) for part in resolved.parts):
         raise ValueError("raw and sealed locators are forbidden")
     return resolved
 
@@ -31,8 +31,8 @@ def _validated_payload(payload: object) -> dict:
     provenance = payload.get("provenance")
     if not isinstance(provenance, dict) or provenance.get("status") != "validated":
         raise ValueError("payload requires validated provenance")
-    if str(provenance.get("partition", "")).lower() in {"sealed", "sealed_test"}:
-        raise ValueError("sealed partition is forbidden")
+    if provenance.get("partition") != "development":
+        raise ValueError("partition must be explicit development")
     if any("raw" in str(value).lower() or "sealed" in str(value).lower() for value in provenance.values()):
         raise ValueError("raw/sealed provenance locator is forbidden")
     return payload

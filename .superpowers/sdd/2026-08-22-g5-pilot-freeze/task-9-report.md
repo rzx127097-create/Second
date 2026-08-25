@@ -28,3 +28,12 @@ files were accessed.
 - G3/G5 regression and G2/G4 regression were rerun after the fix.
 - Both CLI `--help` commands run from the repository checkout.
 - `compileall` and `git diff --check` pass.
+
+## Review Round 2
+
+The CLI boundary now requires the nonempty `development` partition exactly,
+rejects path components and filenames containing `raw` or `sealed` tokens
+(including aliases), and performs these checks before opening input or output
+paths. Diagnosis now requires every audit record to map to exactly one frozen
+stage and rejects unregistered stage labels. Focused verification remains
+`12 passed`; no experiment or validation/sealed data access occurred.

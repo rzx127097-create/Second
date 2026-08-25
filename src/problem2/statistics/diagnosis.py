@@ -53,6 +53,10 @@ def diagnose_result_bundle(validated_rows: Iterable[Mapping[str, object]], audit
         status = str(record.get("status", "unknown")).lower()
         if status not in ALLOWED_STATUSES:
             raise ValueError(f"unknown diagnosis status: {status}")
+        label = str(record.get("stage", record.get("check", record.get("name", "")))).lower()
+        matched_names = [name for name, terms in ORDER if any(term in label for term in terms)]
+        if len(matched_names) != 1:
+            raise ValueError(f"unregistered diagnosis stage: {label}")
     stages = []
     for name, terms in ORDER:
         matched = []

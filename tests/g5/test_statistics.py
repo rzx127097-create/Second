@@ -109,10 +109,18 @@ def test_cli_requires_validated_provenance_and_rejects_sealed_locator(tmp_path) 
     path.write_text(json.dumps(payload), encoding="utf-8")
     result = subprocess.run([sys.executable, "scripts/analyze_g5_paired.py", "--input", str(path)], capture_output=True, text=True)
     assert result.returncode != 0
+    missing_partition = tmp_path / "missing.json"
+    missing_partition.write_text(json.dumps({"validated": True, "provenance": {"status": "validated"}, "rows": []}), encoding="utf-8")
+    result = subprocess.run([sys.executable, "scripts/analyze_g5_paired.py", "--input", str(missing_partition)], capture_output=True, text=True)
+    assert result.returncode != 0
     sealed = tmp_path / "sealed" / "rows.json"
     sealed.parent.mkdir()
     sealed.write_text(json.dumps({"validated": True, "provenance": {"status": "validated", "partition": "sealed_test"}, "rows": []}), encoding="utf-8")
     result = subprocess.run([sys.executable, "scripts/analyze_g5_paired.py", "--input", str(sealed)], capture_output=True, text=True)
+    assert result.returncode != 0
+    alias = tmp_path / "sealed_alias.json"
+    alias.write_text(sealed.read_text(encoding="utf-8"), encoding="utf-8")
+    result = subprocess.run([sys.executable, "scripts/analyze_g5_paired.py", "--input", str(alias)], capture_output=True, text=True)
     assert result.returncode != 0
 
 
@@ -155,6 +163,8 @@ def test_diagnosis_requires_all_known_stages_and_pass_statuses() -> None:
     assert report.complete is False
     with pytest.raises(ValueError, match="status"):
         diagnose_result_bundle(rows, [{"stage": "data_state_correctness", "status": "wat"}])
+    with pytest.raises(ValueError, match="stage"):
+        diagnose_result_bundle(rows, [{"stage": "unregistered_stage", "status": "pass"}])
 
 
 def test_holm_and_equivalence_reject_bool_or_coerced_types() -> None:
