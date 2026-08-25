@@ -28,7 +28,9 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Tasks 1-10 are accepted at M2. The registry, fairness,
+- Current gate: G5 Tasks 1-10 are accepted at M2 and Task11 pilot-freeze
+  implementation is present but its complete execution gate is still open. The
+  registry, fairness,
   budget-selection, partition, shared heterogeneous protocol/checkpoint, five
   learning algorithms, physical G2-to-G3 adapter, direct episode metrics,
   fixed/A*/nearest/urgency/two-stage support-controller boundaries, and the
@@ -39,7 +41,9 @@ real deployment evidence.
   CUDA job per method. Formal jobs, validation tuning, sealed evaluation, and
   efficacy/superiority claims remain unauthorized. Task9 statistics are pure
   adapters over validated mappings; Task10 smoke is engineering acceptance
-  only and is not pilot, formal, validation, or sealed evidence.
+  only and is not pilot, formal, validation, or sealed evidence. A bounded
+  one-job Task11 runner probe was used for API verification only; no complete
+  Task11 pilot matrix has been accepted.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -1697,14 +1701,56 @@ Review and persistence:
 
 Task10 does not raise maturity above M2 and does not authorize formal claims.
 
+## G5 Task 11: Pilot-Freeze Implementation Record
+
+Task11 implementation is pushed at M2 but remains execution-pending. The new
+`problem2.training.pilot` module expands an exact 10,200-job development matrix
+over the two required scales, five methods, 17 conditions, three development
+training seeds, and 20 development scenarios. It preserves scale/scenario
+identity through the Task10 runner, writes descriptive development records,
+aggregates conservative runtime, applies the frozen budget rule, and freezes
+four hashed validation candidates only before validation access. Candidate
+freezing contains validation IDs only as a hashed panel definition; it does not
+read validation scenario content.
+
+Verification:
+
+- `python -m pytest tests/g3 tests/g5 -q`: `390 passed` in the isolated G5
+  environment.
+- `python -m pytest tests/g2 tests/g4 -q`: `178 passed` in the host
+  environment.
+- `python -m pytest tests/g5/test_pilot_freeze.py -q`: `5 passed`.
+- `python scripts/audit_g5_contracts.py`: `status=pass`, validation/sealed
+  access false, `actual_unlock_count=0`; compileall and diff check passed.
+- The bounded CLI probe with `--limit 1` failed closed with exit `2` and did not
+  freeze candidates because complete coverage was absent.
+
+Persistence:
+
+- Task11 implementation commit
+  `16517ca89a91679c4a0a9c6a380d207432701850` and the subsequent Task10 smoke
+  provenance refresh `991af5759ee77e9c2b93d9d564768a8e67cd518d` are pushed to
+  `origin/codex/problem2-g5-pilot-freeze`.
+- The smoke refresh produced CPU/main `pass/85`, CUDA `pass/5`; all 85 smoke
+  manifests bind source commit `16517ca89a91679c4a0a9c6a380d207432701850` and
+  retain false validation/sealed/battery flags.
+- This state record is the next persistence commit; after it is pushed, local,
+  upstream, and `git ls-remote` must match again.
+
+The full neural pilot matrix has not been run or promoted to evidence. The
+implementation handoff is recorded in
+`docs/audits/g5-task11-pilot-freeze-implementation.md`. No synthetic records,
+smoke records, validation tuning, G6 formal jobs, or G7 sealed evaluation are
+authorized as substitutes.
+
 ## Next Step
 
-Task 11 is now the next authorized work: run the development pilot matrix on
-`g20x20_d2` and `g30x50_d4` with training seeds `51001-51003` and scenarios
-`10000-10019`, measure conservative runtime by method/scale, select the exact
-frozen formal budget, and freeze four hashed validation candidates per learning
-algorithm. Task11 must remain development-only; validation tuning, G6 formal
-jobs, and G7 sealed evaluation remain unauthorized until later tasks and gates.
+Execute the complete Task11 development pilot matrix with
+`.venv-g5/Scripts/python.exe scripts/run_g5_pilots.py --device cpu --interactions 128`.
+Require `status=pass`, complete 10,200-job coverage, conservative runtime
+evidence at `g30x50_d4`, the exact frozen formal budget, and four hashed
+validation candidates before opening any validation tuning work. G6 formal jobs
+and G7 sealed evaluation remain unauthorized.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
