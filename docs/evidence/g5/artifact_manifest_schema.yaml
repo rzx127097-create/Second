@@ -1,0 +1,18 @@
+schema_version: g5.v1
+registry_id: G5-ARTIFACT-MANIFEST
+status: design_frozen
+format: content_addressed_artifact_manifest
+additional_properties: false
+required_fields:
+  - artifact_id
+  - artifact_type
+  - source_paths
+  - source_hashes
+  - generator
+  - generator_commit
+  - generator_sha256
+  - generator_version
+  - output_path
+  - output_sha256
+  - created_at
+  - data_status

@@ -1,0 +1,15 @@
+"""Strict, code-readable G5 evidence schemas."""
+
+from __future__ import annotations
+
+
+_COMMON = [
+    "evaluation_identity", "canonical_training_identity", "method", "condition_id", "scale", "training_seed", "scenario_id", "partition", "source_commit", "config_hash", "protocol_hash", "checkpoint_hash", "evaluator_hash", "scenario_panel_hash", "episode_index", "interaction_count", "termination_reason", "terminated", "initial_total_pest", "final_total_pest", "reduction_rate", "success_at_0_85", "pesticide_initial_l", "pesticide_remaining_l", "pesticide_transferred_l", "resource_conservation_residual_l", "battery_replenishment_l", "action_uav", "action_vehicle_slot", "rendezvous_distance_m", "waiting_steps", "pesticide_disabled_steps", "return_steps", "effective_spray_steps", "source_locator",
+]
+
+RAW_EPISODE_SCHEMA = {"$schema": "g5.v1", "type": "object", "additionalProperties": False, "required": _COMMON, "properties": {key: {"type": "number"} for key in _COMMON}}
+RAW_EPISODE_SCHEMA["properties"].update({"evaluation_identity": {"type": "string"}, "canonical_training_identity": {"type": "string"}, "method": {"type": "string"}, "condition_id": {"type": "string"}, "scale": {"type": "string"}, "training_seed": {"type": "integer"}, "scenario_id": {"type": "integer"}, "partition": {"type": "string"}, "source_commit": {"type": "string"}, "config_hash": {"type": "string"}, "protocol_hash": {"type": "string"}, "checkpoint_hash": {"type": "string"}, "evaluator_hash": {"type": "string"}, "scenario_panel_hash": {"type": "string"}, "episode_index": {"type": "integer"}, "interaction_count": {"type": "integer"}, "termination_reason": {"type": "string"}, "terminated": {"type": "boolean"}, "success_at_0_85": {"type": "boolean"}, "action_uav": {"type": "integer"}, "action_vehicle_slot": {"type": "integer"}, "source_locator": {"type": "string"}})
+VALIDATED_LONG_TABLE_SCHEMA = {"type": "object", "additionalProperties": False, "required": _COMMON + ["validation_status", "source_row_reference"], "properties": {**RAW_EPISODE_SCHEMA["properties"], "validation_status": {"type": "string"}, "source_row_reference": {"type": "string"}}}
+ARTIFACT_MANIFEST_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["artifact_id", "artifact_type", "source_paths", "source_hashes", "generator", "generator_commit", "generator_sha256", "generator_version", "output_path", "output_sha256", "created_at", "data_status"], "properties": {"artifact_id": {"type": "string"}, "artifact_type": {"type": "string"}, "source_paths": {"type": "array"}, "source_hashes": {"type": "array"}, "generator": {"type": "string"}, "generator_commit": {"type": ["string", "null"]}, "generator_sha256": {"type": ["string", "null"]}, "generator_version": {"type": ["string", "null"]}, "output_path": {"type": "string"}, "output_sha256": {"type": ["string", "null"]}, "created_at": {"type": ["string", "null"]}, "data_status": {"type": "string"}}}
+
+__all__ = ["RAW_EPISODE_SCHEMA", "VALIDATED_LONG_TABLE_SCHEMA", "ARTIFACT_MANIFEST_SCHEMA"]

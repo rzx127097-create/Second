@@ -1,0 +1,9 @@
+schema_version: g5.v1
+registry_id: G5-VALIDATED-LONG-TABLE
+status: design_frozen
+format: validated_long_format
+source_schema: G5-RAW-EPISODE
+additional_properties: false
+required_fields:
+  - validation_status
+  - source_row_reference
