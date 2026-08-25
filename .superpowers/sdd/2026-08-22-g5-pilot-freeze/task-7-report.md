@@ -138,7 +138,7 @@ regenerated manifests and fix-round report). The final pushed parity commit is
 
 The provenance source scope now explicitly includes
 `src/problem2/experiments/g5_contract.py`, which controls strict registry
-loading and configuration-hash inputs. The exact nine-file scope is serialized
+loading and configuration-hash inputs. The exact ten-file scope is serialized
 as `provenance.source_tree_paths`; the regression suite asserts the contract
 loader is included. Regeneration and the final artifact commit follow this
 source-scope correction.

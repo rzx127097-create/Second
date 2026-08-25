@@ -9,7 +9,7 @@
   },
   "files": {
     "development-smoke.json": "ff85a34467958ac58567730a537d5877103bb0fbe869e9e50cee9efc3222a210",
-    "g6-training-jobs.json": "a1ae16fe787162f7773f7546f53da6ed88a2d26e4c76a99d3f351b3ba1e7b1d1",
+    "g6-training-jobs.json": "ff4d20a347be565f974d39ba24ec382b231d6def326243c06943bd81f2733553",
     "g6-validation-evaluations.json": "4e57689500337d11f86da351ae65314500a6012286b671988f68b66fd3863936",
     "g7-analysis.json": "0e91e59df68046c79d0b274514fd453024f843eb4a314c218c846debae0e7129",
     "g7-sealed-evaluations.json": "47ab883d64e932081d82be303b2a49303341ad5b7ea04bce8146a22309e59fe0",
@@ -50,8 +50,20 @@
       "configs/problem2/g5/families.yaml": "2530a5703659afa90ad4310ef4ae3a0b131983f48627565bfba9a9edbb4cb91a",
       "configs/problem2/g5/sensitivity.yaml": "b376151abbc7943d3a78669a5bf7fcb40e45eb8fea20667f8c1bfb2730f7b370"
     },
-    "source_commit": "b28a1f667b20237fefafb1791f2d3c68509518d3",
-    "source_tree_sha256": "ff11c425ce25e2fd627e2e8d6967f211fe7226fec804cc57d3358bbab08c14ad"
+    "source_commit": "a868e6d5d3220aed1e128d052204a4ba74cb5969",
+    "source_tree_paths": [
+      "src/problem2/experiments/identity.py",
+      "src/problem2/experiments/families.py",
+      "src/problem2/experiments/matrix.py",
+      "src/problem2/experiments/ablation.py",
+      "src/problem2/experiments/sensitivity.py",
+      "src/problem2/experiments/g5_contract.py",
+      "scripts/generate_g5_manifests.py",
+      "configs/problem2/g5/families.yaml",
+      "configs/problem2/g5/ablations.yaml",
+      "configs/problem2/g5/sensitivity.yaml"
+    ],
+    "source_tree_sha256": "f058b0cc84d6b335fc2e3c57ae92d388ea505fc1e7107c0f228614015a832e6c"
   },
   "raw_reference_counts": {
     "algorithm_convergence": 150,
