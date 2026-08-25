@@ -118,6 +118,8 @@ protocol_hash=63b8637ec0cb2d8cccde5e030e6b5d61ca5b812e075f5da3ac7c4f4a4c24bfe4
 Fix-round verification:
 
 - `python -m pytest tests/g5/test_experiment_matrix.py -q`: `8 passed in 6.26s`.
+- `python -m pytest tests/g5 -q`: `233 passed in 45.44s`.
+- `python -m pytest tests/g2 tests/g3 tests/g4 -q`: `243 passed in 150.19s`.
 - Generator twice into independent roots: `byte_identical=True files=7`.
 - Canonical digest audit: `375` jobs, all digest recomputations true.
 - Reference resolution audit: `645` references, every job index resolves.
@@ -128,5 +130,15 @@ Fix-round verification:
 Fix-round content commits pushed without force-push:
 `32dedfd` (identity/registry/provenance implementation), `2c9edc7`
 (output-only drift provenance guard), `cc245a4` (focused regression test), and
-`b28a1f6` (contract-audit registry count regression). The regenerated manifest
-artifacts are pending their final content commit.
+`b28a1f6` (contract-audit registry count regression), and `f499717` (final
+regenerated manifests and fix-round report). The final pushed parity commit is
+`f499717`.
+
+## Fix Round 2
+
+The provenance source scope now explicitly includes
+`src/problem2/experiments/g5_contract.py`, which controls strict registry
+loading and configuration-hash inputs. The exact nine-file scope is serialized
+as `provenance.source_tree_paths`; the regression suite asserts the contract
+loader is included. Regeneration and the final artifact commit follow this
+source-scope correction.
