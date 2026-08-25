@@ -115,6 +115,19 @@ def test_preflight_fails_closed_on_malformed_manifest(tmp_path: Path) -> None:
     assert report["checks"]["no_sealed_identities"] is False
 
 
+def test_preflight_rejects_string_sealed_scenario_id(tmp_path: Path) -> None:
+    manifest_dir = tmp_path / "outputs" / "problem2_sr_mappo_v1" / "g5" / "manifests"
+    manifest_dir.mkdir(parents=True)
+    (manifest_dir / "g7-payload.json").write_text(
+        '{"scenario_id":"30000"}', encoding="utf-8"
+    )
+
+    from scripts._g5_cli import read_only_preflight
+
+    report = read_only_preflight(tmp_path, gate="G7")
+    assert report["checks"]["no_sealed_identities"] is False
+
+
 @pytest.mark.parametrize(
     "script, args",
     [

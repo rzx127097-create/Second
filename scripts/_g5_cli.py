@@ -102,6 +102,17 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
     try:
         paths = list((output_root / "manifests").glob("g6-*.json")) + list((output_root / "manifests").glob("g7-*.json"))
         payloads = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
+        def is_sealed_scenario_id(value):
+            if isinstance(value, bool):
+                return False
+            if isinstance(value, int):
+                candidate = value
+            elif isinstance(value, str) and value.isascii() and value.isdecimal():
+                candidate = int(value)
+            else:
+                return False
+            return 30000 <= candidate <= 30099
+
         def has_sealed_payload(value):
             if isinstance(value, dict):
                 for key, nested in value.items():
@@ -109,7 +120,7 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
                         return True
                     if key in {"scenario_id", "scenario_ids"}:
                         values = nested if isinstance(nested, list) else [nested]
-                        if any(isinstance(item, int) and 30000 <= item <= 30099 for item in values):
+                        if any(is_sealed_scenario_id(item) for item in values):
                             return True
                     if has_sealed_payload(nested):
                         return True
