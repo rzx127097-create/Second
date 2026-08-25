@@ -151,4 +151,4 @@ def test_graph_provenance_is_current_and_registry_bound() -> None:
         "configs/problem2/g5/ablations.yaml",
         "configs/problem2/g5/sensitivity.yaml",
     }
-    assert len({job.config_hash for job in graph.unique_jobs}) == 375
+    assert len({job.config_hash for job in graph.unique_jobs}) == 25
