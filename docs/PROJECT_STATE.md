@@ -28,7 +28,7 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Tasks 1-7 are accepted at M2. The registry, fairness,
+- Current gate: G5 Tasks 1-8 are accepted at M2. The registry, fairness,
   budget-selection, partition, shared heterogeneous protocol/checkpoint, five
   learning algorithms, physical G2-to-G3 adapter, direct episode metrics,
   fixed/A*/nearest/urgency/two-stage support-controller boundaries, and the
@@ -1410,9 +1410,61 @@ Persistence status:
   protected external asset, OSM input, first-problem file, or Word file was
   modified.
 
-Task 8 is the next authorized work: implement append-only orchestration,
-artifact schemas, validation, recovery, and sealed lock guards. The current
-M2 boundary remains unchanged; no G6/G7 execution is authorized.
+## G5 Task 8: Orchestration And Evidence Validation Acceptance Record
+
+Task 8 is accepted at M2 after independent scoped review and fresh controller
+verification. It establishes the append-only orchestration, artifact schemas,
+fail-closed evidence validation, recovery, quarantine, and sealed-lock guards
+required before any G6 formal execution. It did not run pilots, formal jobs,
+validation tuning, or sealed evaluation, and it does not support efficacy,
+superiority, or deployment claims.
+
+Implementation boundaries now persisted:
+
+- JSONL ledger replay/register requires legal transitions, exclusive leases,
+  same-identity retry, stale drift handling, and complete required/optional
+  SHA-256/SHA-1 provenance formats.
+- Raw and validated evidence recomputes both Task 7 training identity and the
+  scenario-bound evaluation identity; callers cannot disable identity checks.
+  Metric/resource/action/counter/partition/terminal and artifact hash/path
+  checks fail closed, while quarantine preserves exact source bytes.
+- G6/G7 preflight is read-only and execution-blocked at G5. Registry hashes
+  require the exact frozen Task 7 key set, output confinement is bound to this
+  repository's configured root, malformed manifests fail closed, and numeric
+  sealed scenario IDs/access flags are rejected while the declarative sealed
+  skeleton marker remains allowed.
+
+Fresh verification:
+
+- Final scoped review `bb81a7d..c62c9a8`: clean; no Critical, Important, or
+  actionable Minor findings. Focused independent probes: `TASK8_PROBES_PASS`.
+- `python -m pytest tests/g5/test_orchestration_and_validation.py
+  tests/g5/test_sealed_guards.py -q`: `60 passed`.
+- `python -m pytest tests/g3 tests/g5 -q`: `358 passed`.
+- `python -m pytest tests/g2 tests/g4 -q`: `178 passed`.
+- `python scripts/audit_g5_contracts.py`: `status=pass`, validation/sealed
+  access false, actual unlock count `0`.
+- `python -m compileall -q src scripts`, `git diff --check`, and all eight
+  public CLI `--help` calls: passed.
+- Sealed lock SHA-256 remained
+  `78c9caa7d432f56f91b67195eb413eddab4e9f84c9fd214eb7a9373f48a73226`; no
+  queue was created and no sealed data was read.
+
+Persistence status:
+
+- Task 8 content and corrective commits from `c22d5b2` through
+  `945dc97badafbcbfcc131cb50ea8e20d589c840e` were pushed without force-push
+  to `origin/codex/problem2-g5-pilot-freeze`.
+- Before this state-record commit, local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-g5-pilot-freeze` all matched
+  `945dc97badafbcbfcc131cb50ea8e20d589c840e`.
+- The protected user-owned `_tmp_docx_assets/` path remains untracked and
+  untouched. No protected external asset or sealed output was modified.
+
+Task 9 is the next authorized work: implement the frozen convergence, paired
+statistics, Holm correction, equivalence, and mechanism-summary contracts.
+Pilot execution, validation tuning, G6 formal jobs, and G7 sealed evaluation
+remain unauthorized until the declared gate order permits them.
 
 ## Completed Tasks
 
@@ -1466,8 +1518,11 @@ M2 boundary remains unchanged; no G6/G7 execution is authorized.
 - Task 7 is complete and persisted: the exact experiment families,
   configuration diffs, and deduplicated 375-job graph are recorded below
   `outputs/problem2_sr_mappo_v1/g5/manifests`.
-- Execute Task 8 of the persisted G5 plan: implement append-only orchestration,
-  artifact schemas, validation, recovery, and sealed lock guards.
+- Task 8 is complete and persisted: append-only orchestration, strict evidence
+  schemas/validation, recovery, quarantine, and sealed-lock guards are recorded
+  in `src/problem2/`, `scripts/`, tests, and the Task 8 report.
+- Execute Task 9 of the persisted G5 plan: implement convergence, paired
+  statistics, multiplicity correction, equivalence, and mechanism summaries.
 - Implement later G5 statistics, smoke, pilots, and validation tuning only in
   the plan's declared order.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
@@ -1490,8 +1545,9 @@ M2 boundary remains unchanged; no G6/G7 execution is authorized.
   differences, five learning algorithms, and Task-6 environment/metric/support
   controllers and Task-7 experiment-family/job-graph manifests are frozen at
   M2. The reduction denominator epsilon is contract owned at `1.0e-12`; Task 8
-  orchestration and evidence-validation implementation is the next authorized
-  work.
+  orchestration and evidence-validation implementation is accepted, and Task 9
+  statistics/mechanism summaries are the next authorized work. No formal or
+  sealed execution is authorized by this record.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -1541,12 +1597,12 @@ M2 boundary remains unchanged; no G6/G7 execution is authorized.
 
 ## Next Step
 
-Execute Task 8 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: implement append-only
-orchestration, artifact schemas, validation, recovery, and sealed lock guards
-against the accepted Task-7 identities and manifests. Keep pilots, validation
-tuning, formal jobs, and sealed-test evaluation unauthorized until their later
-tasks and gates.
+Execute Task 9 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: implement convergence,
+paired statistics, Holm correction, equivalence, and mechanism summaries from
+the accepted Task-8 evidence boundaries. Keep pilots, validation tuning,
+formal jobs, and sealed-test evaluation unauthorized until their later tasks
+and gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
