@@ -1,5 +1,5 @@
 schema_version: g5.v1
-registry_id: G5-ABLATIONS
+contract_id: G5-ABLATIONS
 status: design_frozen
 full_condition: sr_mappo_mobile
 remove_one:

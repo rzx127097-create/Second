@@ -86,6 +86,9 @@ CONTRACT_FILES = (
     "configs/problem2/g5/budget_rule.yaml",
     "configs/problem2/g5/metrics.yaml",
     "configs/problem2/g5/statistics.yaml",
+    "configs/problem2/g5/families.yaml",
+    "configs/problem2/g5/ablations.yaml",
+    "configs/problem2/g5/sensitivity.yaml",
     "docs/evidence/g5/problem1_lineage.yaml",
     "docs/evidence/g5/heterogeneous_interface.yaml",
     "docs/evidence/g5/fairness_matrix.yaml",
@@ -842,6 +845,59 @@ def _load_sealed_lock(root: Path) -> None:
         raise G5ContractError("sealed lock resource contract drifted")
 
 
+def _load_task7_registries(root: Path) -> None:
+    families = _load_yaml(root, "configs/problem2/g5/families.yaml")
+    _header(families, "G5-FAMILIES", "families", {"families"})
+    expected_families = {
+        "algorithm_convergence": ("sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile"),
+        "algorithm_scale": ("sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile"),
+        "problem2_required": ("sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar", "mappo_mobile", "sr_mappo_two_stage"),
+        "vehicle_heuristics": ("sr_mappo_nearest", "sr_mappo_urgency"),
+        "sr_mappo_ablation": ("no_observation_normalization", "no_return_normalization", "no_network_stabilization", "no_robust_value_update", "no_learning_rate_decay"),
+        "sr_mappo_sensitivity": ("learning_rate", "clip_range", "entropy_coef", "gamma", "gae_lambda"),
+    }
+    observed = _mapping(families["families"], "Task 7 families")
+    if set(observed) != set(expected_families):
+        raise G5ContractError("Task 7 family IDs drifted")
+    expected_scales = ("g20x20_d2", "g20x30_d3", "g20x40_d3", "g30x30_d3", "g30x40_d4", "g30x50_d4")
+    for family, conditions in expected_families.items():
+        item = _mapping(observed[family], f"Task 7 family {family}")
+        _require_keys(item, {"conditions", "scales", "seeds"}, f"Task 7 family {family}")
+        if tuple(item["conditions"]) != conditions or tuple(item["seeds"]) != (42, 123, 2024, 3407, 7919):
+            raise G5ContractError(f"Task 7 family {family} values drifted")
+        expected = ("g30x30_d3",) if family in ("sr_mappo_ablation", "sr_mappo_sensitivity") else expected_scales
+        if tuple(item["scales"]) != expected:
+            raise G5ContractError(f"Task 7 family {family} scales drifted")
+
+    ablations = _load_yaml(root, "configs/problem2/g5/ablations.yaml")
+    _header(ablations, "G5-ABLATIONS", "ablations", {"full_condition", "remove_one"})
+    if ablations["full_condition"] != "sr_mappo_mobile":
+        raise G5ContractError("Task 7 ablation full condition drifted")
+    expected_groups = {
+        "no_observation_normalization": ["observation_normalization"],
+        "no_return_normalization": ["return_normalization"],
+        "no_network_stabilization": ["orthogonal_initialization", "layer_normalization"],
+        "no_robust_value_update": ["value_clipping", "huber_value_loss"],
+        "no_learning_rate_decay": ["learning_rate_decay"],
+    }
+    if ablations["remove_one"] != expected_groups:
+        raise G5ContractError("Task 7 ablation groups drifted")
+
+    sensitivity = _load_yaml(root, "configs/problem2/g5/sensitivity.yaml")
+    _header(sensitivity, "G5-SENSITIVITY", "sensitivity", {"center", "algorithmic_axes", "mechanism_axes"})
+    expected_center = {"learning_rate": 0.0003, "clip_range": 0.20, "entropy_coef": 0.010, "gamma": 0.99, "gae_lambda": 0.95}
+    expected_algorithmic = {
+        "learning_rate": [0.0001, 0.0003, 0.0005], "clip_range": [0.10, 0.20, 0.30],
+        "entropy_coef": [0.005, 0.010, 0.020], "gamma": [0.95, 0.99, 0.995], "gae_lambda": [0.90, 0.95, 0.98],
+    }
+    expected_mechanism = {
+        "initial_uav_pesticide_l": [0.05, 0.2875, 0.525], "vehicle_speed_m_s": [4, 8, 12],
+        "transfer_rate_l_min": [2, 4, 8], "setup_time_s": [5, 10, 30], "rendezvous_radius_m": [5, 15, 30],
+    }
+    if sensitivity["center"] != expected_center or sensitivity["algorithmic_axes"] != expected_algorithmic or sensitivity["mechanism_axes"] != expected_mechanism:
+        raise G5ContractError("Task 7 sensitivity registry drifted")
+
+
 def _validate_dependency_locks(root: Path) -> None:
     g3 = (root / "requirements-g3.lock").read_text(encoding="utf-8").splitlines()
     if "torch==2.13.0+cpu" not in g3 or "--extra-index-url https://download.pytorch.org/whl/cpu" not in g3:
@@ -873,6 +929,7 @@ def load_g5_contract(root: Path) -> G5Contract:
     _load_checkpoint_selection(repository_root, partitions)
     _load_g1_partitions(repository_root, partitions)
     _load_sealed_lock(repository_root)
+    _load_task7_registries(repository_root)
     _validate_dependency_locks(repository_root)
     file_hashes = {
         relative: _sha256(repository_root / relative)

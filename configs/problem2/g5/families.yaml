@@ -1,5 +1,5 @@
 schema_version: g5.v1
-registry_id: G5-FAMILIES
+contract_id: G5-FAMILIES
 status: design_frozen
 families:
   algorithm_convergence:

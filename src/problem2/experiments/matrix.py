@@ -45,6 +45,9 @@ class ExperimentReference:
 class TrainingGraph:
     unique_jobs: tuple[TrainingJob, ...]
     references: tuple[ExperimentReference, ...]
+    source_commit: str
+    protocol_hash: str
+    registry_hashes: Mapping[str, str]
 
     @property
     def jobs(self) -> tuple[TrainingJob, ...]:
@@ -58,6 +61,10 @@ class TrainingGraph:
         }
 
     def assert_safe_deduplication(self, left: TrainingJob, right: TrainingJob) -> None:
+        for job in (left, right):
+            expected = canonical_training_identity(job.method, job.scale, job.training_seed, job.config_hash, job.git_commit)
+            if expected != job.canonical_training_identity:
+                raise ValueError("deduplication rejects tampered canonical identity")
         fields = ("method", "scale", "training_seed", "config_hash", "git_commit")
         if any(getattr(left, field) != getattr(right, field) for field in fields):
             raise ValueError("deduplication requires exact canonical identity")
@@ -72,24 +79,34 @@ def _stable_hash(value: object) -> str:
 
 def _git_commit(root: Path) -> str:
     try:
-        return subprocess.run(
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no"], cwd=root,
+            check=True, capture_output=True, text=True, encoding="utf-8",
+        )
+        if status.stdout.strip():
+            raise RuntimeError("source tree is dirty; frozen provenance cannot be generated")
+        result = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=root, check=True,
             capture_output=True, text=True, encoding="utf-8",
-        ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError):
-        return "unknown"
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("Git is unavailable; frozen provenance cannot be generated") from exc
+    commit = result.stdout.strip()
+    if not commit or any(char not in "0123456789abcdef" for char in commit.lower()):
+        raise RuntimeError("Git returned an invalid source commit")
+    return commit
 
 
-def _config_hash(method: str, condition: str, *, extra: Mapping[str, object] | None = None) -> str:
-    return _stable_hash({"method": method, "condition_id": condition, "extra": dict(extra or {})})
+def _config_hash(method: str, condition: str, registry_hashes: Mapping[str, str], *, extra: Mapping[str, object] | None = None) -> str:
+    return _stable_hash({"method": method, "condition_id": condition, "extra": dict(extra or {}), "registry_hashes": dict(sorted(registry_hashes.items()))})
 
 
 def _new_job(
-    *, root: Path, protocol_hash: str, git_commit: str, family: str,
+    *, root: Path, protocol_hash: str, registry_hashes: Mapping[str, str], git_commit: str, family: str,
     condition_id: str, method: str, scale: str, seed: int,
     extra: Mapping[str, object] | None = None,
 ) -> TrainingJob:
-    config_hash = _config_hash(method, condition_id, extra=extra)
+    config_hash = _config_hash(method, condition_id, registry_hashes, extra=extra)
     canonical = canonical_training_identity(method, scale, seed, config_hash, git_commit)
     return TrainingJob(
         method=method, scale=scale, training_seed=seed, config_hash=config_hash,
@@ -107,13 +124,21 @@ def build_training_graph(contract) -> TrainingGraph:
     root = Path(contract.source_root)
     protocol_hash = contract.file_hashes["configs/problem2/g5/protocol.yaml"]
     git_commit = _git_commit(root)
+    registry_hashes = {
+        path: contract.file_hashes[path]
+        for path in (
+            "configs/problem2/g5/families.yaml",
+            "configs/problem2/g5/ablations.yaml",
+            "configs/problem2/g5/sensitivity.yaml",
+        )
+    }
     jobs: list[TrainingJob] = []
     by_base: dict[str, TrainingJob] = {}
     references: list[ExperimentReference] = []
 
     def add_job(family: str, condition: str, method: str, scale: str, seed: int, extra=None) -> TrainingJob:
         candidate = _new_job(
-            root=root, protocol_hash=protocol_hash, git_commit=git_commit,
+            root=root, protocol_hash=protocol_hash, registry_hashes=registry_hashes, git_commit=git_commit,
             family=family, condition_id=condition, method=method, scale=scale,
             seed=seed, extra=extra,
         )
@@ -192,7 +217,10 @@ def build_training_graph(contract) -> TrainingGraph:
         for seed in FORMAL_SEEDS:
             ref("sr_mappo_sensitivity", "sr_mappo_mobile", base[("sr_mappo_mobile", "g30x30_d3", seed)])
 
-    graph = TrainingGraph(unique_jobs=tuple(jobs), references=tuple(references))
+    graph = TrainingGraph(
+        unique_jobs=tuple(jobs), references=tuple(references), source_commit=git_commit,
+        protocol_hash=protocol_hash, registry_hashes=registry_hashes,
+    )
     if len(graph.unique_jobs) != 375:
         raise ValueError(f"frozen training graph must contain 375 jobs, got {len(graph.unique_jobs)}")
     return graph

@@ -3,11 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import shutil
+import subprocess
 
 import pytest
 
 from problem2.experiments.g5_contract import load_g5_contract
-from problem2.experiments.identity import canonical_training_identity, experiment_identity
+from problem2.experiments.identity import canonical_training_identity, canonical_training_serialization, experiment_identity
 from problem2.experiments.matrix import build_training_graph, TrainingGraph
 from problem2.experiments.ablation import validate_ablation_diff
 from problem2.experiments.sensitivity import validate_sensitivity_diff
@@ -23,7 +25,8 @@ SEEDS = (42, 123, 2024, 3407, 7919)
 
 def test_g1_identity_serialization_is_preserved_and_family_binding_is_additive() -> None:
     base = canonical_training_identity("sr_mappo_mobile", "g20x20_d2", 42, "cfg", "commit")
-    assert base == "sr_mappo_mobile|g20x20_d2|42|cfg|commit"
+    raw = canonical_training_serialization("sr_mappo_mobile", "g20x20_d2", 42, "cfg", "commit")
+    assert base == hashlib.sha256(raw.encode()).hexdigest()
     bound = experiment_identity("algorithm_scale", "sr_mappo_mobile", "protocol", base)
     assert bound == "algorithm_scale|sr_mappo_mobile|protocol|" + base
 
@@ -55,14 +58,20 @@ def test_graph_references_share_canonical_jobs_without_unsafe_deduplication() ->
     assert len(primary) >= 150
     assert len({ref.canonical_training_identity for ref in primary}) == 30
     assert all(ref.canonical_training_identity == ref.job.canonical_training_identity for ref in refs)
+    assert all(ref.experiment_identity.endswith(ref.canonical_training_identity) for ref in refs)
 
-    with pytest.raises(ValueError, match="deduplication requires exact canonical identity"):
+    with pytest.raises(ValueError):
         graph.assert_safe_deduplication(
             graph.unique_jobs[0],
             graph.unique_jobs[0].__class__(
                 **{**graph.unique_jobs[0].__dict__, "config_hash": "different"}
             ),
         )
+    tampered = graph.unique_jobs[0].__class__(
+        **{**graph.unique_jobs[0].__dict__, "canonical_training_identity": "0" * 64}
+    )
+    with pytest.raises(ValueError, match="tampered"):
+        graph.assert_safe_deduplication(graph.unique_jobs[0], tampered)
 
 
 def test_ablation_remove_one_groups_and_sensitivity_axes_are_strict() -> None:
@@ -105,3 +114,41 @@ def test_manifest_generator_is_byte_deterministic_and_has_no_sealed_payload(tmp_
         payload = (first / relative).read_text(encoding="utf-8")
         assert "30000" not in payload and "30099" not in payload
         assert "sealed_scenario" not in payload
+    training = json.loads((first / "g6-training-jobs.json").read_text(encoding="utf-8"))
+    assert training["job_count"] == 375
+    assert training["decomposition"]["total"] == 375
+    jobs = training["jobs"]
+    for reference in training["references"]:
+        job = jobs[reference["job_index"]]
+        assert job["canonical_training_identity"] == reference["canonical_training_identity"]
+
+
+def test_identity_rejects_malformed_whitespace() -> None:
+    with pytest.raises(ValueError):
+        canonical_training_serialization(" sr_mappo_mobile", "g20x20_d2", 42, "cfg", "commit")
+
+
+def test_task7_registry_drift_fails_closed(tmp_path: Path) -> None:
+    candidate = tmp_path / "repo"
+    shutil.copytree(ROOT / "configs", candidate / "configs")
+    (candidate / "docs/evidence").mkdir(parents=True)
+    shutil.copytree(ROOT / "docs/evidence/g1", candidate / "docs/evidence/g1")
+    shutil.copytree(ROOT / "docs/evidence/g5", candidate / "docs/evidence/g5")
+    for name in ("requirements-g2.lock", "requirements-g3.lock", "requirements-g5.lock"):
+        shutil.copy2(ROOT / name, candidate / name)
+    path = candidate / "configs/problem2/g5/families.yaml"
+    path.write_text(path.read_text(encoding="utf-8").replace("g20x20_d2", "g20x20_drift"), encoding="utf-8")
+    with pytest.raises(Exception, match="Task 7 family"):
+        load_g5_contract(candidate)
+
+
+def test_graph_provenance_is_current_and_registry_bound() -> None:
+    graph = build_training_graph(load_g5_contract(ROOT))
+    current = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, check=True, capture_output=True, text=True).stdout.strip()
+    assert graph.source_commit == current
+    assert set(graph.registry_hashes) == {
+        "configs/problem2/g5/families.yaml",
+        "configs/problem2/g5/ablations.yaml",
+        "configs/problem2/g5/sensitivity.yaml",
+    }
+    assert len({job.config_hash for job in graph.unique_jobs}) == 375

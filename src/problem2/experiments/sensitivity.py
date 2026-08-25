@@ -29,6 +29,8 @@ def validate_sensitivity_diff(center: Mapping[str, object], variant: Mapping[str
     levels = SENSITIVITY_AXES.get(axis) or MECHANISM_SENSITIVITY_AXES.get(axis)
     if levels is None or variant[axis] not in levels or variant[axis] == center[axis]:
         raise ValueError("sensitivity value is not a registered noncenter level")
+    if center[axis] != levels[1]:
+        raise ValueError("sensitivity center must equal the registered axis center")
     return axis, variant[axis]
 
 

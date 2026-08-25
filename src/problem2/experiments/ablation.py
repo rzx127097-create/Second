@@ -19,6 +19,12 @@ def validate_ablation_diff(full: Mapping[str, object], variant: Mapping[str, obj
     matches = [name for name, fields in ABLATION_GROUPS.items() if changed == set(fields)]
     if len(matches) != 1:
         raise ValueError("ablation must differ by exactly one declared remove-one group")
+    for key, value in full.items():
+        if key in changed:
+            if value is not True:
+                raise ValueError("full ablation configuration must enable declared fields")
+        elif value is not variant[key]:
+            raise ValueError("ablation variant must preserve undeclared fields exactly")
     for key in changed:
         if variant[key] is not False:
             raise ValueError("ablation remove-one values must be false")

@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from collections import Counter
 from typing import Any
 
 from problem2.experiments.g5_contract import load_g5_contract
@@ -37,11 +38,60 @@ def _job_payload(job) -> dict[str, Any]:
     }
 
 
+def _reference_payload(reference, job_index: int) -> dict[str, Any]:
+    job = reference.job
+    return {
+        "experiment_identity": reference.experiment_identity,
+        "family": reference.family,
+        "condition_id": reference.condition_id,
+        "canonical_training_identity": reference.canonical_training_identity,
+        "job_index": job_index,
+    }
+
+
+def _source_tree_hash(repository_root: Path) -> str:
+    paths = (
+        "src/problem2/experiments/identity.py",
+        "src/problem2/experiments/families.py",
+        "src/problem2/experiments/matrix.py",
+        "src/problem2/experiments/ablation.py",
+        "src/problem2/experiments/sensitivity.py",
+        "scripts/generate_g5_manifests.py",
+        "configs/problem2/g5/families.yaml",
+        "configs/problem2/g5/ablations.yaml",
+        "configs/problem2/g5/sensitivity.yaml",
+    )
+    digest = hashlib.sha256()
+    for relative in paths:
+        path = repository_root / relative
+        if not path.is_file():
+            raise RuntimeError(f"missing source file for provenance: {relative}")
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def generate_manifests(repository_root: Path, output_root: Path = DEFAULT_OUTPUT) -> dict[str, Any]:
     repository_root = Path(repository_root).resolve()
     output_root = Path(output_root)
     contract = load_g5_contract(repository_root)
     graph = build_training_graph(contract)
+    source_tree_hash = _source_tree_hash(repository_root)
+    job_indices = {job.canonical_training_identity: index for index, job in enumerate(graph.unique_jobs)}
+    references = [
+        _reference_payload(reference, job_indices[reference.canonical_training_identity])
+        for reference in graph.references
+    ]
+    raw_reference_counts = dict(Counter(reference.family for reference in graph.references))
+    provenance = {
+        "source_commit": graph.source_commit,
+        "source_tree_sha256": source_tree_hash,
+        "protocol_hash": graph.protocol_hash,
+        "registry_hashes": dict(sorted(graph.registry_hashes.items())),
+        "config_hashes": sorted({job.config_hash for job in graph.unique_jobs}),
+    }
     files: dict[str, str] = {}
 
     files["development-smoke.json"] = _write(output_root / "development-smoke.json", {
@@ -72,6 +122,11 @@ def generate_manifests(repository_root: Path, output_root: Path = DEFAULT_OUTPUT
         "partition": "formal_training",
         "job_count": len(graph.unique_jobs),
         "jobs": [_job_payload(job) for job in graph.unique_jobs],
+        "references": references,
+        "reference_count": len(references),
+        "raw_reference_counts": raw_reference_counts,
+        "decomposition": {"algorithm_scale": 150, "problem2_required": 90, "vehicle_heuristics": 60, "sr_mappo_ablation": 25, "sr_mappo_sensitivity": 50, "total": 375},
+        "provenance": provenance,
         "sealed_accessed": False,
     })
     files["g6-validation-evaluations.json"] = _write(output_root / "g6-validation-evaluations.json", {
@@ -102,7 +157,14 @@ def generate_manifests(repository_root: Path, output_root: Path = DEFAULT_OUTPUT
     })
     # Keep the summary independent of the caller's temporary/output path so
     # repeated generation is byte-identical across staging directories.
-    summary = {"files": files, "job_count": len(graph.unique_jobs)}
+    summary = {
+        "files": files,
+        "job_count": len(graph.unique_jobs),
+        "reference_count": len(references),
+        "raw_reference_counts": raw_reference_counts,
+        "decomposition": {"algorithm_scale": 150, "problem2_required": 90, "vehicle_heuristics": 60, "sr_mappo_ablation": 25, "sr_mappo_sensitivity": 50, "total": 375},
+        "provenance": provenance,
+    }
     _write(output_root / "manifest-summary.json", summary)
     return summary
 
