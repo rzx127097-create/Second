@@ -2,19 +2,19 @@
   "algorithm_id": "maddpg_mobile",
   "artifacts": [
     {
-      "bytes": 2325581,
+      "bytes": 2328333,
       "path": "checkpoint.pt",
-      "sha256": "315b5776cc910727c8e9e86171c580fa1e19cd31f33ecbde40f1e59b75b5095e"
+      "sha256": "bffbfd89675c79dc61a067df4d04bc34057be93c1b1d35391c2461c1dcce5054"
     },
     {
-      "bytes": 37652,
+      "bytes": 42644,
       "path": "training.jsonl",
-      "sha256": "37486eadd9d78b0cc6eeeb4b78865dba326d24ec9b5e8c1b85b5aae805fb692f"
+      "sha256": "0c8927df0f581115d447fda3d0981072f69d99858d41e95b71ebf6c1001cfe2c"
     },
     {
-      "bytes": 2066,
+      "bytes": 2251,
       "path": "summary.json",
-      "sha256": "9b038e6291b8fb1ad0a645ef3dfdde6dab055e0f938c3789a270d508cb9b812c"
+      "sha256": "6212172d674ff085231ffc42475ed9a0986a9da02bc5f656bbdc9116fd7b9a44"
     }
   ],
   "battery_replenishment_enabled": false,
@@ -27,7 +27,7 @@
     "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
     "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
     "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-    "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+    "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
   },
   "scenario_id": 10000,
   "schema_version": "g5-smoke-artifact-v1",

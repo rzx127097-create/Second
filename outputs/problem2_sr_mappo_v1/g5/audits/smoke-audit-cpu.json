@@ -60,7 +60,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -79,8 +79,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -144,7 +146,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -163,8 +165,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_fixed__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -228,7 +232,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -247,8 +251,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_astar__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -312,7 +318,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -331,8 +337,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -396,7 +404,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -415,8 +423,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_two_stage__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -480,7 +490,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -499,8 +509,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_nearest__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -564,7 +576,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -583,8 +595,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_urgency__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -648,7 +662,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -667,8 +681,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__no_observation_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -732,7 +748,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -751,8 +767,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__no_return_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -816,7 +834,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -835,8 +853,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__no_network_stabilization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -900,7 +920,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -919,8 +939,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__no_robust_value_update__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -984,7 +1006,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1003,8 +1025,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__no_learning_rate_decay__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1068,7 +1092,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1087,8 +1111,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__learning_rate__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1152,7 +1178,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1171,8 +1197,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__clip_range__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1236,7 +1264,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1255,8 +1283,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__entropy_coef__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1320,7 +1350,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1339,8 +1369,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__gamma__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1404,7 +1436,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1423,8 +1455,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__gae_lambda__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1488,7 +1522,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1507,8 +1541,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__sr_mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1572,7 +1608,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1591,8 +1627,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__sr_mappo_fixed__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1656,7 +1694,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1675,8 +1713,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__sr_mappo_astar__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1740,7 +1780,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1759,8 +1799,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1824,7 +1866,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1843,8 +1885,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__sr_mappo_two_stage__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1908,7 +1952,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -1927,8 +1971,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__sr_mappo_nearest__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -1992,7 +2038,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2011,8 +2057,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__sr_mappo_urgency__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2076,7 +2124,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2095,8 +2143,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__no_observation_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2160,7 +2210,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2179,8 +2229,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__no_return_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2244,7 +2296,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2263,8 +2315,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__no_network_stabilization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2328,7 +2382,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2347,8 +2401,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__no_robust_value_update__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2412,7 +2468,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2431,8 +2487,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__no_learning_rate_decay__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2496,7 +2554,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2515,8 +2573,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__learning_rate__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2580,7 +2640,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2599,8 +2659,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__clip_range__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2664,7 +2726,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2683,8 +2745,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__entropy_coef__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2748,7 +2812,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2767,8 +2831,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__gamma__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2832,7 +2898,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2851,8 +2917,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__gae_lambda__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2910,7 +2978,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -2929,8 +2997,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__sr_mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -2988,7 +3058,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3007,8 +3077,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__sr_mappo_fixed__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3066,7 +3138,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3085,8 +3157,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__sr_mappo_astar__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3144,7 +3218,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3163,8 +3237,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3222,7 +3298,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3241,8 +3317,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__sr_mappo_two_stage__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3300,7 +3378,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3319,8 +3397,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__sr_mappo_nearest__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3378,7 +3458,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3397,8 +3477,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__sr_mappo_urgency__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3456,7 +3538,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3475,8 +3557,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__no_observation_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3534,7 +3618,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3553,8 +3637,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__no_return_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3612,7 +3698,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3631,8 +3717,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__no_network_stabilization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3690,7 +3778,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3709,8 +3797,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__no_robust_value_update__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3768,7 +3858,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3787,8 +3877,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__no_learning_rate_decay__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3846,7 +3938,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3865,8 +3957,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__learning_rate__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -3924,7 +4018,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -3943,8 +4037,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__clip_range__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4002,7 +4098,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4021,8 +4117,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__entropy_coef__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4080,7 +4178,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4099,8 +4197,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__gamma__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4158,7 +4258,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4177,8 +4277,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__gae_lambda__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4231,7 +4333,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4250,8 +4352,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4304,7 +4408,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4323,8 +4427,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_fixed__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4377,7 +4483,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4396,8 +4502,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_astar__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4450,7 +4558,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4469,8 +4577,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4523,7 +4633,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4542,8 +4652,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_two_stage__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4596,7 +4708,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4615,8 +4727,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_nearest__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4669,7 +4783,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4688,8 +4802,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_urgency__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4742,7 +4858,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4761,8 +4877,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__no_observation_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4815,7 +4933,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4834,8 +4952,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__no_return_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4888,7 +5008,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4907,8 +5027,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__no_network_stabilization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -4961,7 +5083,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -4980,8 +5102,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__no_robust_value_update__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5034,7 +5158,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5053,8 +5177,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__no_learning_rate_decay__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5107,7 +5233,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5126,8 +5252,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__learning_rate__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5180,7 +5308,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5199,8 +5327,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__clip_range__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5253,7 +5383,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5272,8 +5402,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__entropy_coef__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5326,7 +5458,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5345,8 +5477,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__gamma__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5399,7 +5533,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5418,8 +5552,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__gae_lambda__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5470,7 +5606,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5489,8 +5625,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__sr_mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5541,7 +5679,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5560,8 +5698,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__sr_mappo_fixed__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5612,7 +5752,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5631,8 +5771,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__sr_mappo_astar__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5683,7 +5825,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5702,8 +5844,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__mappo_mobile__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5754,7 +5898,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5773,8 +5917,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__sr_mappo_two_stage__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5825,7 +5971,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5844,8 +5990,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__sr_mappo_nearest__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5896,7 +6044,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5915,8 +6063,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__sr_mappo_urgency__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -5967,7 +6117,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -5986,8 +6136,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__no_observation_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6038,7 +6190,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6057,8 +6209,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__no_return_normalization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6109,7 +6263,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6128,8 +6282,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__no_network_stabilization__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6180,7 +6336,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6199,8 +6355,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__no_robust_value_update__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6251,7 +6409,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6270,8 +6428,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__no_learning_rate_decay__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6322,7 +6482,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6341,8 +6501,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__learning_rate__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6393,7 +6555,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6412,8 +6574,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__clip_range__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6464,7 +6628,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6483,8 +6647,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__entropy_coef__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6535,7 +6701,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6554,8 +6720,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__gamma__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
@@ -6606,7 +6774,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-        "source_commit": "059dac01ed2432655112328a05330e29432b1192"
+        "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
@@ -6625,8 +6793,10 @@
           28
         ]
       },
+      "scale": "g5_smoke",
       "scenario_id": 10000,
       "sealed_accessed": false,
+      "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__gae_lambda__51001\\training.jsonl",
       "training_seed": 51001,
       "updates": 1,
       "validation_accessed": false
