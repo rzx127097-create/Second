@@ -62,18 +62,17 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
     for field in provenance_fields:
         if row[field] != expected_provenance[field]:
             raise ValidationError(f"provenance drift: {field}")
-    if not isinstance(verify_identity, bool):
-        raise ValidationError("verify_identity must be boolean")
-    if verify_identity:
-        try:
-            expected_identity = canonical_training_identity(row["method"], row["scale"], row["training_seed"], row["config_hash"], row["source_commit"])
-        except ValueError as exc:
-            raise ValidationError("canonical identity inputs are invalid") from exc
-        if row["canonical_training_identity"] != expected_identity:
-            raise ValidationError("canonical identity mismatch")
-        expected_evaluation = canonical_evaluation_identity(row["canonical_training_identity"], row["condition_id"], row["scale"], row["training_seed"], row["scenario_id"], row["partition"], row["checkpoint_hash"], row["evaluator_hash"], row["scenario_panel_hash"])
-        if row["evaluation_identity"] != expected_evaluation:
-            raise ValidationError("evaluation identity mismatch")
+    if verify_identity is not True:
+        raise ValidationError("identity verification cannot be disabled")
+    try:
+        expected_identity = canonical_training_identity(row["method"], row["scale"], row["training_seed"], row["config_hash"], row["source_commit"])
+    except ValueError as exc:
+        raise ValidationError("canonical identity inputs are invalid") from exc
+    if row["canonical_training_identity"] != expected_identity:
+        raise ValidationError("canonical identity mismatch")
+    expected_evaluation = canonical_evaluation_identity(row["canonical_training_identity"], row["condition_id"], row["scale"], row["training_seed"], row["scenario_id"], row["partition"], row["checkpoint_hash"], row["evaluator_hash"], row["scenario_panel_hash"])
+    if row["evaluation_identity"] != expected_evaluation:
+        raise ValidationError("evaluation identity mismatch")
     if row["method"] not in _METHODS or row["condition_id"] not in _METHODS:
         raise ValidationError("method/condition is undeclared")
     if row["scale"] not in _SCALES:

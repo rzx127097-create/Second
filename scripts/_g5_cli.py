@@ -18,6 +18,21 @@ if str(SRC) not in sys.path:
 from problem2.evaluation.sealed_lock import SealedAccessError, assert_no_sealed_access, assert_partition_allowed
 
 
+_TASK7_REGISTRY_PATHS = frozenset({
+    "configs/problem2/g5/families.yaml",
+    "configs/problem2/g5/ablations.yaml",
+    "configs/problem2/g5/sensitivity.yaml",
+})
+
+
+def _registry_hashes_match(contract_hashes: object, expected_registry: object) -> bool:
+    if not isinstance(contract_hashes, dict) or not isinstance(expected_registry, dict):
+        return False
+    if set(expected_registry) != _TASK7_REGISTRY_PATHS:
+        return False
+    return all(contract_hashes.get(path) == expected_registry[path] for path in _TASK7_REGISTRY_PATHS)
+
+
 def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, object]:
     """Audit frozen inputs without queueing jobs, writing artifacts, or reading sealed rows."""
     root = Path(root).resolve()
@@ -30,7 +45,7 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         summary_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/manifest-summary.json"
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         expected_registry = summary.get("provenance", {}).get("registry_hashes", {})
-        checks["registry_hashes"] = all(contract.file_hashes.get(path) == digest for path, digest in expected_registry.items()) and bool(expected_registry)
+        checks["registry_hashes"] = _registry_hashes_match(dict(contract.file_hashes), expected_registry)
         details["frozen_contract"] = "loaded strict G5 contract"
     except Exception:
         checks["frozen_contract"] = False
@@ -72,7 +87,12 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         except (OSError, UnicodeError, json.JSONDecodeError):
             continue
     output_root = root / "outputs/problem2_sr_mappo_v1/g5"
-    checks["output_confinement"] = output_root.resolve().parent == (root / "outputs/problem2_sr_mappo_v1").resolve() and output_root.resolve().name == "g5"
+    configured_output_parent = ROOT / "outputs/problem2_sr_mappo_v1"
+    try:
+        output_root.resolve().relative_to(configured_output_parent.resolve())
+        checks["output_confinement"] = root == ROOT and output_root.resolve().name == "g5"
+    except ValueError:
+        checks["output_confinement"] = False
     try:
         checks["disk_space"] = shutil.disk_usage(root).free >= 1024 * 1024 * 1024
     except OSError:

@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import time
 import uuid
 from typing import Any
@@ -17,6 +18,28 @@ from .artifacts import append_jsonl
 
 class LedgerError(RuntimeError):
     pass
+
+
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_SHA1 = re.compile(r"^[0-9a-f]{40}$")
+
+
+def _validate_initial_provenance(event: dict[str, Any]) -> None:
+    required = ("input_hash", "config_hash", "protocol_hash", "source_commit")
+    if not set(required) <= set(event):
+        raise LedgerError("initial pending provenance is incomplete")
+    for field in ("input_hash", "config_hash", "protocol_hash"):
+        value = event.get(field)
+        if not isinstance(value, str) or not _SHA256.fullmatch(value):
+            raise LedgerError(f"initial pending provenance hash is invalid: {field}")
+    source_commit = event.get("source_commit")
+    if not isinstance(source_commit, str) or not _SHA1.fullmatch(source_commit):
+        raise LedgerError("initial pending provenance hash is invalid: source_commit")
+    for field in ("checkpoint_hash", "scenario_panel_hash"):
+        if field in event:
+            value = event.get(field)
+            if not isinstance(value, str) or not _SHA256.fullmatch(value):
+                raise LedgerError(f"initial pending provenance hash is invalid: {field}")
 
 
 class JobState(str, Enum):
@@ -68,8 +91,7 @@ class AppendOnlyLedger:
         if new_state == JobState.PENDING.value and event.get("old_state") is None:
             if identity in self._jobs:
                 raise LedgerError("duplicate initial pending event")
-            if not {"input_hash", "config_hash", "protocol_hash", "source_commit"} <= set(event):
-                raise LedgerError("initial pending provenance is incomplete")
+            _validate_initial_provenance(event)
             self._jobs[identity] = {
                 "identity": identity,
                 "input_hash": event.get("input_hash"),
@@ -147,6 +169,7 @@ class AppendOnlyLedger:
         required = {"identity", "input_hash", "config_hash", "protocol_hash", "source_commit"}
         if set(job) < required:
             raise LedgerError("job is missing provenance hashes")
+        _validate_initial_provenance(job)
         self._append({"event": "transition", "identity": identity, "old_state": None, "new_state": "pending", "attempt": 0, **{key: value for key, value in job.items() if key != "identity"}})
 
     def acquire(self, identity: str, *, worker_id: str, lease_seconds: float = 3600.0) -> Lease:

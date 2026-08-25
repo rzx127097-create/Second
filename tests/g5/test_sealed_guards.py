@@ -82,6 +82,28 @@ def test_preflight_report_is_read_only_and_contains_exact_audit_fields() -> None
     } <= set(report["checks"]) | set(report["details"])
 
 
+def test_registry_preflight_requires_exact_task7_registry_keys() -> None:
+    from scripts._g5_cli import _registry_hashes_match
+
+    expected = {
+        "configs/problem2/g5/families.yaml": "a" * 64,
+        "configs/problem2/g5/ablations.yaml": "b" * 64,
+        "configs/problem2/g5/sensitivity.yaml": "c" * 64,
+    }
+    assert _registry_hashes_match(expected, expected)
+    assert not _registry_hashes_match(
+        expected,
+        {key: value for key, value in expected.items() if key != "configs/problem2/g5/sensitivity.yaml"},
+    )
+
+
+def test_preflight_rejects_arbitrary_root_for_output_confinement(tmp_path: Path) -> None:
+    from scripts._g5_cli import read_only_preflight
+
+    report = read_only_preflight(tmp_path, gate="G6")
+    assert report["checks"]["output_confinement"] is False
+
+
 @pytest.mark.parametrize(
     "script, args",
     [

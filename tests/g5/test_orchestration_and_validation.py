@@ -99,6 +99,11 @@ def _raw_row(**overrides: object) -> dict[str, object]:
         "source_locator": "episodes.jsonl:1",
     }
     row.update(overrides)
+    if "canonical_training_identity" not in overrides:
+        row["canonical_training_identity"] = canonical_training_identity(
+            row["method"], row["scale"], row["training_seed"],
+            row["config_hash"], row["source_commit"],
+        )
     row["evaluation_identity"] = canonical_evaluation_identity(
         row["canonical_training_identity"], row["condition_id"], row["scale"],
         row["training_seed"], row["scenario_id"], row["partition"],
@@ -206,6 +211,33 @@ def test_initial_ledger_event_requires_complete_provenance(tmp_path: Path) -> No
         AppendOnlyLedger(path)
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("input_hash", "x"),
+        ("config_hash", "x"),
+        ("protocol_hash", "x"),
+        ("source_commit", "x"),
+        ("checkpoint_hash", "x"),
+        ("scenario_panel_hash", "x"),
+    ],
+)
+def test_initial_ledger_event_rejects_malformed_provenance_hashes(
+    tmp_path: Path, field: str, value: str
+) -> None:
+    path = tmp_path / "ledger.jsonl"
+    event = {
+        "event": "transition", "identity": IDENTITY, "old_state": None,
+        "new_state": "pending", "attempt": 0, "input_hash": HASH_A,
+        "config_hash": HASH_A, "protocol_hash": HASH_B, "source_commit": "d" * 40,
+        "checkpoint_hash": "e" * 64, "scenario_panel_hash": "f" * 64,
+    }
+    event[field] = value
+    path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+    with pytest.raises(LedgerError, match="provenance"):
+        AppendOnlyLedger(path)
+
+
 def test_deterministic_scheduler_interleaves_methods_and_is_repeatable() -> None:
     jobs = [
         {"method": method, "scale": scale, "training_seed": seed, "identity": f"{method}-{scale}-{seed}"}
@@ -271,9 +303,13 @@ def test_evaluation_identity_distinguishes_scenarios() -> None:
 
 @pytest.mark.parametrize("method", ["ippo_mobile", "maddpg_mobile", "iql_mobile"])
 def test_all_frozen_learning_methods_are_valid(method: str) -> None:
-    # The identity contract is checked for the primary canonical method; other
-    # frozen comparison methods still exercise the complete row schema/domain.
-    validate_raw_episode(_raw_row(method=method, condition_id=method), expected_provenance=_expected_provenance(), verify_identity=False)
+    validate_raw_episode(_raw_row(method=method, condition_id=method), expected_provenance=_expected_provenance())
+
+
+def test_identity_verification_cannot_be_disabled() -> None:
+    row = _raw_row(evaluation_identity="0" * 64, canonical_training_identity="1" * 64)
+    with pytest.raises(ValidationError, match="cannot be disabled"):
+        validate_raw_episode(row, expected_provenance=_expected_provenance(), verify_identity=False)
 
 
 def test_action_domains_match_heterogeneous_interface() -> None:
