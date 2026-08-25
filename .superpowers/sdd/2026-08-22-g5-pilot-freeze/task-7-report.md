@@ -142,3 +142,12 @@ loading and configuration-hash inputs. The exact ten-file scope is serialized
 as `provenance.source_tree_paths`; the regression suite asserts the contract
 loader is included. Regeneration and the final artifact commit follow this
 source-scope correction.
+
+Final fix-round artifact tuple (used for the committed manifests) is:
+
+```text
+source_commit=a868e6d5d3220aed1e128d052204a4ba74cb5969
+source_tree_paths=10
+```
+
+The final manifest/summary content was committed and pushed in `04f87fa`.
