@@ -165,8 +165,12 @@ def validate_artifact_manifest(record: dict[str, Any], *, output_root: str | Non
         if value is not None and (not isinstance(value, str) or not _HASH64.fullmatch(value)):
             raise ValidationError(f"{field} is invalid")
     for field in ("generator", "generator_version"):
+        if field == "generator_version" and record[field] is None and record["data_status"] == "design_only":
+            continue
         if not isinstance(record[field], str) or not record[field]:
             raise ValidationError(f"{field} is invalid")
+    if record["data_status"] in {"validated", "locked_summary"} and any(record[field] is None for field in ("generator_commit", "generator_sha256", "generator_version", "output_sha256", "created_at")):
+        raise ValidationError("validated artifact provenance is incomplete")
     if output_root is not None:
         from pathlib import Path
         root = Path(output_root).resolve()

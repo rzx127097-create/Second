@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import os
 from typing import Any, Mapping
 import yaml
 
@@ -46,9 +47,9 @@ def assert_no_sealed_access(gate: str, scenario_id: object | None = None, partit
     if isinstance(scenario_id, int) and not isinstance(scenario_id, bool) and 30000 <= scenario_id <= 30099:
         raise SealedAccessError("sealed scenario access is forbidden")
     for value in (partition, path):
-        if isinstance(value, (str, Path)) and "sealed" in str(value).lower():
+        if isinstance(value, (str, os.PathLike)) and "sealed" in os.fspath(value).lower():
             raise SealedAccessError("sealed path access is forbidden")
-        if value is not None and not isinstance(value, (str, Path)):
+        if value is not None and not isinstance(value, (str, os.PathLike)):
             raise SealedAccessError("unsupported path/partition value")
 
 
