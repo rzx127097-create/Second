@@ -71,5 +71,5 @@ gaps. This round closes them without changing the scientific scope:
   sealed-identity absence, and queue/sealed-access invariants. They still fail
   closed at the current G5 gate and never create a queue.
 
-Fix-round verification: focused Task 8 `44 passed`; compileall passed. Broader
-G3/G5 and G2/G4 suites remain required before persistence.
+Fix-round verification: focused Task 8 `44 passed`; G3/G5 `342 passed`; G2/G4
+`178 passed`; compileall, all CLI `--help`, and `git diff --check` passed.
