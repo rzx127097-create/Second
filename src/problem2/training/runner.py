@@ -64,7 +64,15 @@ def _masks() -> dict[str, np.ndarray]:
     return {"uav": np.ones(MASK_SHAPES["uav"], dtype=bool), "vehicle": np.asarray([[True, True, False, False, False]], dtype=bool)}
 
 
-def _envelope(algorithm, current: dict[str, np.ndarray], nxt: dict[str, np.ndarray], index: int, details: Mapping[str, Any]):
+def _envelope(
+    algorithm,
+    current: dict[str, np.ndarray],
+    nxt: dict[str, np.ndarray],
+    index: int,
+    details: Mapping[str, Any],
+    *,
+    scenario_id: int = 10000,
+):
     action_result = ActionResult(actions=details["actions"], masks=details["masks"])
     role_batch = RoleBatch.from_action_result(
         action_result,
@@ -74,8 +82,8 @@ def _envelope(algorithm, current: dict[str, np.ndarray], nxt: dict[str, np.ndarr
         next_masks=_masks(),
         terminated=False,
         truncated=False,
-        scenario_id="development-10000",
-        transition_id=f"development-10000:{index}",
+        scenario_id=f"development-{scenario_id}",
+        transition_id=f"development-{scenario_id}:{index}",
     )
     common = {
         "role_batch": role_batch,
@@ -157,6 +165,7 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         raise ValueError("smoke runner requires a development training seed")
     if job.get("partition") != "development" or int(job.get("scenario_id", -1)) not in contract.partitions["development_scenarios"]:
         raise ValueError("smoke runner requires development partition and scenario")
+    scale = str(job.get("scale", "g5_smoke"))
     if isinstance(max_interactions, bool) or int(max_interactions) <= 0:
         raise ValueError("max_interactions must be positive")
     preflight = run_preflight(device, root)
@@ -185,15 +194,15 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     for index in range(start, stop_at):
         current, nxt = _observations(0), _observations(1)
         details = algorithm.act(current, _masks(), deterministic=False, return_details=True)
-        algorithm.observe(_envelope(algorithm, current, nxt, index, details))
-        records.append({"interaction": index + 1, "method": method, "condition_id": condition, "role_shapes": {key: list(value.shape) for key, value in current.items()}, "mask_shapes": {key: list(value.shape) for key, value in _masks().items()}, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False})
+        algorithm.observe(_envelope(algorithm, current, nxt, index, details, scenario_id=int(job["scenario_id"])))
+        records.append({"interaction": index + 1, "method": method, "condition_id": condition, "scale": scale, "scenario_id": int(job["scenario_id"]), "role_shapes": {key: list(value.shape) for key, value in current.items()}, "mask_shapes": {key: list(value.shape) for key, value in _masks().items()}, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False})
     interrupted = stop_at < target
     checkpoint = output / "checkpoint.pt"
     # G3 checkpoint provenance is deliberately extended only in the outer report;
     # checkpoint loader compares the frozen contract fields.
     save_checkpoint(checkpoint, algorithm, step=stop_at, provenance=provenance | {"interactions": stop_at})
     if interrupted:
-        return {"method": method, "algorithm_id": actual_method, "condition_id": condition, "interactions": stop_at, "updates": 0, "interrupted": True, "checkpoint": str(checkpoint), "validation_accessed": False, "sealed_accessed": False, "resume_equivalent": False, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
+        return {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "scenario_id": int(job["scenario_id"]), "interactions": stop_at, "updates": 0, "interrupted": True, "checkpoint": str(checkpoint), "training_log": str(output / "training.jsonl"), "validation_accessed": False, "sealed_accessed": False, "resume_equivalent": False, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
     metrics = algorithm.update()
     finite = all(np.isfinite(float(value)) for value in metrics.values() if isinstance(value, (int, float, np.integer, np.floating)))
     algorithm.set_evaluation(True)
@@ -225,7 +234,7 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         if not all(resume_comparison.values()):
             raise ValueError(f"resume equivalence comparison failed: {resume_comparison}")
     resume_equivalent = bool(resume_from) and all(resume_comparison.values())
-    summary = {"method": method, "algorithm_id": actual_method, "condition_id": condition, "partition": "development", "scenario_id": int(job["scenario_id"]), "training_seed": seed, "interactions": target, "updates": int(diagnostics.get("updates", 1)), "finite_metrics": bool(finite), "evaluation_frozen": bool(evaluation_frozen), "evaluation_actions": evaluation_actions, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False, "interrupted": False, "resume_equivalent": resume_equivalent, "resume_comparison": resume_comparison, "checkpoint": str(checkpoint), "provenance": provenance, "algorithm_state_digest": state_digest, "metrics_digest": metrics_digest, "diagnostics_digest": diagnostics_digest, "metrics": dict(metrics), "role_shapes": {"uav": [2, 179], "vehicle": [1, 28]}, "mask_shapes": {"uav": [2, 6], "vehicle": [1, 5]}, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
+    summary = {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "partition": "development", "scenario_id": int(job["scenario_id"]), "training_seed": seed, "interactions": target, "updates": int(diagnostics.get("updates", 1)), "finite_metrics": bool(finite), "evaluation_frozen": bool(evaluation_frozen), "evaluation_actions": evaluation_actions, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False, "interrupted": False, "resume_equivalent": resume_equivalent, "resume_comparison": resume_comparison, "checkpoint": str(checkpoint), "training_log": str(log_path), "provenance": provenance, "algorithm_state_digest": state_digest, "metrics_digest": metrics_digest, "diagnostics_digest": diagnostics_digest, "metrics": dict(metrics), "role_shapes": {"uav": [2, 179], "vehicle": [1, 28]}, "mask_shapes": {"uav": [2, 6], "vehicle": [1, 5]}, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
     summary["mask_shapes"]["vehicle"] = [1, 5]
     summary_path = output / "summary.json"
     atomic_write_bytes(summary_path, (json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))
