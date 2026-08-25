@@ -62,11 +62,27 @@ def test_runner_emits_finite_update_exact_roles_checkpoint_and_frozen_eval(tmp_p
 def test_runner_supports_interruption_resume_equivalence(tmp_path: Path) -> None:
     full = run_training_job(_job("iql_mobile"), "cpu", 4, tmp_path / "full")
     first = run_training_job({**_job("iql_mobile"), "stop_after_interactions": 2}, "cpu", 4, tmp_path / "resume")
-    resumed = run_training_job({**_job("iql_mobile"), "resume_from": first["checkpoint"]}, "cpu", 4, tmp_path / "resume")
+    resumed = run_training_job({**_job("iql_mobile"), "resume_from": first["checkpoint"], "resume_reference": full}, "cpu", 4, tmp_path / "resume")
     assert first["interrupted"] is True
     assert resumed["interactions"] == full["interactions"]
     assert resumed["resume_equivalent"] is True
     assert resumed["evaluation_actions"] == full["evaluation_actions"]
+    assert resumed["resume_comparison"]["algorithm_state_equal"] is True
+    assert resumed["resume_comparison"]["metrics_equal"] is True
+    assert resumed["resume_comparison"]["diagnostics_equal"] is True
+
+
+def test_resume_rejects_non_equivalent_reference(tmp_path: Path) -> None:
+    full = run_training_job(_job("iql_mobile"), "cpu", 4, tmp_path / "full")
+    first = run_training_job({**_job("iql_mobile"), "stop_after_interactions": 2}, "cpu", 4, tmp_path / "resume")
+    with pytest.raises(ValueError, match="resume equivalence"):
+        run_training_job({**_job("iql_mobile"), "resume_from": first["checkpoint"], "resume_reference": {**full, "algorithm_state_digest": "bad"}}, "cpu", 4, tmp_path / "resume")
+
+
+@pytest.mark.parametrize("seed", (42, 51004, 20000, 30000))
+def test_runner_rejects_non_development_training_seed(tmp_path: Path, seed: int) -> None:
+    with pytest.raises(ValueError, match="development training seed"):
+        run_training_job({**_job("iql_mobile"), "training_seed": seed}, "cpu", 1, tmp_path)
 
 
 def test_runner_rejects_validation_and_sealed_partitions(tmp_path: Path) -> None:
