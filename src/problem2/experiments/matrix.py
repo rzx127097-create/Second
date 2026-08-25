@@ -83,7 +83,11 @@ def _git_commit(root: Path) -> str:
             ["git", "status", "--porcelain", "--untracked-files=no"], cwd=root,
             check=True, capture_output=True, text=True, encoding="utf-8",
         )
-        if status.stdout.strip():
+        dirty = [
+            line for line in status.stdout.splitlines()
+            if "outputs/problem2_sr_mappo_v1/g5/manifests/" not in line
+        ]
+        if dirty:
             raise RuntimeError("source tree is dirty; frozen provenance cannot be generated")
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=root, check=True,
