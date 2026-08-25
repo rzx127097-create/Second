@@ -428,4 +428,4 @@ def test_g5_contract_audit_cli_reports_fail_closed_summary() -> None:
     assert report["validation_accessed"] is False
     assert report["sealed_accessed"] is False
     assert report["actual_unlock_count"] == 0
-    assert len(report["contract_hashes"]) == 16
+    assert len(report["contract_hashes"]) == 19
