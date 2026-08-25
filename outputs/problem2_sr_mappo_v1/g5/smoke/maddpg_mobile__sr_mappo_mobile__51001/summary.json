@@ -1,14 +1,14 @@
 {
   "algorithm_id": "maddpg_mobile",
-  "algorithm_state_digest": "fd552d14915c1d1e85292572b56d0c97db1d3f9877b288db88754d92b637f9e5",
+  "algorithm_state_digest": "ffb335bcb2ffffc2fb44cb68a22f4ca1cf2b84b38996546f5cb140736a2b1d6e",
   "battery_replenishment_enabled": false,
   "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_mobile__51001\\checkpoint.pt",
   "condition_id": "sr_mappo_mobile",
   "diagnostics_digest": "b3918f4c6ac239d9bff1e3bf3a5202f93bfcc7d8e2f4547628da45b8bad137fa",
   "evaluation_actions": {
     "uav": [
-      4,
-      4
+      2,
+      2
     ],
     "vehicle": [
       1
@@ -30,22 +30,22 @@
   },
   "method": "maddpg_mobile",
   "metrics": {
-    "uav_actor_loss": -1.1972904205322266,
-    "uav_critic_loss": 0.020158028230071068,
+    "uav_actor_loss": -1.2040152549743652,
+    "uav_critic_loss": 0.020158031955361366,
     "updates": 1.0,
-    "vehicle_actor_loss": -0.23626968264579773,
-    "vehicle_critic_loss": 0.019340280443429947
+    "vehicle_actor_loss": -0.22628504037857056,
+    "vehicle_critic_loss": 0.01934027671813965
   },
-  "metrics_digest": "3d462464b10dd0c1298c26109d86317589c45093d7febcc8c7480d53896eb016",
+  "metrics_digest": "3ced8b1157471e0dc6f99966afadceafae515390a2cd3c467afbff5887580315",
   "partition": "development",
-  "peak_allocated_bytes": 25611264,
-  "peak_reserved_bytes": 31457280,
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
   "provenance": {
     "ancestry_hash": "134bd52b0f388487f03d8e75eda5f8580ed8aa063965c082ffce1606a1a156ef",
     "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
     "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
     "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-    "source_commit": "0b3483f45756b6c3c37b4c6416ea6de65ff034c7"
+    "source_commit": "059dac01ed2432655112328a05330e29432b1192"
   },
   "replenished_resource": "pesticide",
   "resume_comparison": {

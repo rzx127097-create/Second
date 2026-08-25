@@ -1,17 +1,17 @@
 {
   "algorithm_id": "sr_mappo_mobile",
-  "algorithm_state_digest": "42e04cb87d866dca88f458225a887642b73833dfb26e28b08a9ae6e9cd8815c6",
+  "algorithm_state_digest": "cc96f0cdcd1b072822fe33262260878ad9797b1d4a68ca2c6b49158fe1b183a4",
   "battery_replenishment_enabled": false,
   "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_mobile__51001\\checkpoint.pt",
   "condition_id": "sr_mappo_mobile",
   "diagnostics_digest": "b3918f4c6ac239d9bff1e3bf3a5202f93bfcc7d8e2f4547628da45b8bad137fa",
   "evaluation_actions": {
     "uav": [
-      4,
-      4
+      2,
+      2
     ],
     "vehicle": [
-      0
+      1
     ]
   },
   "evaluation_frozen": true,
@@ -30,7 +30,7 @@
   },
   "method": "sr_mappo_mobile",
   "metrics": {
-    "critic_loss": 1.7640436887741089,
+    "critic_loss": 1.764043539762497,
     "critic_updates": 4,
     "critic_valid_samples": 128,
     "learning_rates": {
@@ -39,24 +39,24 @@
       "vehicle": 0.00029969999999999997
     },
     "uav_actor_updates": 8,
-    "uav_entropy": 1.2508953213691711,
-    "uav_policy_loss": 0.14221453852951527,
+    "uav_entropy": 0.9894705973565578,
+    "uav_policy_loss": 0.22204842325299978,
     "uav_valid_samples": 256,
     "vehicle_actor_updates": 4,
-    "vehicle_entropy": 0.19037051813211292,
-    "vehicle_policy_loss": 0.19897528365254402,
+    "vehicle_entropy": 0.1899614918511361,
+    "vehicle_policy_loss": 0.21975254593417048,
     "vehicle_valid_samples": 128
   },
-  "metrics_digest": "07c15714a390c394319555c9651383957cb8b06405f5220623f6b3da1109f3e6",
+  "metrics_digest": "caa101a5825349bc4c4f704c86019f38d4087ad5c7d4ef7c271660e69b54094a",
   "partition": "development",
-  "peak_allocated_bytes": 19327488,
-  "peak_reserved_bytes": 25165824,
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
   "provenance": {
     "ancestry_hash": "134bd52b0f388487f03d8e75eda5f8580ed8aa063965c082ffce1606a1a156ef",
     "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
     "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
     "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-    "source_commit": "0b3483f45756b6c3c37b4c6416ea6de65ff034c7"
+    "source_commit": "059dac01ed2432655112328a05330e29432b1192"
   },
   "replenished_resource": "pesticide",
   "resume_comparison": {
