@@ -27,7 +27,10 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         from problem2.experiments.g5_contract import load_g5_contract
         contract = load_g5_contract(root)
         checks["frozen_contract"] = bool(contract.file_hashes)
-        checks["registry_hashes"] = all(bool(value) for value in contract.file_hashes.values())
+        summary_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/manifest-summary.json"
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        expected_registry = summary.get("provenance", {}).get("registry_hashes", {})
+        checks["registry_hashes"] = all(contract.file_hashes.get(path) == digest for path, digest in expected_registry.items()) and bool(expected_registry)
         details["frozen_contract"] = "loaded strict G5 contract"
     except Exception:
         checks["frozen_contract"] = False
@@ -78,8 +81,22 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
     g6_manifest = output_root / "manifests/g6-training-jobs.json"
     try:
         paths = list((output_root / "manifests").glob("g6-*.json")) + list((output_root / "manifests").glob("g7-*.json"))
-        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
-        checks["no_sealed_identities"] = "30000" not in text and "30099" not in text and "sealed_test" not in text
+        payloads = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
+        def has_sealed_payload(value):
+            if isinstance(value, dict):
+                for key, nested in value.items():
+                    if key in {"sealed_accessed", "validation_accessed"} and nested is True:
+                        return True
+                    if key in {"scenario_id", "scenario_ids"}:
+                        values = nested if isinstance(nested, list) else [nested]
+                        if any(isinstance(item, int) and 30000 <= item <= 30099 for item in values):
+                            return True
+                    if has_sealed_payload(nested):
+                        return True
+            elif isinstance(value, list):
+                return any(has_sealed_payload(item) for item in value)
+            return False
+        checks["no_sealed_identities"] = not any(has_sealed_payload(payload) for payload in payloads)
     except OSError:
         checks["no_sealed_identities"] = False
     details["manifest_sha256"] = hashlib.sha256(g6_manifest.read_bytes()).hexdigest() if g6_manifest.exists() else "missing"

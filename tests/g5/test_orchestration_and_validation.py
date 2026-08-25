@@ -196,6 +196,16 @@ def test_duplicate_initial_ledger_event_is_rejected(tmp_path: Path) -> None:
         AppendOnlyLedger(path)
 
 
+def test_initial_ledger_event_requires_complete_provenance(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    path.write_text(json.dumps({
+        "event": "transition", "identity": IDENTITY, "old_state": None,
+        "new_state": "pending", "attempt": 0, "input_hash": HASH_A,
+    }) + "\n", encoding="utf-8")
+    with pytest.raises(LedgerError, match="provenance"):
+        AppendOnlyLedger(path)
+
+
 def test_deterministic_scheduler_interleaves_methods_and_is_repeatable() -> None:
     jobs = [
         {"method": method, "scale": scale, "training_seed": seed, "identity": f"{method}-{scale}-{seed}"}

@@ -102,3 +102,8 @@ on different scenarios yields distinct identities. Evidence validation
 recomputes and checks both identities while retaining mandatory provenance and
 strict domains; comparison-only schema fixtures must explicitly opt out with
 `verify_identity=False`.
+
+The final preflight hardening also validates initial-ledger provenance
+completeness, compares registry hashes to the frozen manifest summary, and
+scans parsed G6/G7 payloads for sealed scenario IDs/access flags while allowing
+the declarative `partition: sealed_test` skeleton marker.

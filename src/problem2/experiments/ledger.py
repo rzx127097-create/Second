@@ -68,6 +68,8 @@ class AppendOnlyLedger:
         if new_state == JobState.PENDING.value and event.get("old_state") is None:
             if identity in self._jobs:
                 raise LedgerError("duplicate initial pending event")
+            if not {"input_hash", "config_hash", "protocol_hash", "source_commit"} <= set(event):
+                raise LedgerError("initial pending provenance is incomplete")
             self._jobs[identity] = {
                 "identity": identity,
                 "input_hash": event.get("input_hash"),
