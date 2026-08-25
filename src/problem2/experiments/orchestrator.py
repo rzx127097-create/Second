@@ -36,6 +36,8 @@ class GpuTrainingLease:
         self.coordination_path = Path(coordination_path) if coordination_path is not None else None
 
     def acquire(self, identity: str, *, worker_id: str) -> Lease:
+        if self.coordination_path is None:
+            raise LedgerError("GPU coordination path is required")
         if self._active is not None:
             raise LedgerError("GPU lease is already active")
         if not isinstance(identity, str) or not identity or not isinstance(worker_id, str) or not worker_id:

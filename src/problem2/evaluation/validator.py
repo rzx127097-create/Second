@@ -10,6 +10,7 @@ from typing import Any, Iterable
 
 from problem2.experiments.artifacts import write_quarantine
 from problem2.experiments.g5_contract import REDUCTION_RATE_EPSILON
+from problem2.experiments.identity import canonical_training_identity
 from .schema import ARTIFACT_MANIFEST_SCHEMA, RAW_EPISODE_SCHEMA
 from .sealed_lock import SealedAccessError, assert_partition_allowed
 
@@ -38,7 +39,7 @@ def _number(value: Any, name: str, *, nonnegative: bool = False) -> float:
     return result
 
 
-def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, str] | None = None) -> dict[str, Any]:
+def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True) -> dict[str, Any]:
     if not isinstance(row, dict):
         raise ValidationError("episode row must be an object")
     required = set(RAW_EPISODE_SCHEMA["required"])
@@ -56,20 +57,27 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
     if not isinstance(row["source_commit"], str) or not _HASH40.fullmatch(row["source_commit"]):
         raise ValidationError("source_commit must be a lowercase Git SHA-1")
     provenance_fields = ("source_commit", "config_hash", "protocol_hash", "checkpoint_hash", "evaluator_hash", "scenario_panel_hash")
-    if expected_provenance is not None:
-        if set(expected_provenance) != set(provenance_fields):
-            raise ValidationError("provenance contract is incomplete")
-        for field in provenance_fields:
-            if row[field] != expected_provenance[field]:
-                raise ValidationError(f"provenance drift: {field}")
+    if expected_provenance is None or set(expected_provenance) != set(provenance_fields):
+        raise ValidationError("provenance contract is incomplete")
+    for field in provenance_fields:
+        if row[field] != expected_provenance[field]:
+            raise ValidationError(f"provenance drift: {field}")
+    if not isinstance(verify_identity, bool):
+        raise ValidationError("verify_identity must be boolean")
+    if verify_identity:
+        try:
+            expected_identity = canonical_training_identity(row["method"], row["scale"], row["training_seed"], row["config_hash"], row["source_commit"])
+        except ValueError as exc:
+            raise ValidationError("canonical identity inputs are invalid") from exc
+        if row["canonical_training_identity"] != expected_identity or row["evaluation_identity"] != expected_identity:
+            raise ValidationError("canonical identity mismatch")
     if row["method"] not in _METHODS or row["condition_id"] not in _METHODS:
         raise ValidationError("method/condition is undeclared")
     if row["scale"] not in _SCALES:
         raise ValidationError("scale is undeclared")
-    if isinstance(row["training_seed"], bool) or not isinstance(row["training_seed"], int):
-        raise ValidationError("training_seed must be an integer")
-    if isinstance(row["scenario_id"], bool) or not isinstance(row["scenario_id"], int):
-        raise ValidationError("scenario ID must be an integer")
+    for key in ("training_seed", "scenario_id", "episode_index", "interaction_count", "action_uav", "action_vehicle_slot"):
+        if isinstance(row[key], bool) or not isinstance(row[key], int):
+            raise ValidationError(f"{key} must be an integer")
     try:
         assert_partition_allowed(gate="G5", partition=row["partition"], scenario_id=row["scenario_id"])
     except SealedAccessError as exc:
@@ -105,13 +113,13 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
     return dict(row)
 
 
-def validate_long_table(rows: Iterable[dict[str, Any]], *, expected_identities: set[str] | None = None, expected_provenance: dict[str, str] | None = None) -> list[dict[str, Any]]:
+def validate_long_table(rows: Iterable[dict[str, Any]], *, expected_identities: set[str] | None = None, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True) -> list[dict[str, Any]]:
     materialized = list(rows)
     seen: set[str] = set()
     validated: list[dict[str, Any]] = []
     last_counter: dict[str, int] = {}
     for row in materialized:
-        checked = validate_raw_episode(row, expected_provenance=expected_provenance)
+        checked = validate_raw_episode(row, expected_provenance=expected_provenance, verify_identity=verify_identity)
         identity = checked["evaluation_identity"]
         if identity in seen:
             raise ValidationError("duplicate evaluation identity")
@@ -170,7 +178,7 @@ def validate_artifact_manifest(record: dict[str, Any], *, output_root: str | Non
         if not isinstance(record[field], str) or not record[field]:
             raise ValidationError(f"{field} is invalid")
     if record["data_status"] in {"validated", "locked_summary"} and any(record[field] is None for field in ("generator_commit", "generator_sha256", "generator_version", "output_sha256", "created_at")):
-        raise ValidationError("validated artifact provenance is incomplete")
+        raise ValidationError("validated artifact provenance/hash is incomplete")
     if output_root is not None:
         from pathlib import Path
         root = Path(output_root).resolve()
@@ -181,6 +189,13 @@ def validate_artifact_manifest(record: dict[str, Any], *, output_root: str | Non
             raise ValidationError("artifact output escapes frozen root") from exc
         if not relative.parts:
             raise ValidationError("artifact output must be a descendant")
+    if record["data_status"] in {"validated", "locked_summary"}:
+        from pathlib import Path
+        output = Path(record["output_path"]).resolve()
+        if not output.exists() or not output.is_file():
+            raise ValidationError("artifact output does not exist")
+        if hashlib.sha256(output.read_bytes()).hexdigest() != record["output_sha256"]:
+            raise ValidationError("artifact output hash mismatch")
     return dict(record)
 
 

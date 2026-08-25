@@ -6,6 +6,7 @@ import json
 import hashlib
 import shutil
 import subprocess
+import platform
 import sys
 from pathlib import Path
 
@@ -42,12 +43,19 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
     try:
         local = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
         remote = subprocess.run(["git", "rev-parse", "@{upstream}"], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
-        checks["frozen_source_remote"] = bool(local and local == remote)
-        details["frozen_source_remote"] = f"local={local[:12]} remote={remote[:12]}"
+        branch = subprocess.run(["git", "branch", "--show-current"], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
+        ls_remote = subprocess.run(["git", "ls-remote", "origin", f"refs/heads/{branch}"], cwd=root, capture_output=True, text=True, check=True).stdout.strip().split()[0]
+        checks["frozen_source_remote"] = bool(local and local == remote == ls_remote)
+        details["frozen_source_remote"] = f"local={local[:12]} upstream={remote[:12]} origin={ls_remote[:12]}"
     except (OSError, subprocess.CalledProcessError):
         checks["frozen_source_remote"] = False
     reconciliation = root / "docs/audits/g4-lineage-reconciliation.md"
-    checks["g4_reconciliation"] = reconciliation.exists() and "passes" in reconciliation.read_text(encoding="utf-8").lower() if reconciliation.exists() else False
+    g4_audit = root / "outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json"
+    try:
+        g4_payload = json.loads(g4_audit.read_text(encoding="utf-8"))
+        checks["g4_reconciliation"] = reconciliation.exists() and "passes the fail-closed lineage audit" in reconciliation.read_text(encoding="utf-8").lower() and g4_payload.get("audit") == "g4-mechanism-compliance" and g4_payload.get("hard_boundary", {}).get("sealed_test_accessed") is False
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        checks["g4_reconciliation"] = False
     road_candidates = list((root / "outputs/problem2_sr_mappo_v1/g2/roads").glob("*/metadata.json")) if (root / "outputs/problem2_sr_mappo_v1/g2/roads").exists() else []
     checks["road_cache_provenance"] = False
     for candidate in road_candidates:
@@ -55,7 +63,7 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
             payload = json.loads(candidate.read_text(encoding="utf-8"))
             required = {"schema_version", "source", "projection", "grid", "topology", "preprocess_version"}
             source = payload.get("source", {})
-            checks["road_cache_provenance"] = required <= set(payload) and isinstance(source.get("sha256"), str) and bool(source.get("crs")) and bool(payload.get("grid", {}).get("shape")) and bool(payload.get("topology"))
+            checks["road_cache_provenance"] = required <= set(payload) and isinstance(source.get("sha256"), str) and len(source["sha256"]) == 64 and source.get("crs") == "EPSG:4326" and payload.get("projection", {}).get("target_crs") == "EPSG:32643" and bool(source.get("bbox_lonlat")) and len(payload.get("grid", {}).get("shape", [])) == 2 and bool(payload.get("topology")) and payload.get("preprocess_version") == "g2-road-v1"
             if checks["road_cache_provenance"]:
                 break
         except (OSError, UnicodeError, json.JSONDecodeError):
@@ -63,17 +71,26 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
     output_root = root / "outputs/problem2_sr_mappo_v1/g5"
     checks["output_confinement"] = output_root.resolve().parent == (root / "outputs/problem2_sr_mappo_v1").resolve() and output_root.resolve().name == "g5"
     try:
-        checks["disk_space"] = shutil.disk_usage(root).free > 0
+        checks["disk_space"] = shutil.disk_usage(root).free >= 1024 * 1024 * 1024
     except OSError:
         checks["disk_space"] = False
-    checks["runtime_inventory"] = bool(sys.version_info >= (3, 11) and sys.executable)
+    checks["runtime_inventory"] = bool(sys.version_info >= (3, 11) and sys.executable and platform.system() and platform.machine())
     g6_manifest = output_root / "manifests/g6-training-jobs.json"
     try:
-        text = g6_manifest.read_text(encoding="utf-8") if g6_manifest.exists() else ""
+        paths = list((output_root / "manifests").glob("g6-*.json")) + list((output_root / "manifests").glob("g7-*.json"))
+        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
         checks["no_sealed_identities"] = "30000" not in text and "30099" not in text and "sealed_test" not in text
     except OSError:
         checks["no_sealed_identities"] = False
     details["manifest_sha256"] = hashlib.sha256(g6_manifest.read_bytes()).hexdigest() if g6_manifest.exists() else "missing"
+    checks["manifest_hash"] = details["manifest_sha256"] == "ff4d20a347be565f974d39ba24ec382b231d6def326243c06943bd81f2733553"
+    lock_path = root / "docs/evidence/g1/sealed_test_lock.yaml"
+    try:
+        import yaml
+        lock_payload = yaml.safe_load(lock_path.read_text(encoding="utf-8"))
+        checks["sealed_lock"] = lock_payload.get("status") == "locked" and type(lock_payload.get("maximum_unlock_count")) is int and lock_payload.get("maximum_unlock_count") == 1 and type(lock_payload.get("actual_unlock_count")) is int and lock_payload.get("actual_unlock_count") == 0 and lock_payload.get("unlock_gate") == "G7" and lock_payload.get("resource_replenishment") == "pesticide_only" and lock_payload.get("battery_replenishment") == "inactive"
+    except Exception:
+        checks["sealed_lock"] = False
     details["sealed_lock"] = "read-only; no mutation attempted"
     return {"gate": gate, "checks": checks, "details": details, "all_pass": all(checks.values()), "queue_created": False, "sealed_accessed": False}
 

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from problem2.experiments.identity import canonical_training_identity
 from problem2.evaluation.schema import (
     ARTIFACT_MANIFEST_SCHEMA,
     RAW_EPISODE_SCHEMA,
@@ -30,6 +31,20 @@ from problem2.experiments.recovery import atomic_checkpoint_write, recover_check
 HASH_A = "a" * 64
 HASH_B = "b" * 64
 IDENTITY = "c" * 64
+RAW_IDENTITY = canonical_training_identity(
+    "sr_mappo_mobile", "g20x20_d2", 42, HASH_A, "d" * 40
+)
+
+
+def _expected_provenance() -> dict[str, str]:
+    return {
+        "source_commit": "d" * 40,
+        "config_hash": HASH_A,
+        "protocol_hash": HASH_B,
+        "checkpoint_hash": "e" * 64,
+        "evaluator_hash": "f" * 64,
+        "scenario_panel_hash": "1" * 64,
+    }
 
 
 def _job(identity: str = IDENTITY, input_hash: str = HASH_A) -> dict[str, object]:
@@ -44,8 +59,8 @@ def _job(identity: str = IDENTITY, input_hash: str = HASH_A) -> dict[str, object
 
 def _raw_row(**overrides: object) -> dict[str, object]:
     row: dict[str, object] = {
-        "evaluation_identity": IDENTITY,
-        "canonical_training_identity": IDENTITY,
+        "evaluation_identity": RAW_IDENTITY,
+        "canonical_training_identity": RAW_IDENTITY,
         "method": "sr_mappo_mobile",
         "condition_id": "sr_mappo_mobile",
         "scale": "g20x20_d2",
@@ -149,6 +164,33 @@ def test_ledger_rejects_field_rotated_identity_drift(tmp_path: Path) -> None:
         ledger.register(rotated)
 
 
+def test_completed_identity_drift_becomes_stale(tmp_path: Path) -> None:
+    ledger = AppendOnlyLedger(tmp_path / "ledger.jsonl")
+    ledger.register(_job())
+    lease = ledger.acquire(IDENTITY, worker_id="worker-a")
+    ledger.complete(IDENTITY, lease_id=lease.lease_id, worker_id="worker-a")
+    with pytest.raises(LedgerError, match="drift"):
+        ledger.retry(IDENTITY, worker_id="worker-a", input_hash=HASH_B)
+    assert ledger.current(IDENTITY).state is JobState.STALE
+
+
+def test_duplicate_initial_ledger_event_is_rejected(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    ledger = AppendOnlyLedger(path)
+    ledger.register(_job())
+    lease = ledger.acquire(IDENTITY, worker_id="worker-a")
+    ledger.complete(IDENTITY, lease_id=lease.lease_id, worker_id="worker-a")
+    with path.open("ab") as handle:
+        handle.write((json.dumps({
+            "event": "transition", "identity": IDENTITY, "old_state": None,
+            "new_state": "pending", "attempt": 0, "input_hash": HASH_A,
+            "config_hash": HASH_A, "protocol_hash": HASH_B,
+            "source_commit": "d" * 40,
+        }) + "\n").encode("utf-8"))
+    with pytest.raises(LedgerError, match="duplicate"):
+        AppendOnlyLedger(path)
+
+
 def test_deterministic_scheduler_interleaves_methods_and_is_repeatable() -> None:
     jobs = [
         {"method": method, "scale": scale, "training_seed": seed, "identity": f"{method}-{scale}-{seed}"}
@@ -163,12 +205,16 @@ def test_deterministic_scheduler_interleaves_methods_and_is_repeatable() -> None
     assert [job["method"] for job in first[:3]] == ["sr_mappo_mobile", "mappo_mobile", "ippo_mobile"]
 
 
-def test_gpu_training_lease_allows_one_owner_and_records_attempt() -> None:
-    lease = GpuTrainingLease()
+def test_gpu_training_lease_allows_one_owner_and_records_attempt(tmp_path: Path) -> None:
+    coordination = tmp_path / "gpu.lease"
+    lease = GpuTrainingLease(coordination)
+    other_worker = GpuTrainingLease(coordination)
     first = lease.acquire(IDENTITY, worker_id="worker-a")
     assert first.attempt == 1
     with pytest.raises(LedgerError, match="GPU"):
         lease.acquire("b" * 64, worker_id="worker-b")
+    with pytest.raises(LedgerError, match="GPU"):
+        other_worker.acquire("b" * 64, worker_id="worker-b")
     lease.release(first.lease_id, peak_memory_bytes=123, runtime_seconds=4.5)
     assert lease.history[-1]["peak_memory_bytes"] == 123
     second = lease.acquire("b" * 64, worker_id="worker-b")
@@ -195,33 +241,30 @@ def test_artifact_write_is_atomic_and_hash_is_content_addressed(tmp_path: Path) 
 
 def test_valid_raw_episode_and_long_table_are_accepted() -> None:
     row = _raw_row()
-    validate_raw_episode(row)
-    validated = validate_long_table([row], expected_identities={IDENTITY})
-    assert validated[0]["evaluation_identity"] == IDENTITY
+    validate_raw_episode(row, expected_provenance=_expected_provenance())
+    validated = validate_long_table([row], expected_identities={RAW_IDENTITY}, expected_provenance=_expected_provenance())
+    assert validated[0]["evaluation_identity"] == RAW_IDENTITY
 
 
 @pytest.mark.parametrize("method", ["ippo_mobile", "maddpg_mobile", "iql_mobile"])
 def test_all_frozen_learning_methods_are_valid(method: str) -> None:
-    validate_raw_episode(_raw_row(method=method, condition_id=method))
+    # The identity contract is checked for the primary canonical method; other
+    # frozen comparison methods still exercise the complete row schema/domain.
+    validate_raw_episode(_raw_row(method=method, condition_id=method), expected_provenance=_expected_provenance(), verify_identity=False)
 
 
 def test_action_domains_match_heterogeneous_interface() -> None:
-    validate_raw_episode(_raw_row(action_uav=5, action_vehicle_slot=3))
+    validate_raw_episode(_raw_row(action_uav=5, action_vehicle_slot=3), expected_provenance=_expected_provenance())
     with pytest.raises(ValidationError, match="illegal action"):
-        validate_raw_episode(_raw_row(action_uav=6))
+        validate_raw_episode(_raw_row(action_uav=6), expected_provenance=_expected_provenance())
     with pytest.raises(ValidationError, match="illegal action"):
-        validate_raw_episode(_raw_row(action_vehicle_slot=4))
+        validate_raw_episode(_raw_row(action_vehicle_slot=4), expected_provenance=_expected_provenance())
+    with pytest.raises(ValidationError, match="integer"):
+        validate_raw_episode(_raw_row(action_uav=True), expected_provenance=_expected_provenance())
 
 
 def test_validator_binds_expected_provenance_hashes() -> None:
-    expected = {
-        "source_commit": "d" * 40,
-        "config_hash": HASH_A,
-        "protocol_hash": HASH_B,
-        "checkpoint_hash": "e" * 64,
-        "evaluator_hash": "f" * 64,
-        "scenario_panel_hash": "1" * 64,
-    }
+    expected = _expected_provenance()
     validate_raw_episode(_raw_row(), expected_provenance=expected)
     with pytest.raises(ValidationError, match="provenance"):
         validate_raw_episode(_raw_row(protocol_hash="2" * 64), expected_provenance=expected)
@@ -242,15 +285,15 @@ def test_validator_binds_expected_provenance_hashes() -> None:
 )
 def test_validator_rejects_corrupted_rows(override: dict[str, object], message: str) -> None:
     with pytest.raises(ValidationError, match=message):
-        validate_raw_episode(_raw_row(**override))
+        validate_raw_episode(_raw_row(**override), expected_provenance=_expected_provenance())
 
 
 def test_validator_rejects_duplicates_and_incomplete_expected_cells() -> None:
     row = _raw_row()
     with pytest.raises(ValidationError, match="duplicate"):
-        validate_long_table([row, row], expected_identities={IDENTITY})
+        validate_long_table([row, row], expected_identities={RAW_IDENTITY}, expected_provenance=_expected_provenance())
     with pytest.raises(ValidationError, match="incomplete"):
-        validate_long_table([], expected_identities={IDENTITY})
+        validate_long_table([], expected_identities={RAW_IDENTITY}, expected_provenance=_expected_provenance())
 
 
 def test_quarantine_preserves_original_bytes_locator_reason_and_hash(tmp_path: Path) -> None:
@@ -269,6 +312,10 @@ def test_artifact_manifest_uses_path_descendant_check(tmp_path: Path) -> None:
     from problem2.evaluation.validator import validate_artifact_manifest
 
     root = tmp_path / "outputs" / "g5"
+    output = root / "artifact.jsonl"
+    output.parent.mkdir(parents=True)
+    output.write_bytes(b"artifact")
+    output_hash = hashlib.sha256(output.read_bytes()).hexdigest()
     record = {
         "artifact_id": IDENTITY,
         "artifact_type": "raw_episode",
@@ -279,13 +326,15 @@ def test_artifact_manifest_uses_path_descendant_check(tmp_path: Path) -> None:
         "generator_sha256": HASH_B,
         "generator_version": "1",
         "output_path": str(root / "artifact.jsonl"),
-        "output_sha256": HASH_A,
+        "output_sha256": output_hash,
         "created_at": "2026-08-25T00:00:00Z",
         "data_status": "validated",
     }
     validate_artifact_manifest(record, output_root=str(root))
     with pytest.raises(ValidationError, match="escapes"):
         validate_artifact_manifest({**record, "output_path": str(root) + "-escape/a"}, output_root=str(root))
+    with pytest.raises(ValidationError, match="hash"):
+        validate_artifact_manifest({**record, "output_sha256": None}, output_root=str(root))
 
 
 def test_schema_documents_expose_strict_required_fields() -> None:

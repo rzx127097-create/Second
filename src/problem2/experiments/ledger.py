@@ -66,6 +66,8 @@ class AppendOnlyLedger:
             raise LedgerError("ledger event identity is invalid")
         new_state = event.get("new_state")
         if new_state == JobState.PENDING.value and event.get("old_state") is None:
+            if identity in self._jobs:
+                raise LedgerError("duplicate initial pending event")
             self._jobs[identity] = {
                 "identity": identity,
                 "input_hash": event.get("input_hash"),
@@ -88,7 +90,7 @@ class AppendOnlyLedger:
             "pending": {"running", "stale"},
             "running": {"completed", "failed", "stale"},
             "failed": {"pending", "stale"},
-            "completed": set(),
+            "completed": {"stale"},
             "stale": set(),
         }
         if new_state not in legal.get(old_state, set()):

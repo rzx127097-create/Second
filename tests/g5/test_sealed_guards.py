@@ -68,6 +68,20 @@ def test_lock_rejects_boolean_unlock_counter(tmp_path: Path) -> None:
         load_sealed_lock(lock_path)
 
 
+def test_preflight_report_is_read_only_and_contains_exact_audit_fields() -> None:
+    from scripts._g5_cli import read_only_preflight
+
+    report = read_only_preflight(ROOT, gate="G6")
+    assert report["queue_created"] is False
+    assert report["sealed_accessed"] is False
+    assert {
+        "frozen_contract", "registry_hashes", "frozen_source_clean",
+        "frozen_source_remote", "g4_reconciliation", "road_cache_provenance",
+        "output_confinement", "disk_space", "runtime_inventory",
+        "no_sealed_identities", "sealed_lock",
+    } <= set(report["checks"]) | set(report["details"])
+
+
 @pytest.mark.parametrize(
     "script, args",
     [

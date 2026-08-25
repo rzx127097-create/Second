@@ -73,3 +73,20 @@ gaps. This round closes them without changing the scientific scope:
 
 Fix-round verification: focused Task 8 `44 passed`; G3/G5 `342 passed`; G2/G4
 `178 passed`; compileall, all CLI `--help`, and `git diff --check` passed.
+
+## Fix Round 2
+
+The scoped re-review required all evidence-boundary defaults to fail closed.
+This round makes the complete expected provenance mapping mandatory for raw
+and validated evidence, recomputes the Task 7 canonical training identity, and
+requires the evaluation identity to equal that canonical digest (comparison
+schema fixtures may explicitly use `verify_identity=False`). Ledger replay
+rejects duplicate initial events, completed identity drift transitions to
+stale, and the default GPU lease now fails closed without an atomic shared
+coordination path. Validated and locked artifact manifests require existing
+output files whose bytes match the declared SHA-256; design-only records retain
+the only nullable provenance allowance. Integer and boolean domains remain
+strict. Read-only G6/G7 preflight now checks local/upstream/origin parity,
+source cleanliness, frozen manifest hash, G4 audit markers, road-cache tuple,
+lock status/count/gate/resource flags, runtime/disk fields, and sealed IDs
+without creating a queue or mutating the lock.
