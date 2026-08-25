@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 _COMMON = [
-    "evaluation_identity", "canonical_training_identity", "method", "condition_id", "scale", "training_seed", "scenario_id", "partition", "source_commit", "config_hash", "protocol_hash", "checkpoint_hash", "evaluator_hash", "scenario_panel_hash", "episode_index", "interaction_count", "termination_reason", "terminated", "initial_total_pest", "final_total_pest", "reduction_rate", "success_at_0_85", "pesticide_initial_l", "pesticide_remaining_l", "pesticide_transferred_l", "resource_conservation_residual_l", "battery_replenishment_l", "action_uav", "action_vehicle_slot", "rendezvous_distance_m", "waiting_steps", "pesticide_disabled_steps", "return_steps", "effective_spray_steps", "source_locator",
+    "evaluation_identity", "canonical_training_identity", "method", "condition_id", "scale", "training_seed", "scenario_id", "partition", "source_commit", "config_hash", "protocol_hash", "checkpoint_hash", "evaluator_hash", "scenario_panel_hash", "episode_index", "interaction_count", "termination_reason", "terminated", "initial_total_pest", "final_total_pest", "reduction_rate", "success_at_0_85", "pesticide_initial_l", "pesticide_remaining_l", "pesticide_transferred_l", "resource_conservation_residual_l", "battery_replenishment_l", "action_uav", "action_vehicle_slot", "rendezvous_distance_m", "vehicle_service_travel_m", "waiting_steps", "completed_request_waiting_steps", "pesticide_disabled_steps", "return_steps", "effective_spray_steps", "decision_runtime_s", "source_locator",
 ]
 
 RAW_EPISODE_SCHEMA = {"$schema": "g5.v1", "type": "object", "additionalProperties": False, "required": _COMMON, "properties": {key: {"type": "number"} for key in _COMMON}}

@@ -46,3 +46,30 @@ execution entry points intentionally fail closed while the current gate is G5;
 no formal or sealed data was read or generated. The controller must independently
 review this report, update `docs/PROJECT_STATE.md`, commit, push, and verify
 three-way remote parity before Task 8 is considered persisted.
+
+## Fix Round 1
+
+The independent review identified two Critical and eight Important contract
+gaps. This round closes them without changing the scientific scope:
+
+- Raw validation now accepts an exact expected provenance mapping, binds the
+  frozen reduction epsilon, includes all registered direct mechanism metrics,
+  accepts all frozen learning methods, enforces six UAV/four vehicle actions,
+  recomputes pesticide conservation, and rejects non-finite or negative direct
+  measurements.
+- Ledger replay validates prior state, legal transitions, attempt monotonicity,
+  lease ownership, and metadata. Same-identity retry records `failed -> pending
+  -> running`; identity drift is field-mapped rather than set-based.
+- Quarantine preserves arbitrary bytes unchanged. Artifact manifests validate
+  digest fields and resolve output paths beneath the true frozen root.
+- Sealed guards normalize path-like values and reject boolean lock counters.
+  GPU telemetry is finite and non-negative, with optional atomic inter-process
+  coordination for future schedulers.
+- G6/G7 preflight wrappers now expose read-only audit functions covering frozen
+  contract/registry hashes, source/remote parity and cleanliness, G4 lineage,
+  road-cache provenance, output confinement, disk/runtime state, manifest
+  sealed-identity absence, and queue/sealed-access invariants. They still fail
+  closed at the current G5 gate and never create a queue.
+
+Fix-round verification: focused Task 8 `44 passed`; compileall passed. Broader
+G3/G5 and G2/G4 suites remain required before persistence.

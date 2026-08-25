@@ -74,10 +74,13 @@ def _raw_row(**overrides: object) -> dict[str, object]:
         "action_uav": 0,
         "action_vehicle_slot": 0,
         "rendezvous_distance_m": 2.0,
+        "vehicle_service_travel_m": 3.0,
         "waiting_steps": 1,
+        "completed_request_waiting_steps": 1,
         "pesticide_disabled_steps": 0,
         "return_steps": 0,
         "effective_spray_steps": 2,
+        "decision_runtime_s": 0.01,
         "source_locator": "episodes.jsonl:1",
     }
     row.update(overrides)
@@ -117,7 +120,33 @@ def test_ledger_same_identity_retry_and_stale_drift_are_append_only(tmp_path: Pa
 
     replayed = AppendOnlyLedger(path)
     assert replayed.current(IDENTITY).state is JobState.STALE
-    assert len(replayed.events(IDENTITY)) == 5
+    assert [event["new_state"] for event in replayed.events(IDENTITY)] == [
+        "pending", "running", "failed", "pending", "running", "stale"
+    ]
+
+
+def test_ledger_replay_fails_closed_on_illegal_transition(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    path.write_text(
+        json.dumps({
+            "event": "transition", "identity": IDENTITY, "old_state": "pending",
+            "new_state": "completed", "attempt": 0,
+            "input_hash": HASH_A, "config_hash": HASH_A,
+            "protocol_hash": HASH_B, "source_commit": "d" * 40,
+        }) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(LedgerError, match="transition"):
+        AppendOnlyLedger(path)
+
+
+def test_ledger_rejects_field_rotated_identity_drift(tmp_path: Path) -> None:
+    ledger = AppendOnlyLedger(tmp_path / "ledger.jsonl")
+    ledger.register(_job())
+    rotated = _job(input_hash=HASH_B)
+    rotated["config_hash"] = HASH_A
+    with pytest.raises(LedgerError, match="drift"):
+        ledger.register(rotated)
 
 
 def test_deterministic_scheduler_interleaves_methods_and_is_repeatable() -> None:
@@ -142,6 +171,9 @@ def test_gpu_training_lease_allows_one_owner_and_records_attempt() -> None:
         lease.acquire("b" * 64, worker_id="worker-b")
     lease.release(first.lease_id, peak_memory_bytes=123, runtime_seconds=4.5)
     assert lease.history[-1]["peak_memory_bytes"] == 123
+    second = lease.acquire("b" * 64, worker_id="worker-b")
+    with pytest.raises(LedgerError, match="finite"):
+        lease.release(second.lease_id, peak_memory_bytes=123, runtime_seconds=float("nan"))
 
 
 def test_atomic_checkpoint_round_trip_and_previous_copy(tmp_path: Path) -> None:
@@ -168,6 +200,33 @@ def test_valid_raw_episode_and_long_table_are_accepted() -> None:
     assert validated[0]["evaluation_identity"] == IDENTITY
 
 
+@pytest.mark.parametrize("method", ["ippo_mobile", "maddpg_mobile", "iql_mobile"])
+def test_all_frozen_learning_methods_are_valid(method: str) -> None:
+    validate_raw_episode(_raw_row(method=method, condition_id=method))
+
+
+def test_action_domains_match_heterogeneous_interface() -> None:
+    validate_raw_episode(_raw_row(action_uav=5, action_vehicle_slot=3))
+    with pytest.raises(ValidationError, match="illegal action"):
+        validate_raw_episode(_raw_row(action_uav=6))
+    with pytest.raises(ValidationError, match="illegal action"):
+        validate_raw_episode(_raw_row(action_vehicle_slot=4))
+
+
+def test_validator_binds_expected_provenance_hashes() -> None:
+    expected = {
+        "source_commit": "d" * 40,
+        "config_hash": HASH_A,
+        "protocol_hash": HASH_B,
+        "checkpoint_hash": "e" * 64,
+        "evaluator_hash": "f" * 64,
+        "scenario_panel_hash": "1" * 64,
+    }
+    validate_raw_episode(_raw_row(), expected_provenance=expected)
+    with pytest.raises(ValidationError, match="provenance"):
+        validate_raw_episode(_raw_row(protocol_hash="2" * 64), expected_provenance=expected)
+
+
 @pytest.mark.parametrize(
     "override, message",
     [
@@ -175,6 +234,7 @@ def test_valid_raw_episode_and_long_table_are_accepted() -> None:
         ({"interaction_count": 1, "terminated": False}, "terminal"),
         ({"battery_replenishment_l": 1.0}, "battery"),
         ({"resource_conservation_residual_l": 0.1}, "conservation"),
+        ({"pesticide_transferred_l": 0.0}, "conservation"),
         ({"success_at_0_85": False}, "success"),
         ({"scenario_id": 30000, "partition": "sealed_test"}, "sealed"),
         ({"action_vehicle_slot": 99}, "action"),
@@ -194,7 +254,7 @@ def test_validator_rejects_duplicates_and_incomplete_expected_cells() -> None:
 
 
 def test_quarantine_preserves_original_bytes_locator_reason_and_hash(tmp_path: Path) -> None:
-    raw = b'{"bad": NaN}\n'
+    raw = b"\xff\x00\n"
     record = quarantine_invalid_row(
         tmp_path / "quarantine.jsonl", raw, locator="episodes.jsonl:7", reason="nonfinite"
     )
@@ -203,6 +263,29 @@ def test_quarantine_preserves_original_bytes_locator_reason_and_hash(tmp_path: P
     assert record["reason"] == "nonfinite"
     assert record["source_sha256"] == hashlib.sha256(raw).hexdigest()
     assert read_quarantine(tmp_path / "quarantine.jsonl")[0] == record
+
+
+def test_artifact_manifest_uses_path_descendant_check(tmp_path: Path) -> None:
+    from problem2.evaluation.validator import validate_artifact_manifest
+
+    root = tmp_path / "outputs" / "g5"
+    record = {
+        "artifact_id": IDENTITY,
+        "artifact_type": "raw_episode",
+        "source_paths": ["episodes.jsonl"],
+        "source_hashes": [HASH_A],
+        "generator": "test",
+        "generator_commit": "d" * 40,
+        "generator_sha256": HASH_B,
+        "generator_version": "1",
+        "output_path": str(root / "artifact.jsonl"),
+        "output_sha256": HASH_A,
+        "created_at": "2026-08-25T00:00:00Z",
+        "data_status": "validated",
+    }
+    validate_artifact_manifest(record, output_root=str(root))
+    with pytest.raises(ValidationError, match="escapes"):
+        validate_artifact_manifest({**record, "output_path": str(root) + "-escape/a"}, output_root=str(root))
 
 
 def test_schema_documents_expose_strict_required_fields() -> None:

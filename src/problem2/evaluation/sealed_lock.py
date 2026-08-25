@@ -33,6 +33,8 @@ def load_sealed_lock(path: Path) -> SealedLock:
         raise SealedAccessError("sealed lock is incomplete")
     if payload["status"] != "locked" or payload["unlock_gate"] != "G7":
         raise SealedAccessError("sealed lock is invalid")
+    if any(isinstance(payload[key], bool) or not isinstance(payload[key], int) for key in ("maximum_unlock_count", "actual_unlock_count")):
+        raise SealedAccessError("sealed lock counters must be integers")
     if payload["maximum_unlock_count"] != 1 or payload["actual_unlock_count"] != 0:
         raise SealedAccessError("sealed lock count is invalid")
     return SealedLock("locked", 1, 0, "G7", bool(payload.get("tuning_allowed_before_unlock", False)))
@@ -44,8 +46,10 @@ def assert_no_sealed_access(gate: str, scenario_id: object | None = None, partit
     if isinstance(scenario_id, int) and not isinstance(scenario_id, bool) and 30000 <= scenario_id <= 30099:
         raise SealedAccessError("sealed scenario access is forbidden")
     for value in (partition, path):
-        if isinstance(value, str) and "sealed" in value.lower():
+        if isinstance(value, (str, Path)) and "sealed" in str(value).lower():
             raise SealedAccessError("sealed path access is forbidden")
+        if value is not None and not isinstance(value, (str, Path)):
+            raise SealedAccessError("unsupported path/partition value")
 
 
 def assert_partition_allowed(gate: str, partition: object, scenario_id: object) -> str:

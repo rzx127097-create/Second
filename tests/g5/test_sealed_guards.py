@@ -33,6 +33,11 @@ def test_truthy_sealed_access_flags_fail_closed(flag: object) -> None:
         assert_no_sealed_access(gate="G5", scenario_id=30000, sealed_accessed=flag)
 
 
+def test_pathlike_sealed_locator_is_denied() -> None:
+    with pytest.raises(SealedAccessError):
+        assert_no_sealed_access("G5", path=Path("outputs/sealed/episode.jsonl"))
+
+
 def test_validation_requires_explicit_authorization_but_development_is_allowed() -> None:
     assert_partition_allowed(gate="G5", partition="development", scenario_id=10000)
     with pytest.raises(SealedAccessError):
@@ -51,6 +56,16 @@ def test_lock_is_unchanged_and_unlock_denied_during_g5(tmp_path: Path) -> None:
     with pytest.raises(SealedAccessError):
         unlock_g7(lock_path, gate="G5", operator="test", prerequisites={})
     assert lock_path.read_bytes() == before
+
+
+def test_lock_rejects_boolean_unlock_counter(tmp_path: Path) -> None:
+    lock_path = tmp_path / "sealed-lock.yaml"
+    lock_path.write_text(
+        "status: locked\nmaximum_unlock_count: 1\nactual_unlock_count: false\nunlock_gate: G7\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(SealedAccessError):
+        load_sealed_lock(lock_path)
 
 
 @pytest.mark.parametrize(

@@ -34,8 +34,11 @@ required_fields:
   - action_uav
   - action_vehicle_slot
   - rendezvous_distance_m
+  - vehicle_service_travel_m
   - waiting_steps
+  - completed_request_waiting_steps
   - pesticide_disabled_steps
   - return_steps
   - effective_spray_steps
+  - decision_runtime_s
   - source_locator
