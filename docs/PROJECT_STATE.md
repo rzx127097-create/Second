@@ -1513,8 +1513,9 @@ Persistence status:
 - Before this state-record commit, local HEAD, upstream HEAD, and
   `git ls-remote origin refs/heads/codex/problem2-g5-pilot-freeze` all matched
   `47c4ebb17e113acb0171b7aa902893b2fdb3c8a0`.
-- State-record commit `408da43ee8f9e39162fc9f8e6b0bd54903576517` was pushed;
-  final local HEAD, upstream HEAD, and `git ls-remote` all match this hash.
+- State-record commit `408da43ee8f9e39162fc9f8e6b0bd54903576517` was pushed with
+  parity; the subsequent persistence synchronization commit
+  `03deaa733a008146accd27dc3bdb0105918bdf21` was also pushed successfully.
 - No pilot, formal training, validation tuning, sealed evaluation, or protected
   external asset access occurred. The user-owned `_tmp_docx_assets/` path
   remains untracked and untouched.
