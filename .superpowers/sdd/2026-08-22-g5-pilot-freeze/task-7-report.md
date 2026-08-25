@@ -148,6 +148,8 @@ Final fix-round artifact tuple (used for the committed manifests) is:
 ```text
 source_commit=a868e6d5d3220aed1e128d052204a4ba74cb5969
 source_tree_paths=10
+source_tree_sha256=f058b0cc84d6b335fc2e3c57ae92d388ea505fc1e7107c0f228614015a832e6c
+protocol_hash=63b8637ec0cb2d8cccde5e030e6b5d61ca5b812e075f5da3ac7c4f4a4c24bfe4
 ```
 
 The final manifest/summary content was committed and pushed in `04f87fa`.
