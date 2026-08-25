@@ -204,6 +204,8 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     evaluation_actions = {role: first.actions[role].tolist() for role in first.actions}
     evaluation_frozen = evaluation_actions == {role: second.actions[role].tolist() for role in second.actions} and eval_before == eval_after
     log_path = output / "training.jsonl"
+    if start == 0:
+        log_path.unlink(missing_ok=True)
     for record in records:
         append_jsonl(log_path, record)
     diagnostics = algorithm.diagnostics.snapshot()
