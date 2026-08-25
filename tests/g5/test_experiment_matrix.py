@@ -121,6 +121,7 @@ def test_manifest_generator_is_byte_deterministic_and_has_no_sealed_payload(tmp_
     for reference in training["references"]:
         job = jobs[reference["job_index"]]
         assert job["canonical_training_identity"] == reference["canonical_training_identity"]
+    assert "src/problem2/experiments/g5_contract.py" in training["provenance"]["source_tree_paths"]
 
 
 def test_identity_rejects_malformed_whitespace() -> None:

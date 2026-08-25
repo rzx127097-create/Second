@@ -12,6 +12,18 @@ from problem2.experiments.matrix import build_training_graph
 
 
 DEFAULT_OUTPUT = Path("outputs/problem2_sr_mappo_v1/g5/manifests")
+SOURCE_SCOPE = (
+    "src/problem2/experiments/identity.py",
+    "src/problem2/experiments/families.py",
+    "src/problem2/experiments/matrix.py",
+    "src/problem2/experiments/ablation.py",
+    "src/problem2/experiments/sensitivity.py",
+    "src/problem2/experiments/g5_contract.py",
+    "scripts/generate_g5_manifests.py",
+    "configs/problem2/g5/families.yaml",
+    "configs/problem2/g5/ablations.yaml",
+    "configs/problem2/g5/sensitivity.yaml",
+)
 
 
 def _write(path: Path, payload: Any) -> str:
@@ -50,19 +62,8 @@ def _reference_payload(reference, job_index: int) -> dict[str, Any]:
 
 
 def _source_tree_hash(repository_root: Path) -> str:
-    paths = (
-        "src/problem2/experiments/identity.py",
-        "src/problem2/experiments/families.py",
-        "src/problem2/experiments/matrix.py",
-        "src/problem2/experiments/ablation.py",
-        "src/problem2/experiments/sensitivity.py",
-        "scripts/generate_g5_manifests.py",
-        "configs/problem2/g5/families.yaml",
-        "configs/problem2/g5/ablations.yaml",
-        "configs/problem2/g5/sensitivity.yaml",
-    )
     digest = hashlib.sha256()
-    for relative in paths:
+    for relative in SOURCE_SCOPE:
         path = repository_root / relative
         if not path.is_file():
             raise RuntimeError(f"missing source file for provenance: {relative}")
@@ -88,6 +89,7 @@ def generate_manifests(repository_root: Path, output_root: Path = DEFAULT_OUTPUT
     provenance = {
         "source_commit": graph.source_commit,
         "source_tree_sha256": source_tree_hash,
+        "source_tree_paths": list(SOURCE_SCOPE),
         "protocol_hash": graph.protocol_hash,
         "registry_hashes": dict(sorted(graph.registry_hashes.items())),
         "config_hashes": sorted({job.config_hash for job in graph.unique_jobs}),
