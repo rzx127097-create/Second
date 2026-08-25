@@ -79,8 +79,8 @@ Fix-round verification: focused Task 8 `44 passed`; G3/G5 `342 passed`; G2/G4
 The scoped re-review required all evidence-boundary defaults to fail closed.
 This round makes the complete expected provenance mapping mandatory for raw
 and validated evidence, recomputes the Task 7 canonical training identity, and
-requires the evaluation identity to equal that canonical digest (comparison
-schema fixtures may explicitly use `verify_identity=False`). Ledger replay
+requires the evaluation identity to match its separate scenario-bound digest
+(comparison schema fixtures may explicitly use `verify_identity=False`). Ledger replay
 rejects duplicate initial events, completed identity drift transitions to
 stale, and the default GPU lease now fails closed without an atomic shared
 coordination path. Validated and locked artifact manifests require existing
