@@ -117,7 +117,7 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
                 return any(has_sealed_payload(item) for item in value)
             return False
         checks["no_sealed_identities"] = not any(has_sealed_payload(payload) for payload in payloads)
-    except OSError:
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError):
         checks["no_sealed_identities"] = False
     details["manifest_sha256"] = hashlib.sha256(g6_manifest.read_bytes()).hexdigest() if g6_manifest.exists() else "missing"
     checks["manifest_hash"] = details["manifest_sha256"] == "ff4d20a347be565f974d39ba24ec382b231d6def326243c06943bd81f2733553"

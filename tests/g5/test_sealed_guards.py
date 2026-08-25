@@ -104,6 +104,17 @@ def test_preflight_rejects_arbitrary_root_for_output_confinement(tmp_path: Path)
     assert report["checks"]["output_confinement"] is False
 
 
+def test_preflight_fails_closed_on_malformed_manifest(tmp_path: Path) -> None:
+    manifest_dir = tmp_path / "outputs" / "problem2_sr_mappo_v1" / "g5" / "manifests"
+    manifest_dir.mkdir(parents=True)
+    (manifest_dir / "g6-corrupt.json").write_text("{not-json", encoding="utf-8")
+
+    from scripts._g5_cli import read_only_preflight
+
+    report = read_only_preflight(tmp_path, gate="G6")
+    assert report["checks"]["no_sealed_identities"] is False
+
+
 @pytest.mark.parametrize(
     "script, args",
     [
