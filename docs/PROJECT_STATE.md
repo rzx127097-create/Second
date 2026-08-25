@@ -28,14 +28,15 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Tasks 1-6 are accepted at M2. The registry, fairness,
+- Current gate: G5 Tasks 1-7 are accepted at M2. The registry, fairness,
   budget-selection, partition, shared heterogeneous protocol/checkpoint, five
-  learning algorithms, physical G2-to-G3 adapter, direct episode metrics, and
-  fixed/A*/nearest/urgency/two-stage support-controller boundaries are
-  persisted. G4 onboard-pesticide scarcity activation and diagnostic
-  support-probe counterfactual remain the preceding accepted mechanism
-  evidence. No G5 pilot has run. Formal jobs, validation tuning, sealed
-  evaluation, and efficacy/superiority claims remain unauthorized.
+  learning algorithms, physical G2-to-G3 adapter, direct episode metrics,
+  fixed/A*/nearest/urgency/two-stage support-controller boundaries, and the
+  deterministic 375-job experiment graph are persisted. G4 onboard-pesticide
+  scarcity activation and diagnostic support-probe counterfactual remain the
+  preceding accepted mechanism evidence. No G5 pilot has run. Formal jobs,
+  validation tuning, sealed evaluation, and efficacy/superiority claims remain
+  unauthorized.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -1335,10 +1336,83 @@ Persistence status:
   protected external asset, OSM input, first-problem file, output artifact, or
   Word file was modified.
 
-Task 7 is the next authorized work: generate exact experiment families,
-configuration diffs, and the deduplicated 375-job graph. Task 7 is not started
-by this persistence record, and pilots, validation tuning, formal execution,
-and sealed access remain unauthorized.
+The Task-7 content head before this state record is
+`c609b8713ed9589b4a5f754dadcc1afa8a56d6cb`; this record persists its review,
+verification, and manifest evidence. Pilots, validation tuning, formal
+execution, and sealed access remain unauthorized.
+
+## G5 Task 7: Experiment Families And Deduplicated Job Graph
+
+Task 7 is implemented, independently reviewed, freshly verified, and persisted
+at the existing `M2` maturity boundary. It generates planning manifests only;
+it does not run pilots, access validation or sealed scenarios, queue formal
+jobs, or support efficacy, superiority, significance, or deployment claims.
+
+Implementation and contract boundaries:
+
+- `src/problem2/experiments/{identity,families,matrix,ablation,sensitivity}.py`
+  preserve the G1 serialization as an explicit intermediate and use its
+  lowercase SHA-256 digest as the canonical training identity. Family-bound
+  identities add `family|condition_id|protocol_hash|canonical_digest` without
+  changing the base digest.
+- The graph covers six scales, five formal training seeds, five frozen learning
+  methods, the five required Problem-2 conditions, nearest/urgency heuristics,
+  five remove-one groups, and five three-level algorithmic sensitivity axes.
+  It contains exactly `375` unique jobs with decomposition
+  `150 + 90 + 60 + 25 + 50`, plus `645` deterministic family references.
+- The strict G5 loader consumes and hashes
+  `configs/problem2/g5/{families,ablations,sensitivity}.yaml`. Registry drift,
+  malformed identities, unsafe deduplication, and source Git unavailability or
+  non-output source drift fail closed. The manifest source tuple is
+  `source_commit=a868e6d5d3220aed1e128d052204a4ba74cb5969`,
+  `source_tree_sha256=f058b0cc84d6b335fc2e3c57ae92d388ea505fc1e7107c0f228614015a832e6c`,
+  and frozen protocol hash
+  `63b8637ec0cb2d8cccde5e030e6b5d61ca5b812e075f5da3ac7c4f4a4c24bfe4`.
+- Generated artifacts remain below
+  `outputs/problem2_sr_mappo_v1/g5/manifests`. The tracked manifest hashes are:
+  `development-smoke.json` `ff85a34467958ac58567730a537d5877103bb0fbe869e9e50cee9efc3222a210`;
+  `pilot-manifest.json` `52f6fde87712df522d976137d05e7025f5e85243c61566e33895588e40447991`;
+  `g6-training-jobs.json` `ff4d20a347be565f974d39ba24ec382b231d6def326243c06943bd81f2733553`;
+  `g6-validation-evaluations.json` `4e57689500337d11f86da351ae65314500a6012286b671988f68b66fd3863936`;
+  `g7-sealed-evaluations.json` `47ab883d64e932081d82be303b2a49303341ad5b7ea04bce8146a22309e59fe0`;
+  `g7-analysis.json` `0e91e59df68046c79d0b274514fd453024f843eb4a314c218c846debae0e7129`;
+  `manifest-summary.json` `328363aa284150a5e3f098d50b05e253992881f5f6b413445fc299bce375aa47`.
+
+Fresh verification and review:
+
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_experiment_matrix.py -q`:
+  `8 passed`.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5 -q`: `233 passed`;
+  `.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q`:
+  `298 passed`; host `python -m pytest tests/g2 tests/g4 -q`:
+  `178 passed`.
+- `.venv-g5/Scripts/python.exe -m compileall -q src scripts`: exit `0`;
+  `scripts/audit_g5_contracts.py`: `status=pass`, validation/sealed access
+  false, actual unlock count `0`; `git diff --check`: exit `0`.
+- Two independent generator runs produced seven byte-identical files; all
+  `375` canonical digests recompute, all `645` references resolve, the exact
+  decomposition holds, and scans contain no `30000`, `30099`,
+  `sealed_scenario`, or `evaluation_results` payload. No pilot, validation,
+  formal, or sealed execution occurred.
+- Independent Task 7 review and two scoped fix re-reviews closed all
+  Critical/Important technical findings. The only deferred item was the
+  required project-state persistence, completed by this record.
+
+Persistence status:
+
+- Task 7 content and correction commits were pushed without force-push across
+  the range `82e5775..c609b871`; the content head persisted by this record is
+  `c609b8713ed9589b4a5f754dadcc1afa8a56d6cb`.
+- Local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-g5-pilot-freeze` all match
+  the state-record commit after this document update is pushed.
+- The user-owned `_tmp_docx_assets/` path remains untracked and untouched. No
+  protected external asset, OSM input, first-problem file, or Word file was
+  modified.
+
+Task 8 is the next authorized work: implement append-only orchestration,
+artifact schemas, validation, recovery, and sealed lock guards. The current
+M2 boundary remains unchanged; no G6/G7 execution is authorized.
 
 ## Completed Tasks
 
@@ -1389,10 +1463,13 @@ and sealed access remain unauthorized.
 
 ## Pending Tasks
 
-- Execute Task 7 of the persisted G5 plan: generate exact experiment families,
-  configuration diffs, and the deduplicated 375-job graph.
-- Implement later G5 orchestration, statistics, smoke, pilots, and validation
-  tuning only in the plan's declared order.
+- Task 7 is complete and persisted: the exact experiment families,
+  configuration diffs, and deduplicated 375-job graph are recorded below
+  `outputs/problem2_sr_mappo_v1/g5/manifests`.
+- Execute Task 8 of the persisted G5 plan: implement append-only orchestration,
+  artifact schemas, validation, recovery, and sealed lock guards.
+- Implement later G5 statistics, smoke, pilots, and validation tuning only in
+  the plan's declared order.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -1411,9 +1488,10 @@ and sealed access remain unauthorized.
   scarcity. Its long-hash/provenance narrative discrepancy is reconciled. The
   G5 experiment contracts, shared algorithm protocol, exact on-policy stability
   differences, five learning algorithms, and Task-6 environment/metric/support
-  controllers are frozen at M2. The reduction denominator epsilon is contract
-  owned at `1.0e-12`; Task 7 experiment-family and job-graph generation is the
-  next authorized work.
+  controllers and Task-7 experiment-family/job-graph manifests are frozen at
+  M2. The reduction denominator epsilon is contract owned at `1.0e-12`; Task 8
+  orchestration and evidence-validation implementation is the next authorized
+  work.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -1463,12 +1541,12 @@ and sealed access remain unauthorized.
 
 ## Next Step
 
-Execute Task 7 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: generate exact
-experiment families, configuration diffs, and the deduplicated 375-job graph
-with test-first development against the accepted Task-6 adapters. Keep pilots,
-validation tuning, formal jobs, and sealed-test evaluation unauthorized until
-their later tasks and gates.
+Execute Task 8 of
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: implement append-only
+orchestration, artifact schemas, validation, recovery, and sealed lock guards
+against the accepted Task-7 identities and manifests. Keep pilots, validation
+tuning, formal jobs, and sealed-test evaluation unauthorized until their later
+tasks and gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
