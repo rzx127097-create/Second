@@ -43,8 +43,11 @@ def main() -> int:
         report["status"] = "fail"
         report["reason"] = f"{type(error).__name__}: {error}"
     AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    AUDIT_PATH.write_text(json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    print(json.dumps({"status": report["status"], "jobs": len(report["jobs"]), "audit": str(AUDIT_PATH)}, sort_keys=True))
+    payload = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
+    device_audit = AUDIT_PATH.with_name(f"smoke-audit-{args.device}.json")
+    AUDIT_PATH.write_text(payload, encoding="utf-8")
+    device_audit.write_text(payload, encoding="utf-8")
+    print(json.dumps({"status": report["status"], "jobs": len(report["jobs"]), "audit": str(AUDIT_PATH), "device_audit": str(device_audit)}, sort_keys=True))
     return 0 if report["status"] == "pass" else 2
 
 
