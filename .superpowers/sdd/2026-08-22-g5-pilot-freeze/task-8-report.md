@@ -79,8 +79,8 @@ Fix-round verification: focused Task 8 `44 passed`; G3/G5 `342 passed`; G2/G4
 The scoped re-review required all evidence-boundary defaults to fail closed.
 This round makes the complete expected provenance mapping mandatory for raw
 and validated evidence, recomputes the Task 7 canonical training identity, and
-requires the evaluation identity to match its separate scenario-bound digest
-(comparison schema fixtures may explicitly use `verify_identity=False`). Ledger replay
+requires the evaluation identity to match its separate scenario-bound digest;
+identity recomputation cannot be disabled by callers. Ledger replay
 rejects duplicate initial events, completed identity drift transitions to
 stale, and the default GPU lease now fails closed without an atomic shared
 coordination path. Validated and locked artifact manifests require existing
@@ -100,10 +100,32 @@ that digest to condition, scale, training seed, scenario ID, partition,
 checkpoint, evaluator, and scenario-panel hashes, so one checkpoint evaluated
 on different scenarios yields distinct identities. Evidence validation
 recomputes and checks both identities while retaining mandatory provenance and
-strict domains; comparison-only schema fixtures must explicitly opt out with
-`verify_identity=False`.
+strict domains; no public validation path can bypass identity recomputation.
 
 The final preflight hardening also validates initial-ledger provenance
 completeness, compares registry hashes to the frozen manifest summary, and
 scans parsed G6/G7 payloads for sealed scenario IDs/access flags while allowing
 the declarative `partition: sealed_test` skeleton marker.
+
+## Final Review And Verification
+
+The final scoped review of `bb81a7d..c62c9a8` is clean. It verified strict
+required and optional ledger hash formats during replay and registration, exact
+Task 7 registry key/value matching, distinct scenario-level identities, frozen
+method/condition validation, non-bypassable identity checks, canonical output
+root confinement, malformed-manifest and numeric-string sealed-ID rejection,
+read-only preflight structure, CLI blocking, and sealed-lock byte preservation.
+
+Fresh controller verification after the final fixes:
+
+- Task 8 focused suites: `60 passed`.
+- `python -m pytest tests/g3 tests/g5 -q`: `358 passed`.
+- `python -m pytest tests/g2 tests/g4 -q`: `178 passed`.
+- `python scripts/audit_g5_contracts.py`: `status=pass`.
+- `python -m compileall -q src scripts`: exit `0`.
+- All eight public CLI `--help` calls: passed.
+- `git diff --check`: exit `0`.
+
+The implementation remains at M2. No pilot, formal training, validation
+tuning, sealed evaluation, queue creation, or lock mutation occurred; G6/G7
+remain blocked until their later authorized gates.
