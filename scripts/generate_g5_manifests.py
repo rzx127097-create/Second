@@ -80,7 +80,6 @@ def generate_manifests(repository_root: Path, output_root: Path = DEFAULT_OUTPUT
         "status": "skeleton_unexecuted",
         "partition": "validation",
         "scenario_payload": None,
-        "evaluation_results": [],
         "sealed_accessed": False,
     })
     files["g7-sealed-evaluations.json"] = _write(output_root / "g7-sealed-evaluations.json", {
@@ -89,7 +88,6 @@ def generate_manifests(repository_root: Path, output_root: Path = DEFAULT_OUTPUT
         "status": "locked_skeleton",
         "partition": "sealed_test",
         "scenario_payload": None,
-        "evaluation_results": [],
         "unlock_required": True,
         "sealed_accessed": False,
     })
