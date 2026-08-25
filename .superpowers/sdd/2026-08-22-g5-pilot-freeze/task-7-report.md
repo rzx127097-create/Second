@@ -110,7 +110,7 @@ is unavailable or the tracked source tree is dirty (output-only manifest drift
 is permitted during regeneration). The generated source tuple is:
 
 ```text
-source_commit=cc245a404470d5e62d6964c7ec4d4d70fdce14d8
+source_commit=b28a1f667b20237fefafb1791f2d3c68509518d3
 source_tree_sha256=ff11c425ce25e2fd627e2e8d6967f211fe7226fec804cc57d3358bbab08c14ad
 protocol_hash=63b8637ec0cb2d8cccde5e030e6b5d61ca5b812e075f5da3ac7c4f4a4c24bfe4
 ```
@@ -127,5 +127,6 @@ Fix-round verification:
 
 Fix-round content commits pushed without force-push:
 `32dedfd` (identity/registry/provenance implementation), `2c9edc7`
-(output-only drift provenance guard), and `cc245a4` (focused regression test).
-The regenerated manifest artifacts are pending their final content commit.
+(output-only drift provenance guard), `cc245a4` (focused regression test), and
+`b28a1f6` (contract-audit registry count regression). The regenerated manifest
+artifacts are pending their final content commit.
