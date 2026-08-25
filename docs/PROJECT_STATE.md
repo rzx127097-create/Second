@@ -28,7 +28,7 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Tasks 1-8 are accepted at M2. The registry, fairness,
+- Current gate: G5 Tasks 1-9 are accepted at M2. The registry, fairness,
   budget-selection, partition, shared heterogeneous protocol/checkpoint, five
   learning algorithms, physical G2-to-G3 adapter, direct episode metrics,
   fixed/A*/nearest/urgency/two-stage support-controller boundaries, and the
@@ -36,7 +36,8 @@ real deployment evidence.
   scarcity activation and diagnostic support-probe counterfactual remain the
   preceding accepted mechanism evidence. No G5 pilot has run. Formal jobs,
   validation tuning, sealed evaluation, and efficacy/superiority claims remain
-  unauthorized.
+  unauthorized. Task9 statistics are pure adapters over validated mappings;
+  no pilot, formal training, validation tuning, or sealed evaluation occurred.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -1461,10 +1462,60 @@ Persistence status:
 - The protected user-owned `_tmp_docx_assets/` path remains untracked and
   untouched. No protected external asset or sealed output was modified.
 
-Task 9 is the next authorized work: implement the frozen convergence, paired
-statistics, Holm correction, equivalence, and mechanism-summary contracts.
-Pilot execution, validation tuning, G6 formal jobs, and G7 sealed evaluation
-remain unauthorized until the declared gate order permits them.
+Task 9 is accepted and persisted at M2. The next authorized work is Task 10
+smoke acceptance. Pilot execution, validation tuning, G6 formal jobs, and G7
+sealed evaluation remain unauthorized until the declared gate order permits
+them.
+
+## G5 Task 9: Statistics And Mechanism Summaries Acceptance Record
+
+Task 9 is accepted at M2 after two independent scoped review rounds and fresh
+controller verification. The implementation provides pure deterministic
+convergence, hierarchical paired bootstrap, Holm adjustment, complete-interval
+equivalence, mechanism sign-coherence, and ordered negative-result diagnosis
+helpers. It consumes validated row mappings only; the library opens no files,
+reads no sealed data, filters no observations, and does not run experiments.
+
+Implementation and boundary fixes:
+
+- Content commits `5b8064c61391d2a10ad51f5a76d6d573bba9e2bc`,
+  `c56fc3d`, and `f18d71dba97fd10218082feb86b4f1f4bec769ef` implement the
+  frozen statistics interfaces and close review findings for explicit A-B
+  direction, finite/censoring semantics, typed mechanism metrics and scale
+  coherence, ordered diagnosis, Holm/equivalence validation, and fail-closed
+  CLI provenance/path boundaries.
+- CLI adapters require `validated: true`, `provenance.status=validated`, and
+  `provenance.partition=development`; they reject raw/sealed path tokens before
+  input or output I/O and confine explicit paths to the frozen output root.
+- Method-form paired rows require an explicit ordered `method_order`, preserving
+  the registered A-B estimand. Mechanism summaries require the mobile/fixed
+  method pair and report direct scenario, training-seed, scale, and aggregate
+  coherence without causal-mediation language.
+
+Fresh verification:
+
+- `python -m pytest tests/g5/test_statistics.py -q`: `12 passed`, run twice;
+  repeated adapter JSON outputs were byte-identical.
+- `python -m pytest tests/g3 tests/g5 -q`: `370 passed`.
+- `python -m pytest tests/g2 tests/g4 -q`: `178 passed`.
+- `python scripts/audit_g5_contracts.py`: `status=pass`, validation/sealed
+  access false, actual unlock count `0`.
+- Both Task9 CLI `--help` commands, `python -m compileall -q src scripts`,
+  and `git diff --check` passed. Scoped reviews of `ed94abb..5b8064c`,
+  `5b8064c..c56fc3d`, and `c56fc3d..f18d71d` closed with no open
+  Critical/Important findings.
+
+Persistence status:
+
+- Task9 content and plan commits through
+  `47c4ebb17e113acb0171b7aa902893b2fdb3c8a0` were pushed to
+  `origin/codex/problem2-g5-pilot-freeze`.
+- Before this state-record commit, local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-g5-pilot-freeze` all matched
+  `47c4ebb17e113acb0171b7aa902893b2fdb3c8a0`.
+- No pilot, formal training, validation tuning, sealed evaluation, or protected
+  external asset access occurred. The user-owned `_tmp_docx_assets/` path
+  remains untracked and untouched.
 
 ## Completed Tasks
 
@@ -1521,8 +1572,11 @@ remain unauthorized until the declared gate order permits them.
 - Task 8 is complete and persisted: append-only orchestration, strict evidence
   schemas/validation, recovery, quarantine, and sealed-lock guards are recorded
   in `src/problem2/`, `scripts/`, tests, and the Task 8 report.
-- Execute Task 9 of the persisted G5 plan: implement convergence, paired
-  statistics, multiplicity correction, equivalence, and mechanism summaries.
+- Task 9 is complete and persisted: deterministic convergence, paired
+  statistics, multiplicity correction, equivalence, mechanism summaries, and
+  ordered diagnosis are recorded in `src/problem2/statistics/`, CLI adapters,
+  tests, and the Task 9 report.
+- Execute Task 10 smoke acceptance from the persisted G5 plan.
 - Implement later G5 statistics, smoke, pilots, and validation tuning only in
   the plan's declared order.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
@@ -1546,8 +1600,9 @@ remain unauthorized until the declared gate order permits them.
   controllers and Task-7 experiment-family/job-graph manifests are frozen at
   M2. The reduction denominator epsilon is contract owned at `1.0e-12`; Task 8
   orchestration and evidence-validation implementation is accepted, and Task 9
-  statistics/mechanism summaries are the next authorized work. No formal or
-  sealed execution is authorized by this record.
+  statistics/mechanism summaries are accepted at M2. Task 10 smoke acceptance
+  is the next authorized work. No formal or sealed execution is authorized by
+  this record.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
@@ -1597,10 +1652,9 @@ remain unauthorized until the declared gate order permits them.
 
 ## Next Step
 
-Execute Task 9 of
-`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md`: implement convergence,
-paired statistics, Holm correction, equivalence, and mechanism summaries from
-the accepted Task-8 evidence boundaries. Keep pilots, validation tuning,
+Execute Task 10 smoke acceptance from
+`docs/superpowers/plans/2026-08-22-g5-pilot-freeze.md` using the accepted Task9
+statistics and Task8 evidence boundaries. Keep pilots, validation tuning,
 formal jobs, and sealed-test evaluation unauthorized until their later tasks
 and gates.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
