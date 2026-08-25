@@ -1,0 +1,9 @@
+{
+  "evaluation_results": [],
+  "manifest_id": "G6-VALIDATION-EVALUATIONS",
+  "partition": "validation",
+  "scenario_payload": null,
+  "schema_version": "g5.v1",
+  "sealed_accessed": false,
+  "status": "skeleton_unexecuted"
+}

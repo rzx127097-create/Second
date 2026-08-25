@@ -1,0 +1,28 @@
+schema_version: g5.v1
+registry_id: G5-FAMILIES
+status: design_frozen
+families:
+  algorithm_convergence:
+    conditions: [sr_mappo_mobile, mappo_mobile, ippo_mobile, maddpg_mobile, iql_mobile]
+    scales: [g20x20_d2, g20x30_d3, g20x40_d3, g30x30_d3, g30x40_d4, g30x50_d4]
+    seeds: [42, 123, 2024, 3407, 7919]
+  algorithm_scale:
+    conditions: [sr_mappo_mobile, mappo_mobile, ippo_mobile, maddpg_mobile, iql_mobile]
+    scales: [g20x20_d2, g20x30_d3, g20x40_d3, g30x30_d3, g30x40_d4, g30x50_d4]
+    seeds: [42, 123, 2024, 3407, 7919]
+  problem2_required:
+    conditions: [sr_mappo_mobile, sr_mappo_fixed, sr_mappo_astar, mappo_mobile, sr_mappo_two_stage]
+    scales: [g20x20_d2, g20x30_d3, g20x40_d3, g30x30_d3, g30x40_d4, g30x50_d4]
+    seeds: [42, 123, 2024, 3407, 7919]
+  vehicle_heuristics:
+    conditions: [sr_mappo_nearest, sr_mappo_urgency]
+    scales: [g20x20_d2, g20x30_d3, g20x40_d3, g30x30_d3, g30x40_d4, g30x50_d4]
+    seeds: [42, 123, 2024, 3407, 7919]
+  sr_mappo_ablation:
+    conditions: [no_observation_normalization, no_return_normalization, no_network_stabilization, no_robust_value_update, no_learning_rate_decay]
+    scales: [g30x30_d3]
+    seeds: [42, 123, 2024, 3407, 7919]
+  sr_mappo_sensitivity:
+    conditions: [learning_rate, clip_range, entropy_coef, gamma, gae_lambda]
+    scales: [g30x30_d3]
+    seeds: [42, 123, 2024, 3407, 7919]

@@ -1,0 +1,21 @@
+schema_version: g5.v1
+registry_id: G5-SENSITIVITY
+status: design_frozen
+center:
+  learning_rate: 0.0003
+  clip_range: 0.20
+  entropy_coef: 0.010
+  gamma: 0.99
+  gae_lambda: 0.95
+algorithmic_axes:
+  learning_rate: [0.0001, 0.0003, 0.0005]
+  clip_range: [0.10, 0.20, 0.30]
+  entropy_coef: [0.005, 0.010, 0.020]
+  gamma: [0.95, 0.99, 0.995]
+  gae_lambda: [0.90, 0.95, 0.98]
+mechanism_axes:
+  initial_uav_pesticide_l: [0.05, 0.2875, 0.525]
+  vehicle_speed_m_s: [4, 8, 12]
+  transfer_rate_l_min: [2, 4, 8]
+  setup_time_s: [5, 10, 30]
+  rendezvous_radius_m: [5, 15, 30]

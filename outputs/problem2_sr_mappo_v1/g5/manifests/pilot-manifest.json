@@ -1,0 +1,41 @@
+{
+  "families": [
+    "algorithm_convergence",
+    "algorithm_scale",
+    "problem2_required",
+    "vehicle_heuristics",
+    "sr_mappo_ablation",
+    "sr_mappo_sensitivity"
+  ],
+  "manifest_id": "G5-PILOT",
+  "partition": "development",
+  "scales": [
+    "g20x20_d2",
+    "g30x50_d4"
+  ],
+  "scenario_ids": [
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019
+  ],
+  "schema_version": "g5.v1",
+  "sealed_accessed": false,
+  "status": "planned"
+}

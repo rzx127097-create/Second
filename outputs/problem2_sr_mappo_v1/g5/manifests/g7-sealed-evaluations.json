@@ -1,0 +1,10 @@
+{
+  "evaluation_results": [],
+  "manifest_id": "G7-SEALED-EVALUATIONS",
+  "partition": "sealed_test",
+  "scenario_payload": null,
+  "schema_version": "g5.v1",
+  "sealed_accessed": false,
+  "status": "locked_skeleton",
+  "unlock_required": true
+}

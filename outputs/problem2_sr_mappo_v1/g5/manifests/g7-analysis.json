@@ -1,0 +1,9 @@
+{
+  "inputs": [],
+  "manifest_id": "G7-ANALYSIS",
+  "partition": "sealed_test",
+  "schema_version": "g5.v1",
+  "sealed_accessed": false,
+  "status": "locked_skeleton",
+  "summaries": []
+}

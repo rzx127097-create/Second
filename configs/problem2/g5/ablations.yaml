@@ -1,0 +1,10 @@
+schema_version: g5.v1
+registry_id: G5-ABLATIONS
+status: design_frozen
+full_condition: sr_mappo_mobile
+remove_one:
+  no_observation_normalization: [observation_normalization]
+  no_return_normalization: [return_normalization]
+  no_network_stabilization: [orthogonal_initialization, layer_normalization]
+  no_robust_value_update: [value_clipping, huber_value_loss]
+  no_learning_rate_decay: [learning_rate_decay]
