@@ -1,8 +1,10 @@
 {
   "algorithm_id": "iql_mobile",
+  "algorithm_state_digest": "1d6ad453367db774c557861382c17bdc385ea5aab753077bc7f5f3bb30897bbe",
   "battery_replenishment_enabled": false,
   "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__sr_mappo_mobile__51001\\checkpoint.pt",
   "condition_id": "sr_mappo_mobile",
+  "diagnostics_digest": "b3918f4c6ac239d9bff1e3bf3a5202f93bfcc7d8e2f4547628da45b8bad137fa",
   "evaluation_actions": {
     "uav": [
       0,
@@ -32,9 +34,23 @@
     "updates": 2.0,
     "vehicle_loss": 0.013279519975185394
   },
+  "metrics_digest": "2a3dff07da2a1f6d96ffd16ea81e50cbb00f880393c00a10b445a19a58231d7e",
+  "partition": "development",
   "peak_allocated_bytes": 26549760,
   "peak_reserved_bytes": 31457280,
+  "provenance": {
+    "ancestry_hash": "134bd52b0f388487f03d8e75eda5f8580ed8aa063965c082ffce1606a1a156ef",
+    "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+    "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+    "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
+    "source_commit": "0b3483f45756b6c3c37b4c6416ea6de65ff034c7"
+  },
   "replenished_resource": "pesticide",
+  "resume_comparison": {
+    "algorithm_state_equal": false,
+    "diagnostics_equal": false,
+    "metrics_equal": false
+  },
   "resume_equivalent": false,
   "role_shapes": {
     "uav": [
@@ -46,7 +62,9 @@
       28
     ]
   },
+  "scenario_id": 10000,
   "sealed_accessed": false,
+  "training_seed": 51001,
   "updates": 1,
   "validation_accessed": false
 }

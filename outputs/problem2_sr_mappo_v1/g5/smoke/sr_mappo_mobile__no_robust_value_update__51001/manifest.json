@@ -1,9 +1,10 @@
 {
+  "algorithm_id": "sr_mappo_mobile",
   "artifacts": [
     {
       "bytes": 1730691,
       "path": "checkpoint.pt",
-      "sha256": "4e4ae0aa84472a60654bd0d19013bc391985cbec939e73f047b10874517e9a2b"
+      "sha256": "baef5a0f612892d239f34aba2ed40565f5c1388524187c7a10403420a4625e98"
     },
     {
       "bytes": 38676,
@@ -11,15 +12,27 @@
       "sha256": "7ea41e559e2b7dcdb8523931075aa5a4bfada53ece34a71c1dfddf9a23f8b772"
     },
     {
-      "bytes": 1493,
+      "bytes": 2422,
       "path": "summary.json",
-      "sha256": "268ab9c680875ea4b72332c7d3abba5d71940bed8cf5fe3d3e406e3530aa6a80"
+      "sha256": "29d21bfdb0fd82957dfd46424522af7f3c51c924077b38b7578e027231136301"
     }
   ],
   "battery_replenishment_enabled": false,
+  "condition_id": "no_robust_value_update",
   "maturity": "M2",
+  "method": "sr_mappo_mobile",
+  "partition": "development",
+  "provenance": {
+    "ancestry_hash": "4e39f8b991de697f92cec18c0ef463c7f3dd61ca5faa7047c9c73a566b039ec1",
+    "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+    "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+    "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
+    "source_commit": "0b3483f45756b6c3c37b4c6416ea6de65ff034c7"
+  },
+  "scenario_id": 10000,
   "schema_version": "g5-smoke-artifact-v1",
   "sealed_accessed": false,
   "status": "pass",
+  "training_seed": 51001,
   "validation_accessed": false
 }
