@@ -105,7 +105,7 @@ def _new_job(
 def build_training_graph(contract) -> TrainingGraph:
     """Expand the frozen family registry and deduplicate only exact base jobs."""
     root = Path(contract.source_root)
-    protocol_hash = _stable_hash(dict(sorted(contract.file_hashes.items())))
+    protocol_hash = contract.file_hashes["configs/problem2/g5/protocol.yaml"]
     git_commit = _git_commit(root)
     jobs: list[TrainingJob] = []
     by_base: dict[str, TrainingJob] = {}
