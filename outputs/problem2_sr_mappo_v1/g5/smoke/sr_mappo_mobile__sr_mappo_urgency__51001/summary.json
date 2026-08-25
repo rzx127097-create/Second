@@ -1,0 +1,65 @@
+{
+  "algorithm_id": "sr_mappo_mobile",
+  "battery_replenishment_enabled": false,
+  "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__sr_mappo_urgency__51001\\checkpoint.pt",
+  "condition_id": "sr_mappo_urgency",
+  "evaluation_actions": {
+    "uav": [
+      2,
+      2
+    ],
+    "vehicle": [
+      1
+    ]
+  },
+  "evaluation_frozen": true,
+  "finite_metrics": true,
+  "interactions": 128,
+  "interrupted": false,
+  "mask_shapes": {
+    "uav": [
+      2,
+      6
+    ],
+    "vehicle": [
+      1,
+      5
+    ]
+  },
+  "method": "sr_mappo_mobile",
+  "metrics": {
+    "critic_loss": 1.764043539762497,
+    "critic_updates": 4,
+    "critic_valid_samples": 128,
+    "learning_rates": {
+      "critic": 0.00029969999999999997,
+      "uav": 0.00029969999999999997,
+      "vehicle": 0.00029969999999999997
+    },
+    "uav_actor_updates": 8,
+    "uav_entropy": 0.9894705973565578,
+    "uav_policy_loss": 0.22204842325299978,
+    "uav_valid_samples": 256,
+    "vehicle_actor_updates": 4,
+    "vehicle_entropy": 0.1899614918511361,
+    "vehicle_policy_loss": 0.21975254593417048,
+    "vehicle_valid_samples": 128
+  },
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
+  "replenished_resource": "pesticide",
+  "resume_equivalent": false,
+  "role_shapes": {
+    "uav": [
+      2,
+      179
+    ],
+    "vehicle": [
+      1,
+      28
+    ]
+  },
+  "sealed_accessed": false,
+  "updates": 1,
+  "validation_accessed": false
+}

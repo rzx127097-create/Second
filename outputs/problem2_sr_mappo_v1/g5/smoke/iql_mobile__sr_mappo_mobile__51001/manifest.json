@@ -1,0 +1,28 @@
+{
+  "algorithm_id": "iql_mobile",
+  "artifacts": [
+    {
+      "bytes": 2752853,
+      "path": "checkpoint.pt",
+      "sha256": "9f240b5e16c0cff15b055188df8562427e3f8879e92ee03942ab2ceafc5f2040"
+    },
+    {
+      "bytes": 148560,
+      "path": "training.jsonl",
+      "sha256": "8ad226f34d2bfaeb7d317c1b038b467523ce2cc5a04fce2add718eacd5c73dcb"
+    },
+    {
+      "bytes": 1036,
+      "path": "summary.json",
+      "sha256": "f543c27a3fea0c5a6a8862c2527a75d0bba6bd705eaa976fd57dc41726671dda"
+    }
+  ],
+  "battery_replenishment_enabled": false,
+  "condition_id": "sr_mappo_mobile",
+  "maturity": "M2",
+  "method": "iql_mobile",
+  "schema_version": "g5-smoke-artifact-v1",
+  "sealed_accessed": false,
+  "status": "pass",
+  "validation_accessed": false
+}

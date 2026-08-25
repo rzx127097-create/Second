@@ -1,0 +1,54 @@
+{
+  "algorithm_id": "maddpg_mobile",
+  "battery_replenishment_enabled": false,
+  "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\maddpg_mobile__sr_mappo_nearest__51001\\checkpoint.pt",
+  "condition_id": "sr_mappo_nearest",
+  "evaluation_actions": {
+    "uav": [
+      2,
+      2
+    ],
+    "vehicle": [
+      1
+    ]
+  },
+  "evaluation_frozen": true,
+  "finite_metrics": true,
+  "interactions": 128,
+  "interrupted": false,
+  "mask_shapes": {
+    "uav": [
+      2,
+      6
+    ],
+    "vehicle": [
+      1,
+      5
+    ]
+  },
+  "method": "maddpg_mobile",
+  "metrics": {
+    "uav_actor_loss": -1.2040152549743652,
+    "uav_critic_loss": 0.020158031955361366,
+    "updates": 1.0,
+    "vehicle_actor_loss": -0.22628504037857056,
+    "vehicle_critic_loss": 0.01934027671813965
+  },
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
+  "replenished_resource": "pesticide",
+  "resume_equivalent": false,
+  "role_shapes": {
+    "uav": [
+      2,
+      179
+    ],
+    "vehicle": [
+      1,
+      28
+    ]
+  },
+  "sealed_accessed": false,
+  "updates": 1,
+  "validation_accessed": false
+}

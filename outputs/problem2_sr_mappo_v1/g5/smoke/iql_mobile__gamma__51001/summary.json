@@ -1,0 +1,52 @@
+{
+  "algorithm_id": "iql_mobile",
+  "battery_replenishment_enabled": false,
+  "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\iql_mobile__gamma__51001\\checkpoint.pt",
+  "condition_id": "gamma",
+  "evaluation_actions": {
+    "uav": [
+      0,
+      0
+    ],
+    "vehicle": [
+      1
+    ]
+  },
+  "evaluation_frozen": true,
+  "finite_metrics": true,
+  "interactions": 128,
+  "interrupted": false,
+  "mask_shapes": {
+    "uav": [
+      2,
+      6
+    ],
+    "vehicle": [
+      1,
+      5
+    ]
+  },
+  "method": "iql_mobile",
+  "metrics": {
+    "uav_loss": 0.010372067801654339,
+    "updates": 2.0,
+    "vehicle_loss": 0.013279514387249947
+  },
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
+  "replenished_resource": "pesticide",
+  "resume_equivalent": false,
+  "role_shapes": {
+    "uav": [
+      2,
+      179
+    ],
+    "vehicle": [
+      1,
+      28
+    ]
+  },
+  "sealed_accessed": false,
+  "updates": 1,
+  "validation_accessed": false
+}

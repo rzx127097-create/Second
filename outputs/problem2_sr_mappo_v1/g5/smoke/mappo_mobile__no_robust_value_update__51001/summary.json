@@ -1,0 +1,65 @@
+{
+  "algorithm_id": "mappo_mobile",
+  "battery_replenishment_enabled": false,
+  "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\mappo_mobile__no_robust_value_update__51001\\checkpoint.pt",
+  "condition_id": "no_robust_value_update",
+  "evaluation_actions": {
+    "uav": [
+      3,
+      3
+    ],
+    "vehicle": [
+      1
+    ]
+  },
+  "evaluation_frozen": true,
+  "finite_metrics": true,
+  "interactions": 128,
+  "interrupted": false,
+  "mask_shapes": {
+    "uav": [
+      2,
+      6
+    ],
+    "vehicle": [
+      1,
+      5
+    ]
+  },
+  "method": "mappo_mobile",
+  "metrics": {
+    "critic_loss": 0.3053591884672642,
+    "critic_updates": 4,
+    "critic_valid_samples": 128,
+    "learning_rates": {
+      "critic": 0.0003,
+      "uav": 0.0003,
+      "vehicle": 0.0003
+    },
+    "uav_actor_updates": 8,
+    "uav_entropy": 1.7916853427886963,
+    "uav_policy_loss": -0.0017540808767080307,
+    "uav_valid_samples": 256,
+    "vehicle_actor_updates": 4,
+    "vehicle_entropy": 0.6923574954271317,
+    "vehicle_policy_loss": 0.0006144407670944929,
+    "vehicle_valid_samples": 128
+  },
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
+  "replenished_resource": "pesticide",
+  "resume_equivalent": false,
+  "role_shapes": {
+    "uav": [
+      2,
+      179
+    ],
+    "vehicle": [
+      1,
+      28
+    ]
+  },
+  "sealed_accessed": false,
+  "updates": 1,
+  "validation_accessed": false
+}

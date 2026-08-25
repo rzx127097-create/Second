@@ -1,0 +1,59 @@
+{
+  "algorithm_id": "ippo_mobile",
+  "battery_replenishment_enabled": false,
+  "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\ippo_mobile__sr_mappo_mobile__51001\\checkpoint.pt",
+  "condition_id": "sr_mappo_mobile",
+  "evaluation_actions": {
+    "uav": [
+      3,
+      3
+    ],
+    "vehicle": [
+      0
+    ]
+  },
+  "evaluation_frozen": true,
+  "finite_metrics": true,
+  "interactions": 128,
+  "interrupted": false,
+  "mask_shapes": {
+    "uav": [
+      2,
+      6
+    ],
+    "vehicle": [
+      1,
+      5
+    ]
+  },
+  "method": "ippo_mobile",
+  "metrics": {
+    "uav_actor_updates": 8,
+    "uav_entropy": 1.7917149662971497,
+    "uav_policy_loss": -0.0014392496086657047,
+    "uav_valid_samples": 256,
+    "uav_value_loss": 1.1270857602357864,
+    "vehicle_actor_updates": 4,
+    "vehicle_entropy": 0.6923720985651016,
+    "vehicle_policy_loss": -0.002773020416498184,
+    "vehicle_valid_samples": 128,
+    "vehicle_value_loss": 1.0408843159675598
+  },
+  "peak_allocated_bytes": 23301632,
+  "peak_reserved_bytes": 29360128,
+  "replenished_resource": "pesticide",
+  "resume_equivalent": false,
+  "role_shapes": {
+    "uav": [
+      2,
+      179
+    ],
+    "vehicle": [
+      1,
+      28
+    ]
+  },
+  "sealed_accessed": false,
+  "updates": 1,
+  "validation_accessed": false
+}

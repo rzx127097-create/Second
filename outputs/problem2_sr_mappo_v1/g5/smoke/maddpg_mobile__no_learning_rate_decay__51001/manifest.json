@@ -1,0 +1,25 @@
+{
+  "artifacts": [
+    {
+      "bytes": 2325581,
+      "path": "checkpoint.pt",
+      "sha256": "8dcc3b80f1724d415fbc2465ce790f13067b89bce9ea2f53e547734aafe0567c"
+    },
+    {
+      "bytes": 38420,
+      "path": "training.jsonl",
+      "sha256": "834a581875eae33292c30ac348b2fcfae9563d7cce8c2ebbd7fbb3504d46f47d"
+    },
+    {
+      "bytes": 1149,
+      "path": "summary.json",
+      "sha256": "a430d21ef179adb0a522a1373e02f6845600f4d69a9d499385d84c2d7a8b0cc3"
+    }
+  ],
+  "battery_replenishment_enabled": false,
+  "maturity": "M2",
+  "schema_version": "g5-smoke-artifact-v1",
+  "sealed_accessed": false,
+  "status": "pass",
+  "validation_accessed": false
+}
