@@ -53,11 +53,11 @@ Generated manifest files and SHA-256 hashes:
 
 ```text
 development-smoke.json ff85a34467958ac58567730a537d5877103bb0fbe869e9e50cee9efc3222a210
-g6-training-jobs.json 2a6811727202fc88bd77775d2484925d00f7104c6d998293b2df9bfbbaa13b75
+g6-training-jobs.json 112bab3c955ae0095235f6cf2d01a8625c6f3e548edefb11768d15a83aa06603
 g6-validation-evaluations.json 6e53997906e11c7df4b7ea0c100fc2db9c9cfe3c4632c12a918ac8f8815b3a4e
 g7-analysis.json 0e91e59df68046c79d0b274514fd453024f843eb4a314c218c846debae0e7129
 g7-sealed-evaluations.json 6547610978a1d3da302c76625cd370dac52f8ee8d0005be7496c49070f6d3118
-manifest-summary.json e57cf33cdaa24305868763c118663237735a5e78a9812be20c85e416725316b1
+manifest-summary.json a67324f34f0f119da2ba1e5094ce84b043cf5e4293beb9847f6a0653a543b23a
 pilot-manifest.json 52f6fde87712df522d976137d05e7025f5e85243c61566e33895588e40447991
 ```
 
@@ -82,3 +82,8 @@ validation, sealed locking, and any execution are intentionally out of scope.
 No pilot, validation tuning, formal job, or sealed evaluation was run. No
 protected external assets, Word files, OSM input, or `_tmp_docx_assets/` were
 modified.
+
+Post-review correction: `protocol_hash` is now bound to the exact frozen
+`configs/problem2/g5/protocol.yaml` SHA-256, matching the existing partition
+adapter contract. The correction was pushed as commit
+`6355cc2` without rewriting the earlier implementation commit.
