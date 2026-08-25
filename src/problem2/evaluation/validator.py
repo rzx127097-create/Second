@@ -10,7 +10,7 @@ from typing import Any, Iterable
 
 from problem2.experiments.artifacts import write_quarantine
 from problem2.experiments.g5_contract import REDUCTION_RATE_EPSILON
-from problem2.experiments.identity import canonical_training_identity
+from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
 from .schema import ARTIFACT_MANIFEST_SCHEMA, RAW_EPISODE_SCHEMA
 from .sealed_lock import SealedAccessError, assert_partition_allowed
 
@@ -69,8 +69,11 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
             expected_identity = canonical_training_identity(row["method"], row["scale"], row["training_seed"], row["config_hash"], row["source_commit"])
         except ValueError as exc:
             raise ValidationError("canonical identity inputs are invalid") from exc
-        if row["canonical_training_identity"] != expected_identity or row["evaluation_identity"] != expected_identity:
+        if row["canonical_training_identity"] != expected_identity:
             raise ValidationError("canonical identity mismatch")
+        expected_evaluation = canonical_evaluation_identity(row["canonical_training_identity"], row["condition_id"], row["scale"], row["training_seed"], row["scenario_id"], row["partition"], row["checkpoint_hash"], row["evaluator_hash"], row["scenario_panel_hash"])
+        if row["evaluation_identity"] != expected_evaluation:
+            raise ValidationError("evaluation identity mismatch")
     if row["method"] not in _METHODS or row["condition_id"] not in _METHODS:
         raise ValidationError("method/condition is undeclared")
     if row["scale"] not in _SCALES:

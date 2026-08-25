@@ -63,11 +63,60 @@ def experiment_identity(
     return "|".join((family, condition_id, protocol_hash, canonical_identity))
 
 
+def canonical_evaluation_serialization(
+    canonical_identity: str,
+    condition_id: str,
+    scale: str,
+    training_seed: int,
+    scenario_id: int,
+    partition: str,
+    checkpoint_hash: str,
+    evaluator_hash: str,
+    scenario_panel_hash: str,
+) -> str:
+    """Return the stable scenario-level evaluation identity serialization."""
+    if not re.fullmatch(r"[0-9a-f]{64}", canonical_identity):
+        raise ValueError("canonical_training_identity must be a lowercase SHA-256 digest")
+    if isinstance(training_seed, bool) or not isinstance(training_seed, int):
+        raise ValueError("training_seed must be an integer")
+    if isinstance(scenario_id, bool) or not isinstance(scenario_id, int):
+        raise ValueError("scenario_id must be an integer")
+    values = (
+        canonical_identity,
+        _field(condition_id, "condition_id"),
+        _field(scale, "scale"),
+        str(training_seed),
+        str(scenario_id),
+        _field(partition, "partition"),
+        _field(checkpoint_hash, "checkpoint_hash"),
+        _field(evaluator_hash, "evaluator_hash"),
+        _field(scenario_panel_hash, "scenario_panel_hash"),
+    )
+    return "|".join(values)
+
+
+def canonical_evaluation_identity(
+    canonical_identity: str,
+    condition_id: str,
+    scale: str,
+    training_seed: int,
+    scenario_id: int,
+    partition: str,
+    checkpoint_hash: str,
+    evaluator_hash: str,
+    scenario_panel_hash: str,
+) -> str:
+    """Return the SHA-256 identity for one frozen scenario evaluation."""
+    raw = canonical_evaluation_serialization(canonical_identity, condition_id, scale, training_seed, scenario_id, partition, checkpoint_hash, evaluator_hash, scenario_panel_hash)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 def sha256_identity(identity: str) -> str:
     return hashlib.sha256(_field(identity, "identity").encode("utf-8")).hexdigest()
 
 
 __all__ = [
     "canonical_training_serialization", "canonical_training_identity",
+    "canonical_evaluation_serialization", "canonical_evaluation_identity",
     "experiment_identity", "sha256_identity",
 ]

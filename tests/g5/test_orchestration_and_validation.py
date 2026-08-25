@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from problem2.experiments.identity import canonical_training_identity
+from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
 from problem2.evaluation.schema import (
     ARTIFACT_MANIFEST_SCHEMA,
     RAW_EPISODE_SCHEMA,
@@ -31,7 +31,7 @@ from problem2.experiments.recovery import atomic_checkpoint_write, recover_check
 HASH_A = "a" * 64
 HASH_B = "b" * 64
 IDENTITY = "c" * 64
-RAW_IDENTITY = canonical_training_identity(
+TRAINING_IDENTITY = canonical_training_identity(
     "sr_mappo_mobile", "g20x20_d2", 42, HASH_A, "d" * 40
 )
 
@@ -59,8 +59,8 @@ def _job(identity: str = IDENTITY, input_hash: str = HASH_A) -> dict[str, object
 
 def _raw_row(**overrides: object) -> dict[str, object]:
     row: dict[str, object] = {
-        "evaluation_identity": RAW_IDENTITY,
-        "canonical_training_identity": RAW_IDENTITY,
+        "evaluation_identity": "0" * 64,
+        "canonical_training_identity": TRAINING_IDENTITY,
         "method": "sr_mappo_mobile",
         "condition_id": "sr_mappo_mobile",
         "scale": "g20x20_d2",
@@ -99,6 +99,11 @@ def _raw_row(**overrides: object) -> dict[str, object]:
         "source_locator": "episodes.jsonl:1",
     }
     row.update(overrides)
+    row["evaluation_identity"] = canonical_evaluation_identity(
+        row["canonical_training_identity"], row["condition_id"], row["scale"],
+        row["training_seed"], row["scenario_id"], row["partition"],
+        row["checkpoint_hash"], row["evaluator_hash"], row["scenario_panel_hash"],
+    )
     return row
 
 
@@ -242,8 +247,16 @@ def test_artifact_write_is_atomic_and_hash_is_content_addressed(tmp_path: Path) 
 def test_valid_raw_episode_and_long_table_are_accepted() -> None:
     row = _raw_row()
     validate_raw_episode(row, expected_provenance=_expected_provenance())
-    validated = validate_long_table([row], expected_identities={RAW_IDENTITY}, expected_provenance=_expected_provenance())
-    assert validated[0]["evaluation_identity"] == RAW_IDENTITY
+    validated = validate_long_table([row], expected_identities={row["evaluation_identity"]}, expected_provenance=_expected_provenance())
+    assert validated[0]["evaluation_identity"] == row["evaluation_identity"]
+
+
+def test_evaluation_identity_distinguishes_scenarios() -> None:
+    first = _raw_row(scenario_id=10000)
+    second = _raw_row(scenario_id=10001)
+    assert first["canonical_training_identity"] == second["canonical_training_identity"]
+    assert first["evaluation_identity"] != second["evaluation_identity"]
+    validate_long_table([first, second], expected_identities={first["evaluation_identity"], second["evaluation_identity"]}, expected_provenance=_expected_provenance())
 
 
 @pytest.mark.parametrize("method", ["ippo_mobile", "maddpg_mobile", "iql_mobile"])
@@ -291,9 +304,9 @@ def test_validator_rejects_corrupted_rows(override: dict[str, object], message: 
 def test_validator_rejects_duplicates_and_incomplete_expected_cells() -> None:
     row = _raw_row()
     with pytest.raises(ValidationError, match="duplicate"):
-        validate_long_table([row, row], expected_identities={RAW_IDENTITY}, expected_provenance=_expected_provenance())
+        validate_long_table([row, row], expected_identities={row["evaluation_identity"]}, expected_provenance=_expected_provenance())
     with pytest.raises(ValidationError, match="incomplete"):
-        validate_long_table([], expected_identities={RAW_IDENTITY}, expected_provenance=_expected_provenance())
+        validate_long_table([], expected_identities={TRAINING_IDENTITY}, expected_provenance=_expected_provenance())
 
 
 def test_quarantine_preserves_original_bytes_locator_reason_and_hash(tmp_path: Path) -> None:

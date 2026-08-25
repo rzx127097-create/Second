@@ -90,3 +90,15 @@ strict. Read-only G6/G7 preflight now checks local/upstream/origin parity,
 source cleanliness, frozen manifest hash, G4 audit markers, road-cache tuple,
 lock status/count/gate/resource flags, runtime/disk fields, and sealed IDs
 without creating a queue or mutating the lock.
+
+## Fix Round 3
+
+Training and evaluation identities are now separate, explicit contracts. Task 7
+training identity remains the SHA-256 digest of method, scale, training seed,
+config hash, and source commit. The new `canonical_evaluation_identity` binds
+that digest to condition, scale, training seed, scenario ID, partition,
+checkpoint, evaluator, and scenario-panel hashes, so one checkpoint evaluated
+on different scenarios yields distinct identities. Evidence validation
+recomputes and checks both identities while retaining mandatory provenance and
+strict domains; comparison-only schema fixtures must explicitly opt out with
+`verify_identity=False`.
