@@ -76,6 +76,11 @@ def summarize_convergence(
         value = _number(row, "reduction_rate")
         if value < -1.0 or value > 1.0:
             raise ValueError("reduction_rate outside [0,1]")
+        if "finite" in row:
+            if not isinstance(row["finite"], bool):
+                raise ValueError("finite must be boolean")
+            if not row["finite"]:
+                raise ValueError("finite=false convergence row")
         if "scale" not in row:
             raise ValueError("scale is required")
         scale = row["scale"]
@@ -116,8 +121,8 @@ def summarize_convergence(
     # A method-level crossing is observed only when every independent seed
     # crosses; otherwise the summary remains right-censored for that seed.
     observed = all(any(values[x] >= threshold for x in grid) for values in grouped.values())
-    observed_hits = [x for values in grouped.values() for x in grid if values[x] >= threshold]
-    hit = min(observed_hits) if observed_hits else budget
+    observed_hits = [min(x for x in grid if values[x] >= threshold) for values in grouped.values() if any(values[x] >= threshold for x in grid)]
+    hit = max(observed_hits) if observed and observed_hits else budget
     times = []
     for values in grouped.values():
         hits = [x for x in grid if values[x] >= threshold]

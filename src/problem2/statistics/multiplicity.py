@@ -30,13 +30,18 @@ def holm_adjust(records: Iterable[Mapping[str, object]]) -> list[AdjustedRecord]
     for row in records:
         if not isinstance(row, Mapping) or "family" not in row or "hypothesis_id" not in row:
             raise ValueError("family and hypothesis_id are required")
+        if not isinstance(row["family"], str) or not row["family"] or not isinstance(row["hypothesis_id"], str) or not row["hypothesis_id"]:
+            raise ValueError("family and hypothesis_id must be nonempty strings")
+        raw_p = row.get("p_value", row.get("raw_p_value"))
+        if isinstance(raw_p, bool) or not isinstance(raw_p, (int, float)):
+            raise ValueError("p_value must be numeric")
         try:
-            p = float(row.get("p_value", row.get("raw_p_value")))
+            p = float(raw_p)
         except (TypeError, ValueError) as exc:
             raise ValueError("p_value must be numeric") from exc
         if not math.isfinite(p) or p < 0 or p > 1:
             raise ValueError("p_value must be in [0,1]")
-        family, hypothesis = str(row["family"]), str(row["hypothesis_id"])
+        family, hypothesis = row["family"], row["hypothesis_id"]
         items.append((family, hypothesis, p))
     seen = set()
     for family, hypothesis, _ in items:

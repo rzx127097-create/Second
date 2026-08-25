@@ -12,6 +12,7 @@ ORDER = (
     ("comparator_fairness", ("comparator", "fairness")),
     ("genuine_boundary_or_absence", ("boundary", "absence", "effect")),
 )
+ALLOWED_STATUSES = {"pass", "fail", "blocked", "not_assessed", "inconclusive"}
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,10 @@ def diagnose_result_bundle(validated_rows: Iterable[Mapping[str, object]], audit
         raise ValueError("validated_rows must not be empty")
     if any(not isinstance(row, Mapping) for row in rows) or any(not isinstance(row, Mapping) for row in audits):
         raise ValueError("diagnosis inputs must be mappings")
+    for record in audits:
+        status = str(record.get("status", "unknown")).lower()
+        if status not in ALLOWED_STATUSES:
+            raise ValueError(f"unknown diagnosis status: {status}")
     stages = []
     for name, terms in ORDER:
         matched = []
@@ -59,10 +64,12 @@ def diagnose_result_bundle(validated_rows: Iterable[Mapping[str, object]], audit
         statuses = []
         for record in matched:
             status = str(record.get("status", "unknown")).lower()
+            if status not in ALLOWED_STATUSES:
+                raise ValueError(f"unknown diagnosis status: {status}")
             statuses.append(status)
             if status in {"fail", "failed", "error", "blocked"}:
                 findings.append(str(record.get("reason", record.get("message", "audit failed"))))
-        status = "fail" if findings else ("pass" if matched else "not_assessed")
+        status = "fail" if findings else ("pass" if matched and all(str(record.get("status")).lower() == "pass" for record in matched) else ("inconclusive" if matched else "not_assessed"))
         stages.append(DiagnosisStage(name, status, tuple(findings)))
-    complete = not any(stage.status == "fail" for stage in stages)
+    complete = all(stage.status == "pass" for stage in stages)
     return DiagnosisReport(tuple(stages), complete, len(rows), len(audits))

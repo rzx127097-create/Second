@@ -6,9 +6,36 @@ import json
 from pathlib import Path
 import sys
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "src"))
 from problem2.statistics.convergence import summarize_convergence
 from problem2.statistics.diagnosis import diagnose_result_bundle
 from problem2.statistics.mechanism import summarize_mechanism
+
+
+def _checked_path(path: Path) -> Path:
+    resolved = path.resolve()
+    root = (REPO_ROOT / "outputs" / "problem2_sr_mappo_v1").resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("input/output must be under the frozen output root") from exc
+    if any(part.lower() in {"raw", "sealed", "sealed_test"} for part in resolved.parts):
+        raise ValueError("raw and sealed locators are forbidden")
+    return resolved
+
+
+def _validated_payload(payload: object) -> dict:
+    if not isinstance(payload, dict) or payload.get("validated") is not True:
+        raise ValueError("payload requires explicit validated=true")
+    provenance = payload.get("provenance")
+    if not isinstance(provenance, dict) or provenance.get("status") != "validated":
+        raise ValueError("payload requires validated provenance")
+    if str(provenance.get("partition", "")).lower() in {"sealed", "sealed_test"}:
+        raise ValueError("sealed partition is forbidden")
+    if any("raw" in str(value).lower() or "sealed" in str(value).lower() for value in provenance.values()):
+        raise ValueError("raw/sealed provenance locator is forbidden")
+    return payload
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -19,10 +46,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--budget", type=int)
     args = parser.parse_args(argv)
     try:
-        source = args.input.read_text(encoding="utf-8") if args.input else sys.stdin.read()
-        payload = json.loads(source)
-        if not isinstance(payload, dict) or payload.get("validated", True) is not True:
-            raise ValueError("input must be a validated JSON mapping")
+        input_path = _checked_path(args.input) if args.input else None
+        output_path = _checked_path(args.output) if args.output else None
+        source = input_path.read_text(encoding="utf-8") if input_path else sys.stdin.read()
+        payload = _validated_payload(json.loads(source))
         rows = payload.get("rows")
         if not isinstance(rows, list):
             raise ValueError("payload requires rows")
@@ -36,8 +63,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             result = summarize_mechanism(rows)
         encoded = json.dumps(result.to_dict(), sort_keys=True, separators=(",", ":"))
-        if args.output:
-            args.output.write_text(encoded + "\n", encoding="utf-8")
+        if output_path:
+            output_path.write_text(encoded + "\n", encoding="utf-8")
         else:
             print(encoded)
         return 0

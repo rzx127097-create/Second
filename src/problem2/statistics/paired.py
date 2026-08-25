@@ -55,6 +55,7 @@ def _pairs(rows: Iterable[Mapping[str, object]], metric: str) -> dict[object, di
     grouped: dict[tuple[object, object, object, object], dict[str, float]] = {}
     explicit: dict[tuple[object, object, object, object], tuple[float, float]] = {}
     comparison_keys: set[tuple[object, object]] = set()
+    declared_orders: set[tuple[str, str]] = set()
     for row in records:
         if not isinstance(row, Mapping) or "training_seed" not in row or "scenario_id" not in row:
             raise ValueError("pairing keys are required")
@@ -66,8 +67,14 @@ def _pairs(rows: Iterable[Mapping[str, object]], metric: str) -> dict[object, di
             explicit[key] = (_finite(row["value_a"], "value_a"), _finite(row["value_b"], "value_b"))
         else:
             method = row.get("method")
+            order = row.get("method_order")
+            if not isinstance(order, (list, tuple)) or len(order) != 2 or any(not isinstance(item, str) or not item for item in order):
+                raise ValueError("method order must be explicitly declared")
+            declared_orders.add((order[0], order[1]))
             if method is None:
                 method = row.get("arm", row.get("condition", "value"))
+            if not isinstance(method, str) or method not in order:
+                raise ValueError("method is outside declared method order")
             value = row.get("value", row.get(metric))
             if value is None:
                 raise ValueError("pair value is missing")
@@ -78,6 +85,8 @@ def _pairs(rows: Iterable[Mapping[str, object]], metric: str) -> dict[object, di
             bucket[method] = _finite(value, "value")
     if len(comparison_keys) > 1:
         raise ValueError("rows contain multiple comparison conditions or scales")
+    if len(declared_orders) > 1:
+        raise ValueError("method order drift")
     if explicit:
         out: dict[object, dict[object, float]] = {}
         for (seed, scenario, _condition, _scale), (a, b) in explicit.items():
@@ -90,7 +99,9 @@ def _pairs(rows: Iterable[Mapping[str, object]], metric: str) -> dict[object, di
     for (seed, scenario, _condition, _scale), methods in grouped.items():
         if len(methods) != 2:
             raise ValueError("each seed/scenario must contain exactly two paired methods")
-        names = sorted(methods)
+        names = next(iter(declared_orders))
+        if set(methods) != set(names):
+            raise ValueError("declared method order does not match paired methods")
         out.setdefault(seed, {})[scenario] = methods[names[0]] - methods[names[1]]
     if len(out) < 1 or any(not scenarios for scenarios in out.values() for _ in [0]):
         raise ValueError("no complete pairs")

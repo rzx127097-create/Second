@@ -13,6 +13,7 @@ MECHANISM_METRICS = (
 _EXPECTED = {"rendezvous_distance_m": -1, "vehicle_service_travel_m": -1, "waiting_steps": -1,
              "pesticide_disabled_steps": -1, "effective_spray_steps": 1, "reduction_rate": 1,
              "success_at_0_85": 1}
+_INTEGER_METRICS = {"waiting_steps", "pesticide_disabled_steps", "effective_spray_steps"}
 
 
 @dataclass(frozen=True)
@@ -32,8 +33,20 @@ class MechanismSummary:
 
 def _value(row: Mapping[str, object], metric: str) -> float:
     value = row.get(metric)
-    if isinstance(value, bool):
+    if metric == "success_at_0_85":
+        if not isinstance(value, bool):
+            raise ValueError("success_at_0_85 must be boolean")
         return float(value)
+    if metric in _INTEGER_METRICS:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError(f"{metric} must be integer")
+        if value < 0:
+            raise ValueError(f"{metric} must be nonnegative")
+        return float(value)
+    if isinstance(value, bool):
+        raise ValueError(f"{metric} must be numeric")
+    if not isinstance(value, (int, float)):
+        raise ValueError(f"{metric} must be numeric")
     try:
         value = float(value)
     except (TypeError, ValueError) as exc:
@@ -63,10 +76,14 @@ def summarize_mechanism(rows: Iterable[Mapping[str, object]]) -> MechanismSummar
     if len(by_method) != 2:
         raise ValueError("mechanism summary requires exactly two methods")
     names = sorted(by_method)
-    mobile_name = next((name for name in by_method if "mobile" in name.lower()), None)
-    fixed_name = next((name for name in by_method if "fixed" in name.lower()), None)
-    if mobile_name is not None and fixed_name is not None:
-        names = [mobile_name, fixed_name]
+    allowed = {"mobile", "fixed", "sr_mappo_mobile", "sr_mappo_fixed"}
+    if set(by_method) - allowed:
+        raise ValueError("method names must be mobile/fixed")
+    mobile_name = next((name for name in by_method if name.endswith("mobile") or name == "mobile"), None)
+    fixed_name = next((name for name in by_method if name.endswith("fixed") or name == "fixed"), None)
+    if mobile_name is None or fixed_name is None:
+        raise ValueError("method names must declare mobile and fixed")
+    names = [mobile_name, fixed_name]
     means = {method: {metric: fmean(_value(row, metric) for row in method_rows) for metric in MECHANISM_METRICS} for method, method_rows in by_method.items()}
     deltas: list[dict[str, object]] = []
     for key in sorted(cells, key=str):
@@ -81,6 +98,10 @@ def summarize_mechanism(rows: Iterable[Mapping[str, object]]) -> MechanismSummar
     for delta in deltas:
         seed_groups.setdefault(delta["training_seed"], []).append(delta)
     seed_ok = all(all(fmean(d[metric] for d in group) * _EXPECTED[metric] >= 0 for metric in MECHANISM_METRICS) for group in seed_groups.values())
+    scale_groups: dict[object, list[dict[str, object]]] = {}
+    for delta in deltas:
+        scale_groups.setdefault(delta["scale"], []).append(delta)
+    scale_ok = all(all(fmean(d[metric] for d in group) * _EXPECTED[metric] >= 0 for metric in MECHANISM_METRICS) for group in scale_groups.values())
     aggregate_ok = all((means[names[0]][metric] - means[names[1]][metric]) * _EXPECTED[metric] >= 0 for metric in MECHANISM_METRICS)
     endpoint = all((means[names[0]][metric] - means[names[1]][metric]) * _EXPECTED[metric] >= 0 for metric in ("reduction_rate", "success_at_0_85"))
     intermediates = all((means[names[0]][metric] - means[names[1]][metric]) * _EXPECTED[metric] >= 0 for metric in MECHANISM_METRICS[:5])
@@ -92,4 +113,4 @@ def summarize_mechanism(rows: Iterable[Mapping[str, object]]) -> MechanismSummar
         interpretation = "operational_continuity_improves_endpoint_unresolved"
     else:
         interpretation = "mechanism_not_supported_in_tested_simulation_regime"
-    return MechanismSummary(means, deltas, {"scenario": scenario_ok, "training_seed": seed_ok, "aggregate": aggregate_ok}, interpretation)
+    return MechanismSummary(means, deltas, {"scenario": scenario_ok, "training_seed": seed_ok, "scale": scale_ok, "aggregate": aggregate_ok}, interpretation)
