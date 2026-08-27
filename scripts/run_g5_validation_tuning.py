@@ -6,9 +6,12 @@ import hashlib
 import json
 from pathlib import Path
 from statistics import fmean
+import sys
 from typing import Any, Iterable
 
 import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from problem2.algorithms import build_algorithm
 from problem2.algorithms.common.checkpoint import load_checkpoint
