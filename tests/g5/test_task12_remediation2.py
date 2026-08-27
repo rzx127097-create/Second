@@ -5,11 +5,17 @@ import importlib.util
 from contextlib import contextmanager
 from pathlib import Path
 
+import numpy as np
 import pytest
 
+from problem2.algorithms.protocol import ActionResult
+from problem2.config import load_g2_config
+from problem2.domain import Action, EpisodeState, UavState, VehicleState
 from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
 from problem2.evaluation.validator import validate_long_table
 from problem2.experiments.g5_contract import load_g5_contract
+from problem2.resources.ledger import new_ledger
+from problem2.training.cooperative_env import Problem2CooperativeEnv
 from problem2.training.selection import select_candidates
 from problem2.training.tuning import (
     CanonicalValidationStore,
@@ -19,6 +25,7 @@ from problem2.training.tuning import (
 )
 from problem2.training import selection as selection_module
 from scripts import freeze_g5 as freeze_module
+from tests.g2.helpers import make_raster_graph
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -192,6 +199,22 @@ def test_recovery_rejects_a_tampered_row_chain(tmp_path: Path) -> None:
     store.ledger_path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="chain|drift|mismatch"):
         store.recover()
+
+
+def test_full_uav_does_not_create_an_illegal_service_request() -> None:
+    config = load_g2_config(ROOT / "configs" / "problem2" / "g2_deterministic.yaml")
+    graph = make_raster_graph([(0, 0)], [])
+    uav = UavState("uav-0", 5.0, 35.0, pesticide_l=config.usable_capacity_l)
+    vehicle = VehicleState("vehicle-0", 0, 5.0, 35.0, inventory_l=1.0)
+    state = EpisodeState(0, (uav,), vehicle, ledger=new_ledger((uav,), 1.0))
+    environment = Problem2CooperativeEnv(state, graph, config, max_steps=2, scenario_id=10000)
+    current = environment.reset(scenario_id=10000)
+    next_view = environment.step(ActionResult(
+        actions={"uav": np.asarray([int(Action.STAY)]), "vehicle": np.asarray([int(Action.STAY)])},
+        masks=current["masks"],
+    ))
+    assert next_view["truncated"] is False
+    assert environment.state.requests == ()
 
 
 def test_technical_failures_are_append_only_and_same_identity_can_retry(tmp_path: Path) -> None:

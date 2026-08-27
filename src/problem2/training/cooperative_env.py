@@ -481,7 +481,11 @@ class Problem2CooperativeEnv:
             if uav.active_request_id is not None:
                 continue
             delay = estimate_service_delay_s(uav, provisional, self.graph, self.config)
-            if should_request(
+            has_positive_pesticide_gap = (
+                self.config.usable_capacity_l - uav.pesticide_l
+                > self.config.tolerance
+            )
+            if has_positive_pesticide_gap and should_request(
                 uav.pesticide_l,
                 self.config.spray_flow_lpm / 60.0,
                 delay,
