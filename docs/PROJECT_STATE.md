@@ -1780,3 +1780,43 @@ contract. G6 formal jobs and G7 sealed evaluation remain unauthorized.
 The highest maturity remains M2 implementation and scoped mechanism evidence.
 Formal jobs, sealed-test evaluation, and thesis efficacy/superiority claims
 remain unauthorized until their later gates.
+
+## Task11-to-Task12 Session Handoff Record
+
+The context-free continuation document is `HANDOFF_TASK12.md`. It records the
+accepted Task11 scope and evidence, exact Task12 plan and stop conditions,
+protected paths, working-tree exclusions, validation/sealed boundaries, and
+the implementation and provenance pitfalls observed during Task11 closure.
+
+Persistence and integrity:
+
+- Handoff content commit
+  `08a66f1b74e5667c1730d68c41082854f53aa398`
+  (`docs: add Task12 context-free handoff`) was pushed to
+  `origin/codex/problem2-g5-pilot-freeze`.
+- Before this persistence record, local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-g5-pilot-freeze` all
+  returned `08a66f1b74e5667c1730d68c41082854f53aa398`.
+- `HANDOFF_TASK12.md` SHA-256 is
+  `4F8C230CB198141C30F77D469CB78CE7C9A2123E36392EBC72D3D02AE1FED9AA`.
+- All ten mandatory startup references named by the handoff exist; the five
+  recorded Task11 core artifact hashes match the persisted files; G5 contract
+  audit remains `status=pass`, `validation_accessed=false`,
+  `sealed_accessed=false`, and `actual_unlock_count=0`; `git diff --check`
+  reports no content error.
+
+Known Task12 entry issue:
+
+- `verify_pilot_artifacts` currently compares the recorded Task11 generation
+  commit `33ba716aacedeff4e90a6d6f604f103732a970fd` with the repository's current
+  HEAD. The check passes at generation time but fails after correct evidence
+  and documentation persistence advances HEAD. The generation commit remains
+  an ancestor and the frozen `src`/`scripts`/`configs`/`docs/evidence`/lock
+  scope is unchanged through the Task11 persistence commit. Task12 must add a
+  failing regression test and repair the lineage-verification semantics before
+  final `freeze_g5 --check-only`; it must not rewrite the evidence manifest to
+  claim generation at a later commit.
+
+This handoff does not authorize G6 or G7. Task12 remains the only next
+authorized activity. After this persistence commit is pushed, local,
+upstream, and remote hashes must agree before a new conversation begins work.
