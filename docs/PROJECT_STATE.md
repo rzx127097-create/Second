@@ -1723,22 +1723,28 @@ Acceptance and verification:
   and `failures=0`; every job directory contains checkpoint, manifest, summary,
   and training log files.
 - Frozen budget: `200000` interactions, checkpoint interval `10000`, checkpoint
-  count `20`, projected slowest runtime `0.7747359809025214` hours.
+  count `20`, projected slowest runtime `0.7708476562500424` hours.
 - Candidate manifest: exactly 20 content-hashed candidates, four per learning
   method, with the hashed 50-ID validation panel and frozen selection rule.
-- Core artifact SHA-256 hashes are recorded in
-  `docs/audits/g5-task11-pilot-freeze-implementation.md`.
-- `.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q`: `390 passed`;
+- Final artifact SHA-256 hashes (also recorded in
+  `docs/audits/g5-task11-pilot-freeze-implementation.md`) are:
+  `pilot-episodes.jsonl` `7609183B3B8945BC019F63F361C5FEBE7D00E9E7E4E8042BB07530A9C013DE72`,
+  `pilot-audit.json` `4A14FE3B3518ECD0E864DDD79FADFCE7311E829BB1E505E76925AE162EF58CF2`,
+  `pilot-artifact-manifest.json` `1B757397A28240C567CBADC5AD56B64C533E316558CE2924935C4D33B1ACC61E`,
+  `pilot-budget.json` `048138954F336C95E3D339AED594C71E23167EF30CC1F4A373D5C2B10BB049CB`,
+  and `validation-candidates.json`
+  `67E6784B3D00D0385310D467C351F5B3374F02C7A7D7C22C571D4DE29190419A`.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q`: `402 passed`;
   `python -m pytest tests/g2 tests/g4 -q`: `178 passed`;
-  `python -m pytest tests/g5 -q`: `329 passed`;
-  `python -m pytest tests/g5/test_pilot_freeze.py -q`: `9 passed`.
+  `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_pilot_freeze.py
+  tests/g5/test_end_to_end_smoke.py -q`: `32 passed`.
 - `python scripts/audit_g5_contracts.py`: `status=pass`,
   `actual_unlock_count=0`; compileall and diff check passed.
 - `python scripts/validate_g5_artifacts.py --root outputs/problem2_sr_mappo_v1/g5 --dry-run`:
   dry-run only, no jobs executed.
 - Refreshed Task10 smoke audits: CPU/main `pass/85`, CPU `pass/85`, CUDA
   `pass/5`; all 85 manifests bind source commit
-  `74a3fef219e507d5e5b57f57a4bf8ed86620480c` and retain false boundary flags.
+  `33ba716aacedeff4e90a6d6f604f103732a970fd` and retain false boundary flags.
 - All pilot records, nested training results, candidate manifests, and audits
   prove `validation_accessed=false`, `sealed_accessed=false`, and
   `battery_replenishment_enabled=false`; `actual_unlock_count=0`.
@@ -1748,12 +1754,20 @@ Persistence:
 - Task11 implementation commit
   `b11298b39d7996a2f46d0c98e9dec774b18a96b4`, boundary hardening commit
   `6394a677ac422e2f6fb215d43bd52e64cebbac2b`, and smoke provenance refresh
-  `74a3fef219e507d5e5b57f57a4bf8ed86620480c` are pushed to
+  `74a3fef219e507d5e5b57f57a4bf8ed86620480c` and final provenance hardening
+  `33ba716aacedeff4e90a6d6f604f103732a970fd` are pushed to
   `origin/codex/problem2-g5-pilot-freeze`; the full pilot evidence was
   generated against that source commit.
-- The pilot evidence content commit and this state-record persistence commit
-  are required before Task12 begins; final local, upstream, and
-  `git ls-remote` hashes must match.
+- Pilot evidence content commit `34f0941ca1d4d167c65e234e8313f421b05f3eaa`
+  was pushed to `origin/codex/problem2-g5-pilot-freeze`. Fresh verification
+  bound to that evidence returned pilot artifact verification `pass`,
+  32 focused Task11 tests passed, 178 G2/G4 regression tests passed, CPU
+  smoke `pass/85`, CUDA smoke `pass/5`, and all 510 pilot job manifests passed
+  the required provenance/boundary scan. Local, upstream, and
+  `git ls-remote` matched `34f0941` before this state-record commit.
+- This state-record persistence commit is the final Task11 synchronization;
+  after it, local, upstream, and `git ls-remote` hashes must match before
+  Task12 begins.
 
 No synthetic records, smoke records, validation tuning, G6 formal jobs, or G7
 sealed evaluation were substituted for the pilot evidence. Task12 is the next

@@ -69,17 +69,17 @@ smoke manifests bind the executed source commit
 
 ## Verification
 
-- `python -m pytest tests/g5/test_pilot_freeze.py -q`: `9 passed`.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5/test_pilot_freeze.py
+  tests/g5/test_end_to_end_smoke.py -q`: `32 passed`.
 - `python -m pytest tests/g5/test_end_to_end_smoke.py -q`: `15 passed`.
-- `python -m pytest tests/g3 tests/g5 -q`: `390 passed` from the isolated G5
-  environment after the final runner wiring.
+- `.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q`: `402 passed`
+  from the isolated G5 environment after the final persistence commit.
 - `python -m pytest tests/g2 tests/g4 -q`: `178 passed` from the host
   environment, which is required for the G2 cross-process replay subprocess.
 - `python scripts/audit_g5_contracts.py`: `status=pass`, validation/sealed
   access false, `actual_unlock_count=0`.
 - `python -m compileall -q src scripts` and `git diff --check`: passed.
-- `python -m pytest tests/g5 -q`: `329 passed` after the pilot runner fix;
-- `.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q`: `390 passed`;
+- `.venv-g5/Scripts/python.exe -m pytest tests/g3 tests/g5 -q`: `402 passed`;
 - `python -m pytest tests/g2 tests/g4 -q`: `178 passed`;
 - `python -m compileall -q src scripts`: exit `0`; `git diff --check`: exit `0`;
 - `python scripts/audit_g5_contracts.py`: `status=pass`,
