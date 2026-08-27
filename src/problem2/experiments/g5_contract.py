@@ -94,6 +94,7 @@ CONTRACT_FILES = (
     "docs/evidence/g5/fairness_matrix.yaml",
     "docs/evidence/g5/exclusion_contract.yaml",
     "docs/evidence/g5/checkpoint_selection.yaml",
+    "docs/evidence/g5/physical_scenario_contract.yaml",
     "docs/evidence/g1/scenario_seed_manifest.yaml",
     "docs/evidence/g1/sealed_test_lock.yaml",
     "requirements-g3.lock",
@@ -142,6 +143,24 @@ class BudgetDecision:
 
 
 @dataclass(frozen=True)
+class PhysicalScenarioContract:
+    assumption_status: str
+    empirical_claim: bool
+    deployment_claim: bool
+    gamma_shape: float
+    gamma_shape_unit: str
+    gamma_scale: float
+    gamma_scale_unit: str
+    normalized_initial_pest_total: float
+    normalized_initial_pest_total_unit: str
+    spray_mortality_per_l: float
+    spray_mortality_unit: str
+    content_hash_algorithm: str
+    content_hash_encoding: str
+    content_hash_fields: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class G5Contract:
     source_root: Path
     algorithm_name: str
@@ -155,6 +174,7 @@ class G5Contract:
     reported_budgets: tuple[str, ...]
     tuning_candidates: Mapping[str, tuple[TuningCandidate, ...]]
     metrics: Mapping[str, MetricDefinition]
+    physical_scenario: PhysicalScenarioContract
     problem1_commit: str
     problem1_blobs: Mapping[str, str]
     problem1_runtime_import_allowed: bool
@@ -418,6 +438,91 @@ def _load_protocol(root: Path) -> tuple[str, str, dict[str, tuple[int, ...]], bo
     if _integer(access["actual_unlock_count"], "actual unlock count") != 0:
         raise G5ContractError("sealed access actual unlock count must be zero")
     return algorithm_name, problem_description, partitions, validation_accessed, validation_tuning_authorized, sealed_accessed
+
+
+def _quantity(value: Any, name: str) -> tuple[float, str]:
+    record = _mapping(value, name)
+    _require_keys(record, {"value", "unit"}, name)
+    return _number(record["value"], f"{name}.value", positive=True), _text(
+        record["unit"], f"{name}.unit"
+    )
+
+
+def _load_physical_scenario(root: Path) -> PhysicalScenarioContract:
+    name = "physical scenario contract"
+    payload = _load_yaml(root, "docs/evidence/g5/physical_scenario_contract.yaml")
+    _header(
+        payload,
+        "G5-PHYSICAL-SCENARIO",
+        name,
+        {
+            "scope",
+            "assumption_status",
+            "claim_boundary",
+            "initial_pest",
+            "spray_response",
+            "scenario_content_hash",
+        },
+    )
+    if payload["scope"] != "candidate_training_and_validation_scenario_generation":
+        raise G5ContractError("physical scenario contract scope drifted")
+    assumption_status = _text(payload["assumption_status"], f"{name}.assumption_status")
+    if assumption_status != "provisional_simulation_assumption":
+        raise G5ContractError("physical scenario assumptions must remain explicitly provisional")
+
+    claims = _mapping(payload["claim_boundary"], f"{name}.claim_boundary")
+    _require_keys(claims, {"empirical_claim", "deployment_claim", "statement"}, f"{name}.claim_boundary")
+    empirical_claim = _strict_bool(claims["empirical_claim"], "physical scenario empirical claim", False)
+    deployment_claim = _strict_bool(claims["deployment_claim"], "physical scenario deployment claim", False)
+    statement = _text(claims["statement"], f"{name}.claim_boundary.statement").lower()
+    if "provisional simulation assumptions" not in statement or "do not evidence" not in statement:
+        raise G5ContractError("physical scenario claim boundary is not explicit")
+
+    initial = _mapping(payload["initial_pest"], f"{name}.initial_pest")
+    _require_keys(initial, {"distribution", "gamma_shape", "gamma_scale", "normalized_total"}, f"{name}.initial_pest")
+    if initial["distribution"] != "gamma":
+        raise G5ContractError("physical scenario initial pest distribution must be gamma")
+    gamma_shape, gamma_shape_unit = _quantity(initial["gamma_shape"], f"{name}.initial_pest.gamma_shape")
+    gamma_scale, gamma_scale_unit = _quantity(initial["gamma_scale"], f"{name}.initial_pest.gamma_scale")
+    normalized_total, normalized_total_unit = _quantity(initial["normalized_total"], f"{name}.initial_pest.normalized_total")
+
+    response = _mapping(payload["spray_response"], f"{name}.spray_response")
+    _require_keys(response, {"model", "mortality_per_l"}, f"{name}.spray_response")
+    if response["model"] != "linear_local_decrease":
+        raise G5ContractError("physical scenario spray response model drifted")
+    mortality, mortality_unit = _quantity(response["mortality_per_l"], f"{name}.spray_response.mortality_per_l")
+
+    content_hash = _mapping(payload["scenario_content_hash"], f"{name}.scenario_content_hash")
+    _require_keys(content_hash, {"algorithm", "encoding", "includes"}, f"{name}.scenario_content_hash")
+    if content_hash["algorithm"] != "sha256" or content_hash["encoding"] != "canonical_metadata_json_then_float64_little_endian":
+        raise G5ContractError("physical scenario content hash definition drifted")
+    fields = _text_tuple(content_hash["includes"], f"{name}.scenario_content_hash.includes")
+    expected_fields = (
+        "partition",
+        "scenario_id",
+        "scale_id",
+        "physical_scenario_contract_sha256",
+        "initial_pest_shape",
+        "initial_pest_values",
+    )
+    if fields != expected_fields:
+        raise G5ContractError("physical scenario content hash fields drifted")
+    return PhysicalScenarioContract(
+        assumption_status=assumption_status,
+        empirical_claim=empirical_claim,
+        deployment_claim=deployment_claim,
+        gamma_shape=gamma_shape,
+        gamma_shape_unit=gamma_shape_unit,
+        gamma_scale=gamma_scale,
+        gamma_scale_unit=gamma_scale_unit,
+        normalized_initial_pest_total=normalized_total,
+        normalized_initial_pest_total_unit=normalized_total_unit,
+        spray_mortality_per_l=mortality,
+        spray_mortality_unit=mortality_unit,
+        content_hash_algorithm="sha256",
+        content_hash_encoding="canonical_metadata_json_then_float64_little_endian",
+        content_hash_fields=fields,
+    )
 
 
 def _load_methods(
@@ -921,6 +1026,7 @@ def load_g5_contract(root: Path) -> G5Contract:
     algorithm_name, problem_description, partitions, validation_accessed, validation_tuning_authorized, sealed_accessed = _load_protocol(repository_root)
     methods, conditions, stability_components = _load_methods(repository_root)
     tuning_candidates = _load_tuning(repository_root)
+    physical_scenario = _load_physical_scenario(repository_root)
     _load_budget(repository_root)
     _load_pilot(repository_root, partitions)
     metrics = _load_metrics(repository_root)
@@ -951,6 +1057,7 @@ def load_g5_contract(root: Path) -> G5Contract:
         reported_budgets=reported_budgets,
         tuning_candidates=tuning_candidates,
         metrics=metrics,
+        physical_scenario=physical_scenario,
         problem1_commit=problem1_commit,
         problem1_blobs=problem1_blobs,
         problem1_runtime_import_allowed=runtime_allowed,

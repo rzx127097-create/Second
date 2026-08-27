@@ -5,6 +5,7 @@ from dataclasses import asdict
 import hashlib
 import json
 from pathlib import Path
+import re
 from statistics import fmean
 import sys
 from typing import Any, Iterable
@@ -14,11 +15,19 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from problem2.algorithms import build_algorithm
-from problem2.algorithms.common.checkpoint import load_checkpoint
+from problem2.algorithms.common.checkpoint import load_training_checkpoint
 from problem2.evaluation.runner import evaluate_episode
-from problem2.experiments.artifacts import atomic_write_bytes
+from problem2.experiments.artifacts import atomic_write_bytes, write_quarantine
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.training.runner import run_training_job
+from problem2.training.physical_training import (
+    EXPECTED_BUDGET_SHA256,
+    EXPECTED_CANDIDATE_SHA256,
+    PHYSICAL_TRAINING_SCHEMA_VERSION,
+    run_physical_candidate_training,
+    run_noncanonical_physical_candidate_training_for_test,
+    validate_physical_training_completion,
+)
 from problem2.training.selection import select_candidates
 from problem2.training.pilot import build_pilot_matrix, run_pilot_matrix, verify_pilot_artifacts
 from problem2.training.tuning import (
@@ -28,8 +37,6 @@ from problem2.training.tuning import (
 )
 
 
-EXPECTED_CANDIDATE_SHA256 = "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a"
-EXPECTED_BUDGET_SHA256 = "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb"
 METHODS = ("sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile")
 SEEDS = (51001, 51002, 51003)
 VALIDATION_IDS = tuple(range(20000, 20050))
@@ -59,25 +66,96 @@ def _row_key(row: dict[str, Any]) -> tuple[str, str, int, int]:
     )
 
 
-def _load_training_result(path: Path, *, method: str, candidate_id: str, config_hash: str, seed: int, interactions: int) -> dict[str, Any] | None:
+def _load_training_result(
+    path: Path,
+    *,
+    root: Path,
+    method: str,
+    candidate_id: str,
+    config_hash: str,
+    seed: int,
+    interactions: int,
+    device: str,
+    canonical: bool,
+) -> dict[str, Any] | None:
+    """Load only a manifest-complete identity through the shared strict validator."""
+
     if not path.is_file():
+        if path.parent.is_dir() and any(
+            (path.parent / name).exists()
+            for name in ("checkpoint.pt", "physical-episodes.jsonl", "summary.json")
+        ):
+            raise RuntimeError(f"physical training completion manifest is missing: {path}")
         return None
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    expected = {
-        "method": method,
-        "candidate_id": candidate_id,
-        "candidate_config_hash": config_hash,
-        "training_seed": seed,
-        "interactions": interactions,
-        "interrupted": False,
-        "finite_metrics": True,
-        "evaluation_frozen": True,
-    }
-    if any(payload.get(key) != value for key, value in expected.items()):
-        raise RuntimeError(f"recovered training result drifted: {path}")
-    if not Path(payload.get("checkpoint", "")).is_file():
-        raise RuntimeError(f"recovered training checkpoint is missing: {path}")
-    return payload
+    contract = load_g5_contract(root)
+    return validate_physical_training_completion(
+        path,
+        contract=contract,
+        method=method,
+        candidate_id=candidate_id,
+        config_hash=config_hash,
+        seed=seed,
+        interactions=interactions,
+        scale="g20x20_d2",
+        device=device,
+        canonical=canonical,
+    )
+
+
+def _quarantine_attempt(identity_root: Path, attempt_root: Path, error: Exception) -> None:
+    payload = bytearray()
+    for name in ("manifest.json", "summary.json", "physical-episodes.jsonl", "checkpoint.pt"):
+        path = attempt_root / name
+        if path.is_file():
+            payload.extend(name.encode("utf-8") + b"\0" + path.read_bytes() + b"\0")
+    write_quarantine(
+        identity_root / "quarantine.jsonl",
+        bytes(payload),
+        locator=str(attempt_root),
+        reason=f"{type(error).__name__}: {error}",
+    )
+
+
+def _attempt_roots(identity_root: Path, method: str, seed: int) -> list[tuple[int, Path]]:
+    if not identity_root.is_dir():
+        return []
+    result: list[tuple[int, Path]] = []
+    for candidate in identity_root.iterdir():
+        match = re.fullmatch(r"attempt-(\d{6})", candidate.name)
+        if match and candidate.is_dir():
+            result.append((int(match.group(1)), candidate / f"{method}__{method}__{seed}"))
+    return sorted(result)
+
+
+def _train_frozen_candidates(
+    root: Path,
+    *,
+    output_root: Path,
+    device: str,
+    interactions: int,
+    methods: Iterable[str],
+    seeds: Iterable[int],
+    canonical: bool,
+    rerun_invalid_from_scratch: bool,
+) -> dict[str, Any]:
+    root = root.resolve()
+    output_root = output_root.resolve()
+    canonical_root = (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+    if canonical:
+        if not output_root.is_relative_to(canonical_root):
+            raise ValueError("canonical training output must be confined below the G5 validation root")
+        if type(interactions) is not int or interactions != 200000:
+            raise ValueError("canonical train-only requires exactly 200000 interactions")
+    return _run_candidate_matrix(
+        root,
+        output_root=output_root,
+        device=device,
+        interactions=interactions,
+        methods=methods,
+        seeds=seeds,
+        canonical=canonical,
+        rerun_invalid_from_scratch=rerun_invalid_from_scratch,
+    )
 
 
 def train_frozen_candidates(
@@ -88,33 +166,117 @@ def train_frozen_candidates(
     interactions: int,
     methods: Iterable[str],
     seeds: Iterable[int],
+    rerun_invalid_from_scratch: bool = False,
 ) -> dict[str, Any]:
-    root = root.resolve()
-    output_root = output_root.resolve()
+    return _train_frozen_candidates(
+        root,
+        output_root=output_root,
+        device=device,
+        interactions=interactions,
+        methods=methods,
+        seeds=seeds,
+        canonical=True,
+        rerun_invalid_from_scratch=rerun_invalid_from_scratch,
+    )
+
+
+def train_frozen_candidates_for_test(
+    root: Path,
+    *,
+    output_root: Path,
+    device: str,
+    interactions: int,
+    methods: Iterable[str],
+    seeds: Iterable[int],
+    rerun_invalid_from_scratch: bool = False,
+) -> dict[str, Any]:
+    canonical_root = (root.resolve() / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+    if output_root.resolve().is_relative_to(canonical_root):
+        raise ValueError("noncanonical test training cannot use the canonical validation root")
+    return _train_frozen_candidates(
+        root,
+        output_root=output_root,
+        device=device,
+        interactions=interactions,
+        methods=methods,
+        seeds=seeds,
+        canonical=False,
+        rerun_invalid_from_scratch=rerun_invalid_from_scratch,
+    )
+
+
+def _run_candidate_matrix(
+    root: Path,
+    *,
+    output_root: Path,
+    device: str,
+    interactions: int,
+    methods: Iterable[str],
+    seeds: Iterable[int],
+    canonical: bool,
+    rerun_invalid_from_scratch: bool,
+) -> dict[str, Any]:
+    method_tuple = tuple(methods)
+    seed_tuple = tuple(seeds)
+    if not method_tuple or any(method not in METHODS for method in method_tuple):
+        raise ValueError("train-only methods must be registered frozen learning methods")
+    if len(set(method_tuple)) != len(method_tuple):
+        raise ValueError("train-only methods contain a duplicate identity")
+    if not seed_tuple or any(type(seed) is not int or seed not in SEEDS for seed in seed_tuple):
+        raise ValueError("train-only training seed is outside the frozen development partition")
+    if len(set(seed_tuple)) != len(seed_tuple):
+        raise ValueError("train-only seeds contain a duplicate identity")
+    if type(interactions) is not int or interactions <= 0:
+        raise ValueError("train-only interactions must be a positive integer")
     contract = load_g5_contract(root)
     candidates_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json"
     budget_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json"
     if _sha256(candidates_path) != EXPECTED_CANDIDATE_SHA256 or _sha256(budget_path) != EXPECTED_BUDGET_SHA256:
         raise RuntimeError("frozen candidate or budget hash differs before training")
     candidate_payload = _load_training_candidate_manifest(candidates_path)
+    if candidate_payload.get("equal_environment_interactions") != 200000:
+        raise ValueError("candidate manifest must declare exactly 200000 environment interactions")
+    for declared_method, rows in candidate_payload["candidates"].items():
+        if declared_method not in METHODS or not isinstance(rows, list) or len(rows) != 4:
+            raise ValueError("candidate manifest must declare four candidates for every method")
+        for candidate in rows:
+            if candidate.get("environment_interactions") != 200000:
+                raise ValueError("every candidate must declare exactly 200000 environment interactions")
     completed = 0
-    for method in tuple(methods):
-        if method not in METHODS:
-            raise ValueError(f"unknown tuning method {method}")
+    requested_identities: list[dict[str, Any]] = []
+    summary_paths: list[str] = []
+    validated_results: list[dict[str, Any]] = []
+    for method in method_tuple:
         for candidate in candidate_payload["candidates"][method]:
-            for seed in tuple(seeds):
-                train_root = output_root / "training" / method / candidate["candidate_id"] / str(seed)
-                summary_path = train_root / f"{method}__{method}__{seed}" / "summary.json"
-                result = _load_training_result(
-                    summary_path,
-                    method=method,
-                    candidate_id=candidate["candidate_id"],
-                    config_hash=candidate["config_hash"],
-                    seed=seed,
-                    interactions=interactions,
-                )
+            for seed in seed_tuple:
+                identity_root = output_root / "training" / method / candidate["candidate_id"] / str(seed)
+                result: dict[str, Any] | None = None
+                attempts = _attempt_roots(identity_root, method, seed)
+                for _, attempt_root in reversed(attempts):
+                    try:
+                        result = _load_training_result(
+                            attempt_root / "manifest.json",
+                            root=root,
+                            method=method,
+                            candidate_id=candidate["candidate_id"],
+                            config_hash=candidate["config_hash"],
+                            seed=seed,
+                            interactions=interactions,
+                            device=device,
+                            canonical=canonical,
+                        )
+                    except Exception as exc:
+                        _quarantine_attempt(identity_root, attempt_root, exc)
+                        if not rerun_invalid_from_scratch:
+                            raise
+                        continue
+                    if result is not None:
+                        break
                 if result is None:
-                    run_training_job(
+                    attempt_number = (max((number for number, _ in attempts), default=0) + 1)
+                    train_root = identity_root / f"attempt-{attempt_number:06d}"
+                    runner = run_physical_candidate_training if canonical else run_noncanonical_physical_candidate_training_for_test
+                    result = runner(
                         {
                             "source_root": root,
                             "_contract": contract,
@@ -131,9 +293,37 @@ def train_frozen_candidates(
                         interactions,
                         train_root,
                     )
+                    result = _load_training_result(
+                        Path(result["manifest"]),
+                        root=root,
+                        method=method,
+                        candidate_id=candidate["candidate_id"],
+                        config_hash=candidate["config_hash"],
+                        seed=seed,
+                        interactions=interactions,
+                        device=device,
+                        canonical=canonical,
+                    )
+                requested_identities.append({
+                    "method": method,
+                    "candidate_id": candidate["candidate_id"],
+                    "training_seed": seed,
+                })
+                summary_paths.append(str(Path(result["summary"]).resolve()))
+                validated_results.append(result)
                 completed += 1
                 print(json.dumps({"event": "training_complete", "method": method, "candidate_id": candidate["candidate_id"], "seed": seed, "completed": completed}), flush=True)
-    return {"status": "training_complete", "job_count": completed, "validation_accessed": False, "sealed_accessed": False}
+    return {
+        "status": "training_complete",
+        "job_count": completed,
+        "requested_identities": requested_identities,
+        "summary_paths": summary_paths,
+        "validation_accessed": False,
+        "sealed_accessed": False,
+        "canonical": canonical,
+        "evidence_status": "canonical_candidate_evidence" if canonical else "noncanonical_test_only",
+        "_validated_results": validated_results,
+    }
 
 
 def _load_training_candidate_manifest(path: Path) -> dict[str, Any]:
@@ -215,15 +405,32 @@ def run_validation_tuning(
     scenario_tuple = tuple(scenario_ids)
     method_tuple = tuple(methods)
     seed_tuple = tuple(seeds)
+    canonical_root = (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+    if output_root != canonical_root:
+        raise ValueError("canonical validation output must be the frozen G5 validation root")
     if scenario_tuple != VALIDATION_IDS:
         raise ValueError("validation tuning requires exactly scenarios 20000-20049")
-    if interactions != 200000 and output_root == (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve():
+    if method_tuple != METHODS or seed_tuple != SEEDS:
+        raise ValueError("validation tuning requires every frozen method and training seed")
+    if interactions != 200000:
         raise ValueError("canonical validation tuning requires exactly 200000 interactions")
+    training = _train_frozen_candidates(
+        root,
+        output_root=output_root,
+        device=device,
+        interactions=interactions,
+        methods=method_tuple,
+        seeds=seed_tuple,
+        canonical=True,
+        rerun_invalid_from_scratch=False,
+    )
+    validated_training = {
+        (row["method"], row["candidate_id"], row["training_seed"]): row
+        for row in training["_validated_results"]
+    }
     ledger = ValidationAccessLedger(candidates_path, budget_path, output_root / "validation-access.json")
     if interactions != ledger.interactions:
-        if output_root == (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve():
-            raise ValueError("canonical candidate budget drifted")
-        ledger.interactions = interactions
+        raise ValueError("canonical candidate budget drifted")
     candidate_payload = _load_training_candidate_manifest(candidates_path)
     consolidated = output_root / "validation-episodes.jsonl"
     existing_rows = [] if not consolidated.exists() else [
@@ -253,52 +460,11 @@ def run_validation_tuning(
             candidate_rows: list[dict[str, Any]] = []
             candidate_id = candidate["candidate_id"]
             for seed in seed_tuple:
-                train_root = output_root / "training" / method / candidate_id / str(seed)
-                summary_path = train_root / f"{method}__{method}__{seed}" / "summary.json"
-                result = _load_training_result(
-                    summary_path,
-                    method=method,
-                    candidate_id=candidate_id,
-                    config_hash=candidate["config_hash"],
-                    seed=seed,
-                    interactions=interactions,
-                )
-                if result is None:
-                    try:
-                        result = run_training_job(
-                            {
-                                "source_root": root,
-                                "_contract": contract,
-                                "method": method,
-                                "condition_id": method,
-                                "candidate_id": candidate_id,
-                                "partition": "development",
-                                "scenario_id": 10000,
-                                "scenario_ids": list(range(10000, 10020)),
-                                "training_seed": seed,
-                                "scale": "g20x20_d2",
-                            },
-                            device,
-                            interactions,
-                            train_root,
-                        )
-                    except Exception as exc:
-                        _write_json(output_root / "failures" / f"{method}__{candidate_id}__{seed}.json", {
-                            "method": method,
-                            "candidate_id": candidate_id,
-                            "config_hash": candidate["config_hash"],
-                            "training_seed": seed,
-                            "interaction_count": interactions,
-                            "error_type": type(exc).__name__,
-                            "error": str(exc),
-                            "validation_accessed": bool(existing_rows),
-                            "sealed_accessed": False,
-                        })
-                        raise
-                algorithm, _ = load_checkpoint(
+                result = validated_training[(method, candidate_id, seed)]
+                algorithm, _ = load_training_checkpoint(
                     Path(result["checkpoint"]),
                     lambda: build_algorithm(method, contract, device, candidate_id=candidate_id, scale="g20x20_d2"),
-                    expected_provenance=result["provenance"],
+                    result["checkpoint_provenance"],
                 )
                 for scenario_id in scenario_tuple:
                     key = (method, candidate_id, seed, scenario_id)
@@ -371,19 +537,26 @@ def run_validation_tuning(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
-    parser.add_argument("--output-root", type=Path, default=Path("outputs/problem2_sr_mappo_v1/g5/validation"))
+    parser.add_argument("--output-root", type=Path)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--interactions", type=int, default=200000)
     parser.add_argument("--train-only", action="store_true")
+    parser.add_argument("--rerun-invalid-from-scratch", action="store_true")
     parser.add_argument("--methods", default=",".join(METHODS))
     parser.add_argument("--seeds", default=",".join(str(seed) for seed in SEEDS))
     args = parser.parse_args()
+    root = args.root.resolve()
+    output_root = (
+        (args.output_root if args.output_root.is_absolute() else root / args.output_root).resolve()
+        if args.output_root is not None
+        else (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+    )
     methods = tuple(value for value in args.methods.split(",") if value)
     seeds = tuple(int(value) for value in args.seeds.split(",") if value)
     result = (
-        train_frozen_candidates(args.root, output_root=args.output_root, device=args.device, interactions=args.interactions, methods=methods, seeds=seeds)
+        train_frozen_candidates(root, output_root=output_root, device=args.device, interactions=args.interactions, methods=methods, seeds=seeds, rerun_invalid_from_scratch=args.rerun_invalid_from_scratch)
         if args.train_only
-        else run_validation_tuning(args.root, output_root=args.output_root, device=args.device, interactions=args.interactions, methods=methods, seeds=seeds)
+        else run_validation_tuning(root, output_root=output_root, device=args.device, interactions=args.interactions, methods=methods, seeds=seeds)
     )
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0

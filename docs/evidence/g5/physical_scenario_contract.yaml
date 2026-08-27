@@ -1,0 +1,35 @@
+schema_version: g5.v1
+contract_id: G5-PHYSICAL-SCENARIO
+status: design_frozen
+scope: candidate_training_and_validation_scenario_generation
+assumption_status: provisional_simulation_assumption
+claim_boundary:
+  empirical_claim: false
+  deployment_claim: false
+  statement: These values are provisional simulation assumptions and do not evidence ecological efficacy or field deployment.
+initial_pest:
+  distribution: gamma
+  gamma_shape:
+    value: 2.0
+    unit: dimensionless
+  gamma_scale:
+    value: 1.0
+    unit: normalized_pest_intensity
+  normalized_total:
+    value: 100.0
+    unit: normalized_pest_units
+spray_response:
+  model: linear_local_decrease
+  mortality_per_l:
+    value: 5.0
+    unit: normalized_pest_units_per_litre
+scenario_content_hash:
+  algorithm: sha256
+  encoding: canonical_metadata_json_then_float64_little_endian
+  includes:
+    - partition
+    - scenario_id
+    - scale_id
+    - physical_scenario_contract_sha256
+    - initial_pest_shape
+    - initial_pest_values

@@ -196,20 +196,55 @@ def _validate_preflight(preflight: Mapping[str, Any], requested_device: str) -> 
 
 
 def _evaluation_snapshot(algorithm: Any) -> bytes:
-    """Stable snapshot of policy/evaluation state, excluding replay bookkeeping."""
-    payload: list[tuple[str, str, bytes]] = []
+    """Stable inference-state snapshot excluding replay, pending rows, and optimizers."""
+
+    def stable(value: Any) -> Any:
+        if isinstance(value, torch.Tensor):
+            array = value.detach().cpu().contiguous().numpy()
+            return ("tensor", str(array.dtype), tuple(array.shape), array.tobytes())
+        if isinstance(value, np.ndarray):
+            array = np.ascontiguousarray(value)
+            return ("ndarray", str(array.dtype), tuple(array.shape), array.tobytes())
+        if isinstance(value, Mapping):
+            return tuple((str(key), stable(nested)) for key, nested in sorted(value.items(), key=lambda item: str(item[0])))
+        if isinstance(value, (list, tuple)):
+            return tuple(stable(item) for item in value)
+        if isinstance(value, np.generic):
+            return value.item()
+        if value is None or isinstance(value, (str, bytes, bool, int, float)):
+            return value
+        return repr(value)
+
+    payload: list[tuple[str, str, Any]] = []
     for name, value in sorted(vars(algorithm).items()):
         if isinstance(value, torch.nn.Module):
             for key, tensor in sorted(value.state_dict().items()):
-                payload.append((name, key, tensor.detach().cpu().numpy().tobytes()))
+                payload.append((name, key, stable(tensor)))
+            payload.append((name, "training", bool(value.training)))
+        elif name.endswith("normalizer") and hasattr(value, "state_dict"):
+            payload.append((name, "state", stable(value.state_dict())))
+        elif "normalizer" in name and isinstance(value, Mapping):
+            normalizers = {
+                str(key): nested.state_dict()
+                for key, nested in value.items()
+                if hasattr(nested, "state_dict")
+            }
+            if normalizers:
+                payload.append((name, "state", stable(normalizers)))
     payload.append(("training", "flag", str(bool(getattr(algorithm, "training", True))).encode()))
     if hasattr(algorithm, "exploration"):
-        payload.append(("exploration", "value", repr(getattr(algorithm, "exploration")).encode()))
+        payload.append(("exploration", "state", stable(getattr(algorithm, "exploration"))))
     return pickle.dumps(payload, protocol=5)
 
 
 def _state_digest(algorithm: Any) -> str:
     return hashlib.sha256(_evaluation_snapshot(algorithm)).hexdigest()
+
+
+def evaluation_state_digest(algorithm: Any) -> str:
+    """Return the stable policy/evaluation digest used by training summaries."""
+
+    return _state_digest(algorithm)
 
 
 def _value_digest(value: Any) -> str:
@@ -290,10 +325,9 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         records.append({"interaction": index + 1, "method": method, "condition_id": condition, "candidate_id": candidate_id, "candidate_config_hash": candidate.config_hash, "scale": scale, "scenario_id": int(job["scenario_id"]), "role_shapes": {key: list(value.shape) for key, value in current.items()}, "mask_shapes": {key: list(value.shape) for key, value in _masks().items()}, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False})
     interrupted = stop_at < target
     checkpoint = output / "checkpoint.pt"
-    # G3 checkpoint provenance is deliberately extended only in the outer report;
-    # checkpoint loader compares the frozen contract fields.
-    save_checkpoint(checkpoint, algorithm, step=stop_at, provenance=provenance | {"interactions": stop_at})
     if interrupted:
+        # Interrupted smoke checkpoints remain resumable pre-update snapshots.
+        save_checkpoint(checkpoint, algorithm, step=stop_at, provenance=provenance | {"interactions": stop_at})
         return {"method": method, "algorithm_id": actual_method, "condition_id": condition, "candidate_id": candidate_id, "candidate_config_hash": candidate.config_hash, "scale": scale, "scenario_id": int(job["scenario_id"]), "scenario_ids": list(scenario_ids), "partition": "development", "training_seed": seed, "interactions": stop_at, "updates": 0, "interrupted": True, "checkpoint": str(checkpoint), "training_log": str(output / "training.jsonl"), "validation_accessed": False, "sealed_accessed": False, "resume_equivalent": False, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
     metrics = algorithm.update()
     finite = all(np.isfinite(float(value)) for value in metrics.values() if isinstance(value, (int, float, np.integer, np.floating)))
@@ -311,6 +345,9 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         append_jsonl(log_path, record)
     diagnostics = algorithm.diagnostics.snapshot()
     state_digest = _state_digest(algorithm)
+    # Completed smoke checkpoints must contain the exact post-update evaluation
+    # state summarized below. They are distinct from interrupted resume points.
+    save_checkpoint(checkpoint, algorithm, step=stop_at, provenance=provenance | {"interactions": stop_at})
     metrics_digest = _value_digest(metrics)
     diagnostics_digest = _value_digest(diagnostics)
     resume_comparison = {"algorithm_state_equal": False, "metrics_equal": False, "diagnostics_equal": False}
@@ -335,4 +372,4 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     return summary
 
 
-__all__ = ["run_training_job"]
+__all__ = ["evaluation_state_digest", "run_training_job"]

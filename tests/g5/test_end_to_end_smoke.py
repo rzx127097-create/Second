@@ -5,9 +5,15 @@ from pathlib import Path
 
 import pytest
 
+from problem2.algorithms import build_algorithm
+from problem2.algorithms.common.checkpoint import load_checkpoint
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.training.preflight import run_preflight
-from problem2.training.runner import ALL_CONDITION_TYPES, run_training_job
+from problem2.training.runner import (
+    ALL_CONDITION_TYPES,
+    _state_digest as evaluation_state_digest,
+    run_training_job,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -57,6 +63,17 @@ def test_runner_emits_finite_update_exact_roles_checkpoint_and_frozen_eval(tmp_p
     manifest = json.loads(Path(result["manifest"]).read_text(encoding="utf-8"))
     assert manifest["status"] == "pass"
     assert manifest["artifacts"]
+
+
+def test_completed_smoke_checkpoint_contains_the_post_update_policy(tmp_path: Path, contract) -> None:
+    result = run_training_job(_job("sr_mappo_mobile"), "cpu", 4, tmp_path)
+    restored, _ = load_checkpoint(
+        result["checkpoint"],
+        lambda: build_algorithm("sr_mappo_mobile", contract, "cpu"),
+        expected_provenance=result["provenance"],
+    )
+
+    assert evaluation_state_digest(restored) == result["algorithm_state_digest"]
 
 
 def test_runner_supports_interruption_resume_equivalence(tmp_path: Path) -> None:

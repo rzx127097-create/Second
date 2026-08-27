@@ -5,18 +5,48 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Mapping
 
 import numpy as np
 
 from problem2.experiments.artifacts import atomic_write_bytes
+from problem2.experiments.g5_contract import load_g5_contract
 from problem2.config import load_g2_config
 from problem2.domain import EpisodeState, UavState, VehicleState
 from problem2.resources.ledger import new_ledger
 from problem2.road.cache import RoadCacheExpectation, load_road_cache
 
 from .cooperative_env import Problem2CooperativeEnv
+
+
+INITIAL_ONBOARD_PESTICIDE_L = 0.2875
+DEVELOPMENT_SCENARIO_IDS = range(10000, 10020)
+VALIDATION_SCENARIO_IDS = range(20000, 20050)
+SEALED_SCENARIO_IDS = range(30000, 30100)
+
+
+class _Task12PhysicalEnv(Problem2CooperativeEnv):
+    """Keep active dispatch mapping aligned with its one-hot behavior mask."""
+
+    def _candidate_requests(self) -> tuple[list[Any], list[str | None]]:
+        if self._dispatch is None:
+            return super()._candidate_requests()
+        dispatch = self._dispatch
+        request = next(
+            item for item in self._state.requests if item.request_id == dispatch.request_id
+        )
+        mapping: list[str | None] = [None, None, None, None]
+        mapping[dispatch.sampled_slot - 1] = dispatch.request_id
+        self._dispatch = replace(dispatch, candidate_mapping=tuple(mapping))
+        self._candidate_nodes = {
+            dispatch.request_id: (
+                dispatch.selected_service_node,
+                dispatch.route_length_m,
+            )
+        }
+        return [request], mapping
 
 
 def _file_sha256(path: Path) -> str:
@@ -155,7 +185,17 @@ class ValidationAccessLedger:
 class ActionDrivenValidationEnv:
     """Attach deterministic local pest mortality to accepted physical spray events."""
 
-    def __init__(self, physical_environment: Any, *, initial_pest: np.ndarray, mortality_per_l: float) -> None:
+    def __init__(
+        self,
+        physical_environment: Any,
+        *,
+        initial_pest: np.ndarray,
+        mortality_per_l: float,
+        partition: str = "validation",
+        source_provenance: Mapping[str, Any] | None = None,
+    ) -> None:
+        physical_scenario_id = getattr(physical_environment, "scenario_id", None)
+        _validate_partition_scenario(partition, physical_scenario_id)
         density = np.asarray(initial_pest, dtype=np.float64)
         if density.ndim != 2 or density.size == 0 or not np.isfinite(density).all() or np.any(density < 0):
             raise ValueError("initial pest field must be a finite non-negative matrix")
@@ -167,6 +207,10 @@ class ActionDrivenValidationEnv:
         self.pest = density.copy()
         self.spray_action_count = 0
         self.sprayed_pesticide_l = 0.0
+        self.partition = partition
+        self.source_provenance = dict(source_provenance or {})
+        self.replenished_resource = "pesticide"
+        self.battery_replenishment_enabled = False
 
     @property
     def state(self) -> Any:
@@ -199,8 +243,9 @@ class ActionDrivenValidationEnv:
         return row, col
 
     def step(self, action_result: Any, **kwargs: Any) -> dict[str, Any]:
-        view = self.physical.step(action_result, **kwargs)
-        for event in view.get("events", ()):
+        pest_before = float(np.sum(self.pest))
+        physical_view = self.physical.step(action_result, **kwargs)
+        for event in physical_view.get("events", ()):
             if getattr(event, "kind", None) != "spray":
                 continue
             amount_l = float(dict(event.payload).get("delta_l", 0.0))
@@ -212,7 +257,17 @@ class ActionDrivenValidationEnv:
             self.sprayed_pesticide_l += amount_l
         self.physical.final_total_pest = float(np.sum(self.pest))
         self.physical.field_summary = self._field_summary()
+        # Problem2CooperativeEnv built its first next view before local pest
+        # mortality was applied. Rebuild from the same completed physical state
+        # so actors and the critic receive the action-complete ecological view.
+        view = self.physical._make_view(events=tuple(physical_view.get("events", ())))
+        if "sampled_actions" in physical_view:
+            view["sampled_actions"] = physical_view["sampled_actions"]
+        immediate_decrease = max(0.0, pest_before - self.physical.final_total_pest)
+        initial_total = float(np.sum(self.initial_pest))
+        view["pest_total_before"] = pest_before
         view["pest_total"] = self.physical.final_total_pest
+        view["team_reward"] = immediate_decrease / initial_total
         view["metric_source"] = "action_driven_environment"
         return view
 
@@ -234,17 +289,30 @@ def _road_cache_expectation(metadata: Mapping[str, Any]) -> RoadCacheExpectation
     )
 
 
-def build_validation_environment(
+def _validate_partition_scenario(partition: str, scenario_id: int) -> None:
+    if partition not in {"development", "validation"}:
+        raise ValueError("physical scenario partition must be exactly development or validation")
+    if isinstance(scenario_id, bool) or not isinstance(scenario_id, int):
+        raise ValueError(f"{partition} scenario identity must be an integer")
+    if scenario_id in SEALED_SCENARIO_IDS:
+        raise ValueError("sealed scenarios are forbidden everywhere in G5")
+    allowed = DEVELOPMENT_SCENARIO_IDS if partition == "development" else VALIDATION_SCENARIO_IDS
+    if scenario_id not in allowed:
+        start, stop = allowed.start, allowed.stop - 1
+        raise ValueError(f"only {partition} scenarios {start}-{stop} may be constructed in G5")
+
+
+def _build_physical_environment(
     repository_root: Path | str,
     *,
     scenario_id: int,
-    scale: str = "g30x50_d4",
+    scale: str,
+    partition: str,
 ) -> ActionDrivenValidationEnv:
-    """Create one validation-only scenario from the frozen G2 road cache."""
-
-    if isinstance(scenario_id, bool) or not isinstance(scenario_id, int) or scenario_id not in range(20000, 20050):
-        raise ValueError("only validation scenarios 20000-20049 may be constructed in G5")
+    _validate_partition_scenario(partition, scenario_id)
     root = Path(repository_root).resolve()
+    contract = load_g5_contract(root)
+    scenario_contract = contract.physical_scenario
     config = load_g2_config(root / "configs" / "problem2" / "g2_deterministic.yaml")
     scale_config = next((item for item in config.scales if item.scale_id == scale), None)
     if scale_config is None:
@@ -256,6 +324,8 @@ def build_validation_environment(
         cache_root / "metadata.json",
         _road_cache_expectation(metadata),
     )
+    if INITIAL_ONBOARD_PESTICIDE_L > config.usable_capacity_l + config.tolerance:
+        raise ValueError("frozen initial onboard pesticide exceeds usable UAV capacity")
     rng = np.random.default_rng(scenario_id)
     primary_nodes = np.flatnonzero(
         np.asarray([
@@ -275,7 +345,7 @@ def build_validation_environment(
             f"uav-{index}",
             float(graph.node_x_m[int(node)]),
             float(graph.node_y_m[int(node)]),
-            pesticide_l=config.usable_capacity_l * 0.35,
+            pesticide_l=INITIAL_ONBOARD_PESTICIDE_L,
         )
         for index, node in enumerate(selected[:-1])
     )
@@ -288,21 +358,108 @@ def build_validation_environment(
         inventory_l=config.vehicle_inventory_l,
     )
     state = EpisodeState(0, uavs, vehicle, ledger=new_ledger(uavs, vehicle.inventory_l))
-    raw_pest = rng.gamma(shape=2.0, scale=1.0, size=scale_config.grid_shape)
-    pest = raw_pest * (100.0 / float(np.sum(raw_pest)))
-    physical = Problem2CooperativeEnv(
+    raw_pest = rng.gamma(
+        shape=scenario_contract.gamma_shape,
+        scale=scenario_contract.gamma_scale,
+        size=scale_config.grid_shape,
+    )
+    pest = raw_pest * (
+        scenario_contract.normalized_initial_pest_total / float(np.sum(raw_pest))
+    )
+    physical = _Task12PhysicalEnv(
         state,
         graph,
         config,
         max_steps=scale_config.max_steps,
         scenario_id=scenario_id,
     )
-    return ActionDrivenValidationEnv(physical, initial_pest=pest, mortality_per_l=5.0)
+    scenario_contract_path = root / "docs/evidence/g5/physical_scenario_contract.yaml"
+    scenario_contract_sha256 = contract.file_hashes[
+        "docs/evidence/g5/physical_scenario_contract.yaml"
+    ]
+    content_metadata = {
+        "partition": partition,
+        "scenario_id": scenario_id,
+        "scale_id": scale,
+        "physical_scenario_contract_sha256": scenario_contract_sha256,
+        "initial_pest_shape": list(pest.shape),
+    }
+    content_hasher = hashlib.sha256()
+    content_hasher.update(
+        json.dumps(content_metadata, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    )
+    content_hasher.update(np.asarray(pest, dtype="<f8").tobytes(order="C"))
+    source_provenance = {
+        "environment_factory": f"problem2.training.tuning.build_{partition}_environment",
+        "road_cache_scale": scale,
+        "road_cache_metadata_sha256": _file_sha256(cache_root / "metadata.json"),
+        "road_cache_graph_sha256": _file_sha256(cache_root / "road_graph.npz"),
+        "road_source_sha256": str(metadata["source"]["sha256"]),
+        "physical_scenario_contract": str(scenario_contract_path),
+        "physical_scenario_contract_sha256": scenario_contract_sha256,
+        "physical_scenario_assumption_status": scenario_contract.assumption_status,
+        "physical_scenario_empirical_claim": scenario_contract.empirical_claim,
+        "physical_scenario_deployment_claim": scenario_contract.deployment_claim,
+        "gamma_shape": scenario_contract.gamma_shape,
+        "gamma_shape_unit": scenario_contract.gamma_shape_unit,
+        "gamma_scale": scenario_contract.gamma_scale,
+        "gamma_scale_unit": scenario_contract.gamma_scale_unit,
+        "normalized_initial_pest_total": scenario_contract.normalized_initial_pest_total,
+        "normalized_initial_pest_total_unit": scenario_contract.normalized_initial_pest_total_unit,
+        "spray_mortality_per_l": scenario_contract.spray_mortality_per_l,
+        "spray_mortality_unit": scenario_contract.spray_mortality_unit,
+        "scenario_content_sha256": content_hasher.hexdigest(),
+        "scenario_content_hash_encoding": scenario_contract.content_hash_encoding,
+    }
+    return ActionDrivenValidationEnv(
+        physical,
+        initial_pest=pest,
+        mortality_per_l=scenario_contract.spray_mortality_per_l,
+        partition=partition,
+        source_provenance=source_provenance,
+    )
+
+
+def build_development_environment(
+    repository_root: Path | str,
+    *,
+    scenario_id: int,
+    scale: str = "g20x20_d2",
+) -> ActionDrivenValidationEnv:
+    """Create one development scenario from the frozen G2 road cache."""
+
+    return _build_physical_environment(
+        repository_root,
+        scenario_id=scenario_id,
+        scale=scale,
+        partition="development",
+    )
+
+
+def build_validation_environment(
+    repository_root: Path | str,
+    *,
+    scenario_id: int,
+    scale: str = "g30x50_d4",
+) -> ActionDrivenValidationEnv:
+    """Create one validation-only scenario from the frozen G2 road cache."""
+
+    return _build_physical_environment(
+        repository_root,
+        scenario_id=scenario_id,
+        scale=scale,
+        partition="validation",
+    )
 
 
 __all__ = [
     "ActionDrivenValidationEnv",
+    "DEVELOPMENT_SCENARIO_IDS",
+    "INITIAL_ONBOARD_PESTICIDE_L",
+    "SEALED_SCENARIO_IDS",
+    "VALIDATION_SCENARIO_IDS",
     "ValidationAccessLedger",
+    "build_development_environment",
     "build_validation_environment",
     "validate_validation_episode",
 ]

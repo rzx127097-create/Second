@@ -208,6 +208,39 @@ def test_validation_environment_pest_change_is_caused_by_real_spray_actions() ->
     assert replay == sprayed
 
 
+def test_spray_is_reflected_in_the_returned_next_observation() -> None:
+    config = load_g2_config(ROOT / "configs" / "problem2" / "g2_deterministic.yaml")
+    graph = make_raster_graph([(0, 0)], [])
+
+    def run(action: int) -> tuple[float, float, float]:
+        uav = UavState("uav-0", 5.0, 35.0, pesticide_l=0.2875)
+        vehicle = VehicleState("vehicle-0", 0, 5.0, 35.0, inventory_l=1.0)
+        state = EpisodeState(0, (uav,), vehicle, ledger=new_ledger((uav,), 1.0))
+        environment = ActionDrivenValidationEnv(
+            Problem2CooperativeEnv(state, graph, config, max_steps=1, scenario_id=10000),
+            initial_pest=np.ones((2, 2)),
+            mortality_per_l=1.0,
+            partition="development",
+        )
+        current = environment.reset(scenario_id=10000)
+        next_view = environment.step(ActionResult(
+            actions={"uav": np.asarray([action]), "vehicle": np.asarray([0])},
+            masks=current["masks"],
+        ))
+        return (
+            float(current["observations"]["uav"][0, 12]),
+            float(next_view["observations"]["uav"][0, 12]),
+            float(environment.pest.mean()),
+        )
+
+    sprayed = run(5)
+    held = run(4)
+    assert sprayed[1] == pytest.approx(sprayed[2])
+    assert sprayed[1] < sprayed[0]
+    assert held[1] == pytest.approx(held[0])
+    assert held[2] == pytest.approx(held[0])
+
+
 def test_training_runner_honors_the_frozen_candidate_id(tmp_path: Path) -> None:
     contract = load_g5_contract(ROOT)
     result = run_training_job(
@@ -241,6 +274,35 @@ def test_validation_scenario_factory_is_deterministic_and_rejects_sealed_ids() -
     assert first.physical.graph.scale_id == "g20x20_d2"
     with pytest.raises(ValueError, match="sealed|validation"):
         build_validation_environment(ROOT, scenario_id=30000, scale="g20x20_d2")
+
+
+def test_g5_physical_factories_enforce_partition_and_pesticide_contract() -> None:
+    from problem2.training import tuning
+
+    development = tuning.build_development_environment(ROOT, scenario_id=10000, scale="g20x20_d2")
+    validation = tuning.build_validation_environment(ROOT, scenario_id=20000, scale="g20x20_d2")
+
+    assert [uav.pesticide_l for uav in development.state.uavs] == [
+        tuning.INITIAL_ONBOARD_PESTICIDE_L,
+        tuning.INITIAL_ONBOARD_PESTICIDE_L,
+    ]
+    assert [uav.pesticide_l for uav in validation.state.uavs] == [
+        tuning.INITIAL_ONBOARD_PESTICIDE_L,
+        tuning.INITIAL_ONBOARD_PESTICIDE_L,
+    ]
+    assert development.replenished_resource == "pesticide"
+    assert validation.replenished_resource == "pesticide"
+    assert development.battery_replenishment_enabled is False
+    assert validation.battery_replenishment_enabled is False
+    with pytest.raises(ValueError, match="development"):
+        tuning.build_development_environment(ROOT, scenario_id=20000, scale="g20x20_d2")
+    with pytest.raises(ValueError, match="validation"):
+        build_validation_environment(ROOT, scenario_id=10000, scale="g20x20_d2")
+    for scenario_id in (30000, 30099):
+        with pytest.raises(ValueError, match="sealed"):
+            tuning.build_development_environment(ROOT, scenario_id=scenario_id, scale="g20x20_d2")
+        with pytest.raises(ValueError, match="sealed"):
+            build_validation_environment(ROOT, scenario_id=scenario_id, scale="g20x20_d2")
 
 
 def test_algorithm_dimensions_follow_the_frozen_scale_uav_count() -> None:
