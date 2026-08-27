@@ -80,6 +80,69 @@ def _load_training_result(path: Path, *, method: str, candidate_id: str, config_
     return payload
 
 
+def train_frozen_candidates(
+    root: Path,
+    *,
+    output_root: Path,
+    device: str,
+    interactions: int,
+    methods: Iterable[str],
+    seeds: Iterable[int],
+) -> dict[str, Any]:
+    root = root.resolve()
+    output_root = output_root.resolve()
+    contract = load_g5_contract(root)
+    candidates_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json"
+    budget_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json"
+    if _sha256(candidates_path) != EXPECTED_CANDIDATE_SHA256 or _sha256(budget_path) != EXPECTED_BUDGET_SHA256:
+        raise RuntimeError("frozen candidate or budget hash differs before training")
+    candidate_payload = _load_training_candidate_manifest(candidates_path)
+    completed = 0
+    for method in tuple(methods):
+        if method not in METHODS:
+            raise ValueError(f"unknown tuning method {method}")
+        for candidate in candidate_payload["candidates"][method]:
+            for seed in tuple(seeds):
+                train_root = output_root / "training" / method / candidate["candidate_id"] / str(seed)
+                summary_path = train_root / f"{method}__{method}__{seed}" / "summary.json"
+                result = _load_training_result(
+                    summary_path,
+                    method=method,
+                    candidate_id=candidate["candidate_id"],
+                    config_hash=candidate["config_hash"],
+                    seed=seed,
+                    interactions=interactions,
+                )
+                if result is None:
+                    run_training_job(
+                        {
+                            "source_root": root,
+                            "_contract": contract,
+                            "method": method,
+                            "condition_id": method,
+                            "candidate_id": candidate["candidate_id"],
+                            "partition": "development",
+                            "scenario_id": 10000,
+                            "scenario_ids": list(range(10000, 10020)),
+                            "training_seed": seed,
+                            "scale": "g20x20_d2",
+                        },
+                        device,
+                        interactions,
+                        train_root,
+                    )
+                completed += 1
+                print(json.dumps({"event": "training_complete", "method": method, "candidate_id": candidate["candidate_id"], "seed": seed, "completed": completed}), flush=True)
+    return {"status": "training_complete", "job_count": completed, "validation_accessed": False, "sealed_accessed": False}
+
+
+def _load_training_candidate_manifest(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not isinstance(payload.get("candidates"), dict):
+        raise ValueError("validation candidate manifest is invalid")
+    return payload
+
+
 def run_selected_refit(
     contract: Any,
     *,
@@ -161,7 +224,7 @@ def run_validation_tuning(
         if output_root == (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve():
             raise ValueError("canonical candidate budget drifted")
         ledger.interactions = interactions
-    candidate_payload = json.loads(candidates_path.read_text(encoding="utf-8"))
+    candidate_payload = _load_training_candidate_manifest(candidates_path)
     consolidated = output_root / "validation-episodes.jsonl"
     existing_rows = [] if not consolidated.exists() else [
         json.loads(line) for line in consolidated.read_text(encoding="utf-8").splitlines() if line.strip()
@@ -311,8 +374,18 @@ def main() -> int:
     parser.add_argument("--output-root", type=Path, default=Path("outputs/problem2_sr_mappo_v1/g5/validation"))
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--interactions", type=int, default=200000)
+    parser.add_argument("--train-only", action="store_true")
+    parser.add_argument("--methods", default=",".join(METHODS))
+    parser.add_argument("--seeds", default=",".join(str(seed) for seed in SEEDS))
     args = parser.parse_args()
-    print(json.dumps(run_validation_tuning(args.root, output_root=args.output_root, device=args.device, interactions=args.interactions), indent=2, sort_keys=True))
+    methods = tuple(value for value in args.methods.split(",") if value)
+    seeds = tuple(int(value) for value in args.seeds.split(",") if value)
+    result = (
+        train_frozen_candidates(args.root, output_root=args.output_root, device=args.device, interactions=args.interactions, methods=methods, seeds=seeds)
+        if args.train_only
+        else run_validation_tuning(args.root, output_root=args.output_root, device=args.device, interactions=args.interactions, methods=methods, seeds=seeds)
+    )
+    print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 
 
