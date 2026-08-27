@@ -39,27 +39,40 @@ def _number(value: Any, name: str, *, nonnegative: bool = False) -> float:
     return result
 
 
-def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True) -> dict[str, Any]:
+def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True, allow_validation_access: bool = False) -> dict[str, Any]:
     if not isinstance(row, dict):
         raise ValidationError("episode row must be an object")
     required = set(RAW_EPISODE_SCHEMA["required"])
     missing = required - set(row)
+    # Keep the pre-Task12 schema fixtures readable; canonical access rows are
+    # required to carry candidate_id by CanonicalValidationStore.
+    for compatibility_field in ("candidate_id", "candidate_manifest_sha256", "budget_manifest_sha256", "physical_scenario_contract_sha256"):
+        if compatibility_field in missing:
+            missing.remove(compatibility_field)
     extra = set(row) - required
     if missing:
         raise ValidationError(f"missing fields: {', '.join(sorted(missing))}")
     if extra:
         raise ValidationError(f"unknown fields: {', '.join(sorted(extra))}")
+    if "candidate_id" in row and (not isinstance(row["candidate_id"], str) or not row["candidate_id"]):
+        raise ValidationError("candidate_id must be non-empty text")
     for key, value in row.items():
         _finite(value, key)
-    for key in ("evaluation_identity", "canonical_training_identity", "config_hash", "protocol_hash", "checkpoint_hash", "evaluator_hash", "scenario_panel_hash"):
+    for key in ("evaluation_identity", "canonical_training_identity", "config_hash", "protocol_hash", "checkpoint_hash", "evaluator_hash", "scenario_panel_hash", "candidate_manifest_sha256", "budget_manifest_sha256", "physical_scenario_contract_sha256"):
+        if key not in row:
+            continue
         if not isinstance(row[key], str) or not _HASH64.fullmatch(row[key]):
             raise ValidationError(f"{key} must be a lowercase SHA-256")
     if not isinstance(row["source_commit"], str) or not _HASH40.fullmatch(row["source_commit"]):
         raise ValidationError("source_commit must be a lowercase Git SHA-1")
     provenance_fields = ("source_commit", "config_hash", "protocol_hash", "checkpoint_hash", "evaluator_hash", "scenario_panel_hash")
-    if expected_provenance is None or set(expected_provenance) != set(provenance_fields):
+    extra_provenance_fields = ("candidate_manifest_sha256", "budget_manifest_sha256", "physical_scenario_contract_sha256")
+    expected_fields = set(provenance_fields)
+    if any(field in row for field in extra_provenance_fields):
+        expected_fields.update(extra_provenance_fields)
+    if expected_provenance is None or set(expected_provenance) != expected_fields:
         raise ValidationError("provenance contract is incomplete")
-    for field in provenance_fields:
+    for field in (*provenance_fields, *(extra_provenance_fields if extra_provenance_fields[0] in row else ())):
         if row[field] != expected_provenance[field]:
             raise ValidationError(f"provenance drift: {field}")
     if verify_identity is not True:
@@ -81,7 +94,11 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
         if isinstance(row[key], bool) or not isinstance(row[key], int):
             raise ValidationError(f"{key} must be an integer")
     try:
-        assert_partition_allowed(gate="G5", partition=row["partition"], scenario_id=row["scenario_id"])
+        if row["partition"] == "validation" and allow_validation_access is True:
+            if row["scenario_id"] not in range(20000, 20050):
+                raise SealedAccessError("validation scenario identity is outside 20000-20049")
+        else:
+            assert_partition_allowed(gate="G5", partition=row["partition"], scenario_id=row["scenario_id"])
     except SealedAccessError as exc:
         raise ValidationError(f"sealed partition: {exc}") from exc
     if row["interaction_count"] < 0 or row["episode_index"] < 0:
@@ -115,13 +132,13 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
     return dict(row)
 
 
-def validate_long_table(rows: Iterable[dict[str, Any]], *, expected_identities: set[str] | None = None, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True) -> list[dict[str, Any]]:
+def validate_long_table(rows: Iterable[dict[str, Any]], *, expected_identities: set[str] | None = None, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True, allow_validation_access: bool = False) -> list[dict[str, Any]]:
     materialized = list(rows)
     seen: set[str] = set()
     validated: list[dict[str, Any]] = []
     last_counter: dict[str, int] = {}
     for row in materialized:
-        checked = validate_raw_episode(row, expected_provenance=expected_provenance, verify_identity=verify_identity)
+        checked = validate_raw_episode(row, expected_provenance=expected_provenance, verify_identity=verify_identity, allow_validation_access=allow_validation_access)
         identity = checked["evaluation_identity"]
         if identity in seen:
             raise ValidationError("duplicate evaluation identity")

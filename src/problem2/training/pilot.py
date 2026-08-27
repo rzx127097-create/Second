@@ -25,6 +25,7 @@ from problem2.experiments.g5_contract import (
 from .budget import aggregate_runtime
 from .preflight import run_preflight
 from .runner import ALL_CONDITION_TYPES, METHODS, run_training_job
+from .tuning import CanonicalValidationStore
 
 
 PILOT_SCALES = ("g20x20_d2", "g30x50_d4")
@@ -550,6 +551,8 @@ def freeze_validation_candidates(
     _contract_guard(contract)
     path = Path(output_path).resolve()
     _require_canonical_path(path, contract, "candidate manifest", allow_noncanonical_output_root=allow_noncanonical_output_root)
+    if not allow_noncanonical_output_root:
+        CanonicalValidationStore.assert_candidate_generation_allowed(contract.source_root)
     if path.exists():
         try:
             existing = json.loads(path.read_text(encoding="utf-8"))

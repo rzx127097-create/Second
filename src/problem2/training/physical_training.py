@@ -30,7 +30,7 @@ from problem2.experiments.g5_contract import G5Contract, load_g5_contract
 
 from .preflight import run_preflight
 from .runner import _provenance, _validate_preflight, evaluation_state_digest
-from .tuning import DEVELOPMENT_SCENARIO_IDS, build_development_environment
+from .tuning import CanonicalValidationStore, DEVELOPMENT_SCENARIO_IDS, build_development_environment
 
 
 PHYSICAL_TRAINING_SCHEMA_VERSION = "g5-physical-candidate-training-v1"
@@ -486,6 +486,7 @@ def _run_physical_candidate_training(
     output_root: Path | str,
     *,
     canonical: bool,
+    allow_g5_output: bool = False,
 ) -> dict[str, Any]:
     """Train one frozen candidate on exact G2-backed development transitions."""
 
@@ -497,6 +498,15 @@ def _run_physical_candidate_training(
     method, condition, candidate_id, seed, scale, scenario_ids = _validate_job(
         job, contract, max_interactions
     )
+    base_output = Path(output_root).resolve()
+    canonical_g5_root = (root / "outputs/problem2_sr_mappo_v1/g5").resolve()
+    canonical_validation_root = (canonical_g5_root / "validation").resolve()
+    if canonical and not base_output.is_relative_to(canonical_validation_root):
+        raise ValueError("canonical physical training output must be confined below the canonical validation root")
+    if not canonical and base_output.is_relative_to(canonical_g5_root) and not allow_g5_output:
+        raise ValueError("noncanonical test training cannot write below the canonical G5 output root")
+    if canonical:
+        CanonicalValidationStore.assert_candidate_generation_allowed(root)
     candidates_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json"
     budget_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json"
     if _file_sha256(candidates_path) != EXPECTED_CANDIDATE_SHA256:
@@ -520,10 +530,6 @@ def _run_physical_candidate_training(
     schedule_name, update_interval = _update_interval(algorithm)
     target = int(max_interactions)
 
-    base_output = Path(output_root).resolve()
-    canonical_g5_root = (root / "outputs/problem2_sr_mappo_v1/g5").resolve()
-    if not canonical and base_output.is_relative_to(canonical_g5_root):
-        raise ValueError("noncanonical test training cannot write below the canonical G5 output root")
     job_output = (base_output / f"{method}__{condition}__{seed}").resolve()
     if not job_output.is_relative_to(base_output):
         raise ValueError("physical training output escaped the supplied root")
@@ -778,6 +784,29 @@ def run_noncanonical_physical_candidate_training_for_test(
     )
 
 
+def run_physical_development_refit_training(
+    job: Mapping[str, Any], device: str, max_interactions: int, output_root: Path | str
+) -> dict[str, Any]:
+    """Run a physical development refit identity under the G5 output root.
+
+    The outer pilot condition is supplied by the refit orchestrator. The
+    physical candidate runner owns the learning method and candidate state;
+    the orchestrator records the outer condition separately so no synthetic
+    Task10 transition path can be used for the refit evidence.
+    """
+
+    if type(max_interactions) is not int or max_interactions <= 0:
+        raise ValueError("physical development refit interactions must be positive")
+    return _run_physical_candidate_training(
+        job,
+        device,
+        max_interactions,
+        output_root,
+        canonical=False,
+        allow_g5_output=True,
+    )
+
+
 __all__ = [
     "EXPECTED_BUDGET_SHA256",
     "EXPECTED_CANDIDATE_SHA256",
@@ -787,5 +816,6 @@ __all__ = [
     "evaluation_state_digest",
     "run_physical_candidate_training",
     "run_noncanonical_physical_candidate_training_for_test",
+    "run_physical_development_refit_training",
     "validate_physical_training_completion",
 ]

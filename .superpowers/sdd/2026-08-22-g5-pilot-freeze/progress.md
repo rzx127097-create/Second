@@ -247,3 +247,22 @@ ecological constants are provisional simulation assumptions only; if they are
 wrong or changed, all 60 candidates require retraining, while validation
 remains untouched. The fix-round work is intentionally uncommitted and
 unpushed.
+
+Task 12 remediation 1: persisted in `c77c7904030117881ceb98f9398b94038ecfd815`
+and pushed; the stale contract-hash test was corrected in
+`dca3466e0c8a72fb4b29a78cc0b9bcf9ed6adf6f` and pushed. Fresh main-worktree
+verification is `403 passed` for `tests/g5`; the clean-worktree matrix check is
+`8 passed` after preserving the ignored fixture boundary. The clean-worktree
+full regression attempt is not evidence because it lacked ignored G5/G4
+fixtures and used the wrong working directory for the first probe; no source or
+protected user directory was changed by that probe. The invalid first attempt
+was inventoried, moved to `g5/quarantine/task12-first-attempt`, and reduced to
+40 JSON/log metadata files. Task 12 remediation 2 is now in progress from base
+`dca3466`; validation and sealed access remain false/forbidden.
+Task 12 remediation 2 fix round 1 status: focused TDD implementation completed
+with `128 passed` in the affected G5 suite. No canonical validation, G6/G7,
+refit, formal, sealed, commit, or push operation ran. I3 controller ruling:
+the gamma-shape/scale, normalized initial pest total, and spray-mortality
+coefficient remain provisional simulation assumptions with no empirical or
+deployment claim; if ecological assumptions are wrong or changed, all 60
+candidates require retraining, while validation remains untouched.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections import defaultdict
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -26,7 +27,15 @@ def _require_commit(value: object) -> str:
     return value.lower()
 
 
-def select_candidates(rows: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
+def select_candidates(
+    rows: Iterable[Mapping[str, Any]],
+    *,
+    require_complete: bool = False,
+    expected_cell_count: int = 3000,
+    candidate_manifest_sha256: str | None = None,
+    budget_manifest_sha256: str | None = None,
+    physical_scenario_contract_sha256: str | None = None,
+) -> dict[str, dict[str, Any]]:
     """Select one row per method using the pre-registered total ordering."""
 
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -49,6 +58,33 @@ def select_candidates(rows: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, 
         grouped[method].append(row)
     if not grouped:
         raise ValueError("candidate results are empty")
+    if require_complete:
+        if expected_cell_count != 3000:
+            raise ValueError("canonical validation selection requires exactly 3000 cells")
+        if set(grouped) != {"sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile"}:
+            raise ValueError("canonical selection requires every frozen method")
+        if sum(int(row.get("episode_count", -1)) for rows_for_method in grouped.values() for row in rows_for_method) != expected_cell_count:
+            raise ValueError("selection requires complete 3000 validated cells")
+        if any(len(rows_for_method) != 4 for rows_for_method in grouped.values()):
+            raise ValueError("canonical selection requires exactly four candidates per method")
+        if any(
+            {str(row["candidate_id"]) for row in rows_for_method} != {"c01", "c02", "c03", "c04"}
+            for rows_for_method in grouped.values()
+        ):
+            raise ValueError("canonical selection requires candidate IDs c01-c04")
+        if any(
+            row.get("episode_count") != 150
+            for rows_for_method in grouped.values()
+            for row in rows_for_method
+        ):
+            raise ValueError("canonical selection requires exactly 150 cells per candidate")
+        provenance = {
+            "candidate_manifest_sha256": _require_sha256(candidate_manifest_sha256, "candidate manifest hash"),
+            "budget_manifest_sha256": _require_sha256(budget_manifest_sha256, "budget manifest hash"),
+            "physical_scenario_contract_sha256": _require_sha256(physical_scenario_contract_sha256, "physical scenario contract hash"),
+        }
+    else:
+        provenance = {}
     selected: dict[str, dict[str, Any]] = {}
     for method, candidates in grouped.items():
         identities = [str(item["candidate_id"]) for item in candidates]
@@ -62,7 +98,7 @@ def select_candidates(rows: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, 
                 int(item["interaction_count"]),
                 str(item["config_hash"]),
             ),
-        )
+        ) | provenance
     return selected
 
 
@@ -92,7 +128,10 @@ def build_formal_freeze_payloads(
     if len(jobs) != 375:
         raise ValueError(f"G6 must contain exactly 375 unique training jobs, got {len(jobs)}")
     canonical = [job.get("canonical_training_identity") for job in jobs]
-    if len(set(canonical)) != 375 or any(not isinstance(value, str) or len(value) != 64 for value in canonical):
+    if len(set(canonical)) != 375 or any(
+        not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None
+        for value in canonical
+    ):
         raise ValueError("G6 training identities must be 375 unique SHA-256 values")
     base_count = sum(job.get("family") == "algorithm_scale" for job in jobs)
     if base_count != 150:
@@ -133,6 +172,8 @@ def build_formal_freeze_payloads(
             "scenario_panel_hash": validation_hash,
             "scenario_content": None,
             "evaluation_results": [],
+            "expected_evaluation_count": len(jobs) * 20 * len(validation_ids),
+            "checkpoint_selection": "frozen_g5_checkpoint_selection_rule",
             "provenance": provenance,
             "sealed_accessed": False,
         },
@@ -147,6 +188,13 @@ def build_formal_freeze_payloads(
             "evaluation_source_count": len(evaluation_sources),
             "expected_evaluation_count": expected_sealed,
             "evaluation_identity_set_hash": sealed_identity_hash,
+            "evaluation_identity_template": {
+                "source_identity": "selected_g6_training_identity_or_mechanism_sensitivity_identity",
+                "scenario_id": "sealed_test_30000_30099",
+                "checkpoint_hash": "bound_only_after_g6_selected_checkpoint",
+                "evaluator_hash": "bound_only_at_g7_execution",
+                "scenario_panel_hash": sealed_hash,
+            },
             "provenance": provenance,
             "sealed_accessed": False,
             "actual_unlock_count": 0,

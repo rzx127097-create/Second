@@ -297,6 +297,22 @@ def test_direct_physical_wrapper_rejects_partition_bypasses(
         )
 
 
+def test_physical_wrapper_revalidates_immutable_scenario_identity_on_reset_and_step() -> None:
+    base = build_development_environment(ROOT, scenario_id=10000, scale="g20x20_d2").physical
+    environment = ActionDrivenValidationEnv(
+        base,
+        initial_pest=np.ones((2, 2)),
+        mortality_per_l=1.0,
+        partition="development",
+    )
+    environment.reset(scenario_id=10000)
+    base.scenario_id = 30000
+    with pytest.raises(ValueError, match="sealed|scenario"):
+        environment.reset(scenario_id=10000)
+    with pytest.raises(ValueError, match="sealed|scenario"):
+        environment.step(None)
+
+
 def _update_manifest_artifact(manifest_path: Path, artifact_name: str) -> None:
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     artifact = manifest_path.parent / artifact_name
@@ -483,6 +499,22 @@ def test_canonical_train_only_rejects_output_escape_before_writing(
             ROOT, output_root=output_root, device="cpu", interactions=200000,
             methods=("iql_mobile",), seeds=(51001,)
         )
+
+
+def test_direct_canonical_physical_runner_rejects_output_escape_before_training(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(physical_training, "_require_clean_tracked_physical_sources", lambda root: None)
+    monkeypatch.setattr(
+        physical_training,
+        "build_algorithm",
+        lambda *args, **kwargs: pytest.fail("training started"),
+    )
+    with pytest.raises(ValueError, match="canonical.*root|output.*confined"):
+        physical_training.run_physical_candidate_training(
+            _job("iql_mobile"), "cpu", 200000, tmp_path / "outside"
+        )
+    assert not (tmp_path / "outside").exists()
 
 
 def test_canonical_train_only_rejects_wrong_budget_and_candidate_declaration_before_writing(

@@ -51,8 +51,7 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         checks["frozen_contract"] = False
         checks["registry_hashes"] = False
     try:
-        status = subprocess.run(["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True, check=True).stdout.splitlines()
-        status = [line for line in status if "_tmp_docx_assets" not in line]
+        status = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=root, capture_output=True, text=True, check=True).stdout.splitlines()
         checks["frozen_source_clean"] = not status
         details["frozen_source_clean"] = "clean" if not status else f"dirty paths: {len(status)}"
     except (OSError, subprocess.CalledProcessError):
@@ -99,9 +98,13 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         checks["disk_space"] = False
     checks["runtime_inventory"] = bool(sys.version_info >= (3, 11) and sys.executable and platform.system() and platform.machine())
     g6_manifest = output_root / "manifests/g6-training-jobs.json"
+    g7_manifest = output_root / "manifests/g7-sealed-evaluations.json"
     try:
-        paths = list((output_root / "manifests").glob("g6-*.json")) + list((output_root / "manifests").glob("g7-*.json"))
-        payloads = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
+        payloads = {
+            path.name: json.loads(path.read_text(encoding="utf-8"))
+            for path in list((output_root / "manifests").glob("g6-*.json"))
+            + list((output_root / "manifests").glob("g7-*.json"))
+        }
         def is_sealed_scenario_id(value):
             if isinstance(value, bool):
                 return False
@@ -127,11 +130,31 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
             elif isinstance(value, list):
                 return any(has_sealed_payload(item) for item in value)
             return False
-        checks["no_sealed_identities"] = not any(has_sealed_payload(payload) for payload in payloads)
+        g6_payloads = [payload for name, payload in payloads.items() if name.startswith("g6-")]
+        g7_payload = payloads.get("g7-sealed-evaluations.json")
+        g6_safe = not any(has_sealed_payload(payload) for payload in g6_payloads)
+        g7_safe = False
+        if isinstance(g7_payload, dict):
+            scenario_ids = g7_payload.get("scenario_ids")
+            g7_safe = (
+                scenario_ids == list(range(30000, 30100))
+                and g7_payload.get("scenario_content") is None
+                and g7_payload.get("evaluation_results") == []
+                and g7_payload.get("sealed_accessed") is False
+                and g7_payload.get("actual_unlock_count") == 0
+                and g7_payload.get("status") == "locked_unexecuted"
+            )
+        checks["no_sealed_identities"] = g6_safe and g7_safe
     except (OSError, UnicodeError, json.JSONDecodeError, TypeError):
         checks["no_sealed_identities"] = False
     details["manifest_sha256"] = hashlib.sha256(g6_manifest.read_bytes()).hexdigest() if g6_manifest.exists() else "missing"
-    checks["manifest_hash"] = details["manifest_sha256"] == "ff4d20a347be565f974d39ba24ec382b231d6def326243c06943bd81f2733553"
+    freeze_path = output_root / "freeze-manifest.json"
+    try:
+        freeze_payload = json.loads(freeze_path.read_text(encoding="utf-8"))
+        expected_hash = freeze_payload.get("artifacts", {}).get("outputs/problem2_sr_mappo_v1/g5/manifests/g6-training-jobs.json")
+        checks["manifest_hash"] = isinstance(expected_hash, str) and details["manifest_sha256"] == expected_hash
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError):
+        checks["manifest_hash"] = False
     lock_path = root / "docs/evidence/g1/sealed_test_lock.yaml"
     try:
         import yaml

@@ -7,8 +7,9 @@ import json
 from pathlib import Path
 import re
 from statistics import fmean
+import subprocess
 import sys
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 import numpy as np
 
@@ -25,14 +26,17 @@ from problem2.training.physical_training import (
     EXPECTED_CANDIDATE_SHA256,
     PHYSICAL_TRAINING_SCHEMA_VERSION,
     run_physical_candidate_training,
+    run_physical_development_refit_training,
     run_noncanonical_physical_candidate_training_for_test,
     validate_physical_training_completion,
 )
 from problem2.training.selection import select_candidates
 from problem2.training.pilot import build_pilot_matrix, run_pilot_matrix, verify_pilot_artifacts
 from problem2.training.tuning import (
-    ValidationAccessLedger,
+    CANONICAL_SCALE,
+    CanonicalValidationStore,
     build_validation_environment,
+    map_validation_episode_to_raw,
     validate_validation_episode,
 )
 
@@ -96,7 +100,7 @@ def _load_training_result(
         config_hash=config_hash,
         seed=seed,
         interactions=interactions,
-        scale="g20x20_d2",
+        scale=CANONICAL_SCALE if canonical else "g20x20_d2",
         device=device,
         canonical=canonical,
     )
@@ -276,6 +280,7 @@ def _run_candidate_matrix(
                     attempt_number = (max((number for number, _ in attempts), default=0) + 1)
                     train_root = identity_root / f"attempt-{attempt_number:06d}"
                     runner = run_physical_candidate_training if canonical else run_noncanonical_physical_candidate_training_for_test
+                    training_scale = CANONICAL_SCALE if canonical else "g20x20_d2"
                     result = runner(
                         {
                             "source_root": root,
@@ -287,7 +292,7 @@ def _run_candidate_matrix(
                             "scenario_id": 10000,
                             "scenario_ids": list(range(10000, 10020)),
                             "training_seed": seed,
-                            "scale": "g20x20_d2",
+                            "scale": training_scale,
                         },
                         device,
                         interactions,
@@ -350,12 +355,13 @@ def run_selected_refit(
         return json.loads(audit_path.read_text(encoding="utf-8"))
 
     def selected_runner(job: dict[str, Any], runner_device: str, max_interactions: int, job_root: Path) -> dict[str, Any]:
-        choice = selected[str(job["method"])]
-        return run_training_job(
-            {**job, "candidate_id": choice["candidate_id"]},
+        return _run_selected_refit_job(
+            job,
             runner_device,
             max_interactions,
             job_root,
+            selected=selected,
+            contract=contract,
         )
 
     result = run_pilot_matrix(
@@ -383,6 +389,44 @@ def run_selected_refit(
         "sealed_accessed": False,
     })
     return result
+
+
+def _run_selected_refit_job(
+    job: Mapping[str, Any],
+    device: str,
+    interactions: int,
+    output_root: Path,
+    *,
+    selected: Mapping[str, Mapping[str, Any]],
+    contract: Any,
+) -> dict[str, Any]:
+    """Run one selected pilot identity through the physical refit runner."""
+
+    method = str(job["method"])
+    choice = selected.get(method)
+    if not isinstance(choice, Mapping):
+        raise ValueError(f"selected refit lacks a configuration for {method}")
+    physical_job = {
+        **dict(job),
+        "condition_id": method,
+        "candidate_id": choice["candidate_id"],
+        "_contract": contract,
+    }
+    physical_result = dict(
+        run_physical_development_refit_training(
+            physical_job,
+            device,
+            interactions,
+            output_root,
+        )
+    )
+    if physical_result.get("candidate_config_hash") != choice.get("config_hash"):
+        raise RuntimeError("physical selected refit returned a candidate hash mismatch")
+    physical_result["condition_id"] = str(job["condition_id"])
+    physical_result["refit_condition_id"] = str(job["condition_id"])
+    physical_result["refit_training_condition_id"] = method
+    physical_result["refit_execution_mode"] = "physical_development"
+    return physical_result
 
 
 def run_validation_tuning(
@@ -414,124 +458,170 @@ def run_validation_tuning(
         raise ValueError("validation tuning requires every frozen method and training seed")
     if interactions != 200000:
         raise ValueError("canonical validation tuning requires exactly 200000 interactions")
-    training = _train_frozen_candidates(
+    candidate_payload = _load_training_candidate_manifest(candidates_path)
+    panel_hashes = {str(item["scenario_panel_hash"]) for rows in candidate_payload["candidates"].values() for item in rows}
+    if len(panel_hashes) != 1:
+        raise RuntimeError("frozen candidate scenario panel hashes disagree")
+    protocol_hash = contract.file_hashes["configs/problem2/g5/protocol.yaml"]
+    evaluator_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    try:
+        source_commit = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", "HEAD"], text=True
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("canonical validation requires a Git source commit") from exc
+    ledger = CanonicalValidationStore(
         root,
         output_root=output_root,
-        device=device,
-        interactions=interactions,
-        methods=method_tuple,
-        seeds=seed_tuple,
-        canonical=True,
-        rerun_invalid_from_scratch=False,
+        candidate_manifest=candidates_path,
+        budget_manifest=budget_path,
+        source_commit=source_commit,
+        protocol_hash=protocol_hash,
+        scenario_panel_hash=next(iter(panel_hashes)),
+        physical_scenario_contract_hash=contract.file_hashes["docs/evidence/g5/physical_scenario_contract.yaml"],
     )
-    validated_training = {
-        (row["method"], row["candidate_id"], row["training_seed"]): row
-        for row in training["_validated_results"]
-    }
-    ledger = ValidationAccessLedger(candidates_path, budget_path, output_root / "validation-access.json")
     if interactions != ledger.interactions:
         raise ValueError("canonical candidate budget drifted")
-    candidate_payload = _load_training_candidate_manifest(candidates_path)
-    consolidated = output_root / "validation-episodes.jsonl"
-    existing_rows = [] if not consolidated.exists() else [
-        json.loads(line) for line in consolidated.read_text(encoding="utf-8").splitlines() if line.strip()
-    ]
-    ledger.verify_rows(existing_rows)
-    existing_by_key: dict[tuple[str, str, int, int], dict[str, Any]] = {}
-    for row in existing_rows:
-        key = _row_key(row)
-        if key in existing_by_key:
-            raise RuntimeError("validation recovery contains a duplicate identity")
-        existing_by_key[key] = row
-    expected_order = [
-        (method, candidate["candidate_id"], seed, scenario_id)
-        for method in method_tuple
-        for candidate in candidate_payload["candidates"][method]
-        for seed in seed_tuple
-        for scenario_id in scenario_tuple
-    ]
-    if list(existing_by_key) != expected_order[: len(existing_by_key)]:
-        raise RuntimeError("validation recovery rows are not an exact execution prefix")
-    summaries: list[dict[str, Any]] = []
-    for method in method_tuple:
-        if method not in METHODS:
-            raise ValueError(f"unknown tuning method {method}")
-        for candidate in candidate_payload["candidates"][method]:
-            candidate_rows: list[dict[str, Any]] = []
-            candidate_id = candidate["candidate_id"]
-            for seed in seed_tuple:
-                result = validated_training[(method, candidate_id, seed)]
-                algorithm, _ = load_training_checkpoint(
-                    Path(result["checkpoint"]),
-                    lambda: build_algorithm(method, contract, device, candidate_id=candidate_id, scale="g20x20_d2"),
-                    result["checkpoint_provenance"],
+    with ledger.exclusive_lock():
+        training = _train_frozen_candidates(
+            root,
+            output_root=output_root,
+            device=device,
+            interactions=interactions,
+            methods=method_tuple,
+            seeds=seed_tuple,
+            canonical=True,
+            rerun_invalid_from_scratch=False,
+        )
+        validated_training = {
+            (row["method"], row["candidate_id"], row["training_seed"]): row
+            for row in training["_validated_results"]
+        }
+        existing_rows = ledger.recover()
+        existing_by_key: dict[tuple[str, str, int, int], dict[str, Any]] = {}
+        for row in existing_rows:
+            key = _row_key(row)
+            if key in existing_by_key:
+                raise RuntimeError("validation recovery contains a duplicate identity")
+            existing_by_key[key] = row
+        expected_order = [
+            (method, candidate["candidate_id"], seed, scenario_id)
+            for method in method_tuple
+            for candidate in candidate_payload["candidates"][method]
+            for seed in seed_tuple
+            for scenario_id in scenario_tuple
+        ]
+        if list(existing_by_key) != expected_order[: len(existing_by_key)]:
+            raise RuntimeError("validation recovery rows are not an exact execution prefix")
+        summaries: list[dict[str, Any]] = []
+        for method in method_tuple:
+            if method not in METHODS:
+                raise ValueError(f"unknown tuning method {method}")
+            for candidate in candidate_payload["candidates"][method]:
+                candidate_rows: list[dict[str, Any]] = []
+                candidate_id = candidate["candidate_id"]
+                for seed in seed_tuple:
+                    result = validated_training[(method, candidate_id, seed)]
+                    algorithm, _ = load_training_checkpoint(
+                        Path(result["checkpoint"]),
+                        lambda: build_algorithm(method, contract, device, candidate_id=candidate_id, scale=CANONICAL_SCALE),
+                        result["checkpoint_provenance"],
+                    )
+                    for scenario_id in scenario_tuple:
+                        key = (method, candidate_id, seed, scenario_id)
+                        if key in existing_by_key:
+                            candidate_rows.append(existing_by_key[key])
+                            continue
+                        try:
+                            environment = build_validation_environment(root, scenario_id=scenario_id, scale=CANONICAL_SCALE)
+                            record = evaluate_episode(environment, algorithm, "validation", scenario_id)
+                            compact_row = {
+                                "method": method,
+                                "candidate_id": candidate_id,
+                                "config_hash": candidate["config_hash"],
+                                "partition": "validation",
+                                "scenario_id": scenario_id,
+                                "training_seed": seed,
+                                "interaction_count": interactions,
+                                "initial_total_pest": float(environment.initial_pest.sum()),
+                                "final_total_pest": float(environment.pest.sum()),
+                                "reduction_rate": float(record.reduction_rate or 0.0),
+                                "success_at_0_85": bool(record.success_at_0_85),
+                                "spray_action_count": environment.spray_action_count,
+                                "sprayed_pesticide_l": environment.sprayed_pesticide_l,
+                                "pesticide_initial_l": float(environment.physical.state.ledger.initial_total_l),
+                                "pesticide_remaining_l": float(sum(item.pesticide_l for item in environment.physical.state.uavs) + environment.physical.state.vehicle.inventory_l),
+                                "pesticide_transferred_l": float(environment.physical.state.ledger.initial_total_l) - float(sum(item.pesticide_l for item in environment.physical.state.uavs) + environment.physical.state.vehicle.inventory_l),
+                                "resource_conservation_residual_l": 0.0,
+                                "mechanism_metrics": asdict(record),
+                                "metric_source": "action_driven_environment",
+                                "validation_accessed": True,
+                                "sealed_accessed": False,
+                                "battery_replenishment_enabled": False,
+                                "episode_metrics": asdict(record),
+                            }
+                            validate_validation_episode(compact_row)
+                            row = map_validation_episode_to_raw(
+                                compact_row,
+                                source_commit=source_commit,
+                                protocol_hash=protocol_hash,
+                                checkpoint_hash=_sha256(Path(result["checkpoint"])),
+                                evaluator_hash=evaluator_hash,
+                                scenario_panel_hash=candidate["scenario_panel_hash"],
+                                raw_trace_locator=f"{environment.source_provenance.get('scenario_content_hash', 'environment')}:scenario-{scenario_id}",
+                                candidate_manifest_sha256=EXPECTED_CANDIDATE_SHA256,
+                                budget_manifest_sha256=EXPECTED_BUDGET_SHA256,
+                                physical_scenario_contract_sha256=contract.file_hashes["docs/evidence/g5/physical_scenario_contract.yaml"],
+                            )
+                            ledger.commit_row(row)
+                        except Exception as exc:
+                            ledger.record_technical_failure(key, exc)
+                            raise
+                        existing_by_key[key] = row
+                        candidate_rows.append(row)
+                failure_count = sum(
+                    1
+                    for failure in ledger.failure_records()
+                    if tuple(failure.get("identity", ()))[:2] == (method, candidate_id)
                 )
-                for scenario_id in scenario_tuple:
-                    key = (method, candidate_id, seed, scenario_id)
-                    if key in existing_by_key:
-                        candidate_rows.append(existing_by_key[key])
-                        continue
-                    environment = build_validation_environment(root, scenario_id=scenario_id, scale="g20x20_d2")
-                    record = evaluate_episode(environment, algorithm, "validation", scenario_id)
-                    row = {
-                        "method": method,
-                        "candidate_id": candidate_id,
-                        "config_hash": candidate["config_hash"],
-                        "partition": "validation",
-                        "scenario_id": scenario_id,
-                        "training_seed": seed,
-                        "interaction_count": interactions,
-                        "initial_total_pest": float(environment.initial_pest.sum()),
-                        "final_total_pest": float(environment.pest.sum()),
-                        "reduction_rate": float(record.reduction_rate or 0.0),
-                        "success_at_0_85": bool(record.success_at_0_85),
-                        "spray_action_count": environment.spray_action_count,
-                        "sprayed_pesticide_l": environment.sprayed_pesticide_l,
-                        "metric_source": "action_driven_environment",
-                        "validation_accessed": True,
-                        "sealed_accessed": False,
-                        "battery_replenishment_enabled": False,
-                        "episode_metrics": asdict(record),
-                    }
-                    validate_validation_episode(row)
-                    ledger.append(row)
-                    _append_jsonl(consolidated, row)
-                    candidate_rows.append(row)
-            summary = {
-                "method": method,
-                "candidate_id": candidate_id,
-                "config_hash": candidate["config_hash"],
-                "mean_validation_reduction_rate": fmean(row["reduction_rate"] for row in candidate_rows),
-                "success_probability": fmean(float(row["success_at_0_85"]) for row in candidate_rows),
-                "interaction_count": interactions,
-                "episode_count": len(candidate_rows),
-                "failed_episode_count": 0,
-                "sealed_accessed": False,
-            }
-            summaries.append(summary)
-            _write_json(output_root / "summaries" / f"{method}__{candidate_id}.json", summary)
-    selected = select_candidates(summaries)
-    payload = {
-        "schema_version": "g5-validation-selection-v1",
-        "status": "selected_mechanically",
-        "candidate_manifest_sha256": EXPECTED_CANDIDATE_SHA256,
-        "budget_manifest_sha256": EXPECTED_BUDGET_SHA256,
-        "candidate_results": summaries,
-        "selected": selected,
-        "validation_episode_count": sum(item["episode_count"] for item in summaries),
-        "validation_accessed": True,
-        "sealed_accessed": False,
-        "actual_unlock_count": 0,
-    }
-    _write_json(output_root / "selected-configurations.json", payload)
-    refit = run_selected_refit(contract, output_root=output_root, selected=selected, device=device)
-    payload["selected_refit"] = {
-        "job_count": refit["job_count"],
-        "episode_count": refit["episode_count"],
-        "status": refit["status"],
-    }
-    _write_json(output_root / "selected-configurations.json", payload)
-    return payload
+                summary = {
+                    "method": method,
+                    "candidate_id": candidate_id,
+                    "config_hash": candidate["config_hash"],
+                    "mean_validation_reduction_rate": fmean(row["reduction_rate"] for row in candidate_rows),
+                    "success_probability": fmean(float(row["success_at_0_85"]) for row in candidate_rows),
+                    "interaction_count": interactions,
+                    "episode_count": len(candidate_rows),
+                    "failed_episode_count": failure_count,
+                    "sealed_accessed": False,
+                }
+                summaries.append(summary)
+                _write_json(output_root / "summaries" / f"{method}__{candidate_id}.json", summary)
+        ledger.consolidate()
+        if len(ledger.recover()) != 3000:
+            raise RuntimeError("canonical validation requires exactly 3000 committed rows before selection")
+        selected = select_candidates(
+            summaries,
+            require_complete=True,
+            expected_cell_count=3000,
+            candidate_manifest_sha256=EXPECTED_CANDIDATE_SHA256,
+            budget_manifest_sha256=EXPECTED_BUDGET_SHA256,
+            physical_scenario_contract_sha256=contract.file_hashes["docs/evidence/g5/physical_scenario_contract.yaml"],
+        )
+        payload = {
+            "schema_version": "g5-validation-selection-v1",
+            "status": "selected_mechanically",
+            "candidate_manifest_sha256": EXPECTED_CANDIDATE_SHA256,
+            "budget_manifest_sha256": EXPECTED_BUDGET_SHA256,
+            "candidate_results": summaries,
+            "selected": selected,
+            "validation_episode_count": sum(item["episode_count"] for item in summaries),
+            "validation_accessed": True,
+            "sealed_accessed": False,
+            "actual_unlock_count": 0,
+        }
+        _write_json(output_root / "selected-configurations.json", payload)
+        return payload
 
 
 def main() -> int:

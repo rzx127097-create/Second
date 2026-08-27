@@ -5,14 +5,18 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+from contextlib import contextmanager
 from dataclasses import replace
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
 
 import numpy as np
 
 from problem2.experiments.artifacts import atomic_write_bytes
 from problem2.experiments.g5_contract import load_g5_contract
+from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
 from problem2.config import load_g2_config
 from problem2.domain import EpisodeState, UavState, VehicleState
 from problem2.resources.ledger import new_ledger
@@ -25,6 +29,12 @@ INITIAL_ONBOARD_PESTICIDE_L = 0.2875
 DEVELOPMENT_SCENARIO_IDS = range(10000, 10020)
 VALIDATION_SCENARIO_IDS = range(20000, 20050)
 SEALED_SCENARIO_IDS = range(30000, 30100)
+CANONICAL_METHODS = (
+    "sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile"
+)
+CANONICAL_SEEDS = (51001, 51002, 51003)
+CANONICAL_SCALE = "g30x50_d4"
+CANONICAL_INTERACTIONS = 200000
 
 
 class _Task12PhysicalEnv(Problem2CooperativeEnv):
@@ -171,8 +181,25 @@ class ValidationAccessLedger:
                 raise ValueError("validation rows exist without an access ledger")
             return
         ledger = _load_json(self.ledger_path, "validation access ledger")
+        expected_keys = {
+            "schema_version", "status", "candidate_manifest_sha256",
+            "budget_manifest_sha256", "row_count", "row_chain_sha256",
+            "sealed_accessed", "actual_unlock_count",
+        }
+        if set(ledger) != expected_keys:
+            raise ValueError("validation access ledger schema drifted")
+        if ledger.get("schema_version") not in {"g5-validation-access-v1", "g5-validation-access-v2"}:
+            raise ValueError("validation access ledger schema drifted")
+        if ledger.get("status") != "validation_accessed_candidates_locked":
+            raise ValueError("validation access ledger status is not locked")
+        if ledger.get("sealed_accessed") is not False or ledger.get("actual_unlock_count") != 0:
+            raise ValueError("validation access ledger contains sealed or unlock state")
         if ledger.get("candidate_manifest_sha256") != self.candidate_sha256 or ledger.get("budget_manifest_sha256") != self.budget_sha256:
             raise ValueError("validation access ledger provenance drifted")
+        if isinstance(ledger.get("row_count"), bool) or not isinstance(ledger.get("row_count"), int) or ledger["row_count"] < 0:
+            raise ValueError("validation access ledger row count is invalid")
+        if not isinstance(ledger.get("row_chain_sha256"), str) or len(ledger["row_chain_sha256"]) != 64:
+            raise ValueError("validation access ledger chain is invalid")
         chain = "0" * 64
         for row in rows:
             validate_validation_episode(row)
@@ -180,6 +207,379 @@ class ValidationAccessLedger:
             chain = hashlib.sha256(chain.encode("ascii") + raw).hexdigest()
         if ledger.get("row_count") != len(rows) or ledger.get("row_chain_sha256") != chain:
             raise ValueError("validation recovery row chain mismatch")
+
+
+class ValidationAccessError(RuntimeError):
+    """Raised when validation access cannot acquire its exclusive writer."""
+
+
+class CanonicalValidationStore(ValidationAccessLedger):
+    """Recoverable, single-writer storage for the canonical validation matrix.
+
+    The legacy ``append`` method remains available for pre-existing compact
+    tests. Canonical callers must use ``commit_row``, which accepts only the
+    strict raw schema and commits a row file before rebuilding the ledger.
+    """
+
+    def __init__(
+        self,
+        repository_root: Path | str,
+        budget_manifest: Path | str | None = None,
+        ledger_path: Path | str | None = None,
+        *,
+        output_root: Path | str | None = None,
+        candidate_manifest: Path | str | None = None,
+        source_commit: str | None = None,
+        protocol_hash: str | None = None,
+        scenario_panel_hash: str | None = None,
+        physical_scenario_contract_hash: str | None = None,
+        allow_noncanonical_test: bool = False,
+    ) -> None:
+        root = Path(repository_root).resolve()
+        if candidate_manifest is None and budget_manifest is not None and ledger_path is not None:
+            candidate_manifest = Path(repository_root)
+            candidate_budget = Path(budget_manifest)
+            target_ledger = Path(ledger_path)
+            target_root = target_ledger.parent
+        else:
+            candidate_manifest = Path(candidate_manifest or root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json")
+            candidate_budget = Path(budget_manifest or root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json")
+            target_root = Path(output_root or root / "outputs/problem2_sr_mappo_v1/g5/validation")
+            target_ledger = Path(ledger_path or target_root / "validation-access.json")
+        target_root = target_root.resolve()
+        canonical_root = (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+        if not allow_noncanonical_test and target_root != canonical_root:
+            raise ValueError("canonical validation output must be the frozen G5 validation root")
+        super().__init__(candidate_manifest, candidate_budget, target_ledger)
+        if self.candidate_sha256 != "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a":
+            raise ValueError("candidate manifest bytes are not the frozen canonical manifest")
+        if self.budget_sha256 != "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb":
+            raise ValueError("budget manifest bytes are not the frozen canonical manifest")
+        if self.interactions != CANONICAL_INTERACTIONS:
+            raise ValueError("canonical validation budget must be exactly 200000")
+        if set(method for method, _ in self._candidates) != set(CANONICAL_METHODS):
+            raise ValueError("candidate manifest must declare exactly the five canonical methods")
+        if len(self._candidates) != 20:
+            raise ValueError("candidate manifest must declare exactly 20 candidates")
+        self.repository_root = root
+        self.output_root = target_root
+        self.rows_root = target_root / "rows"
+        self.consolidated_path = target_root / "validation-episodes.jsonl"
+        self.lock_path = target_root / ".validation-writer.lock"
+        self.failures_path = target_root / "technical-failures.jsonl"
+        self.source_commit = source_commit
+        self.protocol_hash = protocol_hash
+        self.scenario_panel_hash = scenario_panel_hash
+        self.physical_scenario_contract_hash = physical_scenario_contract_hash
+        self._lock_depth = 0
+        self._lock_handle: int | None = None
+        candidate_ids = tuple(sorted({candidate for _, candidate in self._candidates}))
+        if candidate_ids != ("c01", "c02", "c03", "c04"):
+            raise ValueError("candidate manifest must declare c01-c04 for every method")
+        self.methods = CANONICAL_METHODS
+        self.candidate_ids = candidate_ids
+        self.expected_identity_keys = tuple(
+            (method, candidate, seed, scenario)
+            for method in self.methods
+            for candidate in self.candidate_ids
+            for seed in CANONICAL_SEEDS
+            for scenario in VALIDATION_SCENARIO_IDS
+        )
+        self._expected_index = {key: index for index, key in enumerate(self.expected_identity_keys)}
+
+    def candidate_hash(self, method: str, candidate_id: str) -> str:
+        try:
+            return self._candidates[(method, candidate_id)]
+        except KeyError as exc:
+            raise ValueError("identity is not a frozen candidate") from exc
+
+    @contextmanager
+    def exclusive_lock(self) -> Iterator[None]:
+        """Hold an OS-level lock for the complete writer transaction."""
+
+        if self._lock_depth:
+            self._lock_depth += 1
+            try:
+                yield
+            finally:
+                self._lock_depth -= 1
+            return
+        self.output_root.mkdir(parents=True, exist_ok=True)
+        try:
+            self._lock_handle = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError as exc:
+            raise ValidationAccessError("validation writer lock is held by another process") from exc
+        try:
+            os.write(self._lock_handle, json.dumps({"pid": os.getpid(), "created_at": datetime.now(timezone.utc).isoformat()}).encode("utf-8"))
+            os.close(self._lock_handle)
+            self._lock_handle = None
+            self._lock_depth = 1
+            yield
+        finally:
+            self._lock_depth = 0
+            if self._lock_handle is not None:
+                os.close(self._lock_handle)
+                self._lock_handle = None
+            self.lock_path.unlink(missing_ok=True)
+
+    def _locked(self) -> bool:
+        return self._lock_depth > 0
+
+    @contextmanager
+    def _ensure_lock(self) -> Iterator[None]:
+        if self._locked():
+            yield
+        else:
+            with self.exclusive_lock():
+                yield
+
+    def _key(self, row: Mapping[str, Any]) -> tuple[str, str, int, int]:
+        key = (str(row.get("method")), str(row.get("candidate_id")), row.get("training_seed"), row.get("scenario_id"))
+        if key not in self._expected_index:
+            raise ValueError("validation row identity is outside the exact canonical matrix")
+        return key  # type: ignore[return-value]
+
+    def _row_path(self, key: tuple[str, str, int, int]) -> Path:
+        return self.rows_root / f"{self._expected_index[key]:04d}.json"
+
+    def _validate_canonical_row(self, row: Mapping[str, Any]) -> dict[str, Any]:
+        from problem2.evaluation.validator import validate_long_table
+
+        payload = dict(row)
+        key = self._key(payload)
+        if payload.get("config_hash") != self.candidate_hash(key[0], key[1]):
+            raise ValueError("validation row is not bound to the frozen candidate hash")
+        if payload.get("scale") != CANONICAL_SCALE or payload.get("interaction_count") != CANONICAL_INTERACTIONS:
+            raise ValueError("validation row violates the canonical scale or budget")
+        if payload.get("partition") != "validation":
+            raise ValueError("validation row must use the validation partition")
+        for field, frozen in (
+            ("source_commit", self.source_commit),
+            ("protocol_hash", self.protocol_hash),
+            ("scenario_panel_hash", self.scenario_panel_hash),
+            ("candidate_manifest_sha256", self.candidate_sha256),
+            ("budget_manifest_sha256", self.budget_sha256),
+            ("physical_scenario_contract_sha256", self.physical_scenario_contract_hash),
+        ):
+            if frozen is not None and payload.get(field) != frozen:
+                raise ValueError(f"validation row provenance drifted: {field}")
+        expected_provenance = {
+            "source_commit": payload.get("source_commit"),
+            "config_hash": payload.get("config_hash"),
+            "protocol_hash": payload.get("protocol_hash"),
+            "checkpoint_hash": payload.get("checkpoint_hash"),
+            "evaluator_hash": payload.get("evaluator_hash"),
+            "scenario_panel_hash": payload.get("scenario_panel_hash"),
+            "candidate_manifest_sha256": payload.get("candidate_manifest_sha256"),
+            "budget_manifest_sha256": payload.get("budget_manifest_sha256"),
+            "physical_scenario_contract_sha256": payload.get("physical_scenario_contract_sha256"),
+        }
+        validate_long_table(
+            [payload], expected_identities={payload.get("evaluation_identity")},
+            expected_provenance=expected_provenance, allow_validation_access=True,
+        )
+        return payload
+
+    def _read_rows(self) -> list[dict[str, Any]]:
+        if not self.rows_root.exists():
+            return []
+        rows: list[dict[str, Any]] = []
+        for path in sorted(self.rows_root.glob("*.json")):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                raise ValueError(f"validation row file is torn: {path.name}") from exc
+            if not isinstance(payload, dict):
+                raise ValueError("validation row file must contain an object")
+            rows.append(payload)
+        return rows
+
+    def _rebuild_ledger_locked(self, rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+        for row in rows:
+            self._validate_canonical_row(row)
+        keys = [self._key(row) for row in rows]
+        if keys != list(self.expected_identity_keys[: len(keys)]):
+            raise ValueError("validation recovery rows are not an exact execution prefix")
+        chain = "0" * 64
+        for row in rows:
+            raw = json.dumps(dict(row), sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+            chain = hashlib.sha256(chain.encode("ascii") + raw).hexdigest()
+        updated = {
+            "schema_version": "g5-validation-access-v2",
+            "status": "validation_accessed_candidates_locked",
+            "candidate_manifest_sha256": self.candidate_sha256,
+            "budget_manifest_sha256": self.budget_sha256,
+            "row_count": len(rows),
+            "row_chain_sha256": chain,
+            "sealed_accessed": False,
+            "actual_unlock_count": 0,
+        }
+        atomic_write_bytes(self.ledger_path, (json.dumps(updated, sort_keys=True, indent=2) + "\n").encode("utf-8"))
+        return updated
+
+    @staticmethod
+    def _row_chain(rows: list[Mapping[str, Any]]) -> str:
+        chain = "0" * 64
+        for row in rows:
+            raw = json.dumps(dict(row), sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+            chain = hashlib.sha256(chain.encode("ascii") + raw).hexdigest()
+        return chain
+
+    def _assert_ledger_not_ahead(self, rows: list[Mapping[str, Any]]) -> None:
+        if not self.ledger_path.is_file():
+            return
+        ledger = _load_json(self.ledger_path, "validation access ledger")
+        expected_keys = {
+            "schema_version", "status", "candidate_manifest_sha256",
+            "budget_manifest_sha256", "row_count", "row_chain_sha256",
+            "sealed_accessed", "actual_unlock_count",
+        }
+        if set(ledger) != expected_keys:
+            raise ValueError("validation access ledger schema drifted")
+        if ledger["schema_version"] != "g5-validation-access-v2":
+            raise ValueError("validation access ledger schema drifted")
+        if ledger["status"] != "validation_accessed_candidates_locked":
+            raise ValueError("validation access ledger status is not locked")
+        if ledger["sealed_accessed"] is not False or ledger["actual_unlock_count"] != 0:
+            raise ValueError("validation access ledger contains sealed or unlock state")
+        if (
+            isinstance(ledger["row_count"], bool)
+            or not isinstance(ledger["row_count"], int)
+            or ledger["row_count"] < 0
+            or not isinstance(ledger["row_chain_sha256"], str)
+            or len(ledger["row_chain_sha256"]) != 64
+        ):
+            raise ValueError("validation access ledger counters or chain are invalid")
+        if ledger["row_count"] > len(rows):
+            raise ValueError("validation ledger is ahead of committed row files")
+        expected_prefix_chain = self._row_chain(rows[: ledger["row_count"]])
+        if ledger["row_chain_sha256"] != expected_prefix_chain:
+            raise ValueError("validation ledger row chain mismatch")
+
+    def commit_row(self, row: Mapping[str, Any]) -> dict[str, Any]:
+        checked = self._validate_canonical_row(row)
+        key = self._key(checked)
+        with self._ensure_lock():
+            existing = self._read_rows()
+            self._assert_ledger_not_ahead(existing)
+            path = self._row_path(key)
+            if path.exists():
+                prior = json.loads(path.read_text(encoding="utf-8"))
+                if prior != checked:
+                    raise ValueError("duplicate validation identity has different row content")
+                return self._rebuild_ledger_locked(existing)
+            if self._expected_index[key] != len(existing):
+                raise ValueError("validation row is out of order or has a missing predecessor")
+            self.rows_root.mkdir(parents=True, exist_ok=True)
+            atomic_write_bytes(path, (json.dumps(checked, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8"))
+            committed = self._read_rows()
+            return self._rebuild_ledger_locked(committed)
+
+    def consolidate(self) -> list[dict[str, Any]]:
+        with self._ensure_lock():
+            rows = self._read_rows()
+            self._assert_ledger_not_ahead(rows)
+            self._rebuild_ledger_locked(rows)
+            raw = b"".join(json.dumps(row, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8") + b"\n" for row in rows)
+            atomic_write_bytes(self.consolidated_path, raw)
+            return rows
+
+    def recover(self) -> list[dict[str, Any]]:
+        with self._ensure_lock():
+            rows = self._read_rows()
+            self._assert_ledger_not_ahead(rows)
+            self._rebuild_ledger_locked(rows)
+            return rows
+
+    def record_technical_failure(self, key: tuple[str, str, int, int], error: BaseException) -> dict[str, Any]:
+        if key not in self._expected_index:
+            raise ValueError("technical failure identity is outside the canonical matrix")
+        with self._ensure_lock():
+            prior = self.failure_records()
+            same = [item for item in prior if tuple(item.get("identity", ())) == key]
+            record = {
+                "attempt": len(same) + 1,
+                "identity": list(key),
+                "exception_type": type(error).__name__,
+                "exception_message": str(error),
+                "source_commit": self.source_commit,
+                "candidate_manifest_sha256": self.candidate_sha256,
+                "budget_manifest_sha256": self.budget_sha256,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            existing = self.failures_path.read_bytes() if self.failures_path.exists() else b""
+            atomic_write_bytes(self.failures_path, existing + json.dumps(record, sort_keys=True, allow_nan=False).encode("utf-8") + b"\n")
+            return record
+
+    def failure_records(self) -> list[dict[str, Any]]:
+        if not self.failures_path.is_file():
+            return []
+        return [json.loads(line) for line in self.failures_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+    @staticmethod
+    def assert_candidate_generation_allowed(repository_root: Path | str) -> None:
+        root = Path(repository_root).resolve()
+        validation = root / "outputs/problem2_sr_mappo_v1/g5/validation"
+        rows = validation / "rows"
+        if rows.is_dir() and any(rows.glob("*.json")):
+            raise ValueError("candidate generation is forbidden after first validation row")
+        ledger = validation / "validation-access.json"
+        if ledger.is_file():
+            payload = _load_json(ledger, "validation access ledger")
+            if int(payload.get("row_count", 0)) > 0:
+                raise ValueError("candidate generation is forbidden after validation access")
+
+
+def map_validation_episode_to_raw(
+    row: Mapping[str, Any], *, source_commit: str, protocol_hash: str,
+    checkpoint_hash: str, evaluator_hash: str, scenario_panel_hash: str,
+    raw_trace_locator: str, candidate_manifest_sha256: str,
+    budget_manifest_sha256: str, physical_scenario_contract_sha256: str,
+) -> dict[str, Any]:
+    """Map an action-driven episode to the strict canonical raw-row schema."""
+
+    source = dict(row)
+    method = str(source["method"])
+    scale = str(source.get("scale", CANONICAL_SCALE))
+    seed = int(source["training_seed"])
+    scenario_id = int(source["scenario_id"])
+    config_hash = str(source["config_hash"])
+    training_identity = str(source.get("canonical_training_identity") or canonical_training_identity(method, scale, seed, config_hash, source_commit))
+    initial = float(source["initial_total_pest"])
+    final = float(source["final_total_pest"])
+    reduction = 1.0 - final / (initial + 1.0e-12)
+    metrics = source.get("mechanism_metrics") if isinstance(source.get("mechanism_metrics"), Mapping) else {}
+    residual = float(source.get("resource_conservation_residual_l", metrics.get("resource_residual_l", 0.0)))
+    raw = {
+        "evaluation_identity": canonical_evaluation_identity(training_identity, str(source.get("condition_id", method)), scale, seed, scenario_id, "validation", checkpoint_hash, evaluator_hash, scenario_panel_hash),
+        "canonical_training_identity": training_identity,
+        "method": method, "candidate_id": str(source["candidate_id"]), "condition_id": str(source.get("condition_id", method)), "scale": scale,
+        "training_seed": seed, "scenario_id": scenario_id, "partition": "validation",
+        "source_commit": source_commit, "config_hash": config_hash, "protocol_hash": protocol_hash,
+        "checkpoint_hash": checkpoint_hash, "evaluator_hash": evaluator_hash, "scenario_panel_hash": scenario_panel_hash,
+        "candidate_manifest_sha256": candidate_manifest_sha256, "budget_manifest_sha256": budget_manifest_sha256,
+        "physical_scenario_contract_sha256": physical_scenario_contract_sha256,
+        "episode_index": int(source.get("episode_index", 0)), "interaction_count": int(source.get("interaction_count", CANONICAL_INTERACTIONS)),
+        "termination_reason": str(source.get("termination_reason", "horizon")), "terminated": True,
+        "initial_total_pest": initial, "final_total_pest": final, "reduction_rate": reduction,
+        "success_at_0_85": reduction >= 0.85,
+        "pesticide_initial_l": float(source.get("pesticide_initial_l", 0.0)),
+        "pesticide_remaining_l": float(source.get("pesticide_remaining_l", 0.0)),
+        "pesticide_transferred_l": float(source.get("pesticide_transferred_l", source.get("sprayed_pesticide_l", 0.0))),
+        "resource_conservation_residual_l": residual,
+        "battery_replenishment_l": 0.0,
+        "action_uav": int(source.get("action_uav", 0)), "action_vehicle_slot": int(source.get("action_vehicle_slot", 0)),
+        "rendezvous_distance_m": float(source.get("rendezvous_distance_m", metrics.get("rendezvous_distance_m", 0.0))),
+        "vehicle_service_travel_m": float(source.get("vehicle_service_travel_m", metrics.get("vehicle_service_travel_m", 0.0))),
+        "waiting_steps": float(source.get("waiting_steps", metrics.get("waiting_steps", 0.0))),
+        "completed_request_waiting_steps": float(source.get("completed_request_waiting_steps", metrics.get("completed_request_waiting_steps", 0.0))),
+        "pesticide_disabled_steps": float(source.get("pesticide_disabled_steps", metrics.get("pesticide_disabled_steps", 0.0))),
+        "return_steps": float(source.get("return_steps", metrics.get("return_steps", 0.0))),
+        "effective_spray_steps": float(source.get("effective_spray_steps", metrics.get("effective_spray_steps", source.get("spray_action_count", 0.0)))),
+        "decision_runtime_s": float(source.get("decision_runtime_s", metrics.get("decision_runtime_s", 0.0))),
+        "source_locator": raw_trace_locator,
+    }
+    return raw
 
 
 class ActionDrivenValidationEnv:
@@ -211,6 +611,7 @@ class ActionDrivenValidationEnv:
         self.source_provenance = dict(source_provenance or {})
         self.replenished_resource = "pesticide"
         self.battery_replenishment_enabled = False
+        self._scenario_id = int(physical_scenario_id)
 
     @property
     def state(self) -> Any:
@@ -225,13 +626,24 @@ class ActionDrivenValidationEnv:
         )
 
     def reset(self, *, scenario_id: int | None = None) -> dict[str, Any]:
+        self._assert_live_scenario()
+        requested_scenario_id = self._scenario_id if scenario_id is None else scenario_id
+        _validate_partition_scenario(self.partition, requested_scenario_id)
+        if requested_scenario_id != self._scenario_id:
+            raise ValueError("wrapped physical scenario identity is immutable")
         self.pest = self.initial_pest.copy()
         self.spray_action_count = 0
         self.sprayed_pesticide_l = 0.0
         self.physical.initial_total_pest = float(np.sum(self.initial_pest))
         self.physical.final_total_pest = float(np.sum(self.pest))
         self.physical.field_summary = self._field_summary()
-        return self.physical.reset(scenario_id=scenario_id)
+        return self.physical.reset(scenario_id=requested_scenario_id)
+
+    def _assert_live_scenario(self) -> None:
+        current_scenario_id = getattr(self.physical, "scenario_id", None)
+        _validate_partition_scenario(self.partition, current_scenario_id)
+        if int(current_scenario_id) != self._scenario_id:
+            raise ValueError("wrapped physical scenario identity changed")
 
     def _cell_for_uav(self, uav_id: str) -> tuple[int, int]:
         uav = next(item for item in self.physical.state.uavs if item.uav_id == uav_id)
@@ -243,6 +655,7 @@ class ActionDrivenValidationEnv:
         return row, col
 
     def step(self, action_result: Any, **kwargs: Any) -> dict[str, Any]:
+        self._assert_live_scenario()
         pest_before = float(np.sum(self.pest))
         physical_view = self.physical.step(action_result, **kwargs)
         for event in physical_view.get("events", ()):
@@ -453,13 +866,20 @@ def build_validation_environment(
 
 
 __all__ = [
+    "CANONICAL_METHODS",
+    "CANONICAL_SEEDS",
+    "CANONICAL_SCALE",
+    "CANONICAL_INTERACTIONS",
+    "CanonicalValidationStore",
     "ActionDrivenValidationEnv",
     "DEVELOPMENT_SCENARIO_IDS",
     "INITIAL_ONBOARD_PESTICIDE_L",
     "SEALED_SCENARIO_IDS",
     "VALIDATION_SCENARIO_IDS",
     "ValidationAccessLedger",
+    "ValidationAccessError",
     "build_development_environment",
     "build_validation_environment",
+    "map_validation_episode_to_raw",
     "validate_validation_episode",
 ]
