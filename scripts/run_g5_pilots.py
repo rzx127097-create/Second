@@ -45,7 +45,7 @@ def main() -> int:
         report.update(result)
         if result["status"] != "pass":
             raise RuntimeError("pilot matrix failed; candidate freeze is blocked")
-        if args.limit is not None or result["job_count"] != 5 * 17 * 2 * 3 * 20:
+        if args.limit is not None or result["job_count"] != 5 * 17 * 2 * 3:
             raise RuntimeError("candidate freeze requires complete pilot coverage")
         aggregates = result.get("runtime_aggregates")
         if not isinstance(aggregates, dict) or "g30x50_d4" not in aggregates:

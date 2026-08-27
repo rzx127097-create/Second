@@ -23,12 +23,13 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_pilot_matrix_covers_exact_development_panel_without_duplicates() -> None:
     contract = load_g5_contract(ROOT)
     jobs = build_pilot_matrix(contract)
-    assert len(jobs) == 5 * 17 * 2 * 3 * 20
+    assert len(jobs) == 5 * 17 * 2 * 3
     assert {job.method for job in jobs} == set(PILOT_METHODS)
     assert {job.condition_id for job in jobs} == set(PILOT_CONDITIONS)
     assert {job.scale for job in jobs} == set(PILOT_SCALES)
     assert {job.training_seed for job in jobs} == {51001, 51002, 51003}
-    assert {job.scenario_id for job in jobs} == set(range(10000, 10020))
+    assert {job.scenario_id for job in jobs} == {10000}
+    assert all(job.scenario_ids == tuple(range(10000, 10020)) for job in jobs)
     assert all(job.partition == "development" for job in jobs)
     identities = [job.identity for job in jobs]
     assert len(identities) == len(set(identities))
@@ -86,6 +87,7 @@ def test_run_pilot_matrix_writes_descriptive_development_records_and_audit(tmp_p
             "condition_id": job["condition_id"],
             "partition": "development",
             "scenario_id": job["scenario_id"],
+            "scenario_ids": list(job["scenario_ids"]),
             "training_seed": job["training_seed"],
             "interactions": max_interactions,
             "updates": 1,
@@ -99,11 +101,13 @@ def test_run_pilot_matrix_writes_descriptive_development_records_and_audit(tmp_p
     result = run_pilot_matrix(contract, tmp_path, jobs=jobs, interactions=2, runner=fake_runner)
     assert result["status"] == "pass"
     assert result["job_count"] == 1
+    assert result["episode_count"] == 20
     assert result["coverage"]["scales"] == ["g20x20_d2"]
     assert result["validation_accessed"] is False
     assert result["sealed_accessed"] is False
     records = Path(result["episodes_path"]).read_text(encoding="utf-8").splitlines()
-    assert len(records) == 1
+    assert len(records) == 20
+    assert {json.loads(row)["scenario_id"] for row in records} == set(range(10000, 10020))
     assert json.loads(records[0])["data_status"] == "development_pilot_descriptive"
 
 

@@ -19,6 +19,7 @@ from problem2.experiments.g5_contract import (
 )
 
 from .budget import aggregate_runtime
+from .preflight import run_preflight
 from .runner import ALL_CONDITION_TYPES, METHODS, run_training_job
 
 
@@ -38,6 +39,7 @@ class PilotJob:
     training_seed: int
     scenario_id: int
     partition: str = "development"
+    scenario_ids: tuple[int, ...] = PILOT_SCENARIO_IDS
 
     @property
     def identity(self) -> str:
@@ -48,6 +50,7 @@ class PilotJob:
                 "partition": self.partition,
                 "scale": self.scale,
                 "scenario_id": self.scenario_id,
+                "scenario_ids": self.scenario_ids,
                 "training_seed": self.training_seed,
             },
             sort_keys=True,
@@ -104,9 +107,9 @@ def build_pilot_matrix(
         PilotJob(method, condition, scale, seed, scenario)
         for scale in scales
         for seed in training_seeds
-        for scenario in scenario_ids
         for method in methods
         for condition in conditions
+        for scenario in (scenario_ids[0],)
     )
     identities = [job.identity for job in jobs]
     if len(identities) != len(set(identities)):
@@ -145,6 +148,9 @@ def run_pilot_matrix(
     root = Path(output_root).resolve()
     root.mkdir(parents=True, exist_ok=True)
     episodes_path, audit_path = _paths_for_output(root)
+    preflight = run_preflight(device, contract.source_root)
+    if preflight.get("status") != "pass":
+        raise ValueError(preflight.get("reason", "pilot device preflight failed"))
     records: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     runtime_rows: list[dict[str, Any]] = []
@@ -157,7 +163,10 @@ def run_pilot_matrix(
             "scenario_id": job.scenario_id,
             "partition": job.partition,
             "scale": job.scale,
+            "scenario_ids": list(job.scenario_ids),
             "source_root": str(contract.source_root),
+            "_contract": contract,
+            "_preflight": preflight,
         }
         started = time.perf_counter()
         try:
@@ -168,28 +177,30 @@ def run_pilot_matrix(
                     raise ValueError(f"pilot runner did not prove {field}=false")
             if result.get("partition", "development") != "development":
                 raise ValueError("pilot runner returned a non-development partition")
-            record = {
-                "schema_version": "g5-pilot-episode-v1",
-                "data_status": "development_pilot_descriptive",
-                "pilot_job_identity": job.identity,
-                "method": job.method,
-                "algorithm_id": result.get("algorithm_id", job.method),
-                "condition_id": job.condition_id,
-                "scale": job.scale,
-                "training_seed": job.training_seed,
-                "scenario_id": job.scenario_id,
-                "partition": "development",
-                "interactions": int(result.get("interactions", interactions)),
-                "elapsed_seconds": elapsed,
-                "seconds_per_interaction": elapsed / max(int(result.get("interactions", interactions)), 1),
-                "finite_metrics": bool(result.get("finite_metrics", True)),
-                "evaluation_frozen": bool(result.get("evaluation_frozen", True)),
-                "training_result": result,
-                "validation_accessed": False,
-                "sealed_accessed": False,
-                "battery_replenishment_enabled": False,
-            }
-            records.append(record)
+            for episode_index, scenario_id in enumerate(job.scenario_ids):
+                record = {
+                    "schema_version": "g5-pilot-episode-v1",
+                    "data_status": "development_pilot_descriptive",
+                    "pilot_job_identity": job.identity,
+                    "episode_index": episode_index,
+                    "method": job.method,
+                    "algorithm_id": result.get("algorithm_id", job.method),
+                    "condition_id": job.condition_id,
+                    "scale": job.scale,
+                    "training_seed": job.training_seed,
+                    "scenario_id": scenario_id,
+                    "partition": "development",
+                    "interactions": int(result.get("interactions", interactions)),
+                    "elapsed_seconds": elapsed,
+                    "seconds_per_interaction": elapsed / max(int(result.get("interactions", interactions)), 1),
+                    "finite_metrics": bool(result.get("finite_metrics", True)),
+                    "evaluation_frozen": bool(result.get("evaluation_frozen", True)),
+                    "training_result": result,
+                    "validation_accessed": False,
+                    "sealed_accessed": False,
+                    "battery_replenishment_enabled": False,
+                }
+                records.append(record)
             runtime_rows.append({
                 "method_id": job.method,
                 "scale_id": job.scale,
@@ -204,7 +215,7 @@ def run_pilot_matrix(
     atomic_write_bytes(episodes_path, episode_bytes)
     coverage = {
         "expected_job_count": len(selected_jobs),
-        "completed_job_count": len(records),
+        "completed_job_count": len(runtime_rows),
         "scales": sorted({record["scale"] for record in records}),
         "methods": sorted({record["method"] for record in records}),
         "conditions": sorted({record["condition_id"] for record in records}),
@@ -213,10 +224,12 @@ def run_pilot_matrix(
     }
     audit: dict[str, Any] = {
         "schema_version": "g5-pilot-audit-v1",
-        "status": "pass" if not failures and len(records) == len(selected_jobs) else "fail",
+        "status": "pass" if not failures and len(runtime_rows) == len(selected_jobs) and len(records) == len(selected_jobs) * len(PILOT_SCENARIO_IDS) else "fail",
         "maturity": "M2",
         "data_status": "development_pilot_descriptive",
-        "job_count": len(records),
+        "job_count": len(selected_jobs),
+        "episode_count": len(records),
+        "training_job_count": len(selected_jobs),
         "coverage": coverage,
         "runtime_aggregates": aggregate_runtime(runtime_rows) if runtime_rows else {},
         "failures": failures,

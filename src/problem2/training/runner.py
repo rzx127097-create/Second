@@ -20,7 +20,7 @@ from problem2.algorithms import build_algorithm
 from problem2.algorithms.common.checkpoint import load_checkpoint, save_checkpoint
 from problem2.algorithms.protocol import ActionResult, OffPolicyEnvelope, OnPolicyEnvelope, RoleBatch
 from problem2.experiments.artifacts import artifact_sha256, atomic_write_bytes, append_jsonl
-from problem2.experiments.g5_contract import load_g5_contract
+from problem2.experiments.g5_contract import G5Contract, load_g5_contract
 
 from .preflight import run_preflight
 
@@ -153,7 +153,8 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     if not isinstance(job, Mapping):
         raise TypeError("job must be a mapping")
     root = Path(job.get("source_root", Path(__file__).resolve().parents[3])).resolve()
-    contract = load_g5_contract(root)
+    supplied_contract = job.get("_contract")
+    contract = supplied_contract if isinstance(supplied_contract, G5Contract) else load_g5_contract(root)
     method = str(job.get("method", ""))
     condition = str(job.get("condition_id", method))
     if method not in METHODS:
@@ -168,7 +169,8 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     scale = str(job.get("scale", "g5_smoke"))
     if isinstance(max_interactions, bool) or int(max_interactions) <= 0:
         raise ValueError("max_interactions must be positive")
-    preflight = run_preflight(device, root)
+    supplied_preflight = job.get("_preflight")
+    preflight = supplied_preflight if isinstance(supplied_preflight, Mapping) else run_preflight(device, root)
     if preflight.get("status") != "pass":
         raise RuntimeError(preflight.get("reason", "device preflight failed"))
     random.seed(seed)
