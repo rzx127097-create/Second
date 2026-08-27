@@ -4,7 +4,7 @@
     {
       "bytes": 1566357,
       "path": "checkpoint.pt",
-      "sha256": "039a057c25dd479e11a3161fafe0b77f82aeb6c9cfbc98c10db91dfc50a8e362"
+      "sha256": "c3013643033ef55347a24817c79e5de50e47729670bdcf31ea625cf72d1d0788"
     },
     {
       "bytes": 41620,
@@ -14,7 +14,7 @@
     {
       "bytes": 2408,
       "path": "summary.json",
-      "sha256": "9c72661139021a90299864d1a4fb0f24660e6856fa2e9bf44790b274d63d91f3"
+      "sha256": "9d81cd9b4e34547c80704e45c368e09f9cc03143cf09338a3e3204f3e6e27c64"
     }
   ],
   "battery_replenishment_enabled": false,
@@ -27,7 +27,7 @@
     "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
     "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
     "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-    "source_commit": "16517ca89a91679c4a0a9c6a380d207432701850"
+    "source_commit": "b11298b39d7996a2f46d0c98e9dec774b18a96b4"
   },
   "scenario_id": 10000,
   "schema_version": "g5-smoke-artifact-v1",
