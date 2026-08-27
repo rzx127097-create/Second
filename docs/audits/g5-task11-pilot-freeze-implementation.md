@@ -48,7 +48,7 @@ The full command completed with `status=pass`:
   `10000-10019`;
 - every pilot directory has a checkpoint, manifest, summary, and training log;
 - runtime budget: `200000` interactions, checkpoint interval `10000`,
-  checkpoint count `20`, projected slowest runtime `0.7747359809025214` hours;
+  checkpoint count `20`, projected slowest runtime `0.7708476562500424` hours;
 - candidate freeze: `20` candidates, exactly four per learning method,
   content-hashed and bound to the 50-ID validation panel hash;
 - all pilot records are `development_pilot_descriptive` with
@@ -57,13 +57,15 @@ The full command completed with `status=pass`:
 
 Core artifact SHA-256 hashes:
 
-- `validated/pilot-episodes.jsonl`: `3F7EDBDEA0101941ABAD983E3B8A8C86D291F606DB9E0B96A269109F9982FFB8`;
-- `audits/pilot-audit.json`: `FA53BF771E1FD0B81C2664A534BC4B6A843F6E301B244B3C4D7E2C3BC277E046`;
-- `manifests/pilot-budget.json`: `80A2EFA425E468B1A316FFC3F5B5421FCB2D696519363CDFAD0A91B06456443C`;
-- `manifests/validation-candidates.json`: `112050C1735888559C39EC4E0E6F38730169B1EFECB5E9E4D1402FAD954387C1`.
+- `validated/pilot-episodes.jsonl`: `7609183B3B8945BC019F63F361C5FEBE7D00E9E7E4E8042BB07530A9C013DE72`;
+- `audits/pilot-audit.json`: `4A14FE3B3518ECD0E864DDD79FADFCE7311E829BB1E505E76925AE162EF58CF2`;
+- `audits/pilot-artifact-manifest.json`: `1B757397A28240C567CBADC5AD56B64C533E316558CE2924935C4D33B1ACC61E`;
+- `manifests/pilot-budget.json`: `048138954F336C95E3D339AED594C71E23167EF30CC1F4A373D5C2B10BB049CB`;
+- `manifests/validation-candidates.json`: `67E6784B3D00D0385310D467C351F5B3374F02C7A7D7C22C571D4DE29190419A`.
 
-The candidate manifest and pilot summaries bind the executed source commit
-`74a3fef219e507d5e5b57f57a4bf8ed86620480c`.
+The candidate manifest, pilot summaries, artifact manifest, and refreshed
+smoke manifests bind the executed source commit
+`33ba716aacedeff4e90a6d6f604f103732a970fd`.
 
 ## Verification
 
@@ -86,7 +88,7 @@ The candidate manifest and pilot summaries bind the executed source commit
   dry-run only, no jobs executed;
 - refreshed Task10 smoke audits: CPU/main `pass/85`, CPU `pass/85`, CUDA
   `pass/5`; all 85 manifests bind source commit
-  `74a3fef219e507d5e5b57f57a4bf8ed86620480c` and retain false boundary flags.
+  `33ba716aacedeff4e90a6d6f604f103732a970fd` and retain false boundary flags.
 
 ## Boundary And Next Gate
 

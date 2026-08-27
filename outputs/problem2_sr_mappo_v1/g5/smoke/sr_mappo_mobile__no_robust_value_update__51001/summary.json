@@ -56,7 +56,7 @@
     "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
     "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
     "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-    "source_commit": "6394a677ac422e2f6fb215d43bd52e64cebbac2b"
+    "source_commit": "33ba716aacedeff4e90a6d6f604f103732a970fd"
   },
   "replenished_resource": "pesticide",
   "resume_comparison": {
@@ -77,6 +77,28 @@
   },
   "scale": "g5_smoke",
   "scenario_id": 10000,
+  "scenario_ids": [
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019
+  ],
   "sealed_accessed": false,
   "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\smoke\\sr_mappo_mobile__no_robust_value_update__51001\\training.jsonl",
   "training_seed": 51001,

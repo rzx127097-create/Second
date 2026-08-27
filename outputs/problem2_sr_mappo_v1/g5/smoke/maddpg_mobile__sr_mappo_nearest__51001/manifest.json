@@ -4,7 +4,7 @@
     {
       "bytes": 2328333,
       "path": "checkpoint.pt",
-      "sha256": "11d5ec6bf1cc21bc70ecfc89052526c1745e6dd1eabe1c94670ed7411fffda7b"
+      "sha256": "8550e499420ef92d4f59e7bc235c633e672d01b0a82b0187fd16f2f98df07544"
     },
     {
       "bytes": 42644,
@@ -12,9 +12,9 @@
       "sha256": "ba27aaf76f9931e2cc510147022a1bb92c8a61047644073cfc6aa5f345b63e06"
     },
     {
-      "bytes": 2251,
+      "bytes": 2495,
       "path": "summary.json",
-      "sha256": "976fc56ac2f0e487698332852df545004b9c84f890f22ac5913e12a375f08c91"
+      "sha256": "0bc6cd500d5b9578822aca58e05c2e1e504d256432c71cb44fc41de790c58497"
     }
   ],
   "battery_replenishment_enabled": false,
@@ -27,9 +27,32 @@
     "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
     "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
     "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
-    "source_commit": "6394a677ac422e2f6fb215d43bd52e64cebbac2b"
+    "source_commit": "33ba716aacedeff4e90a6d6f604f103732a970fd"
   },
+  "scale": "g5_smoke",
   "scenario_id": 10000,
+  "scenario_ids": [
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019
+  ],
   "schema_version": "g5-smoke-artifact-v1",
   "sealed_accessed": false,
   "status": "pass",

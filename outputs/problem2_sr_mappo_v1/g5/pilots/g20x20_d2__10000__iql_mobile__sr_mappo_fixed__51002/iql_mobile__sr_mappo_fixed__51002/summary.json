@@ -1,0 +1,94 @@
+{
+  "algorithm_id": "iql_mobile",
+  "algorithm_state_digest": "4511b848bd736fd0ce60e5ba00b2026a2d55ec034a7e6cbcd39a288811091865",
+  "battery_replenishment_enabled": false,
+  "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\pilots\\g20x20_d2__10000__iql_mobile__sr_mappo_fixed__51002\\iql_mobile__sr_mappo_fixed__51002\\checkpoint.pt",
+  "condition_id": "sr_mappo_fixed",
+  "diagnostics_digest": "b3918f4c6ac239d9bff1e3bf3a5202f93bfcc7d8e2f4547628da45b8bad137fa",
+  "evaluation_actions": {
+    "uav": [
+      0,
+      0
+    ],
+    "vehicle": [
+      1
+    ]
+  },
+  "evaluation_frozen": true,
+  "finite_metrics": true,
+  "interactions": 128,
+  "interrupted": false,
+  "mask_shapes": {
+    "uav": [
+      2,
+      6
+    ],
+    "vehicle": [
+      1,
+      5
+    ]
+  },
+  "method": "iql_mobile",
+  "metrics": {
+    "uav_loss": 0.010429032146930695,
+    "updates": 2.0,
+    "vehicle_loss": 0.030771926045417786
+  },
+  "metrics_digest": "0db1eb5465c814aa76e6c47c744611226f4b90119aa68beceab40f1c6dab9077",
+  "partition": "development",
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
+  "provenance": {
+    "ancestry_hash": "2b242eb4f436a1c0cae810917ba92d57da3ffcec7211ea4219f6e369e0c96ab3",
+    "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+    "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+    "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
+    "source_commit": "33ba716aacedeff4e90a6d6f604f103732a970fd"
+  },
+  "replenished_resource": "pesticide",
+  "resume_comparison": {
+    "algorithm_state_equal": false,
+    "diagnostics_equal": false,
+    "metrics_equal": false
+  },
+  "resume_equivalent": false,
+  "role_shapes": {
+    "uav": [
+      2,
+      179
+    ],
+    "vehicle": [
+      1,
+      28
+    ]
+  },
+  "scale": "g20x20_d2",
+  "scenario_id": 10000,
+  "scenario_ids": [
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019
+  ],
+  "sealed_accessed": false,
+  "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\pilots\\g20x20_d2__10000__iql_mobile__sr_mappo_fixed__51002\\iql_mobile__sr_mappo_fixed__51002\\training.jsonl",
+  "training_seed": 51002,
+  "updates": 1,
+  "validation_accessed": false
+}

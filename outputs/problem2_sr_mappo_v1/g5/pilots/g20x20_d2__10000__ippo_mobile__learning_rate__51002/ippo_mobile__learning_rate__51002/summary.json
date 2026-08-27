@@ -1,0 +1,101 @@
+{
+  "algorithm_id": "ippo_mobile",
+  "algorithm_state_digest": "436adae25aa86759861fff5517d80f2588e30b372d1d3cf1bebfa5935df35690",
+  "battery_replenishment_enabled": false,
+  "checkpoint": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\pilots\\g20x20_d2__10000__ippo_mobile__learning_rate__51002\\ippo_mobile__learning_rate__51002\\checkpoint.pt",
+  "condition_id": "learning_rate",
+  "diagnostics_digest": "b3918f4c6ac239d9bff1e3bf3a5202f93bfcc7d8e2f4547628da45b8bad137fa",
+  "evaluation_actions": {
+    "uav": [
+      1,
+      1
+    ],
+    "vehicle": [
+      1
+    ]
+  },
+  "evaluation_frozen": true,
+  "finite_metrics": true,
+  "interactions": 128,
+  "interrupted": false,
+  "mask_shapes": {
+    "uav": [
+      2,
+      6
+    ],
+    "vehicle": [
+      1,
+      5
+    ]
+  },
+  "method": "ippo_mobile",
+  "metrics": {
+    "uav_actor_updates": 8,
+    "uav_entropy": 1.791697844862938,
+    "uav_policy_loss": -0.0010096672922372818,
+    "uav_valid_samples": 256,
+    "uav_value_loss": 1.088256150484085,
+    "vehicle_actor_updates": 4,
+    "vehicle_entropy": 0.6919524222612381,
+    "vehicle_policy_loss": 0.00033939722925424576,
+    "vehicle_valid_samples": 128,
+    "vehicle_value_loss": 1.0482861697673798
+  },
+  "metrics_digest": "b119a3725ac51e41283c84b0500c7450cd57345210757af7e681dc4799555855",
+  "partition": "development",
+  "peak_allocated_bytes": 0,
+  "peak_reserved_bytes": 0,
+  "provenance": {
+    "ancestry_hash": "0309dcbbcd66b8e4e0c917f2b672e8cf69a1d3fe671dbbc6d671450777f6a1a5",
+    "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+    "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+    "source_bundle_sha256": "bc3b9cf06706e8f30ea0159f93183e127eb3bd2abc0cc5f46c2999a9a69ce481",
+    "source_commit": "33ba716aacedeff4e90a6d6f604f103732a970fd"
+  },
+  "replenished_resource": "pesticide",
+  "resume_comparison": {
+    "algorithm_state_equal": false,
+    "diagnostics_equal": false,
+    "metrics_equal": false
+  },
+  "resume_equivalent": false,
+  "role_shapes": {
+    "uav": [
+      2,
+      179
+    ],
+    "vehicle": [
+      1,
+      28
+    ]
+  },
+  "scale": "g20x20_d2",
+  "scenario_id": 10000,
+  "scenario_ids": [
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019
+  ],
+  "sealed_accessed": false,
+  "training_log": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\pilots\\g20x20_d2__10000__ippo_mobile__learning_rate__51002\\ippo_mobile__learning_rate__51002\\training.jsonl",
+  "training_seed": 51002,
+  "updates": 1,
+  "validation_accessed": false
+}
