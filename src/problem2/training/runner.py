@@ -155,6 +155,8 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     root = Path(job.get("source_root", Path(__file__).resolve().parents[3])).resolve()
     supplied_contract = job.get("_contract")
     contract = supplied_contract if isinstance(supplied_contract, G5Contract) else load_g5_contract(root)
+    if contract.validation_accessed is not False or contract.sealed_accessed is not False:
+        raise RuntimeError("training contract has validation or sealed access")
     method = str(job.get("method", ""))
     condition = str(job.get("condition_id", method))
     if method not in METHODS:
@@ -171,7 +173,12 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         raise ValueError("max_interactions must be positive")
     supplied_preflight = job.get("_preflight")
     preflight = supplied_preflight if isinstance(supplied_preflight, Mapping) else run_preflight(device, root)
-    if preflight.get("status") != "pass":
+    if (
+        preflight.get("status") != "pass"
+        or preflight.get("validation_accessed") is not False
+        or preflight.get("sealed_accessed") is not False
+        or preflight.get("battery_replenishment_enabled") is not False
+    ):
         raise RuntimeError(preflight.get("reason", "device preflight failed"))
     random.seed(seed)
     np.random.seed(seed)

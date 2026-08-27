@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from pathlib import Path
 import subprocess
 import time
@@ -13,6 +14,9 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 from problem2.experiments.artifacts import atomic_write_bytes
 from problem2.experiments.g5_contract import (
     BudgetDecision,
+    FROZEN_CANDIDATE_BUDGETS,
+    FROZEN_CHECKPOINT_COUNT,
+    FROZEN_MAX_PROJECTED_HOURS,
     G5Contract,
     LEARNING_METHODS,
     PROBLEM2_CONDITIONS,
@@ -143,17 +147,34 @@ def run_pilot_matrix(
     identities = [job.identity for job in selected_jobs]
     if len(identities) != len(set(identities)):
         raise ValueError("pilot jobs contain duplicate identities")
-    if any(job.partition != "development" for job in selected_jobs):
-        raise ValueError("pilot jobs must use the development partition")
+    expected_jobs = build_pilot_matrix(contract)
+    expected_identities = {job.identity for job in expected_jobs}
+    for job in selected_jobs:
+        if job.partition != "development":
+            raise ValueError("pilot jobs must use the development partition")
+        if job.method not in PILOT_METHODS or job.condition_id not in PILOT_CONDITIONS:
+            raise ValueError("pilot job method or condition is outside the frozen matrix")
+        if job.scale not in PILOT_SCALES or job.training_seed not in PILOT_TRAINING_SEEDS:
+            raise ValueError("pilot job scale or training seed is outside the frozen matrix")
+        if job.scenario_id != PILOT_SCENARIO_IDS[0] or tuple(job.scenario_ids) != PILOT_SCENARIO_IDS:
+            raise ValueError("pilot job scenario IDs must match the frozen development scenario panel")
+    if {job.identity for job in selected_jobs} != expected_identities:
+        raise ValueError("pilot matrix must contain the complete frozen training-job coverage")
     root = Path(output_root).resolve()
     root.mkdir(parents=True, exist_ok=True)
     episodes_path, audit_path = _paths_for_output(root)
     preflight = run_preflight(device, contract.source_root)
-    if preflight.get("status") != "pass":
+    if (
+        preflight.get("status") != "pass"
+        or preflight.get("validation_accessed") is not False
+        or preflight.get("sealed_accessed") is not False
+        or preflight.get("battery_replenishment_enabled") is not False
+    ):
         raise ValueError(preflight.get("reason", "pilot device preflight failed"))
     records: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     runtime_rows: list[dict[str, Any]] = []
+    boundary_flags = {"validation_accessed": False, "sealed_accessed": False, "battery_replenishment_enabled": False}
     for job in selected_jobs:
         job_root = root / f"{job.scale}__{job.scenario_id}__{job.method}__{job.condition_id}__{job.training_seed}"
         payload = {
@@ -173,29 +194,54 @@ def run_pilot_matrix(
             result = dict(runner(payload, device, interactions, job_root))
             elapsed = time.perf_counter() - started
             for field in ("validation_accessed", "sealed_accessed", "battery_replenishment_enabled"):
+                boundary_flags[field] = boundary_flags[field] or result.get(field) is True
                 if result.get(field) is not False:
                     raise ValueError(f"pilot runner did not prove {field}=false")
             if result.get("partition", "development") != "development":
                 raise ValueError("pilot runner returned a non-development partition")
+            expected_result_identity = {
+                "method": job.method,
+                "algorithm_id": job.method,
+                "condition_id": job.condition_id,
+                "scale": job.scale,
+                "training_seed": job.training_seed,
+                "scenario_id": job.scenario_id,
+            }
+            for field, expected in expected_result_identity.items():
+                if result.get(field) != expected:
+                    raise ValueError(f"pilot runner returned mismatched {field}")
+            if result.get("finite_metrics") is not True or result.get("evaluation_frozen") is not True:
+                raise ValueError("pilot runner did not prove finite metrics and frozen evaluation")
+            result_interactions = result.get("interactions", interactions)
+            if isinstance(result_interactions, bool) or not isinstance(result_interactions, int) or result_interactions <= 0:
+                raise ValueError("pilot runner returned invalid interactions")
             for episode_index, scenario_id in enumerate(job.scenario_ids):
+                scenario_result = dict(result)
+                # These are scenario-reference rows for one shared training run;
+                # they are never presented as independent scenario executions.
+                scenario_result["training_scenario_id"] = job.scenario_id
+                scenario_result["scenario_id"] = scenario_id
+                scenario_result["scenario_execution"] = False
                 record = {
                     "schema_version": "g5-pilot-episode-v1",
                     "data_status": "development_pilot_descriptive",
+                    "record_type": "scenario_reference",
+                    "scenario_execution": False,
                     "pilot_job_identity": job.identity,
                     "episode_index": episode_index,
                     "method": job.method,
-                    "algorithm_id": result.get("algorithm_id", job.method),
+                    "algorithm_id": job.method,
                     "condition_id": job.condition_id,
                     "scale": job.scale,
                     "training_seed": job.training_seed,
                     "scenario_id": scenario_id,
                     "partition": "development",
-                    "interactions": int(result.get("interactions", interactions)),
+                    "interactions": result_interactions,
                     "elapsed_seconds": elapsed,
-                    "seconds_per_interaction": elapsed / max(int(result.get("interactions", interactions)), 1),
-                    "finite_metrics": bool(result.get("finite_metrics", True)),
-                    "evaluation_frozen": bool(result.get("evaluation_frozen", True)),
-                    "training_result": result,
+                    "seconds_per_interaction": elapsed / result_interactions,
+                    "finite_metrics": True,
+                    "evaluation_frozen": True,
+                    "training_result": scenario_result,
                     "validation_accessed": False,
                     "sealed_accessed": False,
                     "battery_replenishment_enabled": False,
@@ -204,8 +250,8 @@ def run_pilot_matrix(
             runtime_rows.append({
                 "method_id": job.method,
                 "scale_id": job.scale,
-                "interactions": record["interactions"],
-                "elapsed_seconds": record["elapsed_seconds"],
+                "interactions": result_interactions,
+                "elapsed_seconds": elapsed,
             })
         except Exception as exc:
             failures.append({"pilot_job_identity": job.identity, "error": f"{type(exc).__name__}: {exc}"})
@@ -233,9 +279,9 @@ def run_pilot_matrix(
         "coverage": coverage,
         "runtime_aggregates": aggregate_runtime(runtime_rows) if runtime_rows else {},
         "failures": failures,
-        "validation_accessed": False,
-        "sealed_accessed": False,
-        "battery_replenishment_enabled": False,
+        "validation_accessed": boundary_flags["validation_accessed"],
+        "sealed_accessed": boundary_flags["sealed_accessed"],
+        "battery_replenishment_enabled": boundary_flags["battery_replenishment_enabled"],
         "formal_training_performed": False,
         "episodes_path": str(episodes_path),
     }
@@ -244,7 +290,16 @@ def run_pilot_matrix(
 
 
 def _candidate_payload(contract: G5Contract, decision: BudgetDecision) -> dict[str, Any]:
-    if decision.selected_budget <= 0 or decision.checkpoint_interval <= 0 or decision.checkpoint_count < 20:
+    if not isinstance(decision, BudgetDecision) or (
+        decision.selected_budget not in FROZEN_CANDIDATE_BUDGETS
+        or decision.checkpoint_count != FROZEN_CHECKPOINT_COUNT
+        or decision.checkpoint_interval * decision.checkpoint_count != decision.selected_budget
+        or isinstance(decision.projected_slowest_hours, bool)
+        or not isinstance(decision.projected_slowest_hours, (int, float))
+        or not math.isfinite(float(decision.projected_slowest_hours))
+        or decision.projected_slowest_hours <= 0
+        or decision.projected_slowest_hours > FROZEN_MAX_PROJECTED_HOURS
+    ):
         raise ValueError("invalid frozen budget decision")
     scenario_hash = _json_hash(list(VALIDATION_SCENARIO_IDS))
     candidates = {
@@ -318,8 +373,7 @@ def freeze_validation_candidates(
     payload = _candidate_payload(contract, decision)
     if path.exists():
         existing = json.loads(path.read_text(encoding="utf-8"))
-        stable_keys = ("manifest_id", "candidates", "equal_environment_interactions", "checkpoint_interval", "scenario_panel", "selection_rule")
-        if any(existing.get(key) != payload.get(key) for key in stable_keys):
+        if existing != payload:
             raise ValueError("candidate manifest drift before validation")
     path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_bytes(path, (json.dumps(payload, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))
