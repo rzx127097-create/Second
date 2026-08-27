@@ -94,6 +94,19 @@ def test_validation_access_locks_candidate_bytes_after_first_row(tmp_path: Path)
         ledger.append(_validation_row(scenario_id=20001))
 
 
+def test_validation_access_ledger_verifies_recovery_row_chain(tmp_path: Path) -> None:
+    ledger = ValidationAccessLedger(
+        _candidate_manifest(tmp_path),
+        _budget_manifest(tmp_path),
+        tmp_path / "access.json",
+    )
+    row = _validation_row()
+    ledger.append(row)
+    ledger.verify_rows([row])
+    with pytest.raises(ValueError, match="row chain"):
+        ledger.verify_rows([{**row, "scenario_id": 20001}])
+
+
 def test_validation_access_rejects_unequal_declared_candidate_budgets(tmp_path: Path) -> None:
     candidates = _candidate_manifest(tmp_path)
     payload = json.loads(candidates.read_text(encoding="utf-8"))

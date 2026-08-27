@@ -133,6 +133,24 @@ class ValidationAccessLedger:
         atomic_write_bytes(self.ledger_path, (json.dumps(updated, sort_keys=True, indent=2) + "\n").encode("utf-8"))
         return updated
 
+    def verify_rows(self, rows: list[Mapping[str, Any]]) -> None:
+        """Verify a recovered JSONL prefix against the persisted hash chain."""
+
+        if not self.ledger_path.is_file():
+            if rows:
+                raise ValueError("validation rows exist without an access ledger")
+            return
+        ledger = _load_json(self.ledger_path, "validation access ledger")
+        if ledger.get("candidate_manifest_sha256") != self.candidate_sha256 or ledger.get("budget_manifest_sha256") != self.budget_sha256:
+            raise ValueError("validation access ledger provenance drifted")
+        chain = "0" * 64
+        for row in rows:
+            validate_validation_episode(row)
+            raw = json.dumps(dict(row), sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+            chain = hashlib.sha256(chain.encode("ascii") + raw).hexdigest()
+        if ledger.get("row_count") != len(rows) or ledger.get("row_chain_sha256") != chain:
+            raise ValueError("validation recovery row chain mismatch")
+
 
 class ActionDrivenValidationEnv:
     """Attach deterministic local pest mortality to accepted physical spray events."""
