@@ -30,6 +30,8 @@ class MADDPGAlgorithm(HeterogeneousAlgorithm):
         device: str = "cpu",
         *,
         training_config: Mapping[str, Any],
+        uav_count: int = 2,
+        vehicle_count: int = 1,
     ) -> None:
         self.device = torch.device(device)
         self.method_id = "maddpg_mobile"
@@ -40,12 +42,14 @@ class MADDPGAlgorithm(HeterogeneousAlgorithm):
         self.uav_action_dim = int(uav_action_dim)
         self.vehicle_action_dim = int(vehicle_action_dim)
         self.hidden_dim = int(hidden_dim)
+        self.uav_count = int(uav_count)
+        self.vehicle_count = int(vehicle_count)
         self.uav_actor = DiscreteActor(self.uav_obs_dim, self.uav_action_dim, self.hidden_dim, int(self.training_config.get("hidden_depth", 2))).to(self.device)
         self.vehicle_actor = DiscreteActor(self.vehicle_obs_dim, self.vehicle_action_dim, self.hidden_dim, int(self.training_config.get("hidden_depth", 2))).to(self.device)
         self.uav_target_actor = deepcopy(self.uav_actor).to(self.device)
         self.vehicle_target_actor = deepcopy(self.vehicle_actor).to(self.device)
-        self.uav_critic = CentralizedRoleQ(self.state_dim, self.uav_action_dim, self.vehicle_action_dim, self.hidden_dim).to(self.device)
-        self.vehicle_critic = CentralizedRoleQ(self.state_dim, self.uav_action_dim, self.vehicle_action_dim, self.hidden_dim).to(self.device)
+        self.uav_critic = CentralizedRoleQ(self.state_dim, self.uav_action_dim, self.vehicle_action_dim, self.hidden_dim, uav_count=self.uav_count, vehicle_count=self.vehicle_count).to(self.device)
+        self.vehicle_critic = CentralizedRoleQ(self.state_dim, self.uav_action_dim, self.vehicle_action_dim, self.hidden_dim, uav_count=self.uav_count, vehicle_count=self.vehicle_count).to(self.device)
         self.uav_target_critic = deepcopy(self.uav_critic).to(self.device)
         self.vehicle_target_critic = deepcopy(self.vehicle_critic).to(self.device)
         for target in (self.uav_target_actor, self.vehicle_target_actor, self.uav_target_critic, self.vehicle_target_critic):

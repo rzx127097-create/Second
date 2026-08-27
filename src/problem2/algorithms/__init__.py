@@ -42,6 +42,8 @@ def build_algorithm(
     if root is None:
         raise TypeError("contract must expose its validated source_root")
     g3 = load_g3_config(root / "configs/problem2/g3_heterogeneous_marl.yaml")
+    uav_count = int(g3.uav_count)
+    vehicle_count = 1
     if scale is None:
         uav_obs_dim = g3.uav_obs_dim
         critic_state_dim = g3.critic_state_dim
@@ -81,6 +83,8 @@ def build_algorithm(
             hidden_dim=int(parameters["hidden_width"]),
             device=device,
             training_config=training_config,
+            uav_count=uav_count,
+            vehicle_count=vehicle_count,
         )
         MADDPGTrainer(
             algorithm,

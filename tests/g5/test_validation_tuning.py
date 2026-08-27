@@ -319,3 +319,17 @@ def test_algorithm_dimensions_follow_the_frozen_scale_uav_count() -> None:
     )
     result = algorithm.act(view["observations"], view["masks"], deterministic=True)
     assert result.actions["uav"].shape == (4,)
+
+
+def test_maddpg_critic_dimensions_follow_the_frozen_scale_uav_count() -> None:
+    contract = load_g5_contract(ROOT)
+    algorithm = build_algorithm(
+        "maddpg_mobile",
+        contract,
+        "cpu",
+        candidate_id="c01",
+        scale="g30x50_d4",
+    )
+
+    assert algorithm.uav_critic.uav_count == 4
+    assert algorithm.vehicle_critic.uav_count == 4
