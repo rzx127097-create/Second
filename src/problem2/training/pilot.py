@@ -11,7 +11,7 @@ import subprocess
 import time
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
-from problem2.experiments.artifacts import atomic_write_bytes
+from problem2.experiments.artifacts import artifact_sha256, atomic_write_bytes
 from problem2.experiments.g5_contract import (
     BudgetDecision,
     FROZEN_CANDIDATE_BUDGETS,
@@ -33,6 +33,7 @@ PILOT_CONDITIONS = ALL_CONDITION_TYPES
 PILOT_TRAINING_SEEDS = (51001, 51002, 51003)
 PILOT_SCENARIO_IDS = tuple(range(10000, 10020))
 VALIDATION_SCENARIO_IDS = tuple(range(20000, 20050))
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 
 @dataclass(frozen=True)
@@ -122,11 +123,136 @@ def build_pilot_matrix(
 
 
 def _paths_for_output(output_root: Path) -> tuple[Path, Path]:
-    if output_root.name == "pilots":
-        base = output_root.parent
-    else:
-        base = output_root
+    base = _pilot_base_root(output_root)
     return base / "validated" / "pilot-episodes.jsonl", base / "audits" / "pilot-audit.json"
+
+
+def _pilot_base_root(output_root: Path) -> Path:
+    return output_root.parent if output_root.name == "pilots" else output_root
+
+
+def _canonical_g5_root(contract: G5Contract) -> Path:
+    return (_REPOSITORY_ROOT / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
+
+
+def _require_canonical_path(path: Path, contract: G5Contract, label: str, *, allow_noncanonical_output_root: bool) -> Path:
+    resolved = path.resolve()
+    if contract.source_root.resolve() != _REPOSITORY_ROOT:
+        raise ValueError("pilot contract source root is not the canonical repository")
+    if allow_noncanonical_output_root:
+        return resolved
+    try:
+        resolved.relative_to(_canonical_g5_root(contract))
+    except ValueError as exc:
+        raise ValueError(f"{label} must be under the canonical G5 output root") from exc
+    return resolved
+
+
+def _artifact_entry(base: Path, path: Path) -> dict[str, Any]:
+    resolved_base = base.resolve()
+    resolved_path = path.resolve()
+    try:
+        relative = resolved_path.relative_to(resolved_base)
+    except ValueError as exc:
+        raise ValueError("pilot artifact escapes output root") from exc
+    return {"path": relative.as_posix(), "sha256": artifact_sha256(resolved_path), "bytes": resolved_path.stat().st_size}
+
+
+def write_pilot_artifact_manifest(
+    contract: G5Contract,
+    episodes_path: Path | str,
+    audit_path: Path | str,
+    *,
+    manifest_path: Path | str | None = None,
+    allow_noncanonical_output_root: bool = False,
+) -> dict[str, Any]:
+    """Write and verify the provenance-bound manifest for consolidated pilot artifacts."""
+
+    episodes = Path(episodes_path).resolve()
+    audit = Path(audit_path).resolve()
+    base = episodes.parent.parent
+    manifest = Path(manifest_path).resolve() if manifest_path is not None else base / "audits" / "pilot-artifact-manifest.json"
+    _require_canonical_path(base, contract, "pilot output root", allow_noncanonical_output_root=allow_noncanonical_output_root)
+    for path, label in ((episodes, "pilot episodes"), (audit, "pilot audit"), (manifest, "pilot artifact manifest")):
+        _require_canonical_path(path, contract, label, allow_noncanonical_output_root=allow_noncanonical_output_root)
+        if not path.is_file() and path != manifest:
+            raise ValueError(f"{label} is missing")
+    payload = {
+        "schema_version": "g5-pilot-artifact-manifest-v1",
+        "status": "pass",
+        "maturity": "M2",
+        "data_status": "development_pilot_descriptive",
+        "source_commit": _source_commit(contract.source_root),
+        "source_root": str(contract.source_root),
+        "artifact_root": str(base),
+        "artifacts": [_artifact_entry(base, episodes), _artifact_entry(base, audit)],
+    }
+    atomic_write_bytes(manifest, (json.dumps(payload, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))
+    verify_pilot_artifacts(contract, episodes, audit, manifest, allow_noncanonical_output_root=allow_noncanonical_output_root)
+    return {**payload, "path": str(manifest)}
+
+
+def verify_pilot_artifacts(
+    contract: G5Contract,
+    episodes_path: Path | str,
+    audit_path: Path | str,
+    manifest_path: Path | str,
+    *,
+    allow_noncanonical_output_root: bool = False,
+) -> dict[str, Any]:
+    """Re-read the consolidated pilot artifacts and fail closed on drift."""
+
+    episodes = Path(episodes_path).resolve()
+    audit = Path(audit_path).resolve()
+    manifest = Path(manifest_path).resolve()
+    base = episodes.parent.parent
+    _require_canonical_path(base, contract, "pilot output root", allow_noncanonical_output_root=allow_noncanonical_output_root)
+    try:
+        recorded = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("pilot artifact manifest is unreadable") from exc
+    if recorded.get("schema_version") != "g5-pilot-artifact-manifest-v1" or recorded.get("status") != "pass":
+        raise ValueError("pilot artifact manifest is invalid")
+    if recorded.get("source_commit") != _source_commit(contract.source_root):
+        raise ValueError("pilot artifact manifest source commit mismatch")
+    if recorded.get("source_root") != str(contract.source_root.resolve()) or recorded.get("artifact_root") != str(base.resolve()):
+        raise ValueError("pilot artifact manifest provenance is invalid")
+    expected = {"validated/pilot-episodes.jsonl", "audits/pilot-audit.json"}
+    artifacts = recorded.get("artifacts")
+    if not isinstance(artifacts, list) or {item.get("path") for item in artifacts if isinstance(item, Mapping)} != expected:
+        raise ValueError("pilot artifact manifest does not match consolidated artifacts")
+    for item in artifacts:
+        if not isinstance(item, Mapping) or not isinstance(item.get("path"), str):
+            raise ValueError("pilot artifact manifest entry is invalid")
+        candidate = (base / item["path"]).resolve()
+        try:
+            candidate.relative_to(base.resolve())
+        except ValueError as exc:
+            raise ValueError("pilot artifact path escapes output root") from exc
+        if not candidate.is_file():
+            raise ValueError(f"pilot artifact is missing: {item['path']}")
+        if artifact_sha256(candidate) != item.get("sha256"):
+            raise ValueError(f"pilot artifact hash mismatch: {item['path']}")
+        if candidate.stat().st_size != item.get("bytes"):
+            raise ValueError(f"pilot artifact byte mismatch: {item['path']}")
+    try:
+        audit_payload = json.loads(audit.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("pilot audit is unreadable") from exc
+    if not isinstance(audit_payload, Mapping) or audit_payload.get("artifact_manifest_path") != str(manifest) or audit_payload.get("episodes_path") != str(episodes):
+        raise ValueError("pilot audit does not bind its artifact manifest")
+    if not isinstance(audit_payload.get("provenance"), Mapping) or audit_payload["provenance"].get("source_commit") != recorded.get("source_commit"):
+        raise ValueError("pilot audit source commit mismatch")
+    try:
+        records = [json.loads(line.decode("utf-8")) for line in episodes.read_bytes().splitlines()]
+    except (OSError, UnicodeError, json.JSONDecodeError, AttributeError) as exc:
+        raise ValueError("pilot episodes are unreadable") from exc
+    if len(records) != audit_payload.get("episode_count"):
+        raise ValueError("pilot episode count mismatch")
+    for record in records:
+        if not isinstance(record, Mapping) or record.get("data_status") != "development_pilot_descriptive" or record.get("record_type") != "scenario_reference" or record.get("scenario_execution") is not False or record.get("partition") != "development":
+            raise ValueError("pilot episode record is invalid")
+    return dict(recorded)
 
 
 def run_pilot_matrix(
@@ -137,6 +263,7 @@ def run_pilot_matrix(
     interactions: int = 128,
     device: str = "cpu",
     runner: Callable[[Mapping[str, Any], str, int, Path], Mapping[str, Any]] = run_training_job,
+    allow_noncanonical_output_root: bool = False,
 ) -> dict[str, Any]:
     """Run or inject the development pilot path and persist descriptive records."""
 
@@ -160,7 +287,7 @@ def run_pilot_matrix(
             raise ValueError("pilot job scenario IDs must match the frozen development scenario panel")
     if {job.identity for job in selected_jobs} != expected_identities:
         raise ValueError("pilot matrix must contain the complete frozen training-job coverage")
-    root = Path(output_root).resolve()
+    root = _require_canonical_path(Path(output_root), contract, "pilot output root", allow_noncanonical_output_root=allow_noncanonical_output_root)
     root.mkdir(parents=True, exist_ok=True)
     episodes_path, audit_path = _paths_for_output(root)
     preflight = run_preflight(device, contract.source_root)
@@ -175,6 +302,7 @@ def run_pilot_matrix(
     failures: list[dict[str, Any]] = []
     runtime_rows: list[dict[str, Any]] = []
     boundary_flags = {"validation_accessed": False, "sealed_accessed": False, "battery_replenishment_enabled": False}
+    boundary_status = {field: "unknown" for field in boundary_flags}
     for job in selected_jobs:
         job_root = root / f"{job.scale}__{job.scenario_id}__{job.method}__{job.condition_id}__{job.training_seed}"
         payload = {
@@ -194,8 +322,12 @@ def run_pilot_matrix(
             result = dict(runner(payload, device, interactions, job_root))
             elapsed = time.perf_counter() - started
             for field in ("validation_accessed", "sealed_accessed", "battery_replenishment_enabled"):
-                boundary_flags[field] = boundary_flags[field] or result.get(field) is True
-                if result.get(field) is not False:
+                value = result.get(field)
+                boundary_flags[field] = boundary_flags[field] or value is True
+                if type(value) is bool and value is False:
+                    boundary_status[field] = "safe"
+                else:
+                    boundary_status[field] = "unsafe" if value is True else "unknown"
                     raise ValueError(f"pilot runner did not prove {field}=false")
             if result.get("partition", "development") != "development":
                 raise ValueError("pilot runner returned a non-development partition")
@@ -210,6 +342,8 @@ def run_pilot_matrix(
             for field, expected in expected_result_identity.items():
                 if result.get(field) != expected:
                     raise ValueError(f"pilot runner returned mismatched {field}")
+            if result.get("scenario_ids") != list(job.scenario_ids):
+                raise ValueError("pilot runner returned mismatched scenario_ids")
             if result.get("finite_metrics") is not True or result.get("evaluation_frozen") is not True:
                 raise ValueError("pilot runner did not prove finite metrics and frozen evaluation")
             result_interactions = result.get("interactions", interactions)
@@ -230,11 +364,11 @@ def run_pilot_matrix(
                     "pilot_job_identity": job.identity,
                     "episode_index": episode_index,
                     "method": job.method,
-                    "algorithm_id": job.method,
-                    "condition_id": job.condition_id,
-                    "scale": job.scale,
-                    "training_seed": job.training_seed,
-                    "scenario_id": scenario_id,
+                "algorithm_id": job.method,
+                "condition_id": job.condition_id,
+                "scale": job.scale,
+                "training_seed": job.training_seed,
+                "scenario_id": scenario_id,
                     "partition": "development",
                     "interactions": result_interactions,
                     "elapsed_seconds": elapsed,
@@ -268,6 +402,7 @@ def run_pilot_matrix(
         "training_seeds": sorted({record["training_seed"] for record in records}),
         "scenario_ids": sorted({record["scenario_id"] for record in records}),
     }
+    artifact_manifest_path = _pilot_base_root(root) / "audits" / "pilot-artifact-manifest.json"
     audit: dict[str, Any] = {
         "schema_version": "g5-pilot-audit-v1",
         "status": "pass" if not failures and len(runtime_rows) == len(selected_jobs) and len(records) == len(selected_jobs) * len(PILOT_SCENARIO_IDS) else "fail",
@@ -282,16 +417,35 @@ def run_pilot_matrix(
         "validation_accessed": boundary_flags["validation_accessed"],
         "sealed_accessed": boundary_flags["sealed_accessed"],
         "battery_replenishment_enabled": boundary_flags["battery_replenishment_enabled"],
+        "boundary_status": boundary_status,
         "formal_training_performed": False,
         "episodes_path": str(episodes_path),
+        "artifact_manifest_path": str(artifact_manifest_path),
+        "provenance": {
+            "source_commit": _source_commit(contract.source_root),
+            "contract_hashes": dict(sorted(contract.file_hashes.items())),
+        },
     }
     atomic_write_bytes(audit_path, (json.dumps(audit, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))
-    return {**audit, "episodes_path": str(episodes_path), "audit_path": str(audit_path)}
+    write_pilot_artifact_manifest(
+        contract,
+        episodes_path,
+        audit_path,
+        manifest_path=artifact_manifest_path,
+        allow_noncanonical_output_root=allow_noncanonical_output_root,
+    )
+    return {**audit, "episodes_path": str(episodes_path), "audit_path": str(audit_path), "artifact_manifest_path": str(artifact_manifest_path)}
 
 
 def _candidate_payload(contract: G5Contract, decision: BudgetDecision) -> dict[str, Any]:
     if not isinstance(decision, BudgetDecision) or (
-        decision.selected_budget not in FROZEN_CANDIDATE_BUDGETS
+        type(decision.selected_budget) is not int
+        or type(decision.checkpoint_interval) is not int
+        or type(decision.checkpoint_count) is not int
+        or decision.selected_budget <= 0
+        or decision.checkpoint_interval <= 0
+        or decision.checkpoint_count <= 0
+        or decision.selected_budget not in FROZEN_CANDIDATE_BUDGETS
         or decision.checkpoint_count != FROZEN_CHECKPOINT_COUNT
         or decision.checkpoint_interval * decision.checkpoint_count != decision.selected_budget
         or isinstance(decision.projected_slowest_hours, bool)
@@ -358,11 +512,14 @@ def freeze_validation_candidates(
     contract: G5Contract,
     decision: BudgetDecision,
     output_path: Path | str,
+    *,
+    allow_noncanonical_output_root: bool = False,
 ) -> dict[str, Any]:
     """Freeze four hashed candidates per method before any validation access."""
 
     _contract_guard(contract)
     path = Path(output_path).resolve()
+    _require_canonical_path(path, contract, "candidate manifest", allow_noncanonical_output_root=allow_noncanonical_output_root)
     if path.exists():
         try:
             existing = json.loads(path.read_text(encoding="utf-8"))
@@ -388,4 +545,6 @@ __all__ = [
     "build_pilot_matrix",
     "freeze_validation_candidates",
     "run_pilot_matrix",
+    "verify_pilot_artifacts",
+    "write_pilot_artifact_manifest",
 ]

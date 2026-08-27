@@ -430,13 +430,13 @@ def test_protocol_never_selects_masked_action(two_role_algorithm, batch, role, s
 - Runtime measurements are aggregated conservatively by method/scale; the frozen Task-2 budget rule emits one exact formal interaction budget and checkpoint interval before validation begins.
 - `freeze_validation_candidates` writes four candidates per learning algorithm with content hashes, common validation scenarios, equal interactions, and the exact tie-break chain.
 
-- [ ] **Step 1: Write failing tests that reject incomplete small/large scale coverage, missing seeds/scenarios, unequal interactions, mutable candidate files, and a budget decision outside the frozen rule**
-- [ ] **Step 2: Run the focused tests and confirm the pilot/freezer APIs are absent**
-- [ ] **Step 3: Implement pilot orchestration and budget-rule evaluation**
-- [ ] **Step 4: Run the full development pilot matrix, preserving failed/negative runs and stopping at the first contract or data-integrity failure**
-- [ ] **Step 5: Validate raw artifacts, generate the pilot long table and audit, and run descriptive summaries only; do not claim formal ranking**
-- [ ] **Step 6: Freeze and hash the exact budget, checkpoint interval, four candidates per algorithm, validation scenario panel, and selection rule before any validation access**
-- [ ] **Step 7: Commit `docs: freeze g5 validation candidates`, push, verify the remote hash, and record the freeze in project state**
+- [x] **Step 1: Write failing tests that reject incomplete small/large scale coverage, missing seeds/scenarios, unequal interactions, mutable candidate files, and a budget decision outside the frozen rule**
+- [x] **Step 2: Run the focused tests and confirm the pilot/freezer APIs are absent**
+- [x] **Step 3: Implement pilot orchestration and budget-rule evaluation**
+- [x] **Step 4: Run the full development pilot matrix, preserving failed/negative runs and stopping at the first contract or data-integrity failure**
+- [x] **Step 5: Validate raw artifacts, generate the pilot long table and audit, and run descriptive summaries only; do not claim formal ranking**
+- [x] **Step 6: Freeze and hash the exact budget, checkpoint interval, four candidates per algorithm, validation scenario panel, and selection rule before any validation access**
+- [x] **Step 7: Commit `docs: freeze g5 validation candidates`, push, verify the remote hash, and record the freeze in project state**
 
 ### Task 12: Run equal-budget validation tuning, refit development pilots, and freeze G6/G7 manifests
 

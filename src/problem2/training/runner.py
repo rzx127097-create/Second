@@ -114,7 +114,24 @@ def _algorithm_for_condition(condition: str) -> str:
 
 
 def _write_manifest(root: Path, files: list[Path], result: Mapping[str, Any]) -> Path:
-    manifest = {"schema_version": "g5-smoke-artifact-v1", "status": "pass", "maturity": "M2", "method": result["method"], "algorithm_id": result["algorithm_id"], "condition_id": result["condition_id"], "partition": result["partition"], "scenario_id": result["scenario_id"], "training_seed": result["training_seed"], "provenance": result["provenance"], "validation_accessed": False, "sealed_accessed": False, "battery_replenishment_enabled": False, "artifacts": [{"path": str(path.relative_to(root)), "sha256": artifact_sha256(path), "bytes": path.stat().st_size} for path in files]}
+    manifest = {
+        "schema_version": "g5-smoke-artifact-v1",
+        "status": "pass",
+        "maturity": "M2",
+        "method": result["method"],
+        "algorithm_id": result["algorithm_id"],
+        "condition_id": result["condition_id"],
+        "partition": result["partition"],
+        "scale": result["scale"],
+        "scenario_id": result["scenario_id"],
+        "scenario_ids": list(result["scenario_ids"]),
+        "training_seed": result["training_seed"],
+        "provenance": result["provenance"],
+        "validation_accessed": False,
+        "sealed_accessed": False,
+        "battery_replenishment_enabled": False,
+        "artifacts": [{"path": str(path.relative_to(root)), "sha256": artifact_sha256(path), "bytes": path.stat().st_size} for path in files],
+    }
     path = root / "manifest.json"
     atomic_write_bytes(path, (json.dumps(manifest, sort_keys=True, indent=2) + "\n").encode("utf-8"))
     loaded = json.loads(path.read_text(encoding="utf-8"))
@@ -122,9 +139,56 @@ def _write_manifest(root: Path, files: list[Path], result: Mapping[str, Any]) ->
         artifact = root / item["path"]
         if artifact.resolve().parent != root.resolve() or artifact_sha256(artifact) != item["sha256"] or artifact.stat().st_size != item["bytes"]:
             raise RuntimeError("smoke artifact manifest verification failed")
-    if loaded["method"] != result["method"] or loaded["algorithm_id"] != result["algorithm_id"] or loaded["condition_id"] != result["condition_id"]:
+    expected_identity = {
+        "method": result["method"],
+        "algorithm_id": result["algorithm_id"],
+        "condition_id": result["condition_id"],
+        "partition": result["partition"],
+        "scale": result["scale"],
+        "scenario_id": result["scenario_id"],
+        "scenario_ids": list(result["scenario_ids"]),
+        "training_seed": result["training_seed"],
+    }
+    if any(loaded.get(field) != expected for field, expected in expected_identity.items()):
         raise RuntimeError("smoke artifact identity drift")
     return path
+
+
+def _validate_preflight(preflight: Mapping[str, Any], requested_device: str) -> None:
+    required = {
+        "schema_version",
+        "status",
+        "device",
+        "python",
+        "torch_version",
+        "cuda_version",
+        "cuda_visible",
+        "gpu_name",
+        "vram_bytes",
+        "deterministic_algorithms",
+        "cudnn_deterministic",
+        "cudnn_benchmark",
+        "validation_accessed",
+        "sealed_accessed",
+        "battery_replenishment_enabled",
+    }
+    if not required <= set(preflight):
+        raise RuntimeError("preflight report is incomplete")
+    if preflight.get("schema_version") != "g5-smoke-preflight-v1" or preflight.get("status") != "pass":
+        raise RuntimeError(preflight.get("reason", "device preflight failed"))
+    if preflight.get("device") != requested_device:
+        raise RuntimeError("preflight device does not match requested device")
+    for field in ("cuda_visible", "deterministic_algorithms", "cudnn_deterministic", "cudnn_benchmark", "validation_accessed", "sealed_accessed", "battery_replenishment_enabled"):
+        if type(preflight.get(field)) is not bool:
+            raise RuntimeError(f"preflight field {field} must be boolean")
+    if preflight["deterministic_algorithms"] is not True or preflight["cudnn_deterministic"] is not True or preflight["cudnn_benchmark"] is not False:
+        raise RuntimeError("preflight deterministic settings are incomplete")
+    if any(preflight[field] is not False for field in ("validation_accessed", "sealed_accessed", "battery_replenishment_enabled")):
+        raise RuntimeError("preflight boundary is unsafe")
+    if not isinstance(preflight.get("python"), str) or not preflight["python"] or not isinstance(preflight.get("torch_version"), str) or not preflight["torch_version"]:
+        raise RuntimeError("preflight runtime metadata is incomplete")
+    if requested_device == "cuda" and (preflight["cuda_visible"] is not True or not isinstance(preflight.get("gpu_name"), str) or not preflight["gpu_name"] or type(preflight.get("vram_bytes")) is not int or preflight["vram_bytes"] <= 0):
+        raise RuntimeError("preflight CUDA metadata is incomplete")
 
 
 def _evaluation_snapshot(algorithm: Any) -> bytes:
@@ -168,18 +232,23 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         raise ValueError("smoke runner requires a development training seed")
     if job.get("partition") != "development" or int(job.get("scenario_id", -1)) not in contract.partitions["development_scenarios"]:
         raise ValueError("smoke runner requires development partition and scenario")
+    scenario_ids_value = job.get("scenario_ids", contract.partitions["development_scenarios"])
+    if isinstance(scenario_ids_value, (str, bytes)) or not isinstance(scenario_ids_value, (list, tuple)):
+        raise ValueError("scenario IDs must be a sequence")
+    scenario_ids: tuple[int, ...] = tuple(scenario_ids_value)
+    if (
+        not scenario_ids
+        or any(type(item) is not int or item not in contract.partitions["development_scenarios"] for item in scenario_ids)
+        or len(set(scenario_ids)) != len(scenario_ids)
+        or int(job["scenario_id"]) not in scenario_ids
+    ):
+        raise ValueError("scenario IDs must all belong to the development partition")
     scale = str(job.get("scale", "g5_smoke"))
     if isinstance(max_interactions, bool) or int(max_interactions) <= 0:
         raise ValueError("max_interactions must be positive")
     supplied_preflight = job.get("_preflight")
     preflight = supplied_preflight if isinstance(supplied_preflight, Mapping) else run_preflight(device, root)
-    if (
-        preflight.get("status") != "pass"
-        or preflight.get("validation_accessed") is not False
-        or preflight.get("sealed_accessed") is not False
-        or preflight.get("battery_replenishment_enabled") is not False
-    ):
-        raise RuntimeError(preflight.get("reason", "device preflight failed"))
+    _validate_preflight(preflight, str(device).lower())
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -211,7 +280,7 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     # checkpoint loader compares the frozen contract fields.
     save_checkpoint(checkpoint, algorithm, step=stop_at, provenance=provenance | {"interactions": stop_at})
     if interrupted:
-        return {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "scenario_id": int(job["scenario_id"]), "interactions": stop_at, "updates": 0, "interrupted": True, "checkpoint": str(checkpoint), "training_log": str(output / "training.jsonl"), "validation_accessed": False, "sealed_accessed": False, "resume_equivalent": False, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
+        return {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "scenario_id": int(job["scenario_id"]), "scenario_ids": list(scenario_ids), "partition": "development", "training_seed": seed, "interactions": stop_at, "updates": 0, "interrupted": True, "checkpoint": str(checkpoint), "training_log": str(output / "training.jsonl"), "validation_accessed": False, "sealed_accessed": False, "resume_equivalent": False, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
     metrics = algorithm.update()
     finite = all(np.isfinite(float(value)) for value in metrics.values() if isinstance(value, (int, float, np.integer, np.floating)))
     algorithm.set_evaluation(True)
@@ -243,7 +312,7 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         if not all(resume_comparison.values()):
             raise ValueError(f"resume equivalence comparison failed: {resume_comparison}")
     resume_equivalent = bool(resume_from) and all(resume_comparison.values())
-    summary = {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "partition": "development", "scenario_id": int(job["scenario_id"]), "training_seed": seed, "interactions": target, "updates": int(diagnostics.get("updates", 1)), "finite_metrics": bool(finite), "evaluation_frozen": bool(evaluation_frozen), "evaluation_actions": evaluation_actions, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False, "interrupted": False, "resume_equivalent": resume_equivalent, "resume_comparison": resume_comparison, "checkpoint": str(checkpoint), "training_log": str(log_path), "provenance": provenance, "algorithm_state_digest": state_digest, "metrics_digest": metrics_digest, "diagnostics_digest": diagnostics_digest, "metrics": dict(metrics), "role_shapes": {"uav": [2, 179], "vehicle": [1, 28]}, "mask_shapes": {"uav": [2, 6], "vehicle": [1, 5]}, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
+    summary = {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "partition": "development", "scenario_id": int(job["scenario_id"]), "scenario_ids": list(scenario_ids), "training_seed": seed, "interactions": target, "updates": int(diagnostics.get("updates", 1)), "finite_metrics": bool(finite), "evaluation_frozen": bool(evaluation_frozen), "evaluation_actions": evaluation_actions, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False, "interrupted": False, "resume_equivalent": resume_equivalent, "resume_comparison": resume_comparison, "checkpoint": str(checkpoint), "training_log": str(log_path), "provenance": provenance, "algorithm_state_digest": state_digest, "metrics_digest": metrics_digest, "diagnostics_digest": diagnostics_digest, "metrics": dict(metrics), "role_shapes": {"uav": [2, 179], "vehicle": [1, 28]}, "mask_shapes": {"uav": [2, 6], "vehicle": [1, 5]}, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
     summary["mask_shapes"]["vehicle"] = [1, 5]
     summary_path = output / "summary.json"
     atomic_write_bytes(summary_path, (json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))

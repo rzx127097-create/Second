@@ -12,7 +12,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from problem2.experiments.artifacts import atomic_write_bytes
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.training.budget import select_pilot_budget
-from problem2.training.pilot import build_pilot_matrix, freeze_validation_candidates, run_pilot_matrix
+from problem2.training.pilot import (
+    build_pilot_matrix,
+    freeze_validation_candidates,
+    run_pilot_matrix,
+    write_pilot_artifact_manifest,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,7 +65,9 @@ def main() -> int:
             for method, values in aggregates["g30x50_d4"].items()
         ]
         decision = select_pilot_budget(runtime_rows)
-        candidate_path = args.output_root.parent / "manifests" / "validation-candidates.json"
+        output_root = args.output_root.resolve()
+        pilot_base = output_root.parent if output_root.name == "pilots" else output_root
+        candidate_path = pilot_base / "manifests" / "validation-candidates.json"
         candidates = freeze_validation_candidates(contract, decision, candidate_path)
         budget_payload = {
             "schema_version": "g5.v1",
@@ -77,13 +84,19 @@ def main() -> int:
             "sealed_accessed": False,
             "battery_replenishment_enabled": False,
         }
-        budget_path = args.output_root.parent / "manifests" / "pilot-budget.json"
+        budget_path = pilot_base / "manifests" / "pilot-budget.json"
         atomic_write_bytes(budget_path, (json.dumps(budget_payload, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))
         audit_path = Path(str(result["audit_path"]))
         audit = json.loads(audit_path.read_text(encoding="utf-8"))
         audit["budget_decision"] = budget_payload["decision"]
         audit["candidate_manifest"] = str(candidate_path)
         atomic_write_bytes(audit_path, (json.dumps(audit, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))
+        write_pilot_artifact_manifest(
+            contract,
+            result["episodes_path"],
+            result["audit_path"],
+            manifest_path=result["artifact_manifest_path"],
+        )
         report["status"] = "pass"
         report["budget_decision"] = budget_payload["decision"]
         report["candidate_manifest"] = str(candidate_path)
