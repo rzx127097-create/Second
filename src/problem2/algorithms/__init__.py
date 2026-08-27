@@ -17,6 +17,7 @@ def build_algorithm(
     device: str,
     *,
     candidate_id: str = "c01",
+    scale: str | None = None,
 ) -> HeterogeneousAlgorithm:
     """Build one frozen G5 method from the validated contract."""
 
@@ -29,7 +30,7 @@ def build_algorithm(
     from problem2.algorithms.mappo.algorithm import MAPPOAlgorithm
     from problem2.algorithms.sr_mappo.algorithm import SRMAPPOAlgorithm
     from problem2.algorithms.sr_mappo.trainer import SRMAPPOTrainer
-    from problem2.config import load_g3_config
+    from problem2.config import load_g2_config, load_g3_config
 
     on_policy_methods = ("sr_mappo_mobile", "mappo_mobile", "ippo_mobile")
     off_policy_methods = ("maddpg_mobile", "iql_mobile")
@@ -41,6 +42,19 @@ def build_algorithm(
     if root is None:
         raise TypeError("contract must expose its validated source_root")
     g3 = load_g3_config(root / "configs/problem2/g3_heterogeneous_marl.yaml")
+    if scale is None:
+        uav_obs_dim = g3.uav_obs_dim
+        critic_state_dim = g3.critic_state_dim
+    else:
+        scale_contract = next((item for item in load_g2_config(root / "configs/problem2/g2_deterministic.yaml").scales if item.scale_id == scale), None)
+        if scale_contract is None:
+            raise ValueError(f"unknown frozen scale {scale!r}")
+        try:
+            uav_count = int(scale.rsplit("_d", 1)[1])
+        except (IndexError, ValueError) as exc:
+            raise ValueError("scale must encode the frozen UAV count") from exc
+        uav_obs_dim = 43 + 68 * uav_count
+        critic_state_dim = 45 + 70 * uav_count
     candidates = getattr(contract, "tuning_candidates", {}).get(method_id)
     if not candidates:
         raise ValueError(f"method {method_id!r} has no frozen tuning candidates")
@@ -59,9 +73,9 @@ def build_algorithm(
             **parameters,
         }
         algorithm = MADDPGAlgorithm(
-            uav_obs_dim=g3.uav_obs_dim,
+            uav_obs_dim=uav_obs_dim,
             vehicle_obs_dim=g3.vehicle_obs_dim,
-            state_dim=g3.critic_state_dim,
+            state_dim=critic_state_dim,
             uav_action_dim=g3.uav_action_dim,
             vehicle_action_dim=g3.vehicle_action_dim,
             hidden_dim=int(parameters["hidden_width"]),
@@ -84,7 +98,7 @@ def build_algorithm(
             **parameters,
         }
         algorithm = IQLAlgorithm(
-            uav_obs_dim=g3.uav_obs_dim,
+            uav_obs_dim=uav_obs_dim,
             vehicle_obs_dim=g3.vehicle_obs_dim,
             uav_action_dim=g3.uav_action_dim,
             vehicle_action_dim=g3.vehicle_action_dim,
@@ -115,7 +129,7 @@ def build_algorithm(
     }
     stability = dict(contract.stability_components[method_id])
     common = {
-        "uav_obs_dim": g3.uav_obs_dim,
+        "uav_obs_dim": uav_obs_dim,
         "vehicle_obs_dim": g3.vehicle_obs_dim,
         "uav_action_dim": g3.uav_action_dim,
         "vehicle_action_dim": g3.vehicle_action_dim,
@@ -136,7 +150,7 @@ def build_algorithm(
             clip_radius=training_config["clip_radius"],
         )
         return algorithm
-    centralized = {**common, "state_dim": g3.critic_state_dim}
+    centralized = {**common, "state_dim": critic_state_dim}
     algorithm = (
         SRMAPPOAlgorithm(method_id=method_id, **centralized)
         if method_id == "sr_mappo_mobile"

@@ -23,6 +23,6 @@ partitions:
     end: 30099
 access:
   validation_accessed: false
-  validation_tuning_authorized: false
+  validation_tuning_authorized: true
   sealed_accessed: false
   actual_unlock_count: 0

@@ -38,7 +38,7 @@ def _hash_text(value: str, length: int) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:length]
 
 
-def _provenance(contract, condition: str) -> dict[str, str]:
+def _provenance(contract, condition: str, candidate_id: str = "c01") -> dict[str, str]:
     root = contract.source_root
     try:
         import subprocess
@@ -49,7 +49,7 @@ def _provenance(contract, condition: str) -> dict[str, str]:
     source = hashlib.sha256(source_payload.encode("ascii")).hexdigest()
     config = contract.file_hashes["configs/problem2/g5/methods.yaml"]
     protocol = contract.file_hashes["docs/evidence/g5/heterogeneous_interface.yaml"]
-    ancestry = _hash_text(condition, 64)
+    ancestry = _hash_text(f"{condition}|{candidate_id}", 64)
     if len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit.lower()):
         raise RuntimeError("Git returned an invalid source commit for smoke provenance")
     return {"source_commit": commit, "source_bundle_sha256": source, "config_hash": config, "protocol_hash": protocol, "ancestry_hash": ancestry}
@@ -126,6 +126,8 @@ def _write_manifest(root: Path, files: list[Path], result: Mapping[str, Any]) ->
         "scenario_id": result["scenario_id"],
         "scenario_ids": list(result["scenario_ids"]),
         "training_seed": result["training_seed"],
+        "candidate_id": result["candidate_id"],
+        "candidate_config_hash": result["candidate_config_hash"],
         "provenance": result["provenance"],
         "validation_accessed": False,
         "sealed_accessed": False,
@@ -148,6 +150,8 @@ def _write_manifest(root: Path, files: list[Path], result: Mapping[str, Any]) ->
         "scenario_id": result["scenario_id"],
         "scenario_ids": list(result["scenario_ids"]),
         "training_seed": result["training_seed"],
+        "candidate_id": result["candidate_id"],
+        "candidate_config_hash": result["candidate_config_hash"],
     }
     if any(loaded.get(field) != expected for field, expected in expected_identity.items()):
         raise RuntimeError("smoke artifact identity drift")
@@ -259,12 +263,22 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
     # The learning family is owned by the job method; condition is an
     # independent support/controller boundary and must never swap algorithms.
     actual_method = method
-    algorithm = build_algorithm(actual_method, contract, device)
-    provenance = _provenance(contract, condition)
+    candidate_id = job.get("candidate_id", "c01")
+    if not isinstance(candidate_id, str) or candidate_id not in {
+        item.candidate_id for item in contract.tuning_candidates[actual_method]
+    }:
+        raise ValueError("training job candidate_id is not frozen for the method")
+    candidate = next(item for item in contract.tuning_candidates[actual_method] if item.candidate_id == candidate_id)
+    algorithm = build_algorithm(actual_method, contract, device, candidate_id=candidate_id)
+    provenance = _provenance(contract, condition, candidate_id)
     start = 0
     resume_from = job.get("resume_from")
     if resume_from:
-        algorithm, metadata = load_checkpoint(Path(resume_from), lambda: build_algorithm(actual_method, contract, device), expected_provenance=provenance)
+        algorithm, metadata = load_checkpoint(
+            Path(resume_from),
+            lambda: build_algorithm(actual_method, contract, device, candidate_id=candidate_id),
+            expected_provenance=provenance,
+        )
         start = int(metadata["provenance"].get("interactions", 0))
     target = int(max_interactions)
     stop_at = min(target, int(job.get("stop_after_interactions", target)))
@@ -273,14 +287,14 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         current, nxt = _observations(0), _observations(1)
         details = algorithm.act(current, _masks(), deterministic=False, return_details=True)
         algorithm.observe(_envelope(algorithm, current, nxt, index, details, scenario_id=int(job["scenario_id"])))
-        records.append({"interaction": index + 1, "method": method, "condition_id": condition, "scale": scale, "scenario_id": int(job["scenario_id"]), "role_shapes": {key: list(value.shape) for key, value in current.items()}, "mask_shapes": {key: list(value.shape) for key, value in _masks().items()}, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False})
+        records.append({"interaction": index + 1, "method": method, "condition_id": condition, "candidate_id": candidate_id, "candidate_config_hash": candidate.config_hash, "scale": scale, "scenario_id": int(job["scenario_id"]), "role_shapes": {key: list(value.shape) for key, value in current.items()}, "mask_shapes": {key: list(value.shape) for key, value in _masks().items()}, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False})
     interrupted = stop_at < target
     checkpoint = output / "checkpoint.pt"
     # G3 checkpoint provenance is deliberately extended only in the outer report;
     # checkpoint loader compares the frozen contract fields.
     save_checkpoint(checkpoint, algorithm, step=stop_at, provenance=provenance | {"interactions": stop_at})
     if interrupted:
-        return {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "scenario_id": int(job["scenario_id"]), "scenario_ids": list(scenario_ids), "partition": "development", "training_seed": seed, "interactions": stop_at, "updates": 0, "interrupted": True, "checkpoint": str(checkpoint), "training_log": str(output / "training.jsonl"), "validation_accessed": False, "sealed_accessed": False, "resume_equivalent": False, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
+        return {"method": method, "algorithm_id": actual_method, "condition_id": condition, "candidate_id": candidate_id, "candidate_config_hash": candidate.config_hash, "scale": scale, "scenario_id": int(job["scenario_id"]), "scenario_ids": list(scenario_ids), "partition": "development", "training_seed": seed, "interactions": stop_at, "updates": 0, "interrupted": True, "checkpoint": str(checkpoint), "training_log": str(output / "training.jsonl"), "validation_accessed": False, "sealed_accessed": False, "resume_equivalent": False, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
     metrics = algorithm.update()
     finite = all(np.isfinite(float(value)) for value in metrics.values() if isinstance(value, (int, float, np.integer, np.floating)))
     algorithm.set_evaluation(True)
@@ -312,7 +326,7 @@ def run_training_job(job: Mapping[str, Any], device: str, max_interactions: int,
         if not all(resume_comparison.values()):
             raise ValueError(f"resume equivalence comparison failed: {resume_comparison}")
     resume_equivalent = bool(resume_from) and all(resume_comparison.values())
-    summary = {"method": method, "algorithm_id": actual_method, "condition_id": condition, "scale": scale, "partition": "development", "scenario_id": int(job["scenario_id"]), "scenario_ids": list(scenario_ids), "training_seed": seed, "interactions": target, "updates": int(diagnostics.get("updates", 1)), "finite_metrics": bool(finite), "evaluation_frozen": bool(evaluation_frozen), "evaluation_actions": evaluation_actions, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False, "interrupted": False, "resume_equivalent": resume_equivalent, "resume_comparison": resume_comparison, "checkpoint": str(checkpoint), "training_log": str(log_path), "provenance": provenance, "algorithm_state_digest": state_digest, "metrics_digest": metrics_digest, "diagnostics_digest": diagnostics_digest, "metrics": dict(metrics), "role_shapes": {"uav": [2, 179], "vehicle": [1, 28]}, "mask_shapes": {"uav": [2, 6], "vehicle": [1, 5]}, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
+    summary = {"method": method, "algorithm_id": actual_method, "condition_id": condition, "candidate_id": candidate_id, "candidate_config_hash": candidate.config_hash, "scale": scale, "partition": "development", "scenario_id": int(job["scenario_id"]), "scenario_ids": list(scenario_ids), "training_seed": seed, "interactions": target, "updates": int(diagnostics.get("updates", 1)), "finite_metrics": bool(finite), "evaluation_frozen": bool(evaluation_frozen), "evaluation_actions": evaluation_actions, "validation_accessed": False, "sealed_accessed": False, "replenished_resource": "pesticide", "battery_replenishment_enabled": False, "interrupted": False, "resume_equivalent": resume_equivalent, "resume_comparison": resume_comparison, "checkpoint": str(checkpoint), "training_log": str(log_path), "provenance": provenance, "algorithm_state_digest": state_digest, "metrics_digest": metrics_digest, "diagnostics_digest": diagnostics_digest, "metrics": dict(metrics), "role_shapes": {"uav": [2, 179], "vehicle": [1, 28]}, "mask_shapes": {"uav": [2, 6], "vehicle": [1, 5]}, "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0, "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0}
     summary["mask_shapes"]["vehicle"] = [1, 5]
     summary_path = output / "summary.json"
     atomic_write_bytes(summary_path, (json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8"))

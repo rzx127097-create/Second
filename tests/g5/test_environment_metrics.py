@@ -318,9 +318,9 @@ def test_evaluation_freezes_policy_state_and_partition_guard_fails_closed() -> N
     assert policy.normalizer.tolist() == [3.0, 4.0]
     assert record.decision_runtime_s >= 0.0
     assert assert_partition_allowed("development", 10019) == "development"
+    assert assert_partition_allowed("validation", 20000) == "validation"
     for partition, scenario_id in (
         ("development", 10020),
-        ("validation", 20000),
         ("sealed_test", 30000),
         ("undeclared", 10000),
     ):
@@ -447,8 +447,8 @@ def _copy_g5_contract_root(tmp_path: Path) -> Path:
 @pytest.mark.parametrize(
     "mutate",
     [
-        lambda payload: payload["access"].__setitem__("validation_accessed", True),
-        lambda payload: payload["access"].__setitem__("validation_tuning_authorized", True),
+        lambda payload: payload["access"].__setitem__("sealed_accessed", True),
+        lambda payload: payload["access"].update({"validation_accessed": True, "validation_tuning_authorized": False}),
         lambda payload: payload["access"].__setitem__("actual_unlock_count", 1),
         lambda payload: payload["partitions"]["development_scenarios"].__setitem__("end", 10018),
     ],

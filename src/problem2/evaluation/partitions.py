@@ -26,6 +26,7 @@ def _strict_partition_state() -> tuple[dict[str, tuple[int, ...]], dict[str, boo
     }
     flags = {
         "validation_accessed": contract.validation_accessed,
+        "validation_tuning_authorized": contract.validation_tuning_authorized,
         "sealed_accessed": contract.sealed_accessed,
     }
     protocol_hash = contract.file_hashes["configs/problem2/g5/protocol.yaml"]
@@ -44,9 +45,9 @@ def assert_partition_allowed(partition: str, scenario_id: int) -> str:
     if scenario_id not in ranges[partition]:
         raise PartitionAccessError("scenario ID is outside its declared partition")
     if partition == "sealed_test":
-        raise PartitionAccessError("sealed-test access is forbidden during G5 Task 6")
-    if partition == "validation":
-        raise PartitionAccessError("validation access is not authorized during G5 Task 6")
+        raise PartitionAccessError("sealed-test access is forbidden during G5 Task12")
+    if partition == "validation" and not load_g5_contract(REPOSITORY_ROOT).validation_tuning_authorized:
+        raise PartitionAccessError("validation tuning is not authorized")
     return partition
 
 

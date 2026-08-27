@@ -191,6 +191,7 @@ def test_partitions_are_exact_and_pairwise_disjoint() -> None:
         for right in values[index + 1 :]:
             assert set(left).isdisjoint(right)
     assert contract.validation_accessed is False
+    assert contract.validation_tuning_authorized is True
     assert contract.sealed_accessed is False
 
 

@@ -160,6 +160,7 @@ class G5Contract:
     problem1_runtime_import_allowed: bool
     file_hashes: Mapping[str, str]
     validation_accessed: bool
+    validation_tuning_authorized: bool
     sealed_accessed: bool
 
 
@@ -347,7 +348,7 @@ def _registry_header(
         raise G5ContractError(f"{name}.status must be design_frozen")
 
 
-def _load_protocol(root: Path) -> tuple[str, str, dict[str, tuple[int, ...]], bool, bool]:
+def _load_protocol(root: Path) -> tuple[str, str, dict[str, tuple[int, ...]], bool, bool, bool]:
     name = "protocol"
     payload = _load_yaml(root, "configs/problem2/g5/protocol.yaml")
     _header(
@@ -409,12 +410,14 @@ def _load_protocol(root: Path) -> tuple[str, str, dict[str, tuple[int, ...]], bo
         {"validation_accessed", "validation_tuning_authorized", "sealed_accessed", "actual_unlock_count"},
         "protocol.access",
     )
-    validation_accessed = _strict_bool(access["validation_accessed"], "validation access", False)
-    _strict_bool(access["validation_tuning_authorized"], "validation tuning authorization", False)
+    validation_accessed = _strict_bool(access["validation_accessed"], "validation access")
+    validation_tuning_authorized = _strict_bool(access["validation_tuning_authorized"], "validation tuning authorization")
+    if validation_accessed and not validation_tuning_authorized:
+        raise G5ContractError("validation access requires prior tuning authorization")
     sealed_accessed = _strict_bool(access["sealed_accessed"], "sealed access", False)
     if _integer(access["actual_unlock_count"], "actual unlock count") != 0:
         raise G5ContractError("sealed access actual unlock count must be zero")
-    return algorithm_name, problem_description, partitions, validation_accessed, sealed_accessed
+    return algorithm_name, problem_description, partitions, validation_accessed, validation_tuning_authorized, sealed_accessed
 
 
 def _load_methods(
@@ -915,7 +918,7 @@ def _validate_dependency_locks(root: Path) -> None:
 
 def load_g5_contract(root: Path) -> G5Contract:
     repository_root = Path(root).resolve()
-    algorithm_name, problem_description, partitions, validation_accessed, sealed_accessed = _load_protocol(repository_root)
+    algorithm_name, problem_description, partitions, validation_accessed, validation_tuning_authorized, sealed_accessed = _load_protocol(repository_root)
     methods, conditions, stability_components = _load_methods(repository_root)
     tuning_candidates = _load_tuning(repository_root)
     _load_budget(repository_root)
@@ -953,6 +956,7 @@ def load_g5_contract(root: Path) -> G5Contract:
         problem1_runtime_import_allowed=runtime_allowed,
         file_hashes=MappingProxyType(file_hashes),
         validation_accessed=validation_accessed,
+        validation_tuning_authorized=validation_tuning_authorized,
         sealed_accessed=sealed_accessed,
     )
 

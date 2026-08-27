@@ -74,6 +74,21 @@ def _source_commit(root: Path) -> str:
     return commit
 
 
+def _is_ancestor(root: Path, ancestor: str, descendant: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "merge-base", "--is-ancestor", ancestor, descendant],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        raise ValueError("pilot provenance requires Git ancestry verification") from exc
+    if result.returncode not in (0, 1):
+        raise ValueError("pilot generation commit cannot be resolved")
+    return result.returncode == 0
+
+
 def _json_hash(value: Any) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -213,8 +228,10 @@ def verify_pilot_artifacts(
         raise ValueError("pilot artifact manifest is unreadable") from exc
     if recorded.get("schema_version") != "g5-pilot-artifact-manifest-v1" or recorded.get("status") != "pass":
         raise ValueError("pilot artifact manifest is invalid")
-    if recorded.get("source_commit") != _source_commit(contract.source_root):
-        raise ValueError("pilot artifact manifest source commit mismatch")
+    current_commit = _source_commit(contract.source_root)
+    generation_commit = recorded.get("source_commit")
+    if not isinstance(generation_commit, str) or not _is_ancestor(contract.source_root, generation_commit, current_commit):
+        raise ValueError("pilot artifact manifest source commit is not an ancestor of the current commit")
     if recorded.get("source_root") != str(contract.source_root.resolve()) or recorded.get("artifact_root") != str(base.resolve()):
         raise ValueError("pilot artifact manifest provenance is invalid")
     expected = {"validated/pilot-episodes.jsonl", "audits/pilot-audit.json"}
@@ -243,6 +260,19 @@ def verify_pilot_artifacts(
         raise ValueError("pilot audit does not bind its artifact manifest")
     if not isinstance(audit_payload.get("provenance"), Mapping) or audit_payload["provenance"].get("source_commit") != recorded.get("source_commit"):
         raise ValueError("pilot audit source commit mismatch")
+    recorded_hashes = audit_payload["provenance"].get("contract_hashes")
+    if not isinstance(recorded_hashes, Mapping):
+        raise ValueError("pilot audit lacks frozen contract hashes")
+    governance_state_paths = {
+        "configs/problem2/g5/protocol.yaml",
+        "docs/evidence/g5/checkpoint_selection.yaml",
+        "docs/evidence/g1/sealed_test_lock.yaml",
+    }
+    for relative, expected_hash in recorded_hashes.items():
+        if relative in governance_state_paths:
+            continue
+        if contract.file_hashes.get(relative) != expected_hash:
+            raise ValueError(f"pilot frozen contract scope drifted: {relative}")
     try:
         records = [json.loads(line.decode("utf-8")) for line in episodes.read_bytes().splitlines()]
     except (OSError, UnicodeError, json.JSONDecodeError, AttributeError) as exc:

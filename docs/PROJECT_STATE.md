@@ -1820,3 +1820,32 @@ Known Task12 entry issue:
 This handoff does not authorize G6 or G7. Task12 remains the only next
 authorized activity. After this persistence commit is pushed, local,
 upstream, and remote hashes must agree before a new conversation begins work.
+
+## Task12 Pre-Validation Authorization
+
+Task12 implementation reached the pre-access boundary on 2026-08-27. The
+candidate and budget artifacts remain byte-identical to the Task11 freeze:
+
+- validation candidates SHA-256:
+  `67E6784B3D00D0385310D467C351F5B3374F02C7A7D7C22C571D4DE29190419A`;
+- pilot budget SHA-256:
+  `048138954F336C95E3D339AED594C71E23167EF30CC1F4A373D5C2B10BB049CB`;
+- sealed lock SHA-256:
+  `78C9CAA7D432F56F91B67195EB413EDDAB4E9F84C9FD214EB7A9373F48A73226`,
+  with maximum unlock count `1` and actual unlock count `0`.
+
+The Task11 pilot verifier lineage defect is repaired by requiring the recorded
+generation commit to be an ancestor of the current commit and by rejecting
+drift in the immutable contract scope. Task12 now has a validation-only,
+action-driven pest metric adapter over the frozen G2 road cache, exact
+candidate-ID propagation, scale-dependent `d2/d3/d4` observation dimensions,
+an immutable validation-access ledger, the frozen mechanical selection rule,
+and fail-closed G6/G7 count construction. Validation authorization is enabled
+for IDs `20000-20049`; `validation_accessed` remains false until the first
+persisted validation row. Sealed access remains forbidden.
+
+Pre-access verification: Task12 focused tests `14 passed`; authorization and
+partition regression tests `18 passed`; candidate, budget, and sealed-lock
+hashes match the values above; `git diff --check` has no content error. This is
+an implementation and governance transition only. It contains no validation
+result, no G6 job, no sealed content, and no efficacy or superiority claim.
