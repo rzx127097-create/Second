@@ -1589,9 +1589,11 @@ Persistence status:
   statistics, multiplicity correction, equivalence, mechanism summaries, and
   ordered diagnosis are recorded in `src/problem2/statistics/`, CLI adapters,
   tests, and the Task 9 report.
-- Execute Task 10 smoke acceptance from the persisted G5 plan.
-- Implement later G5 statistics, smoke, pilots, and validation tuning only in
-  the plan's declared order.
+- Task10 smoke and Task11 development pilot/candidate freeze are complete and
+  persisted. Execute only Task12 validation tuning, selected-configuration
+  development refit, and final G5 freeze from the persisted plan.
+- Keep the frozen candidate, budget, statistics, and partition contracts
+  immutable while Task12 performs its one-way validation access.
 - Run G6/G7 formal and sealed experiments only after all prior gates pass.
 - Generate G8 figures, tables, and thesis prose from locked summaries.
 
@@ -1613,9 +1615,10 @@ Persistence status:
   controllers and Task-7 experiment-family/job-graph manifests are frozen at
   M2. The reduction denominator epsilon is contract owned at `1.0e-12`; Task 8
   orchestration and evidence-validation implementation is accepted, and Task 9
-  statistics/mechanism summaries are accepted at M2. Task 10 smoke acceptance
-  is the next authorized work. No formal or sealed execution is authorized by
-  this record.
+  statistics/mechanism summaries are accepted at M2. Task10 smoke and Task11
+  development-pilot/candidate-freeze acceptance are complete. Task12
+  validation tuning and final G5 freeze are the next authorized work. No G6
+  formal or G7 sealed execution is authorized by this record.
 - First-problem historical results may justify choosing SR-MAPPO as the
   algorithmic base, but they are not formal second-problem causal evidence.
 - Fixed-support, rolling-A*, same-source MAPPO, two-stage, sensitivity,
