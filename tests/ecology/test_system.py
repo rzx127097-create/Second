@@ -247,6 +247,20 @@ def test_restore_rejects_noncanonical_config_and_preserves_live_state() -> None:
     _assert_state_equal(system.state_dict(), before)
 
 
+def test_restore_rejects_digest_valid_alternate_config_before_mutation() -> None:
+    system = DynamicEcologySystem.from_scenario(_scenario(), CONFIG, 0.25)
+    before = system.state_dict()
+    alternate = replace(CONFIG, beta=1.4)
+    candidate = system.state_dict()
+    candidate["config_hash"] = alternate.contract_sha256
+    candidate["state_sha256"] = _digest_payload(candidate)
+
+    with pytest.raises(ValueError, match="scenario/config_hash"):
+        system.load_state_dict(candidate, config=alternate)
+
+    _assert_state_equal(system.state_dict(), before)
+
+
 def test_snapshot_restores_exact_continuation_and_canonical_digest() -> None:
     left = DynamicEcologySystem.from_scenario(_scenario(), CONFIG, 0.25)
     for step in range(4):

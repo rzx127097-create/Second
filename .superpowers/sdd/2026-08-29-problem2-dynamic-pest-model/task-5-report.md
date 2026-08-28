@@ -191,3 +191,40 @@ $ python -m pytest tests/ecology -q
 95 passed in 1.60s
 exit_code=0
 ```
+
+## Fix Round 3
+
+### RED
+
+A restore regression was added using an alternate `DynamicEcologyConfig` with
+`beta=1.4` and the unchanged canonical three-substep count. The candidate
+state's `config_hash` and `state_sha256` were both recomputed, so digest
+verification alone could not reject it. Before the fix:
+
+```text
+1 failed, 20 passed
+Failed: DID NOT RAISE ValueError
+```
+
+### GREEN
+
+`load_state_dict` now requires the supplied configuration's canonical hash to
+equal the immutable `scenario.config_hash`, before any state reconstruction or
+assignment. The regression also compares the complete pre-restore state after
+rejection, preserving atomicity.
+
+Final focused system verification:
+
+```text
+$ python -m pytest tests/ecology/test_system.py -q
+21 passed in 0.48s
+exit_code=0
+```
+
+The complete focused ecology suite also passed after the fix:
+
+```text
+$ python -m pytest tests/ecology -q
+96 passed in 1.55s
+exit_code=0
+```
