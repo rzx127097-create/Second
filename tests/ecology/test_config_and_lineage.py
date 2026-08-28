@@ -135,6 +135,12 @@ def test_lineage_resolves_only_the_approved_commit_and_blobs() -> None:
             "source commit",
         ),
         (
+            lambda payload: payload.__setitem__(
+                "repository_path", "C:/unapproved-repository"
+            ),
+            "repository_path",
+        ),
+        (
             lambda payload: payload["sources"][0].__setitem__("blob_id", "0" * 40),
             "blob",
         ),

@@ -106,6 +106,7 @@ _APPROVED_LINEAGE = {
     "source/locust_rl_selected/config/settings.py": "25bbd3afb90b5be1e0d267d3aabf938526ef5ae2",
 }
 _APPROVED_SOURCE_COMMIT = "1ca9e5ccc5f77ed775cd2b607dd70d635720accf"
+_APPROVED_REPOSITORY_PATH = "C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper"
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -396,6 +397,8 @@ def verify_problem1_lineage(path: Path, *, resolve_git: bool = True) -> dict[str
     if _text(payload["schema_version"], "schema_version") != "problem2.dynamic-pest-lineage.v1":
         raise DynamicEcologyConfigError("Problem-1 lineage schema_version drifted")
     repository_path = _text(payload["repository_path"], "repository_path")
+    if repository_path != _APPROVED_REPOSITORY_PATH:
+        raise DynamicEcologyConfigError("Problem-1 repository_path drifted")
     source_commit = _text(payload["source_commit"], "source commit")
     if source_commit != _APPROVED_SOURCE_COMMIT:
         raise DynamicEcologyConfigError("Problem-1 source commit drifted")
