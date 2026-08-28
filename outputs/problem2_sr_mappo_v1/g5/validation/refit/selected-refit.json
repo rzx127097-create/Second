@@ -1,0 +1,81 @@
+{
+  "episode_count": 10200,
+  "episodes_sha256": "4e1f11a94e3a64da21321a813188cf3de49954560d39cf87c3a93a7427076589",
+  "job_count": 510,
+  "schema_version": "g5-selected-refit-v1",
+  "sealed_accessed": false,
+  "selected": {
+    "ippo_mobile": {
+      "budget_manifest_sha256": "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb",
+      "candidate_id": "c01",
+      "candidate_manifest_sha256": "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a",
+      "config_hash": "ab9e8807b886a059b54e34053a891d8dd046fcfbfec52fa1d180eed247df3461",
+      "episode_count": 150,
+      "failed_episode_count": 0,
+      "interaction_count": 200000,
+      "mean_validation_reduction_rate": 0.0026175830786319353,
+      "method": "ippo_mobile",
+      "physical_scenario_contract_sha256": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "sealed_accessed": false,
+      "success_probability": 0.0
+    },
+    "iql_mobile": {
+      "budget_manifest_sha256": "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb",
+      "candidate_id": "c03",
+      "candidate_manifest_sha256": "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a",
+      "config_hash": "41871a4071d3b04e2585d06d3476976bbda0ac305c563d40b2a421d6b5cdde48",
+      "episode_count": 150,
+      "failed_episode_count": 0,
+      "interaction_count": 200000,
+      "mean_validation_reduction_rate": 0.002599799048446192,
+      "method": "iql_mobile",
+      "physical_scenario_contract_sha256": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "sealed_accessed": false,
+      "success_probability": 0.0
+    },
+    "maddpg_mobile": {
+      "budget_manifest_sha256": "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb",
+      "candidate_id": "c04",
+      "candidate_manifest_sha256": "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a",
+      "config_hash": "22dc69688615b405acd2e6cc64e6700400b60d7904826883874dcb3496d0434f",
+      "episode_count": 150,
+      "failed_episode_count": 0,
+      "interaction_count": 200000,
+      "mean_validation_reduction_rate": 9.992007221626409e-15,
+      "method": "maddpg_mobile",
+      "physical_scenario_contract_sha256": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "sealed_accessed": false,
+      "success_probability": 0.0
+    },
+    "mappo_mobile": {
+      "budget_manifest_sha256": "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb",
+      "candidate_id": "c01",
+      "candidate_manifest_sha256": "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a",
+      "config_hash": "9b47674560692e920dc28361bc8bf0dc1210923fbec424ad442cefede0695de9",
+      "episode_count": 150,
+      "failed_episode_count": 0,
+      "interaction_count": 200000,
+      "mean_validation_reduction_rate": 0.0026958817364916253,
+      "method": "mappo_mobile",
+      "physical_scenario_contract_sha256": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "sealed_accessed": false,
+      "success_probability": 0.0
+    },
+    "sr_mappo_mobile": {
+      "budget_manifest_sha256": "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb",
+      "candidate_id": "c02",
+      "candidate_manifest_sha256": "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a",
+      "config_hash": "06deec69c111adb01062b951e98bf6642bdb9bd064a63ebade903fe87786e6d0",
+      "episode_count": 150,
+      "failed_episode_count": 0,
+      "interaction_count": 200000,
+      "mean_validation_reduction_rate": 0.007436090709143013,
+      "method": "sr_mappo_mobile",
+      "physical_scenario_contract_sha256": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "sealed_accessed": false,
+      "success_probability": 0.0
+    }
+  },
+  "status": "pass",
+  "validation_accessed": true
+}

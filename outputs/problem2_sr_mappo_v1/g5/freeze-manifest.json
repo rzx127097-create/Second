@@ -1,0 +1,84 @@
+{
+  "actual_unlock_count": 0,
+  "artifacts": {
+    "outputs/problem2_sr_mappo_v1/g5/audits/negative-result-diagnosis.json": "c211338ea52a5c1e7bea82d4ca640478cf0058e7b1f185684b4a6a7ddcb61936",
+    "outputs/problem2_sr_mappo_v1/g5/manifests/g6-training-jobs.json": "ae077d930aa46f4f4843b2199e65b59f1c5d7404f477b8bdbb12378ad577fe74",
+    "outputs/problem2_sr_mappo_v1/g5/manifests/g6-validation-evaluations.json": "1c8a8d2ef620391635424d8d930a5fffa979c5bd555a9cd37c3b66048dda101e",
+    "outputs/problem2_sr_mappo_v1/g5/manifests/g7-analysis.json": "e5d8e94470d250ae8896d5fcc686eb1dd373d302c976273174d21f66d2254427",
+    "outputs/problem2_sr_mappo_v1/g5/manifests/g7-sealed-evaluations.json": "d4729a81431fe005181ad521d9aa50861a6f838f61fb2c2c2cf866309ff98df1",
+    "outputs/problem2_sr_mappo_v1/g5/validated/validation-episodes.jsonl": "42a264e54d5fce526e185e9e6ef108efa5c25cc832a893ba1af730bd0ee4f939",
+    "outputs/problem2_sr_mappo_v1/g5/validation/refit/audits/pilot-artifact-manifest.json": "fd083bcaa6571bbecf650c29a76e186f66427e363cc3d1d732959b88c2654829",
+    "outputs/problem2_sr_mappo_v1/g5/validation/refit/audits/pilot-audit.json": "1475fe9b3672379fc70483dcad0993aa620542484dfc0dfb144549dcc33249ea",
+    "outputs/problem2_sr_mappo_v1/g5/validation/refit/selected-refit.json": "47823ac0fa72400e3be1619b5f5007318c42f8a539da99ae3b71ced6fb924ee2",
+    "outputs/problem2_sr_mappo_v1/g5/validation/refit/validated/pilot-episodes.jsonl": "4e1f11a94e3a64da21321a813188cf3de49954560d39cf87c3a93a7427076589",
+    "outputs/problem2_sr_mappo_v1/g5/validation/selected-configurations.json": "a5b23d901865c126ede8f73f15466a328af6912e7564209c922fc3c8aa0bd96e",
+    "outputs/problem2_sr_mappo_v1/g5/validation/validation-access.json": "48d4074a66ad0c3e3fd3e2759280440c3400b22ddd64cb8a7d250ec7cb5c1b85",
+    "outputs/problem2_sr_mappo_v1/g5/validation/validation-episodes.jsonl": "42a264e54d5fce526e185e9e6ef108efa5c25cc832a893ba1af730bd0ee4f939"
+  },
+  "contract_hashes": {
+    "configs/problem2/g5/ablations.yaml": "2d7222ee9e24a561ec1d6b267c6e6906cfa7f6ab64ca3ebeb7b2bb1686b02787",
+    "configs/problem2/g5/budget_rule.yaml": "46346c400ea8d44307ce229f093bffc219490791ba8a935d7b2b1a39fa6ce16f",
+    "configs/problem2/g5/families.yaml": "2530a5703659afa90ad4310ef4ae3a0b131983f48627565bfba9a9edbb4cb91a",
+    "configs/problem2/g5/methods.yaml": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+    "configs/problem2/g5/metrics.yaml": "c1761358f1bd4638ff879cc29acf9dac3c754e149f0d0fe2a4d51323ab6ec8bb",
+    "configs/problem2/g5/pilot.yaml": "fef62b31a8b7db28f4333e8abb9d7aa296c7a7bea494a1d7b1c54d19389f93f0",
+    "configs/problem2/g5/protocol.yaml": "3b07a5917dc4c4961eb5fb6f978102e5cf2681afb561a9c8364e1ec6138667f9",
+    "configs/problem2/g5/sensitivity.yaml": "b376151abbc7943d3a78669a5bf7fcb40e45eb8fea20667f8c1bfb2730f7b370",
+    "configs/problem2/g5/statistics.yaml": "a75cef225795bd13c05f6110d4387323ab818e9e46f100419eb05b26d30d0386",
+    "configs/problem2/g5/tuning_candidates.yaml": "6388acfd268e38618e99ea9030b1260647e90ce7ace2f81aea04ecea42330be7",
+    "docs/evidence/g1/scenario_seed_manifest.yaml": "a2bbf31f4bbdad32a0a6704c6974f0890cb00b65935e906a367a8a6a834d6915",
+    "docs/evidence/g1/sealed_test_lock.yaml": "78c9caa7d432f56f91b67195eb413eddab4e9f84c9fd214eb7a9373f48a73226",
+    "docs/evidence/g5/checkpoint_selection.yaml": "3b6ec50f725592586c753d1b522ebc85beb312b8985a1026e38748a48dd42cff",
+    "docs/evidence/g5/exclusion_contract.yaml": "ea7c7bfb545a47a938bc4b5884da0d2ebfb14967d7200bb436b17fa1ca72a4ca",
+    "docs/evidence/g5/fairness_matrix.yaml": "2c21ca660026c446918b5a2057c82f786b0ec2cf7c7b93643f17272f756b619f",
+    "docs/evidence/g5/heterogeneous_interface.yaml": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+    "docs/evidence/g5/physical_scenario_contract.yaml": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+    "docs/evidence/g5/problem1_lineage.yaml": "25a81264c1b58aa500a2ab66003b1a8d2fb6ad020730c22576f33be1376e4c20",
+    "requirements-g3.lock": "d4bb20fafcfbc849b09419a764ac2e8aa37669ac9d6c8df0da4df42d4e90acbd",
+    "requirements-g5.lock": "3b15d9c6808867209be2f3928ea6a6f45feb168544f26620032513ad44ee48c6"
+  },
+  "counts": {
+    "g6_base_jobs": 150,
+    "g6_total_jobs": 375,
+    "g7_expected_evaluations": 42500,
+    "refit_episodes": 10200,
+    "refit_jobs": 510,
+    "validation_rows": 3000
+  },
+  "protected_asset_audit": {
+    "checked_files": [
+      {
+        "path": "C:/Users/RZX/Desktop/\u8bba\u6587/\u6bd5\u4e1a\u8bba\u6587/locust-rl-paper/\u65b9\u5411.docx",
+        "sha256": "dd614abf8d221b79ce379d6830b0dd9dd384ed53a449f512ece424ccdb833a89"
+      },
+      {
+        "path": "C:/Users/RZX/Desktop/\u8bba\u6587/\u6bd5\u4e1a\u8bba\u6587/locust-rl-paper/\u65e0\u4eba\u673a\u8757\u707e.docx",
+        "sha256": "363284c6d7dd4f0d46a95e1f45ad723e2c2b1780bcd87c1c50db428ffd30d127"
+      },
+      {
+        "path": "C:/Users/RZX/Desktop/\u8bba\u6587/\u6bd5\u4e1a\u8bba\u6587/locust-rl-paper/\u6d88\u878d.docx",
+        "sha256": "ec0a620d6ab5cb6e2055c4c1d3a90344fae6b67474b33bbc46b97879e8f9f43a"
+      },
+      {
+        "path": "D:/Pycharm/Locust_rl/data/jodhpur_drive.graphml",
+        "sha256": "b3af36efbfc87fff30bd61d204283dc40c5b8c83a80ba0ee09f3da5ef52a9462"
+      },
+      {
+        "path": "D:/Pycharm/Locust_rl/data/jodhpur_buildings.geojson",
+        "sha256": "08a81df6c8fa401014acd161661072714d9231b2b95173cbe932c86fe57f37db"
+      },
+      {
+        "path": "D:/Pycharm/Locust_rl/data/jodhpur_green.geojson",
+        "sha256": "b80f54c7c03ee42b4f8e8a55bfbcfbd4b7a166ed5e3eb97cd443069398ce0647"
+      }
+    ],
+    "external_writes": false,
+    "status": "pass"
+  },
+  "schema_version": "g5-freeze-v1",
+  "sealed_accessed": false,
+  "source_commit": "7a079fa16afae7ebd1d69f4d63d83cc09437a816",
+  "source_scope_sha256": "9a6a9baf960d86f94ba391cef60116d0ab33fb8b8c965c30a2e7f38e9308def4",
+  "status": "pass",
+  "validation_accessed": true
+}

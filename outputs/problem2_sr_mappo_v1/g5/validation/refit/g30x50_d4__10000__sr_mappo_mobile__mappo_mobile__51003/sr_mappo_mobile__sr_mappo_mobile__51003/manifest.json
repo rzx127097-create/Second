@@ -1,0 +1,93 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1723083,
+      "path": "checkpoint.pt",
+      "sha256": "cef61d8e6996b60b9b14ce0e4112e9f16693217034496cdf7c170a179ecddcbd"
+    },
+    {
+      "bytes": 283,
+      "path": "physical-episodes.jsonl",
+      "sha256": "dc5ef3901b65086c5a7104ac468d730a885ea130bf2065bef2aae4a7c26e5031"
+    },
+    {
+      "bytes": 5589,
+      "path": "summary.json",
+      "sha256": "46c3b68fd17d493507c6ff3f5148a559dacc2a2c498fd9d7629018d79e5e881e"
+    }
+  ],
+  "canonical": false,
+  "checkpoint_evaluation_state_digest": "9a865a7d80a68bd83757e8cf7d59c58a3f48aac0541c035506abb251b43464bf",
+  "evidence_status": "noncanonical_test_only",
+  "identity": {
+    "algorithm_id": "sr_mappo_mobile",
+    "candidate_config_hash": "06deec69c111adb01062b951e98bf6642bdb9bd064a63ebade903fe87786e6d0",
+    "candidate_id": "c02",
+    "condition_id": "sr_mappo_mobile",
+    "interaction_count": 128,
+    "method": "sr_mappo_mobile",
+    "partition": "development",
+    "scale": "g30x50_d4",
+    "scenario_id": 10000,
+    "scenario_ids": [
+      10000,
+      10001,
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009,
+      10010,
+      10011,
+      10012,
+      10013,
+      10014,
+      10015,
+      10016,
+      10017,
+      10018,
+      10019
+    ],
+    "training_seed": 51003
+  },
+  "schema_version": "g5-physical-candidate-artifact-v1",
+  "sealed_accessed": false,
+  "source_provenance": {
+    "budget_manifest_sha256": "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb",
+    "candidate_manifest_sha256": "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a",
+    "canonical": false,
+    "environment_factory": "problem2.training.tuning.build_development_environment",
+    "evidence_status": "noncanonical_test_only",
+    "gamma_scale": 1.0,
+    "gamma_scale_unit": "normalized_pest_intensity",
+    "gamma_shape": 2.0,
+    "gamma_shape_unit": "dimensionless",
+    "normalized_initial_pest_total": 100.0,
+    "normalized_initial_pest_total_unit": "normalized_pest_units",
+    "physical_scenario_assumption_status": "provisional_simulation_assumption",
+    "physical_scenario_contract": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\docs\\evidence\\g5\\physical_scenario_contract.yaml",
+    "physical_scenario_contract_sha256": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+    "physical_scenario_deployment_claim": false,
+    "physical_scenario_empirical_claim": false,
+    "physical_training_source_sha256": {
+      "src/problem2/training/physical_training.py": "0e810c3ebb3334df7b7fbf1f8dd5dada4a2b7fde0a486a1214b498d8367605d2",
+      "src/problem2/training/runner.py": "3e654ccdd402cd8a578a89c0dc9290e427600a921eaa9821e15b788f74ff04a0",
+      "src/problem2/training/tuning.py": "1338e296812f6dfa61b82496f50cec6f0bec8d9e601d3b5824750660d769a494"
+    },
+    "road_cache_graph_sha256": "a9b362a28381890429d306ebf237f3c4e102be412a54e1d2822ff41328b44410",
+    "road_cache_metadata_sha256": "38a2cb5d1d9d456a8805987e056a4ec45b7e8c86479be8a16385ea50fe3eef18",
+    "road_cache_scale": "g30x50_d4",
+    "road_source_sha256": "B3AF36EFBFC87FFF30BD61D204283DC40C5B8C83A80BA0EE09F3DA5EF52A9462",
+    "scenario_content_hash_encoding": "canonical_metadata_json_then_float64_little_endian",
+    "scenario_content_sha256": "2c809690ffd3381901b7d222736e03f4bc47458cb9be25f2e0517250d41629d7",
+    "source_bundle_sha256": "77acb78fa38b4f48b92021de3b4d4efdb9be8c24e6b63635d519133824693233",
+    "source_commit": "7a079fa16afae7ebd1d69f4d63d83cc09437a816",
+    "spray_mortality_per_l": 5.0,
+    "spray_mortality_unit": "normalized_pest_units_per_litre"
+  },
+  "status": "pass",
+  "validation_accessed": false
+}

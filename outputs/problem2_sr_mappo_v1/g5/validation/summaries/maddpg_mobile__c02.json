@@ -1,0 +1,11 @@
+{
+  "candidate_id": "c02",
+  "config_hash": "4f64b134d475e9a9c355d6839a89e4aabc11d2518c5e07cb3f93d0d4164b41df",
+  "episode_count": 150,
+  "failed_episode_count": 0,
+  "interaction_count": 200000,
+  "mean_validation_reduction_rate": 9.992007221626409e-15,
+  "method": "maddpg_mobile",
+  "sealed_accessed": false,
+  "success_probability": 0.0
+}

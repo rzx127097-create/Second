@@ -1,0 +1,11 @@
+{
+  "candidate_id": "c01",
+  "config_hash": "a159b84542dfc00058bc257c0b86e33e9e130c0061abc5c63ec13c3ab22fa02d",
+  "episode_count": 150,
+  "failed_episode_count": 0,
+  "interaction_count": 200000,
+  "mean_validation_reduction_rate": 0.002599799048446192,
+  "method": "iql_mobile",
+  "sealed_accessed": false,
+  "success_probability": 0.0
+}

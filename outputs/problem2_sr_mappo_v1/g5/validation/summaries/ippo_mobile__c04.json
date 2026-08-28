@@ -1,0 +1,11 @@
+{
+  "candidate_id": "c04",
+  "config_hash": "90947860007172892aa8d912cf4d8d42b40b1d8688792a66f7ddbfbf9fbf048e",
+  "episode_count": 150,
+  "failed_episode_count": 0,
+  "interaction_count": 200000,
+  "mean_validation_reduction_rate": 0.002599799048446192,
+  "method": "ippo_mobile",
+  "sealed_accessed": false,
+  "success_probability": 0.0
+}

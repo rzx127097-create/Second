@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 ## Final Goal
 
@@ -28,26 +28,20 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Tasks 1-11 are accepted at M2. Task11 completed the full
-  development pilot, runtime-budget selection, and pre-validation candidate
-  freeze. The
-  registry, fairness,
-  budget-selection, partition, shared heterogeneous protocol/checkpoint, five
-  learning algorithms, physical G2-to-G3 adapter, direct episode metrics,
-  fixed/A*/nearest/urgency/two-stage support-controller boundaries, and the
-  deterministic 375-job experiment graph are persisted. G4 onboard-pesticide
-  scarcity activation and diagnostic support-probe counterfactual remain the
-  preceding accepted mechanism evidence. Task10 development smoke acceptance
-  has passed for all five methods and all 17 condition types on CPU, plus one
-  CUDA job per method. Task11 pilot evidence covers 510 training identities and
-  10,200 descriptive development episodes, with the frozen budget and 20
-  validation candidates persisted before validation access. Formal jobs,
-  validation tuning, sealed evaluation, and efficacy/superiority claims remain
-  unauthorized. Task9 statistics are pure
-  adapters over validated mappings; Task10 smoke is engineering acceptance
-  only and is not pilot, formal, validation, or sealed evidence. A bounded
-  one-job Task11 runner probe was used for API verification only before the
-  complete matrix; the full Task11 pilot matrix is now accepted at M2.
+- Current gate: G5 Task12 has completed validation-only tuning, selected
+  development refit, and generation of the G5 freeze artifacts. The canonical
+  validation evidence contains 3,000 action-driven rows from the 20 frozen
+  candidates and 3 training seeds across validation scenarios `20000-20049`.
+  The selected development refit contains 510 physical jobs and 10,200
+  descriptive scenario-reference rows. The freeze manifest requires 150 base
+  G6 jobs, 375 total unique G6 jobs, and 42,500 expected G7 sealed identities;
+  all formal/sealed jobs remain unexecuted. The validation results are weak or
+  negative (`success_probability=0.0` for every candidate) and support only a
+  retained diagnostic, not efficacy, superiority, or significance claims.
+  Task12 generation source commit is
+  `7a079fa16afae7ebd1d69f4d63d83cc09437a816`; the content and persistence
+  commits must be recorded below before G5 is marked persisted. G6 becomes the
+  next authorized gate only after those commits and fresh verification agree.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.

@@ -1,0 +1,11 @@
+{
+  "candidate_id": "c02",
+  "config_hash": "54522bf75df0b60868b125874d58fde71f83dd28797eb9c4c05726094c47d8ff",
+  "episode_count": 150,
+  "failed_episode_count": 0,
+  "interaction_count": 200000,
+  "mean_validation_reduction_rate": 0.0026028419479280475,
+  "method": "mappo_mobile",
+  "sealed_accessed": false,
+  "success_probability": 0.0
+}

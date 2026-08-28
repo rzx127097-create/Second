@@ -1,9 +1,14 @@
 {
+  "actual_unlock_count": 0,
+  "exclusion_contract_sha256": "ea7c7bfb545a47a938bc4b5884da0d2ebfb14967d7200bb436b17fa1ca72a4ca",
+  "expected_evaluation_count": 42500,
   "inputs": [],
   "manifest_id": "G7-ANALYSIS",
   "partition": "sealed_test",
+  "results": [],
   "schema_version": "g5.v1",
   "sealed_accessed": false,
-  "status": "locked_skeleton",
-  "summaries": []
+  "sealed_panel_hash": "342dbe7ea660a3a457e2b7128df10bb49850b12eedb9f23ae810ced9e6b5267b",
+  "statistics_contract_sha256": "a75cef225795bd13c05f6110d4387323ab818e9e46f100419eb05b26d30d0386",
+  "status": "locked_unexecuted"
 }

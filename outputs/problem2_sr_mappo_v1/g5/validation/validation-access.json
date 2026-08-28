@@ -1,0 +1,10 @@
+{
+  "actual_unlock_count": 0,
+  "budget_manifest_sha256": "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb",
+  "candidate_manifest_sha256": "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a",
+  "row_chain_sha256": "a7ec04132a5526b8ac9551abb8ac35bf083bff133e25082ea88031d91844490a",
+  "row_count": 3000,
+  "schema_version": "g5-validation-access-v2",
+  "sealed_accessed": false,
+  "status": "validation_accessed_candidates_locked"
+}

@@ -1,0 +1,153 @@
+{
+  "artifact_manifest_path": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\validation\\refit\\audits\\pilot-artifact-manifest.json",
+  "battery_replenishment_enabled": false,
+  "boundary_status": {
+    "battery_replenishment_enabled": "safe",
+    "sealed_accessed": "safe",
+    "validation_accessed": "safe"
+  },
+  "coverage": {
+    "completed_job_count": 510,
+    "conditions": [
+      "clip_range",
+      "entropy_coef",
+      "gae_lambda",
+      "gamma",
+      "learning_rate",
+      "mappo_mobile",
+      "no_learning_rate_decay",
+      "no_network_stabilization",
+      "no_observation_normalization",
+      "no_return_normalization",
+      "no_robust_value_update",
+      "sr_mappo_astar",
+      "sr_mappo_fixed",
+      "sr_mappo_mobile",
+      "sr_mappo_nearest",
+      "sr_mappo_two_stage",
+      "sr_mappo_urgency"
+    ],
+    "expected_job_count": 510,
+    "methods": [
+      "ippo_mobile",
+      "iql_mobile",
+      "maddpg_mobile",
+      "mappo_mobile",
+      "sr_mappo_mobile"
+    ],
+    "scales": [
+      "g20x20_d2",
+      "g30x50_d4"
+    ],
+    "scenario_ids": [
+      10000,
+      10001,
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009,
+      10010,
+      10011,
+      10012,
+      10013,
+      10014,
+      10015,
+      10016,
+      10017,
+      10018,
+      10019
+    ],
+    "training_seeds": [
+      51001,
+      51002,
+      51003
+    ]
+  },
+  "data_status": "development_pilot_descriptive",
+  "episode_count": 10200,
+  "episodes_path": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\g5\\validation\\refit\\validated\\pilot-episodes.jsonl",
+  "failures": [],
+  "formal_training_performed": false,
+  "job_count": 510,
+  "maturity": "M2",
+  "provenance": {
+    "contract_hashes": {
+      "configs/problem2/g5/ablations.yaml": "2d7222ee9e24a561ec1d6b267c6e6906cfa7f6ab64ca3ebeb7b2bb1686b02787",
+      "configs/problem2/g5/budget_rule.yaml": "46346c400ea8d44307ce229f093bffc219490791ba8a935d7b2b1a39fa6ce16f",
+      "configs/problem2/g5/families.yaml": "2530a5703659afa90ad4310ef4ae3a0b131983f48627565bfba9a9edbb4cb91a",
+      "configs/problem2/g5/methods.yaml": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+      "configs/problem2/g5/metrics.yaml": "c1761358f1bd4638ff879cc29acf9dac3c754e149f0d0fe2a4d51323ab6ec8bb",
+      "configs/problem2/g5/pilot.yaml": "fef62b31a8b7db28f4333e8abb9d7aa296c7a7bea494a1d7b1c54d19389f93f0",
+      "configs/problem2/g5/protocol.yaml": "3b07a5917dc4c4961eb5fb6f978102e5cf2681afb561a9c8364e1ec6138667f9",
+      "configs/problem2/g5/sensitivity.yaml": "b376151abbc7943d3a78669a5bf7fcb40e45eb8fea20667f8c1bfb2730f7b370",
+      "configs/problem2/g5/statistics.yaml": "a75cef225795bd13c05f6110d4387323ab818e9e46f100419eb05b26d30d0386",
+      "configs/problem2/g5/tuning_candidates.yaml": "6388acfd268e38618e99ea9030b1260647e90ce7ace2f81aea04ecea42330be7",
+      "docs/evidence/g1/scenario_seed_manifest.yaml": "a2bbf31f4bbdad32a0a6704c6974f0890cb00b65935e906a367a8a6a834d6915",
+      "docs/evidence/g1/sealed_test_lock.yaml": "78c9caa7d432f56f91b67195eb413eddab4e9f84c9fd214eb7a9373f48a73226",
+      "docs/evidence/g5/checkpoint_selection.yaml": "3b6ec50f725592586c753d1b522ebc85beb312b8985a1026e38748a48dd42cff",
+      "docs/evidence/g5/exclusion_contract.yaml": "ea7c7bfb545a47a938bc4b5884da0d2ebfb14967d7200bb436b17fa1ca72a4ca",
+      "docs/evidence/g5/fairness_matrix.yaml": "2c21ca660026c446918b5a2057c82f786b0ec2cf7c7b93643f17272f756b619f",
+      "docs/evidence/g5/heterogeneous_interface.yaml": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+      "docs/evidence/g5/physical_scenario_contract.yaml": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "docs/evidence/g5/problem1_lineage.yaml": "25a81264c1b58aa500a2ab66003b1a8d2fb6ad020730c22576f33be1376e4c20",
+      "requirements-g3.lock": "d4bb20fafcfbc849b09419a764ac2e8aa37669ac9d6c8df0da4df42d4e90acbd",
+      "requirements-g5.lock": "3b15d9c6808867209be2f3928ea6a6f45feb168544f26620032513ad44ee48c6"
+    },
+    "source_commit": "7a079fa16afae7ebd1d69f4d63d83cc09437a816"
+  },
+  "runtime_aggregates": {
+    "g20x20_d2": {
+      "ippo_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.008185246093717069
+      },
+      "iql_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.010435159374992509
+      },
+      "maddpg_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.00882512109376421
+      },
+      "mappo_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.007631100781168243
+      },
+      "sr_mappo_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.01824047421882824
+      }
+    },
+    "g30x50_d4": {
+      "ippo_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.009110538281220215
+      },
+      "iql_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.011711502343700886
+      },
+      "maddpg_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.009874367187535427
+      },
+      "mappo_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.008830533593709333
+      },
+      "sr_mappo_mobile": {
+        "observations": 51,
+        "seconds_per_interaction": 0.015551283593708831
+      }
+    }
+  },
+  "schema_version": "g5-pilot-audit-v1",
+  "sealed_accessed": false,
+  "status": "pass",
+  "training_job_count": 510,
+  "validation_accessed": false
+}
