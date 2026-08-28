@@ -1843,3 +1843,67 @@ partition regression tests `18 passed`; candidate, budget, and sealed-lock
 hashes match the values above; `git diff --check` has no content error. This is
 an implementation and governance transition only. It contains no validation
 result, no G6 job, no sealed content, and no efficacy or superiority claim.
+
+## G5 Task 12: Validation Tuning And Final Freeze
+
+Task12 is accepted at G5 as an implementation, validation-process, and
+development-refit freeze while the highest research maturity remains `M2`.
+The content freeze commit is
+`9965860ca8d92678d01240c57be4dc887f779760`
+(`feat: freeze g5 fair-pilot experiment system`), pushed to
+`origin/codex/problem2-g5-pilot-freeze`. Before this state-record commit,
+local HEAD, upstream HEAD, and `git ls-remote` all returned that hash.
+
+Task12 evidence and boundaries:
+
+- Canonical physical candidate training completed `60` identities: five
+  methods x four frozen candidates x three development training seeds at
+  `g30x50_d4`, with `200000` interactions per identity and all terminal
+  manifests passing.
+- Validation tuning evaluated the 20 byte-locked candidates on the fixed
+  validation panel `20000-20049` with three training seeds, producing exactly
+  `3000` action-driven rows and zero technical failures. The candidate and
+  budget bytes were locked before the first validation row; sealed content was
+  never accessed.
+- Every candidate had `success_probability=0.0`. This is a weak/negative
+  validation diagnosis retained in the evidence set, not a formal ranking,
+  efficacy result, superiority result, or statistical conclusion.
+- Mechanical selections are `sr_mappo_mobile=c02`, `mappo_mobile=c01`,
+  `ippo_mobile=c01`, `maddpg_mobile=c04`, and `iql_mobile=c03`.
+- Selected-configuration development refit completed `510` physical jobs and
+  `10200` development scenario-reference rows, with validation and sealed
+  access false in the refit records.
+- Frozen G6 manifests contain `150` base jobs and `375` unique jobs, with
+  `375000` planned G6 validation identities. G7 contains `42500` planned
+  sealed evaluation identities and no sealed scenario content or results.
+- The sealed lock remains unchanged at maximum unlock count `1` and actual
+  unlock count `0`; pesticide is the only replenished resource and battery
+  replenishment remains disabled.
+
+Fresh verification on the pushed content commit:
+
+- `.venv-g5/Scripts/python.exe -m pytest tests/g5 -q`: `428 passed`.
+- `python -m pytest -q` in the documented host regression environment:
+  `727 passed`.
+- `.venv-g5/Scripts/python.exe -m compileall -q src scripts`: exit `0`.
+- `.venv-g5/Scripts/python.exe scripts/audit_g5_contracts.py`: `status=pass`,
+  `sealed_accessed=false`, `actual_unlock_count=0`.
+- `.venv-g5/Scripts/python.exe scripts/validate_g5_artifacts.py --root
+  outputs/problem2_sr_mappo_v1/g5 --dry-run`: dry-run completed with no jobs
+  executed.
+- `.venv-g5/Scripts/python.exe scripts/freeze_g5.py --check-only`:
+  `status=pass`, with validation rows `3000`, refit jobs/episodes `510/10200`,
+  G6 `150/375`, G7 `42500`, and sealed access false.
+- `git diff --check`: no content errors.
+
+The isolated G5 environment's exact lock intentionally omits legacy Chapter
+4.2 document-rendering dependencies, so its repository-wide collection
+command reports missing `PIL`/`matplotlib`; the cross-gate full regression was
+therefore run in the documented host environment and passed `727` tests.
+This environment issue does not affect the G5 implementation suite or any
+Task12 evidence artifact. No protected external asset, OSM input, sealed
+scenario, G6 formal job, or G7 sealed evaluation was modified or executed.
+
+G6 is the next authorized gate only after this state-record persistence commit
+is pushed and parity is rechecked. Until then, no formal efficacy, superiority,
+statistical-significance, or real-deployment claim is permitted.
