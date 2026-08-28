@@ -12,6 +12,7 @@ import time
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from problem2.experiments.artifacts import artifact_sha256, atomic_write_bytes
+from problem2.experiments.ecology_policy import DYNAMIC_OUTPUT_ROOT, HISTORICAL_OUTPUT_ROOT
 from problem2.experiments.g5_contract import (
     BudgetDecision,
     FROZEN_CANDIDATE_BUDGETS,
@@ -148,19 +149,31 @@ def _pilot_base_root(output_root: Path) -> Path:
 
 
 def _canonical_g5_root(contract: G5Contract) -> Path:
-    return (_REPOSITORY_ROOT / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
+    return (_REPOSITORY_ROOT / DYNAMIC_OUTPUT_ROOT / "g5").resolve()
 
 
-def _require_canonical_path(path: Path, contract: G5Contract, label: str, *, allow_noncanonical_output_root: bool) -> Path:
+def _historical_g5_root() -> Path:
+    return (_REPOSITORY_ROOT / HISTORICAL_OUTPUT_ROOT).resolve()
+
+
+def _require_canonical_path(
+    path: Path,
+    contract: G5Contract,
+    label: str,
+    *,
+    allow_noncanonical_output_root: bool,
+    allow_historical_read: bool = False,
+) -> Path:
     resolved = path.resolve()
     if contract.source_root.resolve() != _REPOSITORY_ROOT:
         raise ValueError("pilot contract source root is not the canonical repository")
     if allow_noncanonical_output_root:
         return resolved
-    try:
-        resolved.relative_to(_canonical_g5_root(contract))
-    except ValueError as exc:
-        raise ValueError(f"{label} must be under the canonical G5 output root") from exc
+    permitted_roots = [_canonical_g5_root(contract)]
+    if allow_historical_read:
+        permitted_roots.append(_historical_g5_root())
+    if not any(resolved.is_relative_to(root) for root in permitted_roots):
+        raise ValueError(f"{label} must be under the canonical G5 output root")
     return resolved
 
 
@@ -222,7 +235,13 @@ def verify_pilot_artifacts(
     audit = Path(audit_path).resolve()
     manifest = Path(manifest_path).resolve()
     base = episodes.parent.parent
-    _require_canonical_path(base, contract, "pilot output root", allow_noncanonical_output_root=allow_noncanonical_output_root)
+    _require_canonical_path(
+        base,
+        contract,
+        "pilot output root",
+        allow_noncanonical_output_root=allow_noncanonical_output_root,
+        allow_historical_read=True,
+    )
     try:
         recorded = json.loads(manifest.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:

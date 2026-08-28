@@ -11,7 +11,7 @@ from problem2.experiments.g5_contract import load_g5_contract
 from problem2.experiments.matrix import build_training_graph
 
 
-DEFAULT_OUTPUT = Path("outputs/problem2_sr_mappo_v1/g5/manifests")
+DEFAULT_OUTPUT = Path("outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/manifests")
 SOURCE_SCOPE = (
     "src/problem2/experiments/identity.py",
     "src/problem2/experiments/families.py",

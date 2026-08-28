@@ -11,6 +11,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 
+import numpy as np
+
 from problem2.experiments.artifacts import write_quarantine
 from problem2.experiments.g5_contract import REDUCTION_RATE_EPSILON
 from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
@@ -68,6 +70,17 @@ def validate_dynamic_episode(row: Any) -> None:
 
     if not isinstance(row, Mapping):
         raise ValidationError("dynamic episode must be an object")
+    required = set(DYNAMIC_RAW_EPISODE_SCHEMA["required"])
+    missing = required - set(row)
+    if missing:
+        raise ValidationError(
+            f"dynamic episode required fields are missing: {', '.join(sorted(missing))}"
+        )
+    extra = set(row) - set(DYNAMIC_RAW_EPISODE_SCHEMA["properties"])
+    if extra:
+        raise ValidationError(
+            f"dynamic episode has unknown fields: {', '.join(sorted(extra))}"
+        )
     if row.get("metric_source") != _DYNAMIC_METRIC_SOURCE:
         raise ValidationError("metric_source must be dynamic_ecology_environment")
     missing = set(_DYNAMIC_FIELDS) - set(row)
@@ -109,14 +122,39 @@ def validate_dynamic_episode(row: Any) -> None:
     expected_scenario = generate_dynamic_scenario(partition, scenario_id, scale, shape, config)
     if row["ecology_scenario_sha256"] != expected_scenario.scenario_sha256:
         raise ValidationError("ecology_scenario_sha256 drifted")
+    expected_initial_pest = float(np.sum(expected_scenario.initial_prey))
+    if not math.isclose(initial, expected_initial_pest, rel_tol=0.0, abs_tol=1e-12):
+        raise ValidationError("initial_total_pest is inconsistent with the frozen scenario")
     if row["dynamic_step_count"] != horizon:
         raise ValidationError("dynamic_step_count does not match the scale horizon")
 
-    for key in ("initial_total_predator", "final_total_predator", "cumulative_deposited_effect", "terminal_mean_concentration", "terminal_max_concentration", "terminal_wind_strength"):
+    for key in (
+        "initial_total_predator",
+        "final_total_predator",
+        "cumulative_deposited_effect",
+        "terminal_mean_concentration",
+        "terminal_max_concentration",
+        "terminal_wind_strength",
+    ):
         _number(row[key], key, nonnegative=True)
+    expected_initial_predator = float(np.sum(expected_scenario.initial_predator))
+    if not math.isclose(
+        float(row["initial_total_predator"]),
+        expected_initial_predator,
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValidationError(
+            "initial_total_predator is inconsistent with the frozen scenario"
+        )
     _number(row["terminal_wind_direction"], "terminal_wind_direction")
     if row["terminal_max_concentration"] < row["terminal_mean_concentration"]:
         raise ValidationError("terminal concentration extrema are inconsistent")
+    if row["terminal_mean_concentration"] > config.concentration_cap or row["terminal_max_concentration"] > config.concentration_cap:
+        raise ValidationError("terminal concentration exceeds the frozen cap")
+    lower_wind, upper_wind = config.wind_strength_range
+    if not lower_wind <= row["terminal_wind_strength"] <= upper_wind:
+        raise ValidationError("terminal wind strength exceeds the frozen range")
 
 
 def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True, allow_validation_access: bool = False) -> dict[str, Any]:
@@ -195,6 +233,9 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
         or metric_source not in {"action_driven_environment", _DYNAMIC_METRIC_SOURCE}
     ):
         raise ValidationError("metric_source is undeclared")
+    dynamic_payload_fields = set(_DYNAMIC_FIELDS) - {"metric_source"}
+    if metric_source != _DYNAMIC_METRIC_SOURCE and set(row) & dynamic_payload_fields:
+        raise ValidationError("dynamic ecology fields require dynamic metric_source")
     if metric_source == _DYNAMIC_METRIC_SOURCE:
         validate_dynamic_episode(row)
     for key in ("initial_total_pest", "final_total_pest"):

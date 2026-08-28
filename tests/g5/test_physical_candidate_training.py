@@ -310,7 +310,7 @@ def test_physical_wrapper_revalidates_immutable_scenario_identity_on_reset_and_s
         mortality_per_l=1.0,
         partition="development",
         purpose="static_ecology_diagnostic",
-        output_root=ROOT / "outputs/problem2_sr_mappo_v1/static_diagnostic",
+        output_root=ROOT / "outputs/problem2_sr_mappo_v1/diagnostics/static_ecology/g5",
         repository_root=ROOT,
     )
     environment.reset(scenario_id=10000)
@@ -338,6 +338,7 @@ def test_static_adapter_requires_explicit_diagnostic_scope(tmp_path: Path) -> No
         purpose="static_ecology_diagnostic",
         output_root=tmp_path,
         repository_root=ROOT,
+        allow_noncanonical_output_root=True,
     )
     assert diagnostic.primary_eligible is False
 
@@ -599,7 +600,7 @@ def test_cli_default_output_is_root_relative_from_an_alternate_cwd(
     assert task12.main() == 0
     assert captured["root"] == ROOT.resolve()
     assert captured["output_root"] == (
-        ROOT / "outputs/problem2_sr_mappo_v1/g5/validation"
+        ROOT / "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5"
     ).resolve()
 
 

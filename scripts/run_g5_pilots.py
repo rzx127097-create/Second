@@ -10,6 +10,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from problem2.experiments.artifacts import atomic_write_bytes
+from problem2.experiments.ecology_policy import EcologyMode, resolve_output_root
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.training.budget import select_pilot_budget
 from problem2.training.pilot import (
@@ -21,7 +22,7 @@ from problem2.training.pilot import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-G5_ROOT = ROOT / "outputs" / "problem2_sr_mappo_v1" / "g5"
+G5_ROOT = ROOT / "outputs" / "problem2_sr_mappo_v1" / "dynamic_pest_v1" / "g5"
 
 
 def main() -> int:
@@ -30,7 +31,23 @@ def main() -> int:
     parser.add_argument("--interactions", type=int, default=128)
     parser.add_argument("--limit", type=int, help="development-only bounded probe; cannot freeze candidates")
     parser.add_argument("--output-root", type=Path, default=G5_ROOT / "pilots")
+    parser.add_argument(
+        "--ecology-mode",
+        choices=tuple(mode.value for mode in EcologyMode),
+        default=EcologyMode.DYNAMIC.value,
+    )
     args = parser.parse_args()
+    try:
+        output_root = resolve_output_root(
+            ROOT,
+            "G5",
+            args.output_root,
+            primary=True,
+            partition="development",
+            ecology_mode=args.ecology_mode,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     report: dict[str, object] = {
         "schema_version": "g5-pilot-cli-v1",
         "status": "fail",
@@ -46,7 +63,7 @@ def main() -> int:
             if isinstance(args.limit, bool) or args.limit <= 0:
                 raise ValueError("--limit must be positive")
             jobs = jobs[: args.limit]
-        result = run_pilot_matrix(contract, args.output_root, jobs=jobs, interactions=args.interactions, device=args.device)
+        result = run_pilot_matrix(contract, output_root, jobs=jobs, interactions=args.interactions, device=args.device)
         report.update(result)
         if result["status"] != "pass":
             raise RuntimeError("pilot matrix failed; candidate freeze is blocked")
@@ -65,7 +82,6 @@ def main() -> int:
             for method, values in aggregates["g30x50_d4"].items()
         ]
         decision = select_pilot_budget(runtime_rows)
-        output_root = args.output_root.resolve()
         pilot_base = output_root.parent if output_root.name == "pilots" else output_root
         candidate_path = pilot_base / "manifests" / "validation-candidates.json"
         candidates = freeze_validation_candidates(contract, decision, candidate_path)

@@ -29,6 +29,7 @@ def run_preflight(device: str = "cpu", root: Path | str | None = None) -> dict[s
         "validation_accessed": False,
         "sealed_accessed": False,
         "battery_replenishment_enabled": False,
+        "ecology_mode": "dynamic",
     }
     try:
         contract = load_g5_contract(repository_root)

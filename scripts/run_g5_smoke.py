@@ -10,13 +10,14 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from problem2.experiments.g5_contract import load_g5_contract
+from problem2.experiments.ecology_policy import EcologyMode, resolve_output_root
 from problem2.training.preflight import run_preflight
 from problem2.training.runner import ALL_CONDITION_TYPES, METHODS, run_training_job
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_ROOT = ROOT / "outputs" / "problem2_sr_mappo_v1" / "g5" / "smoke"
-AUDIT_PATH = ROOT / "outputs" / "problem2_sr_mappo_v1" / "g5" / "audits" / "smoke-audit.json"
+OUTPUT_ROOT = ROOT / "outputs" / "problem2_sr_mappo_v1" / "dynamic_pest_v1" / "g5" / "smoke"
+AUDIT_PATH = ROOT / "outputs" / "problem2_sr_mappo_v1" / "dynamic_pest_v1" / "g5" / "audits" / "smoke-audit.json"
 
 
 def main() -> int:
@@ -26,7 +27,23 @@ def main() -> int:
     parser.add_argument("--all-methods", action="store_true")
     parser.add_argument("--all-condition-types", action="store_true")
     parser.add_argument("--method", choices=METHODS)
+    parser.add_argument(
+        "--ecology-mode",
+        choices=tuple(mode.value for mode in EcologyMode),
+        default=EcologyMode.DYNAMIC.value,
+    )
     args = parser.parse_args()
+    try:
+        output_root = resolve_output_root(
+            ROOT,
+            "G5",
+            OUTPUT_ROOT,
+            primary=True,
+            partition="development",
+            ecology_mode=args.ecology_mode,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     report = {"schema_version": "g5-smoke-audit-v1", "status": "pass", "maturity": "M2", "preflight": None, "jobs": [], "validation_accessed": False, "sealed_accessed": False, "battery_replenishment_enabled": False}
     try:
         load_g5_contract(ROOT)
@@ -38,7 +55,7 @@ def main() -> int:
         for method in methods:
             for condition in conditions:
                 job = {"method": method, "condition_id": condition, "training_seed": 51001, "scenario_id": 10000, "partition": "development", "source_root": str(ROOT)}
-                report["jobs"].append(run_training_job(job, args.device, args.interactions, OUTPUT_ROOT))
+                report["jobs"].append(run_training_job(job, args.device, args.interactions, output_root))
     except Exception as error:
         report["status"] = "fail"
         report["reason"] = f"{type(error).__name__}: {error}"

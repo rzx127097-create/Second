@@ -26,6 +26,7 @@ from problem2.algorithms.protocol import (
     RoleBatch,
 )
 from problem2.experiments.artifacts import artifact_sha256, atomic_write_bytes
+from problem2.experiments.ecology_policy import DYNAMIC_OUTPUT_ROOT, resolve_frozen_g5_manifest
 from problem2.experiments.g5_contract import G5Contract, load_g5_contract
 
 from .preflight import run_preflight
@@ -499,16 +500,15 @@ def _run_physical_candidate_training(
         job, contract, max_interactions
     )
     base_output = Path(output_root).resolve()
-    canonical_g5_root = (root / "outputs/problem2_sr_mappo_v1/g5").resolve()
-    canonical_validation_root = (canonical_g5_root / "validation").resolve()
-    if canonical and not base_output.is_relative_to(canonical_validation_root):
-        raise ValueError("canonical physical training output must be confined below the canonical validation root")
+    canonical_g5_root = (root / DYNAMIC_OUTPUT_ROOT / "g5").resolve()
+    if canonical and not base_output.is_relative_to(canonical_g5_root):
+        raise ValueError("canonical physical training output must be confined below the canonical G5 output root")
     if not canonical and base_output.is_relative_to(canonical_g5_root) and not allow_g5_output:
         raise ValueError("noncanonical test training cannot write below the canonical G5 output root")
     if canonical:
         CanonicalValidationStore.assert_candidate_generation_allowed(root)
-    candidates_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json"
-    budget_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json"
+    candidates_path = resolve_frozen_g5_manifest(root, "validation-candidates.json")
+    budget_path = resolve_frozen_g5_manifest(root, "pilot-budget.json")
     if _file_sha256(candidates_path) != EXPECTED_CANDIDATE_SHA256:
         raise RuntimeError("frozen validation candidate bytes drifted")
     if _file_sha256(budget_path) != EXPECTED_BUDGET_SHA256:

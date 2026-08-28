@@ -17,6 +17,7 @@ from problem2.road.cache import RoadCacheExpectation, load_road_cache
 from problem2.simulation.engine import build_action_masks, step_episode
 from problem2.experiments.g4_contract import G4Contract, G4ContractError, G4ProbeManifest
 from problem2.experiments.g4_support import FixedSupportPolicy, MobileSupportPolicy
+from problem2.experiments.ecology_policy import DYNAMIC_OUTPUT_ROOT
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -181,10 +182,9 @@ def _source_tree_identity() -> tuple[str, str]:
 
 def _safe_output_root(output_root: Path | str) -> Path:
     candidate = Path(output_root).resolve()
-    try:
-        candidate.relative_to(CANONICAL_G4_ROOT)
-    except ValueError as exc:
-        raise G4ContractError("G4 output must remain beneath the canonical G4 root") from exc
+    canonical_dynamic_root = (ROOT / DYNAMIC_OUTPUT_ROOT / "g4").resolve()
+    if not candidate.is_relative_to(CANONICAL_G4_ROOT) and not candidate.is_relative_to(canonical_dynamic_root):
+        raise G4ContractError("G4 output must remain beneath a canonical G4 root")
     candidate.mkdir(parents=True, exist_ok=True)
     return candidate
 

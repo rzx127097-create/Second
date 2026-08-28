@@ -20,6 +20,12 @@ from problem2.algorithms.common.checkpoint import load_training_checkpoint
 from problem2.evaluation.runner import evaluate_episode
 from problem2.experiments.artifacts import atomic_write_bytes, write_quarantine
 from problem2.experiments.g5_contract import load_g5_contract
+from problem2.experiments.ecology_policy import (
+    DYNAMIC_OUTPUT_ROOT,
+    EcologyMode,
+    resolve_frozen_g5_manifest,
+    resolve_output_root,
+)
 from problem2.training.runner import run_training_job
 from problem2.training.physical_training import (
     EXPECTED_BUDGET_SHA256,
@@ -143,11 +149,21 @@ def _train_frozen_candidates(
     rerun_invalid_from_scratch: bool,
 ) -> dict[str, Any]:
     root = root.resolve()
-    output_root = output_root.resolve()
-    canonical_root = (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+    output_root = (
+        resolve_output_root(
+            root,
+            "G5",
+            output_root,
+            primary=True,
+            partition="development",
+        )
+        if canonical
+        else output_root.resolve()
+    )
+    canonical_root = (root / DYNAMIC_OUTPUT_ROOT / "g5").resolve()
     if canonical:
         if not output_root.is_relative_to(canonical_root):
-            raise ValueError("canonical training output must be confined below the G5 validation root")
+            raise ValueError("canonical training output must be confined below the canonical G5 output root")
         if type(interactions) is not int or interactions != 200000:
             raise ValueError("canonical train-only requires exactly 200000 interactions")
     return _run_candidate_matrix(
@@ -194,9 +210,14 @@ def train_frozen_candidates_for_test(
     seeds: Iterable[int],
     rerun_invalid_from_scratch: bool = False,
 ) -> dict[str, Any]:
-    canonical_root = (root.resolve() / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
-    if output_root.resolve().is_relative_to(canonical_root):
-        raise ValueError("noncanonical test training cannot use the canonical validation root")
+    root = root.resolve()
+    output_resolved = output_root.resolve()
+    protected_roots = (
+        root / DYNAMIC_OUTPUT_ROOT / "g5",
+        root / "outputs/problem2_sr_mappo_v1/g5",
+    )
+    if any(output_resolved.is_relative_to(path.resolve()) for path in protected_roots):
+        raise ValueError("noncanonical test training cannot use a canonical or historical G5 root")
     return _train_frozen_candidates(
         root,
         output_root=output_root,
@@ -233,8 +254,8 @@ def _run_candidate_matrix(
     if type(interactions) is not int or interactions <= 0:
         raise ValueError("train-only interactions must be a positive integer")
     contract = load_g5_contract(root)
-    candidates_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json"
-    budget_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json"
+    candidates_path = resolve_frozen_g5_manifest(root, "validation-candidates.json")
+    budget_path = resolve_frozen_g5_manifest(root, "pilot-budget.json")
     if _sha256(candidates_path) != EXPECTED_CANDIDATE_SHA256 or _sha256(budget_path) != EXPECTED_BUDGET_SHA256:
         raise RuntimeError("frozen candidate or budget hash differs before training")
     candidate_payload = _load_training_candidate_manifest(candidates_path)
@@ -440,16 +461,22 @@ def run_validation_tuning(
     scenario_ids: Iterable[int] = VALIDATION_IDS,
 ) -> dict[str, Any]:
     root = root.resolve()
-    output_root = output_root.resolve()
-    candidates_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json"
-    budget_path = root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json"
+    output_root = resolve_output_root(
+        root,
+        "G5",
+        output_root,
+        primary=True,
+        partition="validation",
+    )
+    candidates_path = resolve_frozen_g5_manifest(root, "validation-candidates.json")
+    budget_path = resolve_frozen_g5_manifest(root, "pilot-budget.json")
     if _sha256(candidates_path) != EXPECTED_CANDIDATE_SHA256 or _sha256(budget_path) != EXPECTED_BUDGET_SHA256:
         raise RuntimeError("frozen candidate or budget hash differs before validation access")
     contract = load_g5_contract(root)
     scenario_tuple = tuple(scenario_ids)
     method_tuple = tuple(methods)
     seed_tuple = tuple(seeds)
-    canonical_root = (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+    canonical_root = (root / DYNAMIC_OUTPUT_ROOT / "g5/validation").resolve()
     if output_root != canonical_root:
         raise ValueError("canonical validation output must be the frozen G5 validation root")
     if scenario_tuple != VALIDATION_IDS:
@@ -648,13 +675,34 @@ def main() -> int:
     parser.add_argument("--rerun-invalid-from-scratch", action="store_true")
     parser.add_argument("--methods", default=",".join(METHODS))
     parser.add_argument("--seeds", default=",".join(str(seed) for seed in SEEDS))
+    parser.add_argument(
+        "--ecology-mode",
+        choices=tuple(mode.value for mode in EcologyMode),
+        default=EcologyMode.DYNAMIC.value,
+    )
     args = parser.parse_args()
     root = args.root.resolve()
-    output_root = (
+    requested_output_root = (
         (args.output_root if args.output_root.is_absolute() else root / args.output_root).resolve()
         if args.output_root is not None
-        else (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+        else None
     )
+    partition = "development" if args.train_only else "validation"
+    try:
+        output_root = resolve_output_root(
+            root,
+            "G5",
+            requested_output_root,
+            primary=True,
+            partition=partition,
+            ecology_mode=args.ecology_mode,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
+    if not args.train_only:
+        parser.error(
+            "dynamic G3-G5 prerequisites are incomplete; validation tuning remains blocked"
+        )
     methods = tuple(value for value in args.methods.split(",") if value)
     seeds = tuple(int(value) for value in args.seeds.split(",") if value)
     result = (

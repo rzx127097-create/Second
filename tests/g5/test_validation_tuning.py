@@ -224,7 +224,7 @@ def test_validation_environment_pest_change_is_caused_by_real_spray_actions() ->
             mortality_per_l=1.0,
             partition="development",
             purpose="static_ecology_diagnostic",
-            output_root=ROOT / "outputs/problem2_sr_mappo_v1/static_diagnostic",
+            output_root=ROOT / "outputs/problem2_sr_mappo_v1/diagnostics/static_ecology/g5",
             repository_root=ROOT,
         )
         view = environment.reset(scenario_id=10000)
@@ -259,7 +259,7 @@ def test_spray_is_reflected_in_the_returned_next_observation() -> None:
             mortality_per_l=1.0,
             partition="development",
             purpose="static_ecology_diagnostic",
-            output_root=ROOT / "outputs/problem2_sr_mappo_v1/static_diagnostic",
+            output_root=ROOT / "outputs/problem2_sr_mappo_v1/diagnostics/static_ecology/g5",
             repository_root=ROOT,
         )
         current = environment.reset(scenario_id=10000)

@@ -16,6 +16,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from problem2.evaluation.sealed_lock import SealedAccessError, assert_no_sealed_access, assert_partition_allowed
+from problem2.experiments.ecology_policy import EcologyMode, resolve_output_root
 
 
 _TASK7_REGISTRY_PATHS = frozenset({
@@ -173,6 +174,11 @@ def run_cli(name: str, *, default_partition: str = "development", blocked_reason
     parser.add_argument("--sealed-accessed", action="store_true")
     parser.add_argument("--dry-run", action="store_true", default=False)
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument(
+        "--ecology-mode",
+        choices=tuple(mode.value for mode in EcologyMode),
+        default=EcologyMode.DYNAMIC.value,
+    )
     args = parser.parse_args()
     try:
         if args.scenario_id is not None:
@@ -180,6 +186,19 @@ def run_cli(name: str, *, default_partition: str = "development", blocked_reason
         assert_no_sealed_access(gate="G5", scenario_id=args.scenario_id, partition=args.partition, sealed_accessed=args.sealed_accessed)
     except SealedAccessError as exc:
         print(f"sealed access denied: {exc}", file=sys.stderr)
+        return 2
+    gate = "G7" if "g7" in name else "G6" if "g6" in name else "G5"
+    try:
+        resolve_output_root(
+            args.root,
+            gate,
+            None,
+            primary=True,
+            partition=args.partition,
+            ecology_mode=args.ecology_mode,
+        )
+    except ValueError as exc:
+        print(f"dynamic ecology denied: {exc}", file=sys.stderr)
         return 2
     if blocked_reason is not None:
         report = read_only_preflight(args.root, gate="G6" if "g6" in name else "G7")

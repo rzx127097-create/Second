@@ -16,6 +16,11 @@ from typing import Any, Iterator, Mapping
 import numpy as np
 
 from problem2.experiments.artifacts import atomic_write_bytes
+from problem2.experiments.ecology_policy import (
+    DYNAMIC_OUTPUT_ROOT,
+    STATIC_DIAGNOSTIC_OUTPUT_ROOT,
+    resolve_output_root,
+)
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
 from problem2.config import load_g2_config
@@ -251,14 +256,23 @@ class CanonicalValidationStore(ValidationAccessLedger):
             target_ledger = Path(ledger_path)
             target_root = target_ledger.parent
         else:
-            candidate_manifest = Path(candidate_manifest or root / "outputs/problem2_sr_mappo_v1/g5/manifests/validation-candidates.json")
-            candidate_budget = Path(budget_manifest or root / "outputs/problem2_sr_mappo_v1/g5/manifests/pilot-budget.json")
-            target_root = Path(output_root or root / "outputs/problem2_sr_mappo_v1/g5/validation")
-            target_ledger = Path(ledger_path or target_root / "validation-access.json")
-        target_root = target_root.resolve()
-        canonical_root = (root / "outputs/problem2_sr_mappo_v1/g5/validation").resolve()
+            candidate_manifest = Path(candidate_manifest or root / DYNAMIC_OUTPUT_ROOT / "g5/manifests/validation-candidates.json")
+            candidate_budget = Path(budget_manifest or root / DYNAMIC_OUTPUT_ROOT / "g5/manifests/pilot-budget.json")
+            target_root = Path(output_root or root / DYNAMIC_OUTPUT_ROOT / "g5/validation")
+        if allow_noncanonical_test:
+            target_root = target_root.resolve()
+        else:
+            target_root = resolve_output_root(
+                root,
+                "G5",
+                target_root,
+                primary=True,
+                partition="validation",
+            )
+        target_ledger = Path(ledger_path or target_root / "validation-access.json")
+        canonical_root = (root / DYNAMIC_OUTPUT_ROOT / "g5/validation").resolve()
         if not allow_noncanonical_test and target_root != canonical_root:
-            raise ValueError("canonical validation output must be the frozen G5 validation root")
+            raise ValueError("canonical validation output must be the dynamic G5 validation root")
         super().__init__(candidate_manifest, candidate_budget, target_ledger)
         if self.candidate_sha256 != "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a":
             raise ValueError("candidate manifest bytes are not the frozen canonical manifest")
@@ -280,7 +294,7 @@ class CanonicalValidationStore(ValidationAccessLedger):
         self.protocol_hash = protocol_hash
         self.scenario_panel_hash = scenario_panel_hash
         self.physical_scenario_contract_hash = physical_scenario_contract_hash
-        self.require_dynamic_ecology = require_dynamic_ecology
+        self.require_dynamic_ecology = True if not allow_noncanonical_test else require_dynamic_ecology
         self._lock_depth = 0
         self._lock_handle: int | None = None
         candidate_ids = tuple(sorted({candidate for _, candidate in self._candidates}))
@@ -535,15 +549,23 @@ class CanonicalValidationStore(ValidationAccessLedger):
     @staticmethod
     def assert_candidate_generation_allowed(repository_root: Path | str) -> None:
         root = Path(repository_root).resolve()
-        validation = root / "outputs/problem2_sr_mappo_v1/g5/validation"
-        rows = validation / "rows"
-        if rows.is_dir() and any(rows.glob("*.json")):
-            raise ValueError("candidate generation is forbidden after first validation row")
-        ledger = validation / "validation-access.json"
-        if ledger.is_file():
-            payload = _load_json(ledger, "validation access ledger")
-            if int(payload.get("row_count", 0)) > 0:
-                raise ValueError("candidate generation is forbidden after validation access")
+        validation = root / DYNAMIC_OUTPUT_ROOT / "g5/validation"
+        validation_roots = [validation]
+        # A temporary legacy repository used by regression tests may contain
+        # only the pre-dynamic ledger; preserve its one-way guard without
+        # allowing real historical evidence to block a new dynamic freeze.
+        historical_validation = root / "outputs/problem2_sr_mappo_v1/g5/validation"
+        if not validation.exists() and historical_validation.exists():
+            validation_roots.append(historical_validation)
+        for validation_root in validation_roots:
+            rows = validation_root / "rows"
+            if rows.is_dir() and any(rows.glob("*.json")):
+                raise ValueError("candidate generation is forbidden after first validation row")
+            ledger = validation_root / "validation-access.json"
+            if ledger.is_file():
+                payload = _load_json(ledger, "validation access ledger")
+                if int(payload.get("row_count", 0)) > 0:
+                    raise ValueError("candidate generation is forbidden after validation access")
 
 
 def map_validation_episode_to_raw(
@@ -635,6 +657,7 @@ class ActionDrivenValidationEnv:
         purpose: str | None = None,
         output_root: Path | str | None = None,
         repository_root: Path | str | None = None,
+        allow_noncanonical_output_root: bool = False,
     ) -> None:
         physical_scenario_id = getattr(physical_environment, "scenario_id", None)
         _validate_partition_scenario(partition, physical_scenario_id)
@@ -646,7 +669,8 @@ class ActionDrivenValidationEnv:
             raise ValueError("static diagnostic output_root is required")
         if repository_root is None:
             raise ValueError("static diagnostic repository_root is required")
-        _validate_static_diagnostic_scope(repository_root, output_root)
+        if not allow_noncanonical_output_root:
+            _validate_static_diagnostic_scope(repository_root, output_root)
         density = np.asarray(initial_pest, dtype=np.float64)
         if density.ndim != 2 or density.size == 0 or not np.isfinite(density).all() or np.any(density < 0):
             raise ValueError("initial pest field must be a finite non-negative matrix")
@@ -772,12 +796,10 @@ def _validate_static_diagnostic_scope(repository_root: Path | str, output_root: 
     if supplied_root != canonical_root:
         raise ValueError("static diagnostic repository_root is not the authoritative repository")
     output = Path(output_root).resolve()
-    managed_root = canonical_root / "outputs" / "problem2_sr_mappo_v1"
-    diagnostic_root = managed_root / "static_diagnostic"
-    if output.is_relative_to(managed_root) and not output.is_relative_to(diagnostic_root):
+    diagnostic_root = canonical_root / STATIC_DIAGNOSTIC_OUTPUT_ROOT
+    if not output.is_relative_to(diagnostic_root):
         raise ValueError(
-            "static diagnostic output must remain outside primary/validation/sealed "
-            "namespaces and within the diagnostic namespace"
+            "static diagnostic output is outside the diagnostics/static_ecology namespace"
         )
 
 
@@ -944,7 +966,7 @@ def _build_static_environment(
         partition=partition,
         source_provenance=source_provenance,
         purpose=purpose,
-        output_root=output_root or (root / "outputs" / "problem2_sr_mappo_v1" / "static_diagnostic"),
+        output_root=output_root or (root / STATIC_DIAGNOSTIC_OUTPUT_ROOT),
         repository_root=root,
     )
 
