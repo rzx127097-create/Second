@@ -1,0 +1,20 @@
+schema_version: problem2.dynamic-pest-lineage.v1
+repository_path: C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper
+source_commit: 1ca9e5ccc5f77ed775cd2b607dd70d635720accf
+read_only: true
+runtime_import_allowed: false
+checkpoint_import_allowed: false
+output_or_result_import_allowed: false
+sources:
+  - path: source/locust_rl_selected/models/holling_tanner.py
+    blob_id: 3cd829a907d6931206a4045c3436a941bc1cacfc
+    adopted_design: reflected_boundary_laplacian_upwind_advection_holling_tanner_reactions_bounded_pesticide_mortality_three_substep_integration
+  - path: source/locust_rl_selected/models/subsystems.py
+    blob_id: 245e9c46cb977629e3e22e09841693be7095db38
+    adopted_design: dynamic_wind_and_radius_weighted_persistent_pesticide_effect_field
+  - path: source/locust_rl_selected/envs/locust_env.py
+    blob_id: dcc1527be19667daca41e310c69dde8775b6eb83
+    adopted_design: ecological_update_order_and_gaussian_prey_predator_initialization
+  - path: source/locust_rl_selected/config/settings.py
+    blob_id: 25bbd3afb90b5be1e0d267d3aabf938526ef5ae2
+    adopted_design: committed_model_defaults_and_parameter_names

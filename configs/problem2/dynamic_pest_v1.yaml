@@ -1,0 +1,32 @@
+schema_version: problem2.dynamic-ecology.v1
+version: problem2-dynamic-pest-v1
+assumption_status: provisional_normalized_simulation
+dynamic_wind: true
+replenished_resource: pesticide
+battery_replenishment_enabled: false
+beta: 1.5
+m: 2.0
+s: 0.25
+d1: 0.3
+d2: 0.3
+integration_interval: 0.005
+substeps: 3
+reaction_clip_bounds: [-0.5, 0.5]
+prey_extinction_threshold: 1.0e-6
+predator_low_prey_decay: 0.1
+prey_advection_multiplier: 0.05
+predator_advection_multiplier: 0.01
+wind_strength_range: [0.0, 0.5]
+wind_direction_noise_std: 0.1
+wind_strength_noise_std: 0.05
+wind_slow_direction_amplitude: 0.005
+wind_slow_direction_period: 50
+effect_amount: 0.85
+effect_duration: 15
+decay_rate: 0.92
+spray_radius: 4
+concentration_cap: 1.0
+prey_mortality_scale: 2.0
+prey_mortality_cap: 0.98
+predator_sensitivity: 0.1
+predator_mortality_cap: 0.3
