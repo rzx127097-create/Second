@@ -1907,3 +1907,36 @@ scenario, G6 formal job, or G7 sealed evaluation was modified or executed.
 G6 is the next authorized gate only after this state-record persistence commit
 is pushed and parity is rechecked. Until then, no formal efficacy, superiority,
 statistical-significance, or real-deployment claim is permitted.
+
+## G6 Readiness Audit And Session Handoff
+
+On 2026-08-28, a read-only G5-to-G6 readiness audit was completed and persisted
+in `HANDOFF_G6_READINESS.md`. The initial handoff commit was
+`01a2f9b9ab9a62931b67b33256f108b8cfe46ef7`; the final handoff clarification
+commit is `3594b13c3661c8dcb1325c655532bd71d4b13170` (`docs: clarify validation
+access handoff`), pushed to `origin/codex/problem2-g5-pilot-freeze`. After that
+push, local HEAD, upstream HEAD, and `git ls-remote` all matched the final
+handoff commit.
+
+For completeness, the preceding Task12 persistence commit is explicitly
+recorded here as `93fa732c60196e3ffb3b59d035a80edb1a7db138`
+(`docs: record g5 freeze persistence`). After that persistence push, local HEAD,
+upstream HEAD, and `git ls-remote` all matched `93fa732...` before the handoff
+commits above.
+
+The audit confirms that G5 Task12 evidence is present and that no G6 formal job,
+G7 sealed evaluation, or sealed scenario content was accessed. It also confirms
+that G6 formal execution is not ready: `run_g6_jobs.py` and
+`resume_g6_jobs.py` remain blocking stubs; the G6 evaluator hash is bound to
+that stub; the current preflight does not cover the complete G6 entry contract;
+the G6 manifest lacks frozen scheduler/storage/GPU estimates; and the real
+ledger/recovery/validation execution loop is not connected. Selected-refit
+condition semantics also require a focused ruling before the G5 freeze can be
+trusted for formal execution.
+
+The next authorized work is G6 readiness remediation. It must reopen and
+re-freeze G5 after implementing and testing the real runner, recovery path,
+validation evaluator, complete preflight, resource estimates, and condition
+semantics. No formal G6 execution may begin until the new G5 content and
+persistence commits are pushed, their hashes are recorded, and fresh parity and
+all required audits pass. The current highest maturity remains `M2`.
