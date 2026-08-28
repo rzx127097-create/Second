@@ -35,6 +35,7 @@ _STATE_KEYS = frozenset(
         "state_sha256",
     }
 )
+_CANONICAL_SUBSTEPS = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +136,7 @@ def _digest_payload(payload: Mapping[str, object]) -> str:
         for key, value in payload.items()
         if key not in {"prey", "predator", "pesticide", "state_sha256"}
     }
+    metadata["pesticide_shape"] = _jsonable(payload["pesticide"]["shape"])  # type: ignore[index]
     digest = hashlib.sha256()
     digest.update(
         json.dumps(
@@ -167,6 +169,8 @@ class DynamicEcologySystem:
             raise TypeError("scenario must be a DynamicPestScenario")
         if not isinstance(config, DynamicEcologyConfig):
             raise TypeError("config must be a DynamicEcologyConfig")
+        if config.substeps != _CANONICAL_SUBSTEPS:
+            raise ValueError("substeps must remain exactly 3")
         if scenario.config_hash != config.contract_sha256:
             raise ValueError("scenario/config_hash mismatch")
         self.scenario = scenario
@@ -286,7 +290,7 @@ class DynamicEcologySystem:
         self._prey, self._predator = self._pesticide.apply_mortality(
             self._prey, self._predator
         )
-        for _ in range(self.config.substeps):
+        for _ in range(_CANONICAL_SUBSTEPS):
             self._prey, self._predator = dynamics.holling_tanner_substep(
                 self._prey, self._predator, wind_vector, self.config
             )
@@ -402,7 +406,12 @@ class DynamicEcologySystem:
             2.0 / active_config.beta,
         )
         pesticide_state = state["pesticide"]
-        pesticide = PesticideEffectField.from_state_dict(pesticide_state, active_config)  # type: ignore[arg-type]
+        if not isinstance(pesticide_state, Mapping):
+            raise ValueError("pesticide state is invalid")
+        pesticide_shape = pesticide_state.get("shape")
+        if not isinstance(pesticide_shape, tuple) or pesticide_shape != self.shape:
+            raise ValueError("pesticide shape drifted")
+        pesticide = PesticideEffectField.from_state_dict(pesticide_state, active_config)
         wind_state = state["wind"]
         if not isinstance(wind_state, Mapping):
             raise ValueError("wind state is invalid")
