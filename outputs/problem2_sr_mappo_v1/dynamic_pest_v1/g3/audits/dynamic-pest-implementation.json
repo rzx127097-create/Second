@@ -1,0 +1,80 @@
+{
+  "battery_replenishment_enabled": false,
+  "check_names": [
+    "numerics",
+    "scenario_replay",
+    "accepted_spray",
+    "conservation",
+    "fixed_dimensions",
+    "signed_reward",
+    "static_primary_rejected"
+  ],
+  "checks": [
+    {
+      "field_shape": [
+        2,
+        2
+      ],
+      "finite": true,
+      "name": "numerics",
+      "status": "pass",
+      "substeps": 3
+    },
+    {
+      "ecology_source_commit": "1ca9e5ccc5f77ed775cd2b607dd70d635720accf",
+      "name": "scenario_replay",
+      "scenario_id": 10000,
+      "scenario_sha256": "65b28c5be6575facca89d09f47ef432dd2a6269799785b6c25ee0c585432e5bb",
+      "status": "pass"
+    },
+    {
+      "dynamic_step_count": 1,
+      "name": "accepted_spray",
+      "spray_action_count": 1,
+      "status": "pass"
+    },
+    {
+      "name": "conservation",
+      "resource_conservation_residual_l": 0.0,
+      "status": "pass"
+    },
+    {
+      "name": "fixed_dimensions",
+      "observation_shapes": {
+        "critic": [
+          185
+        ],
+        "uav": [
+          2,
+          179
+        ],
+        "vehicle": [
+          1,
+          28
+        ]
+      },
+      "status": "pass"
+    },
+    {
+      "endpoint_reduction_rate": -3.419801865171932,
+      "name": "signed_reward",
+      "status": "pass",
+      "team_reward": -0.018686435421480803
+    },
+    {
+      "name": "static_primary_rejected",
+      "rejection": "dynamic ecology required",
+      "status": "pass"
+    }
+  ],
+  "ecology_config_sha256": "d40a369d8006b6d156e5eb1321bc6fdc699cd5646d772a6cf5e4a1d7f63ac8b1",
+  "ecology_mode": "dynamic",
+  "ecology_version": "problem2-dynamic-pest-v1",
+  "maturity": "M2",
+  "replenished_resource": "pesticide",
+  "schema_version": "problem2.dynamic-pest-audit.v1",
+  "sealed_accessed": false,
+  "source_commit": "a1f0a238b066ac5f2782dd40819b826e04c90fd8",
+  "status": "pass",
+  "validation_accessed": false
+}

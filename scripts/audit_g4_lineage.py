@@ -211,9 +211,10 @@ def _current_g4_document_text(path: Path) -> str:
     text = path.read_text(encoding="utf-8")
     if path.name == "PROJECT_STATE.md":
         start = text.find("## G4 Resource-Scarcity Mechanism Acceptance Record")
-        end = text.find("## Superseded Pre-Final-Review G4 Record", start)
         if start >= 0:
-            text = text[start : end if end >= 0 else None]
+            # Keep later G5 records out of the current G4 tuple check.
+            next_section = text.find("\n## ", start + 1)
+            text = text[start : next_section if next_section >= 0 else None]
     return text
 
 

@@ -229,8 +229,8 @@ claims.
   (`docs: accept g4 after final verification`), prepared on
   `codex/problem2-g4-resource-scarcity`.
 - Generator/code commit bound in the canonical G4 artifacts:
-  `09d361994100741a9ae834b63ba07c9b5db953e7`
-  (`docs: finalize g4 round 2 report`).
+  `af0c0b1641f1da3ac8bc2fae5faccae47c1ca14e`
+  (`fix: enforce dynamic ecology evidence contract`).
 - Executed scarcity axis: `initial_uav_pesticide_l`, sampled at `0.05`,
   `0.2875`, and `0.525 L`, all within the frozen G2 usable UAV capacity
   `1.08 L`.
@@ -244,8 +244,8 @@ claims.
   that reached service start, while `euclidean_service_start_distance_m` is
   Euclidean separation at service start, not road-travel distance.
 - Canonical G4 evidence is preserved below
-  `outputs/problem2_sr_mappo_v1/g4` with source commit `09d361994100741a9ae834b63ba07c9b5db953e7`, source tree
-  `5a61825001e92fae112579ae05f5c778deedcab3`, source bundle SHA-256
+  `outputs/problem2_sr_mappo_v1/g4` with source commit `af0c0b1641f1da3ac8bc2fae5faccae47c1ca14e`, source tree
+  `c35d1977b910944eba50ea3456bdb6c830aba575`, source bundle SHA-256
   `d2a8a4a4dced015a8f77483d30077b5a24948a97ac1f82b979d6ba968f9df3ed`, and contract SHA-256
   `2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea`.
 - Hardened audit result: `status=pass`, exact matrix shape `3 x 3 x 3` per

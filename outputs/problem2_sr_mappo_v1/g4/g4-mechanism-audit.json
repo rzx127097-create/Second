@@ -3,7 +3,7 @@
     0.05,
     0.525
   ],
-  "artifact_manifest_sha256": "7ec50bd98dedf948cca03179decb09f89071df3cb8d64b699726bc7434a6f56c",
+  "artifact_manifest_sha256": "e5c7f158320c4000c27ebb3fe9f973c8685cd11d1b4cb2bbecf03c0e10925523",
   "audit": "g4-mechanism-compliance",
   "claim_boundary": "diagnostic support-probe mechanism activation from limited onboard pesticide and paired descriptive counterfactual deltas only; no vehicle-inventory scarcity claim, G3 actor or checkpoint execution, superiority, efficacy, formal-result, or deployment claim",
   "frozen_contract_sha256": "2847f32a64b3d8b80a1e8ec8c5ff56b407ba3abc05cfb1d5780c8a31e18f11ea",
@@ -18,7 +18,7 @@
     {
       "bytes": 2446,
       "path": "activation-summary.json",
-      "sha256": "c69a6e342e65b3f565159eb8c1db286e5cf42159f0ffc06619f4c7c5fee2e07f"
+      "sha256": "26a7551cf648924c582b1573fe97db70b0052843db59ce0b58363bdc5f7f7f0a"
     },
     {
       "bytes": 57326,
@@ -28,42 +28,42 @@
     {
       "bytes": 90436,
       "path": "fixed/activation-summary.json",
-      "sha256": "f2b388b4722c16bdd683675b003fbaff9bcebcfd4e5bac6537949f91666d70f5"
+      "sha256": "da4b13758a9a13ba4e888fe4ed0b569167b9225b6807c2c979f82d1286360c8c"
     },
     {
       "bytes": 2116,
       "path": "fixed/provenance.json",
-      "sha256": "a11e3a31d9c108b9f62f4151bc9941b79bd766c466685bb4f689b8e3d3492bef"
+      "sha256": "0ef50e2fa0df05bc80326d7458bb739abe05a5aaabca7092c02dd39c19d9e00e"
     },
     {
       "bytes": 75744,
       "path": "fixed/raw-probe.jsonl",
-      "sha256": "994bc578554096bdd426eeb982ef67737ba45ff8855a04c6dea6ae977b52e91d"
+      "sha256": "5ccd4f2499f30f04022eddc1c76120d21f3b4eca73ffe25fd7616c7a150fd92a"
     },
     {
       "bytes": 90211,
       "path": "mobile/activation-summary.json",
-      "sha256": "257abed9c273f914b426832bca7498ca653a47aedd56c512d70266066e838b8e"
+      "sha256": "b07f5f067d3c80dd30b67c799c7064bec4bd80f96153d11f6a58e3f84d3d635b"
     },
     {
       "bytes": 2116,
       "path": "mobile/provenance.json",
-      "sha256": "a11e3a31d9c108b9f62f4151bc9941b79bd766c466685bb4f689b8e3d3492bef"
+      "sha256": "0ef50e2fa0df05bc80326d7458bb739abe05a5aaabca7092c02dd39c19d9e00e"
     },
     {
       "bytes": 75494,
       "path": "mobile/raw-probe.jsonl",
-      "sha256": "4d5705ab4463d252d4a6f8e52f6298e6ccab805f0d441484b7f118ff6dec510a"
+      "sha256": "cf79e8e81f3dc642a804d0fc0824bc25c96f4839440b8d93488107098b96e49b"
     },
     {
       "bytes": 376054,
       "path": "probe-matrix-summary.json",
-      "sha256": "b5562c9ca0b72275b784c38e702cbc4bbac8c6071dbd6da2ba1dae79fe226a00"
+      "sha256": "a1e83795b7456be2e859c2eaaf0d08bb12204af73683a8f7cc589b8462e479b4"
     },
     {
       "bytes": 2116,
       "path": "provenance.json",
-      "sha256": "a11e3a31d9c108b9f62f4151bc9941b79bd766c466685bb4f689b8e3d3492bef"
+      "sha256": "0ef50e2fa0df05bc80326d7458bb739abe05a5aaabca7092c02dd39c19d9e00e"
     }
   ],
   "paired_deltas": [
@@ -609,8 +609,8 @@
       "src/problem2/experiments/g4_counterfactual.py": "79a1a91a06efe85cc957ba92d8699d9f6093d92f5bb6aa65f62b371115a323a9",
       "src/problem2/experiments/g4_support.py": "be1d9311f39f9abe0723ae41de09bd9059aa22b4a22ad7052b77ace7bf5b042a"
     },
-    "source_tree_commit": "09d361994100741a9ae834b63ba07c9b5db953e7",
-    "source_tree_hash": "5a61825001e92fae112579ae05f5c778deedcab3",
+    "source_tree_commit": "af0c0b1641f1da3ac8bc2fae5faccae47c1ca14e",
+    "source_tree_hash": "c35d1977b910944eba50ea3456bdb6c830aba575",
     "validation_accessed": false
   },
   "status": "pass"

@@ -16,7 +16,7 @@ treatment-effect evidence. G5 is the next authorized gate.
 - Canonical evidence content commit:
   `189e22744579001915919af24ed2bdfd099ff2f2`
 - Generator/code commit:
-  `09d361994100741a9ae834b63ba07c9b5db953e7`
+  `af0c0b1641f1da3ac8bc2fae5faccae47c1ca14e`
 - Canonical output root: `outputs/problem2_sr_mappo_v1/g4`
 - Matrix: `3 scales x 3 seeds x 3 initial-UAV-pesticide levels` per arm
 - Paired diagnostic records: `27`

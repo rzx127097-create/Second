@@ -23,6 +23,43 @@ SCALES = (
 SEEDS = (42, 123, 2024, 3407, 7919)
 
 
+def _assert_no_sealed_payload(payload: object) -> None:
+    scenario_fields = {"scenario_id", "scenario_ids", "sealed_scenario_ids"}
+    empty_payload_fields = {"scenario_payload", "evaluation_results"}
+
+    def walk(value: object, field: str | None = None) -> None:
+        if field in scenario_fields:
+            if isinstance(value, dict):
+                for nested in value.values():
+                    walk(nested, field)
+                return
+            if isinstance(value, list):
+                for nested in value:
+                    walk(nested, field)
+                return
+            if isinstance(value, bool):
+                return
+            candidate = value
+            if isinstance(value, str) and value.isdecimal():
+                candidate = int(value)
+            if isinstance(candidate, int):
+                assert not 30000 <= candidate <= 30099
+            return
+
+        if isinstance(value, dict):
+            if "sealed_accessed" in value:
+                assert value["sealed_accessed"] is False
+            for key, nested in value.items():
+                if key in empty_payload_fields:
+                    assert nested in (None, [])
+                walk(nested, key)
+        elif isinstance(value, list):
+            for nested in value:
+                walk(nested, field)
+
+    walk(payload)
+
+
 def test_g1_identity_serialization_is_preserved_and_family_binding_is_additive() -> None:
     base = canonical_training_identity("sr_mappo_mobile", "g20x20_d2", 42, "cfg", "commit")
     raw = canonical_training_serialization("sr_mappo_mobile", "g20x20_d2", 42, "cfg", "commit")
@@ -111,9 +148,8 @@ def test_manifest_generator_is_byte_deterministic_and_has_no_sealed_payload(tmp_
     assert files_a == files_b
     for relative in files_a:
         assert (first / relative).read_bytes() == (second / relative).read_bytes()
-        payload = (first / relative).read_text(encoding="utf-8")
-        assert "30000" not in payload and "30099" not in payload
-        assert "sealed_scenario" not in payload
+        payload = json.loads((first / relative).read_text(encoding="utf-8"))
+        _assert_no_sealed_payload(payload)
     training = json.loads((first / "g6-training-jobs.json").read_text(encoding="utf-8"))
     assert training["job_count"] == 375
     assert training["decomposition"]["total"] == 375
