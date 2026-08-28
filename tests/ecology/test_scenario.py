@@ -140,6 +140,21 @@ def test_scenario_state_round_trip_is_deep_copied_and_exact() -> None:
     assert restored.rng_state != snapshot["rng_state"]
 
 
+def test_live_rng_state_is_immutable_and_cannot_change_scenario_identity() -> None:
+    scenario = generate_dynamic_scenario(
+        "development", 10000, "g20x20_d2", (20, 20), CONFIG
+    )
+    before_hash = scenario.scenario_sha256
+    before_state = scenario.state_dict()
+
+    with pytest.raises(TypeError):
+        scenario.rng_state["state"]["state"] += 1  # type: ignore[index]
+
+    after_state = scenario.state_dict()
+    assert scenario.scenario_sha256 == before_hash
+    assert after_state["rng_state"] == before_state["rng_state"]
+
+
 def test_scenario_state_restore_rejects_stale_hash_and_wrong_dtype() -> None:
     scenario = generate_dynamic_scenario(
         "validation", 20000, "g20x20_d2", (20, 20), CONFIG

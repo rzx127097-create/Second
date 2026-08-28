@@ -112,3 +112,54 @@ feat: add deterministic dynamic pest scenarios
 The resulting commit hash is recorded in the task handoff response. The branch
 was not pushed.
 
+## Fix Round 1: Immutable Live RNG State
+
+### Review Finding
+
+Review identified that `DynamicPestScenario.__post_init__` retained the nested
+`normalized_rng_state` mapping directly. A caller could mutate
+`scenario.rng_state["state"]["state"]`, changing later `state_dict()` output
+without changing the stored `scenario_sha256`.
+
+### RED
+
+Added `test_live_rng_state_is_immutable_and_cannot_change_scenario_identity`.
+Before the fix:
+
+```text
+python -m pytest tests/ecology/test_scenario.py -q
+```
+
+Result: `1 failed, 13 passed`. The regression failed because the nested live
+RNG mapping accepted the mutation instead of raising `TypeError`.
+
+### GREEN
+
+The scenario now recursively freezes mappings, sequences, and any NumPy array
+payload contained in the generator state. `state_dict()` recursively thaws
+into detached ordinary containers, and `from_state_dict()` still receives the
+raw NumPy generator-state shape and validates it through the existing
+bit-generator restoration path.
+
+Fresh verification:
+
+- `python -m pytest tests/ecology/test_scenario.py -q`: `14 passed`
+- `python -m pytest tests/ecology -q`: `75 passed`
+- `python -m compileall -q src/problem2/ecology`: exit `0`
+- `git diff --check`: exit `0`
+
+The pre-existing round-trip test continues to verify equal scenario identity,
+wind state, RNG state, and detached snapshot arrays after
+`from_state_dict()`. No broad repository test was run during this fix round;
+the prior Task 4 report records its unrelated G5 dirty-tree failures.
+
+### Persistence
+
+Fix Round 1 is committed locally with:
+
+```text
+fix: freeze scenario RNG identity state
+```
+
+The branch was not pushed. No unrelated files, plan, project state, protected
+repository, OSM input, or historical output were modified.

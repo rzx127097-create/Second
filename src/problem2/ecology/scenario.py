@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 from numbers import Real
+from types import MappingProxyType
 from typing import Any, Mapping
 
 import numpy as np
@@ -50,6 +51,32 @@ def _json_compatible(value: Any) -> Any:
     if isinstance(value, (tuple, list)):
         return [_json_compatible(item) for item in value]
     return value
+
+
+def _freeze_rng_state(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {key: _freeze_rng_state(item) for key, item in value.items()}
+        )
+    if isinstance(value, list):
+        return tuple(_freeze_rng_state(item) for item in value)
+    if isinstance(value, tuple):
+        return tuple(_freeze_rng_state(item) for item in value)
+    if isinstance(value, np.ndarray):
+        frozen = value.copy()
+        frozen.setflags(write=False)
+        return frozen
+    return value
+
+
+def _thaw_rng_state(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _thaw_rng_state(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_rng_state(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return value.copy()
+    return copy.deepcopy(value)
 
 
 def _canonical_json_bytes(value: Mapping[str, object]) -> bytes:
@@ -158,7 +185,7 @@ def _validate_rng_state(value: object) -> tuple[str, dict[str, object]]:
         raise ValueError("rng_state bit-generator name is unsupported")
     try:
         bit_generator = bit_generator_type()
-        normalized_state = copy.deepcopy(dict(value))
+        normalized_state = _thaw_rng_state(value)
         bit_generator.state = normalized_state
     except (TypeError, ValueError) as exc:
         raise ValueError("rng_state state is invalid") from exc
@@ -364,7 +391,7 @@ class DynamicPestScenario:
     initial_duration: np.ndarray
     initial_spray_count: np.ndarray
     initial_wind: WindState
-    rng_state: dict[str, object]
+    rng_state: Mapping[str, object]
     config_hash: str
     source_commit: str
     implementation_version: str
@@ -420,7 +447,7 @@ class DynamicPestScenario:
         if np.any(duration > 15.0) or np.any(duration != np.floor(duration)):
             raise ValueError("initial_duration is outside its canonical domain")
 
-        normalized_rng_state = raw_rng_state
+        normalized_rng_state = _freeze_rng_state(raw_rng_state)
         digest = _scenario_digest(
             partition=partition,
             scenario_id=scenario_id,
@@ -478,7 +505,7 @@ class DynamicPestScenario:
             "initial_predator": self.initial_predator.copy(),
             "initial_effect": self.initial_effect_state,
             "initial_wind": _wind_payload(self.initial_wind),
-            "rng_state": copy.deepcopy(self.rng_state),
+            "rng_state": _thaw_rng_state(self.rng_state),
             "config_hash": self.config_hash,
             "source_commit": self.source_commit,
             "implementation_version": self.implementation_version,
