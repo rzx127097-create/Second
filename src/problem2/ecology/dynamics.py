@@ -104,13 +104,15 @@ def upwind_advection(
         du_dx = (padded[1:-1, 1:-1] - padded[1:-1, :-2]) / dx
     else:
         du_dx = (padded[1:-1, 2:] - padded[1:-1, 1:-1]) / dx
-        du_dx[:, -1] = (field[:, -2] - field[:, -1]) / dx
+        if field.shape[1] >= 2:
+            du_dx[:, -1] = (field[:, -2] - field[:, -1]) / dx
 
     if wy >= 0.0:
         du_dy = (padded[1:-1, 1:-1] - padded[:-2, 1:-1]) / dx
     else:
         du_dy = (padded[2:, 1:-1] - padded[1:-1, 1:-1]) / dx
-        du_dy[-1, :] = (field[-2, :] - field[-1, :]) / dx
+        if field.shape[0] >= 2:
+            du_dy[-1, :] = (field[-2, :] - field[-1, :]) / dx
 
     return -(wx * du_dx + wy * du_dy)
 

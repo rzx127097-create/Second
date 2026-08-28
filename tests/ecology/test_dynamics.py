@@ -37,6 +37,20 @@ def test_upwind_advection_uses_wind_sign(
     assert np.allclose(upwind_advection(field, wind, 1.0), expected)
 
 
+@pytest.mark.parametrize(
+    ("field", "wind"),
+    [
+        (np.ones((1, 3)), (0.0, -1.0)),
+        (np.ones((2, 1)), (-1.0, 0.0)),
+    ],
+)
+def test_upwind_advection_handles_negative_wind_on_degenerate_axis(
+    field: np.ndarray, wind: tuple[float, float]
+) -> None:
+    observed = upwind_advection(field, wind, dx=1.0)
+    assert np.array_equal(observed, np.zeros_like(field))
+
+
 def _independent_reference_advance(
     prey: np.ndarray,
     predator: np.ndarray,
@@ -184,6 +198,34 @@ def test_advance_preserves_inputs_and_enforces_output_clips() -> None:
     assert predator.tobytes() == predator_before
     assert np.all((0.0 <= next_prey) & (next_prey <= 1.0 / CONFIG.beta))
     assert np.all((0.0 <= next_predator) & (next_predator <= 2.0 / CONFIG.beta))
+
+
+def test_one_substep_exactly_clips_raw_updates_above_both_upper_bounds() -> None:
+    prey = np.full((2, 2), 2.0)
+    predator = np.full((2, 2), 2.0)
+    dt = CONFIG.integration_interval / CONFIG.substeps
+
+    # Uniform fields have zero diffusion and advection, so these raw values
+    # are independently derived from the clipped reaction equations.
+    raw_prey_reaction = np.clip(
+        2.0 * (1.0 - CONFIG.beta * 2.0)
+        - CONFIG.m * 2.0 * 2.0 / (2.0 + 1.0 + 1e-10),
+        -0.5,
+        0.5,
+    )
+    raw_predator_reaction = np.clip(
+        CONFIG.s * 2.0 * (1.0 - 2.0 / 2.0), -0.5, 0.5
+    )
+    raw_prey = 2.0 + dt * raw_prey_reaction
+    raw_predator = 2.0 + dt * raw_predator_reaction
+    assert raw_prey > 1.0 / CONFIG.beta
+    assert raw_predator > 2.0 / CONFIG.beta
+
+    observed_prey, observed_predator = dynamics.holling_tanner_substep(
+        prey, predator, (0.0, 0.0), CONFIG
+    )
+    assert np.array_equal(observed_prey, np.full((2, 2), 1.0 / CONFIG.beta))
+    assert np.array_equal(observed_predator, np.full((2, 2), 2.0 / CONFIG.beta))
 
 
 def test_density_validation_rejects_shape_nonfinite_and_negative_values() -> None:
