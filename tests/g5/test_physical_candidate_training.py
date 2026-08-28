@@ -309,6 +309,9 @@ def test_physical_wrapper_revalidates_immutable_scenario_identity_on_reset_and_s
         initial_pest=np.ones((2, 2)),
         mortality_per_l=1.0,
         partition="development",
+        purpose="static_ecology_diagnostic",
+        output_root=ROOT / "outputs/problem2_sr_mappo_v1/static_diagnostic",
+        repository_root=ROOT,
     )
     environment.reset(scenario_id=10000)
     base.scenario_id = 30000
@@ -316,6 +319,27 @@ def test_physical_wrapper_revalidates_immutable_scenario_identity_on_reset_and_s
         environment.reset(scenario_id=10000)
     with pytest.raises(ValueError, match="sealed|scenario"):
         environment.step(None)
+
+
+def test_static_adapter_requires_explicit_diagnostic_scope(tmp_path: Path) -> None:
+    base = build_development_environment(ROOT, scenario_id=10000, scale="g20x20_d2").physical
+    with pytest.raises(ValueError, match="static_ecology_diagnostic"):
+        ActionDrivenValidationEnv(
+            base,
+            initial_pest=np.ones((2, 2)),
+            mortality_per_l=1.0,
+            partition="development",
+        )
+    diagnostic = ActionDrivenValidationEnv(
+        base,
+        initial_pest=np.ones((2, 2)),
+        mortality_per_l=1.0,
+        partition="development",
+        purpose="static_ecology_diagnostic",
+        output_root=tmp_path,
+        repository_root=ROOT,
+    )
+    assert diagnostic.primary_eligible is False
 
 
 def _update_manifest_artifact(manifest_path: Path, artifact_name: str) -> None:

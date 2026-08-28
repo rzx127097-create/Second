@@ -27,6 +27,18 @@ from problem2.resources.ledger import ResourceLedger
 STATE_SCHEMA_VERSION = "problem2.dynamic-pest-environment.v1"
 
 
+def _detached_view(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _detached_view(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return tuple(_detached_view(item) for item in value)
+    if isinstance(value, list):
+        return [_detached_view(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return value.copy()
+    return value
+
+
 def _metrics_to_state(metrics: Any) -> dict[str, object]:
     return {
         "tolerance": metrics.tolerance,
@@ -233,7 +245,7 @@ class DynamicPestEnvironment:
         self.battery_replenishment_enabled = False
         self._scenario_id = ecology.scenario.scenario_id
         self._scenario_sha256 = ecology.scenario.scenario_sha256
-        self._reference_spray_l = ecology._reference_spray_l
+        self._reference_spray_l = float(ecology.state_dict()["reference_spray_l"])
         self.spray_action_count = 0
         self.sprayed_pesticide_l = 0.0
         self._last_sampled_actions: dict[str, np.ndarray] = {}
@@ -379,7 +391,6 @@ class DynamicPestEnvironment:
         self.physical.reset(scenario_id=requested)
         self._set_diagnostics()
         view = self.physical._make_view()
-        self._set_diagnostics()
         self._current_view = view
         return view
 
@@ -426,13 +437,14 @@ class DynamicPestEnvironment:
             "sprayed_pesticide_l": self.sprayed_pesticide_l,
             "last_sampled_actions": {role: values.copy() for role, values in self._last_sampled_actions.items()},
             "ecology_global_context_before": self.ecology_global_context_before,
+            "current_view": _detached_view(self._current_view),
         }
 
     def load_state_dict(self, state: Mapping[str, object]) -> None:
         expected = {
             "schema_version", "partition", "scenario_id", "scenario_sha256", "scale_id",
             "ecology_config_sha256", "ecology", "physical_state", "physical_metrics", "dispatch", "candidate_nodes",
-            "spray_action_count", "sprayed_pesticide_l", "last_sampled_actions", "ecology_global_context_before",
+            "spray_action_count", "sprayed_pesticide_l", "last_sampled_actions", "ecology_global_context_before", "current_view",
         }
         if not isinstance(state, Mapping) or set(state) != expected:
             raise ValueError("dynamic environment state keys are incomplete")
@@ -476,18 +488,15 @@ class DynamicPestEnvironment:
         }
         self.ecology_global_context_before = tuple(state["ecology_global_context_before"])  # type: ignore[arg-type]
         self._set_diagnostics()
-        self.ecology_global_context_before = self.ecology.global_summary()
-        self._current_view = self._decorate_view(
-            {"events": self.physical.state.last_step_events},
-            type("Transition", (), {
-                "prey_after_total": float(np.sum(self.prey)),
-                "predator_before_total": float(np.sum(self.predator)),
-                "predator_after_total": float(np.sum(self.predator)),
-                "wind_vector": self.ecology.wind_vector,
-                "step_count": self.ecology.step_count,
-            })(),
-            float(np.sum(self.prey)),
-        )
+        current_view = state["current_view"]
+        if current_view is None:
+            self.physical._current_view = None
+            self._current_view = None
+        else:
+            if not isinstance(current_view, Mapping):
+                raise ValueError("dynamic environment current view is invalid")
+            self.physical._make_view(events=tuple(current_view.get("events", ())))
+            self._current_view = _detached_view(current_view)
 
     def episode_record(self) -> Any:
         return self.physical.episode_record()

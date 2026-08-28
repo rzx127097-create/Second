@@ -165,6 +165,21 @@ def test_wrapper_state_restore_reproduces_uninterrupted_transitions() -> None:
     assert left.physical.state == right.physical.state
 
 
+def test_wrapper_state_restore_preserves_the_current_view_exactly() -> None:
+    left = _dynamic_environment()
+    view = left.reset(scenario_id=10000)
+    left.step(_action(view, [5, 4]))
+    snapshot = left.state_dict()
+
+    right = _dynamic_environment()
+    right.load_state_dict(snapshot)
+
+    _equal(snapshot["current_view"], right._current_view)
+    _equal(left._current_view, right._current_view)
+    for role in ("uav", "vehicle"):
+        assert left._current_view["observations"][role].tobytes() == right._current_view["observations"][role].tobytes()
+
+
 def test_static_diagnostic_requires_explicit_development_scope(tmp_path: Path) -> None:
     from problem2.training.tuning import build_static_diagnostic_environment
 

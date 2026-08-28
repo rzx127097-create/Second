@@ -180,6 +180,35 @@ def test_validation_episode_requires_action_dependent_pest_metrics_and_zero_seal
         validate_validation_episode(_validation_row(sealed_accessed=True))
 
 
+def test_dynamic_validation_episode_accepts_signed_growth_without_spray() -> None:
+    row = _validation_row(
+        initial_total_pest=100.0,
+        final_total_pest=120.0,
+        reduction_rate=-0.2,
+        success_at_0_85=False,
+        spray_action_count=0,
+        sprayed_pesticide_l=0.0,
+        metric_source="dynamic_ecology_environment",
+    )
+
+    validate_validation_episode(row)
+
+
+def test_dynamic_validation_episode_rejects_unsigned_reduction() -> None:
+    row = _validation_row(
+        initial_total_pest=100.0,
+        final_total_pest=120.0,
+        reduction_rate=0.0,
+        success_at_0_85=False,
+        spray_action_count=0,
+        sprayed_pesticide_l=0.0,
+        metric_source="dynamic_ecology_environment",
+    )
+
+    with pytest.raises(ValueError, match="derived"):
+        validate_validation_episode(row)
+
+
 def test_validation_environment_pest_change_is_caused_by_real_spray_actions() -> None:
     config = load_g2_config(ROOT / "configs" / "problem2" / "g2_deterministic.yaml")
     graph = make_raster_graph([(0, 0)], [])
@@ -188,9 +217,17 @@ def test_validation_environment_pest_change_is_caused_by_real_spray_actions() ->
         uav = UavState("uav-0", 5.0, 35.0, pesticide_l=config.usable_capacity_l / 2.0)
         vehicle = VehicleState("vehicle-0", 0, 5.0, 35.0, inventory_l=1.0)
         state = EpisodeState(0, (uav,), vehicle, ledger=new_ledger((uav,), 1.0))
-        base = Problem2CooperativeEnv(state, graph, config, max_steps=1, scenario_id=20000)
-        environment = ActionDrivenValidationEnv(base, initial_pest=np.ones((2, 2)), mortality_per_l=1.0)
-        view = environment.reset(scenario_id=20000)
+        base = Problem2CooperativeEnv(state, graph, config, max_steps=1, scenario_id=10000)
+        environment = ActionDrivenValidationEnv(
+            base,
+            initial_pest=np.ones((2, 2)),
+            mortality_per_l=1.0,
+            partition="development",
+            purpose="static_ecology_diagnostic",
+            output_root=ROOT / "outputs/problem2_sr_mappo_v1/static_diagnostic",
+            repository_root=ROOT,
+        )
+        view = environment.reset(scenario_id=10000)
         environment.step(ActionResult(
             actions={"uav": np.asarray([action]), "vehicle": np.asarray([0])},
             masks=view["masks"],
@@ -221,6 +258,9 @@ def test_spray_is_reflected_in_the_returned_next_observation() -> None:
             initial_pest=np.ones((2, 2)),
             mortality_per_l=1.0,
             partition="development",
+            purpose="static_ecology_diagnostic",
+            output_root=ROOT / "outputs/problem2_sr_mappo_v1/static_diagnostic",
+            repository_root=ROOT,
         )
         current = environment.reset(scenario_id=10000)
         next_view = environment.step(ActionResult(

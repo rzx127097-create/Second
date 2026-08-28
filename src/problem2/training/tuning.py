@@ -92,8 +92,9 @@ def validate_validation_episode(row: Mapping[str, Any]) -> None:
         raise ValueError("sealed access is forbidden during G5")
     if row.get("battery_replenishment_enabled") is not False:
         raise ValueError("battery replenishment must remain inactive")
-    if row.get("metric_source") != "action_driven_environment":
-        raise ValueError("validation metrics must come from an action-driven environment")
+    metric_source = row.get("metric_source")
+    if metric_source not in {"action_driven_environment", "dynamic_ecology_environment"}:
+        raise ValueError("validation metrics must come from an action-driven or dynamic ecology environment")
     spray_count = row.get("spray_action_count")
     sprayed_l = row.get("sprayed_pesticide_l")
     if isinstance(spray_count, bool) or not isinstance(spray_count, int) or spray_count < 0:
@@ -105,10 +106,12 @@ def validate_validation_episode(row: Mapping[str, Any]) -> None:
     reduction = row.get("reduction_rate")
     if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)) for value in (initial, final, reduction)):
         raise ValueError("pest metrics must be finite numbers")
-    if float(initial) <= 0 or float(final) < 0 or float(final) > float(initial):
+    if float(initial) <= 0 or float(final) < 0:
         raise ValueError("pest totals are physically invalid")
     expected = 1.0 - float(final) / float(initial)
-    if expected > 0 and (spray_count == 0 or float(sprayed_l) <= 0):
+    if metric_source == "action_driven_environment" and float(final) > float(initial):
+        raise ValueError("pest totals are physically invalid")
+    if metric_source == "action_driven_environment" and expected > 0 and (spray_count == 0 or float(sprayed_l) <= 0):
         raise ValueError("positive pest reduction requires at least one spray action")
     if not math.isclose(float(reduction), expected, rel_tol=0.0, abs_tol=1e-12):
         raise ValueError("reduction rate is not derived from pest totals")
@@ -552,7 +555,8 @@ def map_validation_episode_to_raw(
     training_identity = str(source.get("canonical_training_identity") or canonical_training_identity(method, scale, seed, config_hash, source_commit))
     initial = float(source["initial_total_pest"])
     final = float(source["final_total_pest"])
-    reduction = 1.0 - final / (initial + 1.0e-12)
+    epsilon = 1.0e-12 if source.get("metric_source") == "action_driven_environment" else 0.0
+    reduction = 1.0 - final / (initial + epsilon)
     metrics = source.get("mechanism_metrics") if isinstance(source.get("mechanism_metrics"), Mapping) else {}
     residual = float(source.get("resource_conservation_residual_l", metrics.get("resource_residual_l", 0.0)))
     raw = {
@@ -601,9 +605,25 @@ class ActionDrivenValidationEnv:
         mortality_per_l: float,
         partition: str = "validation",
         source_provenance: Mapping[str, Any] | None = None,
+        purpose: str | None = None,
+        output_root: Path | str | None = None,
+        repository_root: Path | str | None = None,
+        _internal_legacy: bool = False,
     ) -> None:
         physical_scenario_id = getattr(physical_environment, "scenario_id", None)
         _validate_partition_scenario(partition, physical_scenario_id)
+        if not _internal_legacy:
+            if partition != "development":
+                raise ValueError("static diagnostic requires partition=development")
+            if purpose != "static_ecology_diagnostic":
+                raise ValueError("purpose must be static_ecology_diagnostic")
+            if output_root is None:
+                raise ValueError("static diagnostic output_root is required")
+            output = Path(output_root).resolve()
+            if repository_root is not None:
+                primary_root = (Path(repository_root).resolve() / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
+                if output.is_relative_to(primary_root):
+                    raise ValueError("static diagnostic output must be outside primary/validation/sealed namespaces")
         density = np.asarray(initial_pest, dtype=np.float64)
         if density.ndim != 2 or density.size == 0 or not np.isfinite(density).all() or np.any(density < 0):
             raise ValueError("initial pest field must be a finite non-negative matrix")
@@ -762,6 +782,8 @@ def _build_static_environment(
     scenario_id: int,
     scale: str,
     partition: str,
+    purpose: str = "static_ecology_diagnostic",
+    output_root: Path | str | None = None,
 ) -> ActionDrivenValidationEnv:
     _validate_partition_scenario(partition, scenario_id)
     root = Path(repository_root).resolve()
@@ -869,6 +891,10 @@ def _build_static_environment(
         mortality_per_l=scenario_contract.spray_mortality_per_l,
         partition=partition,
         source_provenance=source_provenance,
+        purpose=purpose,
+        output_root=output_root or (root / "outputs" / "problem2_sr_mappo_v1" / "static_diagnostic"),
+        repository_root=root,
+        _internal_legacy=True,
     )
 
 
@@ -941,7 +967,8 @@ def build_static_diagnostic_environment(
     if output.is_relative_to(primary_root):
         raise ValueError("static diagnostic output must be outside primary/validation/sealed namespaces")
     environment = _build_static_environment(
-        root, scenario_id=scenario_id, scale=scale, partition=partition
+        root, scenario_id=scenario_id, scale=scale, partition=partition,
+        purpose=purpose, output_root=output,
     )
     environment.primary_eligible = False
     return environment

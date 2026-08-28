@@ -88,3 +88,69 @@ readiness, formal efficacy, superiority, validation tuning, sealed evaluation,
 or a maturity increase. The long physical test selection was not rerun to
 completion after the final hardening because execution was interrupted; the
 last completed focused physical result is recorded above.
+
+## Fix Round 1
+
+Review findings were verified against the current implementation before
+changes. The fix remains bounded to dynamic validation compatibility, exact
+wrapper view restoration, and static diagnostic construction guards. No plan,
+project-state record, historical G5 output, validation artifact, or sealed
+scenario was modified.
+
+### RED
+
+Three regression tests were added before the fix:
+
+- Dynamic growth with no spray failed because
+  `validate_validation_episode` accepted only
+  `action_driven_environment` and rejected the dynamic metric source.
+- The unsigned dynamic reduction regression failed at the same stale metric
+  source check.
+- Exact wrapper view restoration failed with `KeyError: 'current_view'` because
+  the wrapper state did not contain the current view.
+- Static constructor enforcement failed because direct construction without a
+  diagnostic purpose/output root did not raise.
+
+### GREEN
+
+The focused fix regressions passed:
+
+```text
+tests/g5/test_validation_tuning.py dynamic regressions: 2 passed in 7.34s
+tests/ecology/test_dynamic_environment.py current-view restore: 1 passed in 1.84s
+tests/g5/test_physical_candidate_training.py static guard: 1 passed in 9.85s
+```
+
+The complete directly affected validation module then passed:
+
+```text
+python -m pytest tests/g5/test_validation_tuning.py -q
+22 passed in 25.23s
+```
+
+The wrapper module had already passed `6 passed` before the fix round, and the
+new exact-view regression passed after the state changes. No broad repository
+suite was run.
+
+### Fixes
+
+- `validate_validation_episode` now preserves legacy static-row rules while
+  accepting dynamic rows with signed reduction, growth beyond initial prey,
+  predation-driven reduction, and zero spray.
+- `scripts/run_g5_validation_tuning.py` now emits dynamic prey fields, direct
+  signed reduction, dynamic metric provenance, and the ecology scenario
+  locator.
+- `DynamicPestEnvironment.state_dict()` now stores a detached current view and
+  `load_state_dict()` restores it exactly while retaining physical legality
+  state and the saved pre-step ecology context.
+- `ActionDrivenValidationEnv` requires explicit development static-diagnostic
+  purpose/output scope for direct construction; its internal legacy path is
+  private and static adapters remain `primary_eligible=False`.
+- Existing static adapter tests now pass explicit diagnostic scope.
+
+### Remaining Concern
+
+The full wrapper module was not rerun after every Fix Round 1 edit because the
+user requested immediate finalization after the affected validation module
+completed. The exact-view regression and all 22 validation tests passed after
+the changes; the prior wrapper baseline was `6 passed`.
