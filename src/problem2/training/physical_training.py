@@ -539,6 +539,8 @@ def _run_physical_candidate_training(
     environment = build_development_environment(
         root, scenario_id=scenario_ids[scenario_cursor], scale=scale
     )
+    if getattr(environment, "primary_eligible", False) is not True or getattr(environment, "ecology_mode", None) != "dynamic":
+        raise RuntimeError("physical candidate training requires the dynamic primary environment")
     current = environment.reset(scenario_id=scenario_ids[scenario_cursor])
     source_provenance = {
         **environment.source_provenance,
@@ -564,11 +566,22 @@ def _run_physical_candidate_training(
             "scenario_id": int(environment.physical.scenario_id),
             "interaction_count": episode_interactions,
             "team_reward_sum": episode_reward,
-            "initial_total_pest": float(environment.initial_pest.sum()),
-            "final_total_pest": float(environment.pest.sum()),
+            "initial_total_pest": float(environment.initial_prey.sum()),
+            "final_total_pest": float(environment.prey.sum()),
             "spray_action_count": int(environment.spray_action_count),
             "sprayed_pesticide_l": float(environment.sprayed_pesticide_l),
-            "metric_source": "action_driven_environment",
+            "metric_source": "dynamic_ecology_environment",
+            "ecology_version": environment.ecology.config.version,
+            "ecology_config_sha256": environment.ecology.config.contract_sha256,
+            "ecology_scenario_sha256": environment.ecology.scenario.scenario_sha256,
+            "initial_predator_total": float(environment.initial_predator.sum()),
+            "final_predator_total": float(environment.predator.sum()),
+            "cumulative_deposited_effect": environment.ecology.deposited_effect,
+            "terminal_mean_concentration": float(environment.ecology.concentration.mean()),
+            "terminal_max_concentration": float(environment.ecology.concentration.max()),
+            "wind_direction": float(environment.ecology.wind_state.direction),
+            "wind_strength": float(environment.ecology.wind_state.strength),
+            "dynamic_step_count": environment.ecology.step_count,
         })
 
     for transition_index in range(target):
@@ -612,6 +625,8 @@ def _run_physical_candidate_training(
             environment = build_development_environment(
                 root, scenario_id=scenario_ids[scenario_cursor], scale=scale
             )
+            if getattr(environment, "primary_eligible", False) is not True or getattr(environment, "ecology_mode", None) != "dynamic":
+                raise RuntimeError("physical candidate training requires the dynamic primary environment")
             current = environment.reset(scenario_id=scenario_ids[scenario_cursor])
             episode_interactions = 0
             episode_reward = 0.0
@@ -707,7 +722,7 @@ def _run_physical_candidate_training(
         "summary": str(summary_path),
         "manifest": str(manifest_path),
         "source_provenance": source_provenance,
-        "reward_source": "immediate_normalized_pest_decrease",
+        "reward_source": "signed_normalized_dynamic_prey_change",
         "shared_team_reward": True,
         "replenished_resource": "pesticide",
         "initial_onboard_pesticide_l": 0.2875,

@@ -22,8 +22,12 @@ from problem2.config import load_g2_config
 from problem2.domain import EpisodeState, UavState, VehicleState
 from problem2.resources.ledger import new_ledger
 from problem2.road.cache import RoadCacheExpectation, load_road_cache
+from problem2.ecology.config import DynamicEcologyConfig
+from problem2.ecology.scenario import generate_dynamic_scenario
+from problem2.ecology.system import DynamicEcologySystem
 
 from .cooperative_env import Problem2CooperativeEnv
+from .dynamic_env import DynamicPestEnvironment
 
 
 INITIAL_ONBOARD_PESTICIDE_L = 0.2875
@@ -586,6 +590,9 @@ def map_validation_episode_to_raw(
 class ActionDrivenValidationEnv:
     """Attach deterministic local pest mortality to accepted physical spray events."""
 
+    ecology_mode = "static_diagnostic"
+    primary_eligible = False
+
     def __init__(
         self,
         physical_environment: Any,
@@ -749,7 +756,7 @@ def _load_static_environment_inputs(
     )
 
 
-def _build_physical_environment(
+def _build_static_environment(
     repository_root: Path | str,
     *,
     scenario_id: int,
@@ -865,15 +872,90 @@ def _build_physical_environment(
     )
 
 
+def _build_dynamic_environment(
+    repository_root: Path | str,
+    *,
+    scenario_id: int,
+    scale: str,
+    partition: str,
+) -> DynamicPestEnvironment:
+    _validate_partition_scenario(partition, scenario_id)
+    root = Path(repository_root).resolve()
+    static = _build_static_environment(
+        root, scenario_id=scenario_id, scale=scale, partition=partition
+    )
+    _, _, scale_config, _, _, _, _, _ = _load_static_environment_inputs(str(root), scale)
+    ecology_config = DynamicEcologyConfig.from_yaml(
+        root / "configs" / "problem2" / "dynamic_pest_v1.yaml"
+    )
+    scenario = generate_dynamic_scenario(
+        partition,
+        scenario_id,
+        scale,
+        scale_config.grid_shape,
+        ecology_config,
+    )
+    ecology = DynamicEcologySystem.from_scenario(
+        scenario, ecology_config, static.physical.config.spray_per_step_l
+    )
+    provenance = {
+        **static.source_provenance,
+        "environment_factory": f"problem2.training.tuning.build_{partition}_environment",
+        "ecology_mode": "dynamic",
+        "ecology_config_path": str(root / "configs" / "problem2" / "dynamic_pest_v1.yaml"),
+        "ecology_config_sha256": ecology_config.contract_sha256,
+        "ecology_scenario_sha256": scenario.scenario_sha256,
+        "ecology_source_commit": scenario.source_commit,
+        "ecology_version": ecology_config.version,
+        "ecology_implementation_version": scenario.implementation_version,
+        "dynamic_grid_shape": list(scenario.grid_shape),
+        "scenario_content_sha256": scenario.scenario_sha256,
+        "scenario_content_hash_encoding": "canonical_dynamic_ecology_state_v1",
+    }
+    return DynamicPestEnvironment(
+        static.physical,
+        ecology,
+        partition=partition,
+        source_provenance=provenance,
+    )
+
+
+def build_static_diagnostic_environment(
+    repository_root: Path | str,
+    *,
+    scenario_id: int,
+    scale: str = "g20x20_d2",
+    partition: str,
+    purpose: str,
+    output_root: Path | str,
+) -> ActionDrivenValidationEnv:
+    """Build the legacy static adapter for explicitly scoped diagnostics only."""
+
+    if partition != "development":
+        raise ValueError("static diagnostic requires partition=development")
+    if purpose != "static_ecology_diagnostic":
+        raise ValueError("purpose must be static_ecology_diagnostic")
+    root = Path(repository_root).resolve()
+    output = Path(output_root).resolve()
+    primary_root = (root / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
+    if output.is_relative_to(primary_root):
+        raise ValueError("static diagnostic output must be outside primary/validation/sealed namespaces")
+    environment = _build_static_environment(
+        root, scenario_id=scenario_id, scale=scale, partition=partition
+    )
+    environment.primary_eligible = False
+    return environment
+
+
 def build_development_environment(
     repository_root: Path | str,
     *,
     scenario_id: int,
     scale: str = "g20x20_d2",
-) -> ActionDrivenValidationEnv:
-    """Create one development scenario from the frozen G2 road cache."""
+) -> DynamicPestEnvironment:
+    """Create one dynamic development scenario from the frozen G2 road cache."""
 
-    return _build_physical_environment(
+    return _build_dynamic_environment(
         repository_root,
         scenario_id=scenario_id,
         scale=scale,
@@ -886,10 +968,10 @@ def build_validation_environment(
     *,
     scenario_id: int,
     scale: str = "g30x50_d4",
-) -> ActionDrivenValidationEnv:
-    """Create one validation-only scenario from the frozen G2 road cache."""
+) -> DynamicPestEnvironment:
+    """Create one dynamic validation-only scenario from the frozen G2 road cache."""
 
-    return _build_physical_environment(
+    return _build_dynamic_environment(
         repository_root,
         scenario_id=scenario_id,
         scale=scale,
@@ -904,6 +986,7 @@ __all__ = [
     "CANONICAL_INTERACTIONS",
     "CanonicalValidationStore",
     "ActionDrivenValidationEnv",
+    "DynamicPestEnvironment",
     "DEVELOPMENT_SCENARIO_IDS",
     "INITIAL_ONBOARD_PESTICIDE_L",
     "SEALED_SCENARIO_IDS",
@@ -911,6 +994,7 @@ __all__ = [
     "ValidationAccessLedger",
     "ValidationAccessError",
     "build_development_environment",
+    "build_static_diagnostic_environment",
     "build_validation_environment",
     "map_validation_episode_to_raw",
     "validate_validation_episode",

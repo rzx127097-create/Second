@@ -104,6 +104,8 @@ class Problem2CooperativeEnv:
         self.field_summary = field
         self.initial_total_pest = initial_total_pest
         self.final_total_pest = final_total_pest
+        self.ecology_global_context: tuple[float, ...] = ()
+        self.uav_ecology_context: dict[str, tuple[float, ...]] = {}
         self._initial_vehicle_inventory_l = initial_state.vehicle.inventory_l
         self._state = initial_state
         self._dispatch: _Dispatch | None = None

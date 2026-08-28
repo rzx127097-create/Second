@@ -250,7 +250,12 @@ def test_physical_scenario_contract_is_strict_and_provenance_bound() -> None:
     assert first.source_provenance["scenario_content_sha256"] == second.source_provenance[
         "scenario_content_sha256"
     ]
-    assert float(first.initial_pest.sum()) == pytest.approx(100.0)
+    assert first.ecology_mode == "dynamic"
+    assert first.primary_eligible is True
+    assert float(first.initial_prey.sum()) > 0.0
+    assert first.source_provenance["ecology_scenario_sha256"] == (
+        second.source_provenance["ecology_scenario_sha256"]
+    )
 
 
 def test_physical_scenario_contract_rejects_unknown_keys(tmp_path: Path) -> None:
