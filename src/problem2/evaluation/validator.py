@@ -11,7 +11,7 @@ from typing import Any, Iterable
 from problem2.experiments.artifacts import write_quarantine
 from problem2.experiments.g5_contract import REDUCTION_RATE_EPSILON
 from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
-from .schema import ARTIFACT_MANIFEST_SCHEMA, RAW_EPISODE_SCHEMA
+from .schema import ARTIFACT_MANIFEST_SCHEMA, DYNAMIC_RAW_EPISODE_SCHEMA, RAW_EPISODE_SCHEMA
 from .sealed_lock import SealedAccessError, assert_partition_allowed
 
 
@@ -23,6 +23,11 @@ _HASH64 = re.compile(r"^[0-9a-f]{64}$")
 _HASH40 = re.compile(r"^[0-9a-f]{40}$")
 _METHODS = {"sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile", "sr_mappo_fixed", "sr_mappo_astar", "sr_mappo_two_stage", "sr_mappo_nearest", "sr_mappo_urgency"}
 _SCALES = {"g20x20_d2", "g20x30_d3", "g20x40_d3", "g30x30_d3", "g30x40_d4", "g30x50_d4"}
+_DYNAMIC_METRIC_SOURCE = "dynamic_ecology_environment"
+_DYNAMIC_FIELDS = tuple(
+    field for field in DYNAMIC_RAW_EPISODE_SCHEMA["required"]
+    if field not in RAW_EPISODE_SCHEMA["required"]
+)
 
 
 def _finite(value: Any, name: str) -> None:
@@ -49,7 +54,7 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
     for compatibility_field in ("candidate_id", "candidate_manifest_sha256", "budget_manifest_sha256", "physical_scenario_contract_sha256"):
         if compatibility_field in missing:
             missing.remove(compatibility_field)
-    extra = set(row) - required
+    extra = set(row) - set(RAW_EPISODE_SCHEMA["properties"])
     if missing:
         raise ValidationError(f"missing fields: {', '.join(sorted(missing))}")
     if extra:
@@ -109,6 +114,29 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
         raise ValidationError("termination reason is required")
     if row["action_uav"] not in range(6) or row["action_vehicle_slot"] not in range(4):
         raise ValidationError("illegal action")
+    metric_source = row.get("metric_source")
+    if metric_source is not None and metric_source not in {"action_driven_environment", _DYNAMIC_METRIC_SOURCE}:
+        raise ValidationError("metric_source is undeclared")
+    if metric_source == _DYNAMIC_METRIC_SOURCE:
+        missing_dynamic = set(_DYNAMIC_FIELDS) - set(row)
+        if missing_dynamic:
+            raise ValidationError(f"dynamic ecology provenance is incomplete: {', '.join(sorted(missing_dynamic))}")
+        if not isinstance(row["ecology_version"], str) or not row["ecology_version"]:
+            raise ValidationError("ecology_version must be non-empty text")
+        for key in ("ecology_config_sha256", "ecology_scenario_sha256"):
+            if not isinstance(row[key], str) or not _HASH64.fullmatch(row[key]):
+                raise ValidationError(f"{key} must be a lowercase SHA-256")
+        if not isinstance(row["ecology_source_commit"], str) or not _HASH40.fullmatch(row["ecology_source_commit"]):
+            raise ValidationError("ecology_source_commit must be a lowercase Git SHA-1")
+        if not isinstance(row["ecology_implementation_version"], str) or not row["ecology_implementation_version"]:
+            raise ValidationError("ecology_implementation_version must be non-empty text")
+        for key in ("initial_predator_total", "final_predator_total", "cumulative_deposited_effect", "terminal_mean_concentration", "terminal_max_concentration", "wind_strength"):
+            _number(row[key], key, nonnegative=True)
+        _number(row["wind_direction"], "wind_direction")
+        if row["terminal_max_concentration"] < row["terminal_mean_concentration"]:
+            raise ValidationError("terminal concentration extrema are inconsistent")
+        if isinstance(row["dynamic_step_count"], bool) or not isinstance(row["dynamic_step_count"], int) or row["dynamic_step_count"] < 0:
+            raise ValidationError("dynamic_step_count must be a non-negative integer")
     for key in ("initial_total_pest", "final_total_pest"):
         _number(row[key], key)
         if row[key] <= 0:

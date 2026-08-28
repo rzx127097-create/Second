@@ -201,3 +201,29 @@ def test_static_diagnostic_requires_explicit_development_scope(tmp_path: Path) -
             purpose="static_ecology_diagnostic",
             output_root=ROOT / "outputs/problem2_sr_mappo_v1/g5/validation",
         )
+
+
+def test_static_adapter_cannot_bypass_diagnostic_scope_or_output_root() -> None:
+    from problem2.training.tuning import ActionDrivenValidationEnv
+
+    base = _physical()
+    with pytest.raises(TypeError, match="_internal_legacy"):
+        ActionDrivenValidationEnv(
+            base,
+            initial_pest=np.ones((1, 1)),
+            mortality_per_l=1.0,
+            partition="development",
+            purpose="static_ecology_diagnostic",
+            output_root=ROOT / "outputs/problem2_sr_mappo_v1/static_diagnostic",
+            repository_root=ROOT,
+            _internal_legacy=True,
+        )
+    with pytest.raises(ValueError, match="repository_root"):
+        ActionDrivenValidationEnv(
+            base,
+            initial_pest=np.ones((1, 1)),
+            mortality_per_l=1.0,
+            partition="development",
+            purpose="static_ecology_diagnostic",
+            output_root=ROOT / "outputs/problem2_sr_mappo_v1/g5/validation",
+        )

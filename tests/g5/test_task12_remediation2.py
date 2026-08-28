@@ -244,13 +244,61 @@ def test_validation_episode_mapping_is_strict_raw_schema_and_provenance_complete
         budget_manifest_sha256=store.budget_sha256,
         physical_scenario_contract_sha256=store.physical_scenario_contract_hash,
     )
-    assert set(row) == set(__import__("problem2.evaluation.schema", fromlist=["RAW_EPISODE_SCHEMA"]).RAW_EPISODE_SCHEMA["required"])
+    assert set(row) == set(__import__("problem2.evaluation.schema", fromlist=["RAW_EPISODE_SCHEMA"]).RAW_EPISODE_SCHEMA["required"]) | {"metric_source"}
     validate_long_table([row], allow_validation_access=True, expected_identities={row["evaluation_identity"]}, expected_provenance={
         "source_commit": "d" * 40, "config_hash": row["config_hash"], "protocol_hash": "2" * 64,
         "checkpoint_hash": "e" * 64, "evaluator_hash": "f" * 64, "scenario_panel_hash": "1" * 64,
         "candidate_manifest_sha256": store.candidate_sha256, "budget_manifest_sha256": store.budget_sha256,
         "physical_scenario_contract_sha256": store.physical_scenario_contract_hash,
     })
+
+
+def test_dynamic_validation_mapping_persists_complete_ecology_provenance(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    source = {
+        **_row(store),
+        "metric_source": "dynamic_ecology_environment",
+        "ecology_version": "dynamic-pest-v1",
+        "ecology_config_sha256": "a" * 64,
+        "ecology_scenario_sha256": "b" * 64,
+        "ecology_source_commit": "c" * 40,
+        "ecology_implementation_version": "problem2-ecology-v1",
+        "initial_predator_total": 12.0,
+        "final_predator_total": 10.0,
+        "cumulative_deposited_effect": 0.75,
+        "terminal_mean_concentration": 0.05,
+        "terminal_max_concentration": 0.2,
+        "wind_direction": 0.4,
+        "wind_strength": 0.25,
+        "dynamic_step_count": 180,
+    }
+    row = map_validation_episode_to_raw(
+        source,
+        source_commit="d" * 40,
+        protocol_hash="2" * 64,
+        checkpoint_hash="e" * 64,
+        evaluator_hash="f" * 64,
+        scenario_panel_hash="1" * 64,
+        raw_trace_locator="raw/episodes.jsonl:1",
+        candidate_manifest_sha256=store.candidate_sha256,
+        budget_manifest_sha256=store.budget_sha256,
+        physical_scenario_contract_sha256=store.physical_scenario_contract_hash,
+    )
+
+    assert row["metric_source"] == "dynamic_ecology_environment"
+    for field in (
+        "ecology_version", "ecology_config_sha256", "ecology_scenario_sha256",
+        "ecology_source_commit", "ecology_implementation_version",
+        "initial_predator_total", "final_predator_total",
+        "cumulative_deposited_effect", "terminal_mean_concentration",
+        "terminal_max_concentration", "wind_direction", "wind_strength",
+        "dynamic_step_count",
+    ):
+        assert field in row
+
+    store.commit_row(row)
+    persisted = json.loads((store.rows_root / "0000.json").read_text(encoding="utf-8"))
+    assert persisted == row
 
 
 def test_selection_requires_complete_3000_cells_and_writes_provenance(tmp_path: Path) -> None:

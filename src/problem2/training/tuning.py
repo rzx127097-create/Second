@@ -588,6 +588,22 @@ def map_validation_episode_to_raw(
         "decision_runtime_s": float(source.get("decision_runtime_s", metrics.get("decision_runtime_s", 0.0))),
         "source_locator": raw_trace_locator,
     }
+    metric_source = source.get("metric_source")
+    if metric_source is not None:
+        raw["metric_source"] = str(metric_source)
+    if metric_source == "dynamic_ecology_environment":
+        dynamic_fields = (
+            "ecology_version", "ecology_config_sha256", "ecology_scenario_sha256",
+            "ecology_source_commit", "ecology_implementation_version",
+            "initial_predator_total", "final_predator_total",
+            "cumulative_deposited_effect", "terminal_mean_concentration",
+            "terminal_max_concentration", "wind_direction", "wind_strength",
+            "dynamic_step_count",
+        )
+        missing = [field for field in dynamic_fields if field not in source]
+        if missing:
+            raise ValueError(f"dynamic ecology provenance is incomplete: {', '.join(missing)}")
+        raw.update({field: source[field] for field in dynamic_fields})
     return raw
 
 
@@ -608,22 +624,21 @@ class ActionDrivenValidationEnv:
         purpose: str | None = None,
         output_root: Path | str | None = None,
         repository_root: Path | str | None = None,
-        _internal_legacy: bool = False,
     ) -> None:
         physical_scenario_id = getattr(physical_environment, "scenario_id", None)
         _validate_partition_scenario(partition, physical_scenario_id)
-        if not _internal_legacy:
-            if partition != "development":
-                raise ValueError("static diagnostic requires partition=development")
-            if purpose != "static_ecology_diagnostic":
-                raise ValueError("purpose must be static_ecology_diagnostic")
-            if output_root is None:
-                raise ValueError("static diagnostic output_root is required")
-            output = Path(output_root).resolve()
-            if repository_root is not None:
-                primary_root = (Path(repository_root).resolve() / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
-                if output.is_relative_to(primary_root):
-                    raise ValueError("static diagnostic output must be outside primary/validation/sealed namespaces")
+        if partition != "development":
+            raise ValueError("static diagnostic requires partition=development")
+        if purpose != "static_ecology_diagnostic":
+            raise ValueError("purpose must be static_ecology_diagnostic")
+        if output_root is None:
+            raise ValueError("static diagnostic output_root is required")
+        if repository_root is None:
+            raise ValueError("static diagnostic repository_root is required")
+        output = Path(output_root).resolve()
+        primary_root = (Path(repository_root).resolve() / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
+        if output.is_relative_to(primary_root):
+            raise ValueError("static diagnostic output must be outside primary/validation/sealed namespaces")
         density = np.asarray(initial_pest, dtype=np.float64)
         if density.ndim != 2 or density.size == 0 or not np.isfinite(density).all() or np.any(density < 0):
             raise ValueError("initial pest field must be a finite non-negative matrix")
@@ -776,15 +791,13 @@ def _load_static_environment_inputs(
     )
 
 
-def _build_static_environment(
+def _build_physical_environment(
     repository_root: Path | str,
     *,
     scenario_id: int,
     scale: str,
     partition: str,
-    purpose: str = "static_ecology_diagnostic",
-    output_root: Path | str | None = None,
-) -> ActionDrivenValidationEnv:
+) -> tuple[Problem2CooperativeEnv, np.ndarray, dict[str, Any]]:
     _validate_partition_scenario(partition, scenario_id)
     root = Path(repository_root).resolve()
     (
@@ -885,16 +898,31 @@ def _build_static_environment(
         "scenario_content_sha256": content_hasher.hexdigest(),
         "scenario_content_hash_encoding": scenario_contract.content_hash_encoding,
     }
+    return physical, pest, source_provenance
+
+
+def _build_static_environment(
+    repository_root: Path | str,
+    *,
+    scenario_id: int,
+    scale: str,
+    partition: str,
+    purpose: str = "static_ecology_diagnostic",
+    output_root: Path | str | None = None,
+) -> ActionDrivenValidationEnv:
+    root = Path(repository_root).resolve()
+    physical, pest, source_provenance = _build_physical_environment(
+        root, scenario_id=scenario_id, scale=scale, partition=partition,
+    )
     return ActionDrivenValidationEnv(
         physical,
         initial_pest=pest,
-        mortality_per_l=scenario_contract.spray_mortality_per_l,
+        mortality_per_l=source_provenance["spray_mortality_per_l"],
         partition=partition,
         source_provenance=source_provenance,
         purpose=purpose,
         output_root=output_root or (root / "outputs" / "problem2_sr_mappo_v1" / "static_diagnostic"),
         repository_root=root,
-        _internal_legacy=True,
     )
 
 
@@ -907,8 +935,8 @@ def _build_dynamic_environment(
 ) -> DynamicPestEnvironment:
     _validate_partition_scenario(partition, scenario_id)
     root = Path(repository_root).resolve()
-    static = _build_static_environment(
-        root, scenario_id=scenario_id, scale=scale, partition=partition
+    physical, _, physical_provenance = _build_physical_environment(
+        root, scenario_id=scenario_id, scale=scale, partition=partition,
     )
     _, _, scale_config, _, _, _, _, _ = _load_static_environment_inputs(str(root), scale)
     ecology_config = DynamicEcologyConfig.from_yaml(
@@ -922,10 +950,10 @@ def _build_dynamic_environment(
         ecology_config,
     )
     ecology = DynamicEcologySystem.from_scenario(
-        scenario, ecology_config, static.physical.config.spray_per_step_l
+        scenario, ecology_config, physical.config.spray_per_step_l
     )
     provenance = {
-        **static.source_provenance,
+        **physical_provenance,
         "environment_factory": f"problem2.training.tuning.build_{partition}_environment",
         "ecology_mode": "dynamic",
         "ecology_config_path": str(root / "configs" / "problem2" / "dynamic_pest_v1.yaml"),
@@ -939,7 +967,7 @@ def _build_dynamic_environment(
         "scenario_content_hash_encoding": "canonical_dynamic_ecology_state_v1",
     }
     return DynamicPestEnvironment(
-        static.physical,
+        physical,
         ecology,
         partition=partition,
         source_provenance=provenance,
