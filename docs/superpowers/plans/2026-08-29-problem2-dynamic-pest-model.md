@@ -129,13 +129,13 @@ def test_reflected_laplacian_matches_hand_computed_corner_and_center() -> None:
     field = np.array([[1.0, 2.0, 4.0], [3.0, 5.0, 8.0], [6.0, 9.0, 10.0]])
     observed = reflected_laplacian(field, dx=1.0)
     assert observed[0, 0] == pytest.approx(6.0)
-    assert observed[1, 1] == pytest.approx(-1.0)
+    assert observed[1, 1] == pytest.approx(2.0)
 
 
 @pytest.mark.parametrize(
     ("wind", "expected"),
     [((2.0, 0.0), np.array([[2.0, -2.0, -4.0]])),
-     ((-2.0, 0.0), np.array([[-2.0, -4.0, 4.0]]))],
+     ((-2.0, 0.0), np.array([[2.0, 4.0, -4.0]]))],
 )
 def test_upwind_advection_uses_wind_sign(wind, expected) -> None:
     field = np.array([[1.0, 2.0, 4.0]])
