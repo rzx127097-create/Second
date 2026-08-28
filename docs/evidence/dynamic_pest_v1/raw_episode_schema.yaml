@@ -1,0 +1,120 @@
+schema_version: problem2.dynamic-ecology-raw.v1
+registry_id: DYNAMIC-PEST-V1-RAW-EPISODE
+status: design_frozen
+format: long_format_episode_record
+additional_properties: false
+metric_source: dynamic_ecology_environment
+required_fields:
+  - evaluation_identity
+  - canonical_training_identity
+  - method
+  - candidate_id
+  - condition_id
+  - scale
+  - training_seed
+  - scenario_id
+  - partition
+  - source_commit
+  - config_hash
+  - protocol_hash
+  - checkpoint_hash
+  - evaluator_hash
+  - scenario_panel_hash
+  - candidate_manifest_sha256
+  - budget_manifest_sha256
+  - physical_scenario_contract_sha256
+  - episode_index
+  - interaction_count
+  - termination_reason
+  - terminated
+  - initial_total_pest
+  - final_total_pest
+  - reduction_rate
+  - success_at_0_85
+  - pesticide_initial_l
+  - pesticide_remaining_l
+  - pesticide_transferred_l
+  - resource_conservation_residual_l
+  - battery_replenishment_l
+  - action_uav
+  - action_vehicle_slot
+  - rendezvous_distance_m
+  - vehicle_service_travel_m
+  - waiting_steps
+  - completed_request_waiting_steps
+  - pesticide_disabled_steps
+  - return_steps
+  - effective_spray_steps
+  - decision_runtime_s
+  - source_locator
+  - metric_source
+  - ecology_version
+  - ecology_config_sha256
+  - ecology_scenario_sha256
+  - ecology_source_commit
+  - ecology_implementation_version
+  - initial_total_predator
+  - final_total_predator
+  - cumulative_deposited_effect
+  - terminal_mean_concentration
+  - terminal_max_concentration
+  - terminal_wind_direction
+  - terminal_wind_strength
+  - dynamic_step_count
+fields:
+  - {name: evaluation_identity, type: string, required: true}
+  - {name: canonical_training_identity, type: string, required: true}
+  - {name: method, type: string, required: true}
+  - {name: candidate_id, type: string, required: true}
+  - {name: condition_id, type: string, required: true}
+  - {name: scale, type: string, required: true}
+  - {name: training_seed, type: integer, required: true}
+  - {name: scenario_id, type: integer, required: true}
+  - {name: partition, type: string, required: true}
+  - {name: source_commit, type: string, required: true}
+  - {name: config_hash, type: string, required: true}
+  - {name: protocol_hash, type: string, required: true}
+  - {name: checkpoint_hash, type: string, required: true}
+  - {name: evaluator_hash, type: string, required: true}
+  - {name: scenario_panel_hash, type: string, required: true}
+  - {name: candidate_manifest_sha256, type: string, required: true}
+  - {name: budget_manifest_sha256, type: string, required: true}
+  - {name: physical_scenario_contract_sha256, type: string, required: true}
+  - {name: episode_index, type: integer, required: true}
+  - {name: interaction_count, type: integer, required: true}
+  - {name: termination_reason, type: string, required: true}
+  - {name: terminated, type: boolean, required: true}
+  - {name: initial_total_pest, type: number, unit: normalized_pest, required: true}
+  - {name: final_total_pest, type: number, unit: normalized_pest, required: true}
+  - {name: reduction_rate, type: number, unit: "1", required: true}
+  - {name: success_at_0_85, type: boolean, required: true}
+  - {name: pesticide_initial_l, type: number, unit: L, required: true}
+  - {name: pesticide_remaining_l, type: number, unit: L, required: true}
+  - {name: pesticide_transferred_l, type: number, unit: L, required: true}
+  - {name: resource_conservation_residual_l, type: number, unit: L, required: true}
+  - {name: battery_replenishment_l, type: number, unit: L, required: true}
+  - {name: action_uav, type: integer, required: true}
+  - {name: action_vehicle_slot, type: integer, required: true}
+  - {name: rendezvous_distance_m, type: number, unit: m, required: true}
+  - {name: vehicle_service_travel_m, type: number, unit: m, required: true}
+  - {name: waiting_steps, type: number, unit: step, required: true}
+  - {name: completed_request_waiting_steps, type: number, unit: step, required: true}
+  - {name: pesticide_disabled_steps, type: number, unit: step, required: true}
+  - {name: return_steps, type: number, unit: step, required: true}
+  - {name: effective_spray_steps, type: number, unit: step, required: true}
+  - {name: decision_runtime_s, type: number, unit: s, required: true}
+  - {name: source_locator, type: string, required: true}
+  - {name: metric_source, type: string, required: true}
+  - {name: ecology_version, type: string, required: true}
+  - {name: ecology_config_sha256, type: string, required: true}
+  - {name: ecology_scenario_sha256, type: string, required: true}
+  - {name: ecology_source_commit, type: string, required: true}
+  - {name: ecology_implementation_version, type: string, required: true}
+  - {name: initial_total_predator, type: number, unit: normalized_predator, required: true}
+  - {name: final_total_predator, type: number, unit: normalized_predator, required: true}
+  - {name: cumulative_deposited_effect, type: number, unit: normalized_effect, required: true}
+  - {name: terminal_mean_concentration, type: number, unit: normalized_concentration, required: true}
+  - {name: terminal_max_concentration, type: number, unit: normalized_concentration, required: true}
+  - {name: terminal_wind_direction, type: number, unit: rad, required: true}
+  - {name: terminal_wind_strength, type: number, unit: normalized_wind, required: true}
+  - {name: dynamic_step_count, type: integer, unit: step, required: true}

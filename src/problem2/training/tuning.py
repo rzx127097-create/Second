@@ -242,6 +242,7 @@ class CanonicalValidationStore(ValidationAccessLedger):
         scenario_panel_hash: str | None = None,
         physical_scenario_contract_hash: str | None = None,
         allow_noncanonical_test: bool = False,
+        require_dynamic_ecology: bool = False,
     ) -> None:
         root = Path(repository_root).resolve()
         if candidate_manifest is None and budget_manifest is not None and ledger_path is not None:
@@ -279,6 +280,7 @@ class CanonicalValidationStore(ValidationAccessLedger):
         self.protocol_hash = protocol_hash
         self.scenario_panel_hash = scenario_panel_hash
         self.physical_scenario_contract_hash = physical_scenario_contract_hash
+        self.require_dynamic_ecology = require_dynamic_ecology
         self._lock_depth = 0
         self._lock_handle: int | None = None
         candidate_ids = tuple(sorted({candidate for _, candidate in self._candidates}))
@@ -386,6 +388,12 @@ class CanonicalValidationStore(ValidationAccessLedger):
             [payload], expected_identities={payload.get("evaluation_identity")},
             expected_provenance=expected_provenance, allow_validation_access=True,
         )
+        if self.require_dynamic_ecology:
+            from problem2.evaluation.validator import validate_dynamic_episode
+
+            if payload.get("metric_source") != "dynamic_ecology_environment":
+                raise ValueError("dynamic ecology rows require dynamic ecology provenance")
+            validate_dynamic_episode(payload)
         return payload
 
     def _read_rows(self) -> list[dict[str, Any]]:
@@ -595,15 +603,18 @@ def map_validation_episode_to_raw(
         dynamic_fields = (
             "ecology_version", "ecology_config_sha256", "ecology_scenario_sha256",
             "ecology_source_commit", "ecology_implementation_version",
-            "initial_predator_total", "final_predator_total",
+            "initial_total_predator", "final_total_predator",
             "cumulative_deposited_effect", "terminal_mean_concentration",
-            "terminal_max_concentration", "wind_direction", "wind_strength",
+            "terminal_max_concentration", "terminal_wind_direction", "terminal_wind_strength",
             "dynamic_step_count",
         )
         missing = [field for field in dynamic_fields if field not in source]
         if missing:
             raise ValueError(f"dynamic ecology provenance is incomplete: {', '.join(missing)}")
         raw.update({field: source[field] for field in dynamic_fields})
+        from problem2.evaluation.validator import validate_dynamic_episode
+
+        validate_dynamic_episode(raw)
     return raw
 
 
@@ -635,10 +646,7 @@ class ActionDrivenValidationEnv:
             raise ValueError("static diagnostic output_root is required")
         if repository_root is None:
             raise ValueError("static diagnostic repository_root is required")
-        output = Path(output_root).resolve()
-        primary_root = (Path(repository_root).resolve() / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
-        if output.is_relative_to(primary_root):
-            raise ValueError("static diagnostic output must be outside primary/validation/sealed namespaces")
+        _validate_static_diagnostic_scope(repository_root, output_root)
         density = np.asarray(initial_pest, dtype=np.float64)
         if density.ndim != 2 or density.size == 0 or not np.isfinite(density).all() or np.any(density < 0):
             raise ValueError("initial pest field must be a finite non-negative matrix")
@@ -756,6 +764,21 @@ def _validate_partition_scenario(partition: str, scenario_id: int) -> None:
     if scenario_id not in allowed:
         start, stop = allowed.start, allowed.stop - 1
         raise ValueError(f"only {partition} scenarios {start}-{stop} may be constructed in G5")
+
+
+def _validate_static_diagnostic_scope(repository_root: Path | str, output_root: Path | str) -> None:
+    supplied_root = Path(repository_root).resolve()
+    canonical_root = Path(__file__).resolve().parents[3]
+    if supplied_root != canonical_root:
+        raise ValueError("static diagnostic repository_root is not the authoritative repository")
+    output = Path(output_root).resolve()
+    managed_root = canonical_root / "outputs" / "problem2_sr_mappo_v1"
+    diagnostic_root = managed_root / "static_diagnostic"
+    if output.is_relative_to(managed_root) and not output.is_relative_to(diagnostic_root):
+        raise ValueError(
+            "static diagnostic output must remain outside primary/validation/sealed "
+            "namespaces and within the diagnostic namespace"
+        )
 
 
 @lru_cache(maxsize=12)
@@ -991,9 +1014,7 @@ def build_static_diagnostic_environment(
         raise ValueError("purpose must be static_ecology_diagnostic")
     root = Path(repository_root).resolve()
     output = Path(output_root).resolve()
-    primary_root = (root / "outputs" / "problem2_sr_mappo_v1" / "g5").resolve()
-    if output.is_relative_to(primary_root):
-        raise ValueError("static diagnostic output must be outside primary/validation/sealed namespaces")
+    _validate_static_diagnostic_scope(root, output)
     environment = _build_static_environment(
         root, scenario_id=scenario_id, scale=scale, partition=partition,
         purpose=purpose, output_root=output,

@@ -479,6 +479,7 @@ def run_validation_tuning(
         protocol_hash=protocol_hash,
         scenario_panel_hash=next(iter(panel_hashes)),
         physical_scenario_contract_hash=contract.file_hashes["docs/evidence/g5/physical_scenario_contract.yaml"],
+        require_dynamic_ecology=True,
     )
     if interactions != ledger.interactions:
         raise ValueError("canonical candidate budget drifted")
@@ -560,13 +561,13 @@ def run_validation_tuning(
                                 "ecology_scenario_sha256": environment.ecology.scenario.scenario_sha256,
                                 "ecology_source_commit": environment.ecology.scenario.source_commit,
                                 "ecology_implementation_version": environment.ecology.scenario.implementation_version,
-                                "initial_predator_total": float(environment.initial_predator.sum()),
-                                "final_predator_total": float(environment.predator.sum()),
+                                "initial_total_predator": float(environment.initial_predator.sum()),
+                                "final_total_predator": float(environment.predator.sum()),
                                 "cumulative_deposited_effect": environment.ecology.deposited_effect,
                                 "terminal_mean_concentration": float(environment.ecology.concentration.mean()),
                                 "terminal_max_concentration": float(environment.ecology.concentration.max()),
-                                "wind_direction": float(environment.ecology.wind_state.direction),
-                                "wind_strength": float(environment.ecology.wind_state.strength),
+                                "terminal_wind_direction": float(environment.ecology.wind_state.direction),
+                                "terminal_wind_strength": float(environment.ecology.wind_state.strength),
                                 "dynamic_step_count": environment.ecology.step_count,
                                 "validation_accessed": True,
                                 "sealed_accessed": False,

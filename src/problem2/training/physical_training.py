@@ -574,13 +574,13 @@ def _run_physical_candidate_training(
             "ecology_version": environment.ecology.config.version,
             "ecology_config_sha256": environment.ecology.config.contract_sha256,
             "ecology_scenario_sha256": environment.ecology.scenario.scenario_sha256,
-            "initial_predator_total": float(environment.initial_predator.sum()),
-            "final_predator_total": float(environment.predator.sum()),
+            "initial_total_predator": float(environment.initial_predator.sum()),
+            "final_total_predator": float(environment.predator.sum()),
             "cumulative_deposited_effect": environment.ecology.deposited_effect,
             "terminal_mean_concentration": float(environment.ecology.concentration.mean()),
             "terminal_max_concentration": float(environment.ecology.concentration.max()),
-            "wind_direction": float(environment.ecology.wind_state.direction),
-            "wind_strength": float(environment.ecology.wind_state.strength),
+            "terminal_wind_direction": float(environment.ecology.wind_state.direction),
+            "terminal_wind_strength": float(environment.ecology.wind_state.strength),
             "dynamic_step_count": environment.ecology.step_count,
         })
 

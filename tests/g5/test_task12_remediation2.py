@@ -11,6 +11,8 @@ import pytest
 from problem2.algorithms.protocol import ActionResult
 from problem2.config import load_g2_config
 from problem2.domain import Action, EpisodeState, UavState, VehicleState
+from problem2.ecology.config import DynamicEcologyConfig
+from problem2.ecology.scenario import generate_dynamic_scenario
 from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
 from problem2.evaluation.validator import validate_long_table
 from problem2.experiments.g5_contract import load_g5_contract
@@ -30,6 +32,10 @@ from tests.g2.helpers import make_raster_graph
 
 ROOT = Path(__file__).resolve().parents[2]
 G5 = ROOT / "outputs" / "problem2_sr_mappo_v1" / "g5"
+DYNAMIC_CONFIG = DynamicEcologyConfig.from_yaml(ROOT / "configs/problem2/dynamic_pest_v1.yaml")
+DYNAMIC_SCENARIO = generate_dynamic_scenario(
+    "validation", 20000, "g30x50_d4", (30, 50), DYNAMIC_CONFIG
+)
 
 
 def _validation_script():
@@ -111,7 +117,7 @@ def _row(store: CanonicalValidationStore, *, scenario_id: int = 20000) -> dict[s
     }
 
 
-def _store(tmp_path: Path) -> CanonicalValidationStore:
+def _store(tmp_path: Path, *, require_dynamic_ecology: bool = False) -> CanonicalValidationStore:
     candidates, budget = _frozen_manifests(tmp_path)
     return CanonicalValidationStore(
         ROOT,
@@ -125,6 +131,7 @@ def _store(tmp_path: Path) -> CanonicalValidationStore:
             "docs/evidence/g5/physical_scenario_contract.yaml"
         ],
         allow_noncanonical_test=True,
+        require_dynamic_ecology=require_dynamic_ecology,
     )
 
 
@@ -254,23 +261,23 @@ def test_validation_episode_mapping_is_strict_raw_schema_and_provenance_complete
 
 
 def test_dynamic_validation_mapping_persists_complete_ecology_provenance(tmp_path: Path) -> None:
-    store = _store(tmp_path)
+    store = _store(tmp_path, require_dynamic_ecology=True)
     source = {
         **_row(store),
         "metric_source": "dynamic_ecology_environment",
-        "ecology_version": "dynamic-pest-v1",
-        "ecology_config_sha256": "a" * 64,
-        "ecology_scenario_sha256": "b" * 64,
-        "ecology_source_commit": "c" * 40,
-        "ecology_implementation_version": "problem2-ecology-v1",
-        "initial_predator_total": 12.0,
-        "final_predator_total": 10.0,
+        "ecology_version": "problem2-dynamic-pest-v1",
+        "ecology_config_sha256": DYNAMIC_CONFIG.contract_sha256,
+        "ecology_scenario_sha256": DYNAMIC_SCENARIO.scenario_sha256,
+        "ecology_source_commit": DYNAMIC_SCENARIO.source_commit,
+        "ecology_implementation_version": DYNAMIC_SCENARIO.implementation_version,
+        "initial_total_predator": 12.0,
+        "final_total_predator": 10.0,
         "cumulative_deposited_effect": 0.75,
         "terminal_mean_concentration": 0.05,
         "terminal_max_concentration": 0.2,
-        "wind_direction": 0.4,
-        "wind_strength": 0.25,
-        "dynamic_step_count": 180,
+        "terminal_wind_direction": 0.4,
+        "terminal_wind_strength": 0.25,
+        "dynamic_step_count": 350,
     }
     row = map_validation_episode_to_raw(
         source,
@@ -289,9 +296,9 @@ def test_dynamic_validation_mapping_persists_complete_ecology_provenance(tmp_pat
     for field in (
         "ecology_version", "ecology_config_sha256", "ecology_scenario_sha256",
         "ecology_source_commit", "ecology_implementation_version",
-        "initial_predator_total", "final_predator_total",
+        "initial_total_predator", "final_total_predator",
         "cumulative_deposited_effect", "terminal_mean_concentration",
-        "terminal_max_concentration", "wind_direction", "wind_strength",
+        "terminal_max_concentration", "terminal_wind_direction", "terminal_wind_strength",
         "dynamic_step_count",
     ):
         assert field in row
@@ -299,6 +306,12 @@ def test_dynamic_validation_mapping_persists_complete_ecology_provenance(tmp_pat
     store.commit_row(row)
     persisted = json.loads((store.rows_root / "0000.json").read_text(encoding="utf-8"))
     assert persisted == row
+
+
+def test_dynamic_canonical_store_rejects_rows_without_dynamic_provenance(tmp_path: Path) -> None:
+    store = _store(tmp_path, require_dynamic_ecology=True)
+    with pytest.raises(ValueError, match="dynamic ecology"):
+        store.commit_row(_row(store))
 
 
 def test_selection_requires_complete_3000_cells_and_writes_provenance(tmp_path: Path) -> None:

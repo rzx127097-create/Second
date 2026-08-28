@@ -10,10 +10,10 @@ _COMMON = [
 _DYNAMIC_ECOLOGY_FIELDS = [
     "metric_source", "ecology_version", "ecology_config_sha256",
     "ecology_scenario_sha256", "ecology_source_commit",
-    "ecology_implementation_version", "initial_predator_total",
-    "final_predator_total", "cumulative_deposited_effect",
+    "ecology_implementation_version", "initial_total_predator",
+    "final_total_predator", "cumulative_deposited_effect",
     "terminal_mean_concentration", "terminal_max_concentration",
-    "wind_direction", "wind_strength", "dynamic_step_count",
+    "terminal_wind_direction", "terminal_wind_strength", "dynamic_step_count",
 ]
 
 RAW_EPISODE_SCHEMA = {"$schema": "g5.v1", "type": "object", "additionalProperties": False, "required": _COMMON, "properties": {key: {"type": "number"} for key in _COMMON}}
@@ -22,10 +22,10 @@ RAW_EPISODE_SCHEMA["properties"].update({
     "metric_source": {"type": "string"}, "ecology_version": {"type": "string"},
     "ecology_config_sha256": {"type": "string"}, "ecology_scenario_sha256": {"type": "string"},
     "ecology_source_commit": {"type": "string"}, "ecology_implementation_version": {"type": "string"},
-    "initial_predator_total": {"type": "number"}, "final_predator_total": {"type": "number"},
+    "initial_total_predator": {"type": "number"}, "final_total_predator": {"type": "number"},
     "cumulative_deposited_effect": {"type": "number"}, "terminal_mean_concentration": {"type": "number"},
-    "terminal_max_concentration": {"type": "number"}, "wind_direction": {"type": "number"},
-    "wind_strength": {"type": "number"}, "dynamic_step_count": {"type": "integer"},
+    "terminal_max_concentration": {"type": "number"}, "terminal_wind_direction": {"type": "number"},
+    "terminal_wind_strength": {"type": "number"}, "dynamic_step_count": {"type": "integer"},
 })
 DYNAMIC_RAW_EPISODE_SCHEMA = {
     "$schema": "g5.dynamic.v1", "type": "object", "additionalProperties": False,

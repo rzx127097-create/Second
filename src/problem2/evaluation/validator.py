@@ -6,11 +6,16 @@ import base64
 import hashlib
 import math
 import re
+from collections.abc import Mapping
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Iterable
 
 from problem2.experiments.artifacts import write_quarantine
 from problem2.experiments.g5_contract import REDUCTION_RATE_EPSILON
 from problem2.experiments.identity import canonical_evaluation_identity, canonical_training_identity
+from problem2.ecology.config import DynamicEcologyConfig
+from problem2.ecology.scenario import generate_dynamic_scenario
 from .schema import ARTIFACT_MANIFEST_SCHEMA, DYNAMIC_RAW_EPISODE_SCHEMA, RAW_EPISODE_SCHEMA
 from .sealed_lock import SealedAccessError, assert_partition_allowed
 
@@ -28,6 +33,14 @@ _DYNAMIC_FIELDS = tuple(
     field for field in DYNAMIC_RAW_EPISODE_SCHEMA["required"]
     if field not in RAW_EPISODE_SCHEMA["required"]
 )
+_DYNAMIC_SCALE_SPECS = {
+    "g20x20_d2": ((20, 20), 150),
+    "g20x30_d3": ((20, 30), 180),
+    "g20x40_d3": ((20, 40), 220),
+    "g30x30_d3": ((30, 30), 220),
+    "g30x40_d4": ((30, 40), 280),
+    "g30x50_d4": ((30, 50), 350),
+}
 
 
 def _finite(value: Any, name: str) -> None:
@@ -42,6 +55,68 @@ def _number(value: Any, name: str, *, nonnegative: bool = False) -> float:
     if nonnegative and result < 0.0:
         raise ValidationError(f"{name} must be non-negative")
     return result
+
+
+@lru_cache(maxsize=1)
+def _frozen_dynamic_config() -> DynamicEcologyConfig:
+    root = Path(__file__).resolve().parents[3]
+    return DynamicEcologyConfig.from_yaml(root / "configs" / "problem2" / "dynamic_pest_v1.yaml")
+
+
+def validate_dynamic_episode(row: Any) -> None:
+    """Validate one dynamic-ecology row against the frozen local contract."""
+
+    if not isinstance(row, Mapping):
+        raise ValidationError("dynamic episode must be an object")
+    if row.get("metric_source") != _DYNAMIC_METRIC_SOURCE:
+        raise ValidationError("metric_source must be dynamic_ecology_environment")
+    missing = set(_DYNAMIC_FIELDS) - set(row)
+    if missing:
+        raise ValidationError(f"dynamic ecology provenance is incomplete: {', '.join(sorted(missing))}")
+    initial = _number(row.get("initial_total_pest"), "initial_total_pest")
+    final = _number(row.get("final_total_pest"), "final_total_pest", nonnegative=True)
+    if initial <= 0.0:
+        raise ValidationError("initial_total_pest must be positive")
+    expected_rate = 1.0 - final / initial
+    if not math.isclose(float(row.get("reduction_rate")), expected_rate, rel_tol=0.0, abs_tol=1e-12):
+        raise ValidationError("dynamic reduction rate is not derived from pest totals")
+    if row.get("success_at_0_85") is not (expected_rate >= 0.85):
+        raise ValidationError("dynamic success threshold mismatch")
+
+    config = _frozen_dynamic_config()
+    if row["ecology_version"] != config.version:
+        raise ValidationError("ecology_version drifted")
+    if row["ecology_config_sha256"] != config.contract_sha256:
+        raise ValidationError("ecology_config_sha256 drifted")
+    if row["ecology_implementation_version"] != config.version:
+        raise ValidationError("ecology_implementation_version drifted")
+    if row["ecology_source_commit"] != "1ca9e5ccc5f77ed775cd2b607dd70d635720accf":
+        raise ValidationError("ecology_source_commit drifted")
+
+    scale = row.get("scale")
+    partition = row.get("partition")
+    scenario_id = row.get("scenario_id")
+    if scale not in _DYNAMIC_SCALE_SPECS:
+        raise ValidationError("dynamic scale is undeclared")
+    if partition not in {"development", "validation"}:
+        raise ValidationError("dynamic partition is undeclared")
+    if isinstance(scenario_id, bool) or not isinstance(scenario_id, int):
+        raise ValidationError("dynamic scenario_id must be an integer")
+    allowed = range(10000, 10020) if partition == "development" else range(20000, 20050)
+    if scenario_id not in allowed:
+        raise ValidationError("dynamic scenario_id is outside its partition")
+    shape, horizon = _DYNAMIC_SCALE_SPECS[scale]
+    expected_scenario = generate_dynamic_scenario(partition, scenario_id, scale, shape, config)
+    if row["ecology_scenario_sha256"] != expected_scenario.scenario_sha256:
+        raise ValidationError("ecology_scenario_sha256 drifted")
+    if row["dynamic_step_count"] != horizon:
+        raise ValidationError("dynamic_step_count does not match the scale horizon")
+
+    for key in ("initial_total_predator", "final_total_predator", "cumulative_deposited_effect", "terminal_mean_concentration", "terminal_max_concentration", "terminal_wind_strength"):
+        _number(row[key], key, nonnegative=True)
+    _number(row["terminal_wind_direction"], "terminal_wind_direction")
+    if row["terminal_max_concentration"] < row["terminal_mean_concentration"]:
+        raise ValidationError("terminal concentration extrema are inconsistent")
 
 
 def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, str] | None = None, verify_identity: bool = True, allow_validation_access: bool = False) -> dict[str, Any]:
@@ -115,33 +190,23 @@ def validate_raw_episode(row: dict[str, Any], *, expected_provenance: dict[str, 
     if row["action_uav"] not in range(6) or row["action_vehicle_slot"] not in range(4):
         raise ValidationError("illegal action")
     metric_source = row.get("metric_source")
-    if metric_source is not None and metric_source not in {"action_driven_environment", _DYNAMIC_METRIC_SOURCE}:
+    if metric_source is not None and (
+        not isinstance(metric_source, str)
+        or metric_source not in {"action_driven_environment", _DYNAMIC_METRIC_SOURCE}
+    ):
         raise ValidationError("metric_source is undeclared")
     if metric_source == _DYNAMIC_METRIC_SOURCE:
-        missing_dynamic = set(_DYNAMIC_FIELDS) - set(row)
-        if missing_dynamic:
-            raise ValidationError(f"dynamic ecology provenance is incomplete: {', '.join(sorted(missing_dynamic))}")
-        if not isinstance(row["ecology_version"], str) or not row["ecology_version"]:
-            raise ValidationError("ecology_version must be non-empty text")
-        for key in ("ecology_config_sha256", "ecology_scenario_sha256"):
-            if not isinstance(row[key], str) or not _HASH64.fullmatch(row[key]):
-                raise ValidationError(f"{key} must be a lowercase SHA-256")
-        if not isinstance(row["ecology_source_commit"], str) or not _HASH40.fullmatch(row["ecology_source_commit"]):
-            raise ValidationError("ecology_source_commit must be a lowercase Git SHA-1")
-        if not isinstance(row["ecology_implementation_version"], str) or not row["ecology_implementation_version"]:
-            raise ValidationError("ecology_implementation_version must be non-empty text")
-        for key in ("initial_predator_total", "final_predator_total", "cumulative_deposited_effect", "terminal_mean_concentration", "terminal_max_concentration", "wind_strength"):
-            _number(row[key], key, nonnegative=True)
-        _number(row["wind_direction"], "wind_direction")
-        if row["terminal_max_concentration"] < row["terminal_mean_concentration"]:
-            raise ValidationError("terminal concentration extrema are inconsistent")
-        if isinstance(row["dynamic_step_count"], bool) or not isinstance(row["dynamic_step_count"], int) or row["dynamic_step_count"] < 0:
-            raise ValidationError("dynamic_step_count must be a non-negative integer")
+        validate_dynamic_episode(row)
     for key in ("initial_total_pest", "final_total_pest"):
         _number(row[key], key)
-        if row[key] <= 0:
+        if row[key] <= 0 and not (
+            key == "final_total_pest"
+            and metric_source == _DYNAMIC_METRIC_SOURCE
+            and row[key] == 0
+        ):
             raise ValidationError(f"{key} must be positive")
-    expected_rate = 1.0 - float(row["final_total_pest"]) / (float(row["initial_total_pest"]) + REDUCTION_RATE_EPSILON)
+    epsilon = 0.0 if metric_source == _DYNAMIC_METRIC_SOURCE else REDUCTION_RATE_EPSILON
+    expected_rate = 1.0 - float(row["final_total_pest"]) / (float(row["initial_total_pest"]) + epsilon)
     if not math.isclose(float(row["reduction_rate"]), expected_rate, rel_tol=1e-9, abs_tol=1e-12):
         raise ValidationError("reduction rate mismatch")
     if not isinstance(row["success_at_0_85"], bool) or row["success_at_0_85"] != (float(row["reduction_rate"]) >= 0.85):
@@ -246,4 +311,4 @@ def validate_artifact_manifest(record: dict[str, Any], *, output_root: str | Non
     return dict(record)
 
 
-__all__ = ["ValidationError", "validate_raw_episode", "validate_long_table", "validate_artifact_manifest", "quarantine_invalid_row"]
+__all__ = ["ValidationError", "validate_dynamic_episode", "validate_raw_episode", "validate_long_table", "validate_artifact_manifest", "quarantine_invalid_row"]
