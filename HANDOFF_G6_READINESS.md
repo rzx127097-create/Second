@@ -275,6 +275,18 @@ formal jobs. Update `docs/PROJECT_STATE.md` after the next audit so this is
 explicit. Also record the persistence commit hash and the post-push parity
 check that the current state record omitted.
 
+### P2: Validation-access status has two intentional but confusing layers
+
+The design contracts such as `configs/problem2/g5/protocol.yaml` and
+`docs/evidence/g5/checkpoint_selection.yaml` retain
+`validation_accessed: false` as a pre-access/design declaration. Actual
+Task12 validation access is recorded as `validation_accessed: true` in the
+freeze manifest and validation-access ledger. This is not evidence corruption,
+but an operator who reads only the contract audit can misread the state. The
+next G5/G6 readiness update should expose an explicit actual-access field or
+bind the audit output directly to the validation ledger, while preserving the
+historical design declaration.
+
 ## 7. Next Authorized Work Plan
 
 Do the following in order. Stop at the first failed item.
@@ -442,6 +454,9 @@ state record may G7 perform its one permitted sealed unlock.
 16. **Never change the frozen G5 environment casually.** `.venv-g5` omits old
     document-rendering dependencies; use host Python for the documented full
     regression and `.venv-g5` for G5-specific checks.
+17. **Never interpret a design-time `validation_accessed: false` field as proof
+    that Task12 did not access validation.** Check the freeze manifest and
+    validation ledger for actual access, while keeping sealed access at zero.
 
 ## 9. Existing Untracked Items
 
