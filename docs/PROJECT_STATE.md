@@ -1985,3 +1985,46 @@ of the written design, followed by an implementation plan. Production-code
 implementation must use test-driven development. G3-G5 are reopened for the
 new ecological semantics; G6 formal execution and G7 sealed access remain
 unauthorized.
+
+## Dynamic Pest Implementation Plan Approval
+
+On 2026-08-29, the user confirmed the approved design and authorized continued
+work with dynamic ecology as the default environment for every future primary
+experiment. The executable TDD plan is
+`docs/superpowers/plans/2026-08-29-problem2-dynamic-pest-model.md`.
+
+The plan defines ten independently verifiable tasks covering the versioned
+ecology and source-lineage contracts, independent Holling-Tanner numerical
+gold tests, persistent pesticide effect, scenario-owned dynamic wind,
+deterministic scenario identities, complete ecology/RNG state restoration,
+accepted physical spray-event integration, fixed-size observation semantics,
+signed reward and dynamic endpoint validation, fail-closed experiment
+defaults, the `dynamic_pest_v1` output namespace, and bounded G3-G5
+revalidation.
+
+Plan self-review found complete coverage of the approved design, consistent
+cross-task type names, no unresolved placeholder, and no task that overwrites
+historical `outputs/problem2_sr_mappo_v1/g5` evidence. The plan explicitly
+keeps validation refreezing, G6 formal execution, G7 sealed access, paired
+formal statistics, and thesis efficacy claims outside this implementation
+phase.
+
+Persistence and verification:
+
+- Plan commit `1560d1b250678e89fd3245c46dff5fd18c196aa1`
+  (`docs: plan dynamic pest implementation`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`.
+- Local HEAD, upstream HEAD, and `git ls-remote` all matched
+  `1560d1b250678e89fd3245c46dff5fd18c196aa1` after the push.
+- `git diff --check` passed for the plan.
+- The plan contains checkbox steps, exact file ownership, interfaces, RED and
+  GREEN commands, expected outcomes, commit boundaries, a coverage review,
+  and a placeholder scan.
+- No production code, protected external repository, OSM source, historical
+  G5 output, validation scenario, or sealed scenario was modified or accessed
+  during plan creation.
+
+The next authorized activity is TDD implementation of the plan on
+`codex/problem2-dynamic-pest-model`. The highest maturity remains `M2`;
+G3-G5 remain reopened for dynamic semantics, G6 stays blocked, and the G7
+sealed unlock count remains `0`.
