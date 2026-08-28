@@ -20,7 +20,7 @@ real deployment evidence.
 - Authoritative repository for future work:
   `C:/Users/RZX/Documents/ChatGPT/Second`.
 - GitHub remote: `https://github.com/rzx127097-create/Second.git`.
-- Current branch: `codex/problem2-g5-pilot-freeze`.
+- Current branch: `codex/problem2-dynamic-pest-model`.
 - Current branch base at start of G0:
   `2643753855c385253951dfad2c225be0b09b7e00`
   (`origin/main`, commit message `docs: mark section 4.2 delivery complete`).
@@ -28,20 +28,15 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: G5 Task12 has completed validation-only tuning, selected
-  development refit, and generation of the G5 freeze artifacts. The canonical
-  validation evidence contains 3,000 action-driven rows from the 20 frozen
-  candidates and 3 training seeds across validation scenarios `20000-20049`.
-  The selected development refit contains 510 physical jobs and 10,200
-  descriptive scenario-reference rows. The freeze manifest requires 150 base
-  G6 jobs, 375 total unique G6 jobs, and 42,500 expected G7 sealed identities;
-  all formal/sealed jobs remain unexecuted. The validation results are weak or
-  negative (`success_probability=0.0` for every candidate) and support only a
-  retained diagnostic, not efficacy, superiority, or significance claims.
-  Task12 generation source commit is
-  `7a079fa16afae7ebd1d69f4d63d83cc09437a816`; the content and persistence
-  commits must be recorded below before G5 is marked persisted. G6 becomes the
-  next authorized gate only after those commits and fresh verification agree.
+- Current gate: the user has required Problem 2 to inherit the complete
+  Problem-1 dynamic pest environment. The approved design reopens G3-G5 before
+  any G6 work: Holling-Tanner reaction-diffusion, dynamic wind advection, and a
+  persistent decaying pesticide-effect field become mandatory defaults for all
+  future primary experiments. The previous G5 linear-local-decrease outputs
+  remain byte-preserved historical diagnostics and are not admissible as
+  dynamic-environment pilot or formal evidence. G6 and G7 remain blocked until
+  the dynamic implementation, renewed G3/G4 acceptance, fair G5 pilot, and new
+  method/statistics freeze are committed, pushed, and verified.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -1940,3 +1935,53 @@ validation evaluator, complete preflight, resource estimates, and condition
 semantics. No formal G6 execution may begin until the new G5 content and
 persistence commits are pushed, their hashes are recorded, and fresh parity and
 all required audits pass. The current highest maturity remains `M2`.
+
+## Dynamic Pest Model Design And Gate Reopening
+
+On 2026-08-28, the user required every future Problem-2 primary experiment to
+run in the dynamic pest environment inherited from Problem 1 and approved the
+complete Holling-Tanner design. Static pest behavior is now restricted to an
+explicitly labeled development diagnostic and cannot be used for a primary,
+formal, or sealed result.
+
+The approved written design is
+`docs/superpowers/specs/2026-08-28-problem2-dynamic-pest-model-design.md`.
+It freezes a self-contained Problem-2 implementation route for Holling-Tanner
+reaction-diffusion, dynamic wind advection, radius-weighted pesticide effect
+and decay, deterministic scenario/RNG identity, action-complete ecological
+observations, signed ecological reward, and negative reduction-rate support.
+It also requires all algorithms, controllers, ablations, sensitivities,
+scales, G6 jobs, and G7 evaluations to share byte-identical dynamic scenarios.
+
+Problem-1 lineage is read only at commit
+`1ca9e5ccc5f77ed775cd2b607dd70d635720accf`. The design records exact committed
+blob IDs for the dynamics, subsystem, environment, and settings sources and
+excludes the protected repository's current uncommitted reward-sensitivity
+work. No protected external file was modified.
+
+Persistence and verification:
+
+- Isolation-preparation commit
+  `c362c3c58bcc754a30389c085d33273ace1f85f8` (`chore: ignore local worktrees`)
+  was pushed to `origin/codex/problem2-g5-pilot-freeze`.
+- Design content commit
+  `d924f38259463344d8b9f1b9200d7fd3e2f2bd3c`
+  (`docs: design dynamic pest integration`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`; local, upstream, and
+  `git ls-remote` hashes all matched before this state record.
+- Fresh authoritative-directory baseline: `python -m pytest -q` returned
+  `727 passed` in `494.42 s`.
+- `git diff --cached --check` passed before the design commit.
+- All four recorded Problem-1 source blobs resolved exactly at the declared
+  source commit.
+- A linked-worktree baseline was rejected because frozen historical manifests
+  bind the authoritative absolute source root and byte hashes, while Windows
+  checkout line-ending conversion changed frozen bytes. The empty linked
+  worktree was removed after verification; the dedicated branch continues in
+  the authoritative checkout so historical evidence is not rewritten.
+
+The highest maturity remains `M2`. The next authorized activity is user review
+of the written design, followed by an implementation plan. Production-code
+implementation must use test-driven development. G3-G5 are reopened for the
+new ecological semantics; G6 formal execution and G7 sealed access remain
+unauthorized.
