@@ -2028,3 +2028,58 @@ The next authorized activity is TDD implementation of the plan on
 `codex/problem2-dynamic-pest-model`. The highest maturity remains `M2`;
 G3-G5 remain reopened for dynamic semantics, G6 stays blocked, and the G7
 sealed unlock count remains `0`.
+
+## Dynamic Pest Revalidation And G4 Lineage Closure
+
+On 2026-08-29, the bounded dynamic-ecology revalidation and the remaining
+lineage/test blockers were closed at the existing `M2` boundary. All future
+Problem-2 primary experiments remain required to use `dynamic_pest_v1`; static
+ecology is permitted only as an explicitly labeled development diagnostic.
+
+Implementation and evidence changes:
+
+- The manifest sealed-payload regression now parses JSON and checks only
+  structured scenario, payload, evaluation, and access fields. It no longer
+  scans arbitrary identity hashes for the strings `30000` or `30099`.
+- The G4 lineage auditor now limits the `PROJECT_STATE.md` check to the
+  current G4 section and excludes later historical G5 sections. The current
+  G4 handoff, compliance audit, and state section reference generator commit
+  `af0c0b1641f1da3ac8bc2fae5faccae47c1ca14e`, source tree
+  `c35d1977b910944eba50ea3456bdb6c830aba575`, source bundle
+  `d2a8a4a4dced015a8f77483d30077b5a24948a97ac1f82b979d6ba968f9df3ed`, and
+  artifact manifest `e5c7f158320c4000c27ebb3fe9f973c8685cd11d1b4cb2bbecf03c0e10925523`.
+- Dynamic audit and smoke evidence is persisted under
+  `outputs/problem2_sr_mappo_v1/dynamic_pest_v1`. The implementation audit is
+  `pass` at `M2`, uses `ecology_mode=dynamic`, and records validation/sealed
+  access as false. The G5 CPU smoke audit is `pass` for one development job,
+  uses the dynamic ecology mode, records validation/sealed access as false,
+  and keeps battery replenishment disabled.
+
+Fresh verification:
+
+- `python -m pytest tests/ecology tests/g3 tests/g4 tests/g5/test_g4_lineage_reconciliation.py -q`:
+  `276 passed`.
+- `python -m pytest tests/g5 -q`: `434 passed`.
+- `python -m pytest -q`: `865 passed`.
+- `python scripts/audit_g4_mechanism.py --config docs/evidence/g4/g4_contract.yaml --output-root outputs/problem2_sr_mappo_v1/g4 --report outputs/problem2_sr_mappo_v1/g4/g4-mechanism-audit.json`:
+  `status=pass artifacts=10`.
+- `python scripts/audit_g4_lineage.py --repository-root . --output-root outputs/problem2_sr_mappo_v1/g4`:
+  `status=pass`, one generator/tree/source-bundle tuple.
+- `python -m compileall -q src scripts` exited `0`; `git diff --check`
+  reported no content errors.
+- No G6 formal job, G7 sealed evaluation, validation scenario, protected
+  external asset, or OSM source was modified or accessed.
+
+Persistence:
+
+- Content commit `a8277267ad7890c9e52d486344fff6a279fbf7d3`
+  (`fix: reconcile dynamic G4 lineage audits`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`.
+- Before this state-record update, local HEAD, upstream HEAD, and
+  `git ls-remote` all matched `a8277267ad7890c9e52d486344fff6a279fbf7d3`.
+
+This work confirms implementation and bounded development-scope evidence only.
+The highest maturity remains `M2`; G3-G5 require fresh acceptance under the
+new ecological semantics, G6 formal execution remains unauthorized, and the
+G7 sealed unlock count remains `0`. No efficacy, superiority, significance,
+formal-result, real-deployment, or universally optimal claim is permitted.
