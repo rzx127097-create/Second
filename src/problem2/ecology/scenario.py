@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import copy
 import math
+from numbers import Real
 from typing import Mapping
 
 import numpy as np
@@ -27,11 +28,25 @@ class WindState:
 
 
 def _validate_state(state: WindState, config: DynamicEcologyConfig) -> None:
-    if not math.isfinite(state.direction) or not math.isfinite(state.strength):
-        raise ValueError("wind state must be finite")
+    if (
+        isinstance(state.direction, bool)
+        or not isinstance(state.direction, Real)
+        or not math.isfinite(float(state.direction))
+    ):
+        raise ValueError("wind direction must be a finite real number")
+    if (
+        isinstance(state.strength, bool)
+        or not isinstance(state.strength, Real)
+        or not math.isfinite(float(state.strength))
+    ):
+        raise ValueError("wind strength must be a finite real number")
     if not 0.0 <= state.strength <= config.wind_strength_range[1]:
         raise ValueError("wind strength is outside the configured range")
-    if isinstance(state.step_count, bool) or not isinstance(state.step_count, int) or state.step_count < 0:
+    if (
+        isinstance(state.step_count, bool)
+        or not isinstance(state.step_count, int)
+        or state.step_count < 0
+    ):
         raise ValueError("wind step_count must be a non-negative integer")
 
 
@@ -109,10 +124,22 @@ class DynamicWind:
             "step_count",
         }:
             raise ValueError("wind state payload is invalid")
+        direction = raw_state["direction"]
+        strength = raw_state["strength"]
+        step_count = raw_state["step_count"]
+        if (
+            isinstance(direction, bool)
+            or not isinstance(direction, Real)
+            or isinstance(strength, bool)
+            or not isinstance(strength, Real)
+        ):
+            raise ValueError("wind direction and strength must be real numbers")
+        if isinstance(step_count, bool) or not isinstance(step_count, int):
+            raise ValueError("wind step_count must be an integer")
         wind_state = WindState(
-            float(raw_state["direction"]),
-            float(raw_state["strength"]),
-            int(raw_state["step_count"]),
+            direction,
+            strength,
+            step_count,
         )
         _validate_state(wind_state, config)
         bit_generator_name = state["bit_generator"]

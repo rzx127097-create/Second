@@ -72,3 +72,22 @@ def test_dynamic_wind_owns_a_deep_copied_generator_state() -> None:
     snapshot["rng_state"]["state"]["state"] += 1
 
     assert wind.state_dict()["rng_state"] != snapshot["rng_state"]
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("direction", "0.1"),
+        ("strength", "0.2"),
+        ("step_count", 1.9),
+    ],
+)
+def test_state_restore_rejects_wind_values_without_exact_types(
+    field: str, value: object
+) -> None:
+    wind = DynamicWind.initialize(np.random.default_rng(123), CONFIG)
+    snapshot = wind.state_dict()
+    snapshot["state"][field] = value
+
+    with pytest.raises(ValueError, match=field):
+        DynamicWind.from_state_dict(snapshot, CONFIG)

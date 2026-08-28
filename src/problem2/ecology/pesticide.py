@@ -23,7 +23,11 @@ class AcceptedSpray:
 def _validate_population(value: np.ndarray, name: str, shape: tuple[int, int]) -> np.ndarray:
     if not isinstance(value, np.ndarray) or value.ndim != 2 or value.shape != shape:
         raise ValueError(f"{name} must be a two-dimensional array with shape {shape}")
-    if not np.issubdtype(value.dtype, np.number) or not np.all(np.isfinite(value)):
+    if (
+        not np.issubdtype(value.dtype, np.number)
+        or not np.all(np.isfinite(value))
+        or np.any(value < 0.0)
+    ):
         raise ValueError(f"{name} must contain only finite numeric values")
     return value
 
@@ -163,6 +167,18 @@ class PesticideEffectField:
                 raise ValueError(f"pesticide state {name} has invalid shape or dtype")
             if not np.all(np.isfinite(value)):
                 raise ValueError(f"pesticide state {name} must be finite")
+            if name == "concentration" and (
+                np.any(value < 0.0) or np.any(value > config.concentration_cap)
+            ):
+                raise ValueError("concentration contains values outside its ecological domain")
+            if name == "duration" and (
+                np.any(value < 0.0)
+                or np.any(value > config.effect_duration)
+                or np.any(value != np.floor(value))
+            ):
+                raise ValueError("duration contains values outside its ecological domain")
+            if name == "spray_count" and np.any(value < 0):
+                raise ValueError("spray_count contains values outside its ecological domain")
             setattr(field, name, value.copy())
         return field
 

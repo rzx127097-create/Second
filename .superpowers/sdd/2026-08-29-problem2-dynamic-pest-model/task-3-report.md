@@ -117,3 +117,49 @@ implementation hash is available for the report record.
 
 The task explicitly does not push. The pre-existing untracked directories and
 historical G5 files remain protected and untouched.
+
+## Fix Round 1
+
+Review findings addressed on 2026-08-29:
+
+1. `PesticideEffectField.from_state_dict` now rejects concentration below zero
+   or above `config.concentration_cap`, duration below zero, above
+   `config.effect_duration`, or non-integral countdown values, and negative
+   spray counts.
+2. `DynamicWind.from_state_dict` now validates direction and strength as real
+   numeric values and requires `step_count` to already be a non-negative
+   integer. It no longer coerces strings or fractional counts.
+3. `apply_mortality` now rejects negative prey or predator population arrays.
+
+Changed files:
+
+- `src/problem2/ecology/pesticide.py`
+- `src/problem2/ecology/scenario.py`
+- `tests/ecology/test_pesticide.py`
+- `tests/ecology/test_wind.py`
+- This report
+
+TDD RED evidence:
+
+- `python -m pytest tests/ecology/test_pesticide.py -q`: exit `1`, `8 failed,
+  16 passed`; out-of-domain state mutations and negative populations were
+  accepted.
+- `python -m pytest tests/ecology/test_wind.py -q`: exit `1`, `3 failed,
+  5 passed`; string direction/strength and fractional `step_count` were
+  coerced during restoration.
+
+GREEN evidence after the minimal fixes:
+
+- `python -m pytest tests/ecology/test_pesticide.py -q`: `24 passed`.
+- `python -m pytest tests/ecology/test_wind.py -q`: `8 passed`.
+- `python -m pytest tests/ecology/test_pesticide.py tests/ecology/test_wind.py -q`:
+  `32 passed`.
+- `python -m pytest tests/ecology -q`: `61 passed`.
+- `python -m compileall -q src/problem2/ecology`: exit `0`.
+- `git diff --check`: exit `0` (Git emitted only its normal LF-to-CRLF
+  working-copy warning).
+
+The reviewer-confirmed decision to defer an upper bound requiring
+`delta_l <= reference_volume_l` is unchanged. No plan, project state, outputs,
+historical G5 files, or unrelated files were touched. This fix round does not
+change the M2 maturity boundary and was not pushed.

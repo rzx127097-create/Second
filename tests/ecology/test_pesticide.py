@@ -124,3 +124,39 @@ def test_state_round_trip_restores_arrays_and_keeps_physical_litres_out() -> Non
 
     snapshot["concentration"][2, 3] = 0.0
     assert restored.concentration[2, 3] != 0.0
+
+
+@pytest.mark.parametrize(
+    ("array_name", "value"),
+    [
+        ("concentration", -0.01),
+        ("concentration", CONFIG.concentration_cap + 0.01),
+        ("duration", -1.0),
+        ("duration", float(CONFIG.effect_duration + 1)),
+        ("duration", 1.5),
+        ("spray_count", -1),
+    ],
+)
+def test_state_restore_rejects_values_outside_ecological_domains(
+    array_name: str, value: float
+) -> None:
+    field = PesticideEffectField.empty((3, 3), CONFIG)
+    snapshot = field.state_dict()
+    snapshot[array_name][1, 1] = value
+
+    with pytest.raises(ValueError, match=array_name):
+        PesticideEffectField.from_state_dict(snapshot, CONFIG)
+
+
+@pytest.mark.parametrize("population_name", ["prey", "predator"])
+def test_mortality_rejects_negative_population(
+    population_name: str,
+) -> None:
+    field = PesticideEffectField.empty((2, 2), CONFIG)
+    prey = np.ones((2, 2), dtype=np.float64)
+    predator = np.ones((2, 2), dtype=np.float64)
+    population = prey if population_name == "prey" else predator
+    population[0, 0] = -0.1
+
+    with pytest.raises(ValueError, match=population_name):
+        field.apply_mortality(prey, predator)
