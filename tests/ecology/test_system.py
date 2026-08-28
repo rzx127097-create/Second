@@ -191,6 +191,25 @@ def test_local_context_matches_reflected_gradient_and_neighborhood_gold_values()
     )
 
 
+def test_local_context_matches_nonzero_reflected_gradient_gold_values() -> None:
+    scenario = generate_dynamic_scenario(
+        "development", 10000, "g20x20_d2", (3, 3), CONFIG
+    )
+    system = DynamicEcologySystem.from_scenario(scenario, CONFIG, 0.25)
+    system._prey = np.array(
+        [[0.0, 0.1, 0.2], [0.3, 0.4, 0.5], [0.6, 0.7, 0.8]],
+        dtype=np.dtype("<f8"),
+    )
+    system._predator = np.full((3, 3), 0.8, dtype=np.dtype("<f8"))
+    system._pesticide.concentration[...] = np.full(
+        (3, 3), 0.5, dtype=np.dtype("<f4")
+    )
+
+    assert system.local_context(1, 1) == pytest.approx(
+        (0.4, 0.8, 0.5, 0.1, 0.3, 0.4), rel=0.0, abs=1e-12
+    )
+
+
 def test_state_restore_rejects_pesticide_shape_drift_even_with_matching_nested_arrays() -> None:
     system = DynamicEcologySystem.from_scenario(_scenario(), CONFIG, 0.25)
     snapshot = system.state_dict()
@@ -212,6 +231,20 @@ def test_constructor_rejects_noncanonical_substep_count() -> None:
 
     with pytest.raises(ValueError, match="substeps"):
         DynamicEcologySystem.from_scenario(scenario, noncanonical, 0.25)
+
+
+def test_restore_rejects_noncanonical_config_and_preserves_live_state() -> None:
+    system = DynamicEcologySystem.from_scenario(_scenario(), CONFIG, 0.25)
+    before = system.state_dict()
+    noncanonical = replace(CONFIG, substeps=4)
+    candidate = system.state_dict()
+    candidate["config_hash"] = noncanonical.contract_sha256
+    candidate["state_sha256"] = _digest_payload(candidate)
+
+    with pytest.raises(ValueError, match="substeps"):
+        system.load_state_dict(candidate, config=noncanonical)
+
+    _assert_state_equal(system.state_dict(), before)
 
 
 def test_snapshot_restores_exact_continuation_and_canonical_digest() -> None:

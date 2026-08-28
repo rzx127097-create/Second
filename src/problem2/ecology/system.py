@@ -383,6 +383,8 @@ class DynamicEcologySystem:
         active_config = self.config if config is None else config
         if not isinstance(active_config, DynamicEcologyConfig):
             raise TypeError("config must be a DynamicEcologyConfig")
+        if active_config.substeps != _CANONICAL_SUBSTEPS:
+            raise ValueError("substeps must remain exactly 3")
         if state["scenario_sha256"] != self.scenario.scenario_sha256:
             raise ValueError("scenario_sha256 drifted")
         if state["config_hash"] != active_config.contract_sha256:

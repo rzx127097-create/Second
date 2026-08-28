@@ -150,3 +150,44 @@ The ordering spy now submits two sprays and requires both `deposit` calls to
 precede `wind`. The summary and local-context tests independently assert
 normalization, predator statistics, strict high-density thresholds, reflected
 gradients, and the reflected 3x3 corner neighborhood.
+
+## Fix Round 2
+
+### RED
+
+A restore regression was added with a digest-valid snapshot carrying a
+`substeps=4` configuration. Before the fix, `load_state_dict(config=...)`
+accepted that noncanonical configuration, producing:
+
+```text
+1 failed, 19 passed
+Failed: DID NOT RAISE ValueError
+```
+
+The local-context test set also gained an independent 3x3 hand-derived
+interior fixture. At its center, reflected centered differences are
+`gradient_x=0.1` and `gradient_y=0.3`, with neighborhood mean `0.4`; the
+existing corner neighborhood assertion remains in place.
+
+### GREEN
+
+`load_state_dict` now rejects any supplied configuration whose substep count
+is not exactly the canonical value of three before reconstructing or assigning
+any live state. The restore test verifies atomicity by comparing the complete
+state before and after rejection.
+
+Final focused system verification:
+
+```text
+$ python -m pytest tests/ecology/test_system.py -q
+20 passed in 0.49s
+exit_code=0
+```
+
+The full focused ecology suite was then run:
+
+```text
+$ python -m pytest tests/ecology -q
+95 passed in 1.60s
+exit_code=0
+```
