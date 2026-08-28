@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Mapping
 
 import numpy as np
@@ -70,6 +70,9 @@ class RasterRoadGraph:
     source_node_to_cell: Mapping[str, tuple[int, int]]
     source_edge_to_cells: Mapping[str, tuple[tuple[int, int], ...]]
     repairs: tuple[RepairRecord, ...]
+    _neighbor_index: tuple[tuple[tuple[int, Action, float], ...], ...] | None = field(
+        init=False, default=None, repr=False, compare=False
+    )
 
     def node_index(self, row: int, col: int) -> int:
         matches = np.flatnonzero((self.node_rows == row) & (self.node_cols == col))
@@ -78,22 +81,39 @@ class RasterRoadGraph:
         return int(matches[0])
 
     def neighbors(self, node: int) -> list[tuple[int, Action, float]]:
-        row, col = int(self.node_rows[node]), int(self.node_cols[node])
-        results: list[tuple[int, Action, float]] = []
-        for edge_index, (left, right) in enumerate(self.edges):
-            if int(left) == node:
-                neighbor = int(right)
-            elif int(right) == node:
-                neighbor = int(left)
-            else:
-                continue
-            dr = int(self.node_rows[neighbor]) - row
-            dc = int(self.node_cols[neighbor]) - col
-            action = {
-                (-1, 0): Action.UP,
-                (1, 0): Action.DOWN,
-                (0, -1): Action.LEFT,
-                (0, 1): Action.RIGHT,
-            }[(dr, dc)]
-            results.append((neighbor, action, float(self.edge_lengths_m[edge_index])))
-        return sorted(results, key=lambda item: (int(item[1]), item[0]))
+        index = self._neighbor_index
+        if index is None:
+            indexed: list[list[tuple[int, Action, float]]] = [
+                [] for _ in range(len(self.node_rows))
+            ]
+            for edge_index, (left, right) in enumerate(self.edges):
+                left_node, right_node = int(left), int(right)
+                left_row, left_col = (
+                    int(self.node_rows[left_node]),
+                    int(self.node_cols[left_node]),
+                )
+                right_row, right_col = (
+                    int(self.node_rows[right_node]),
+                    int(self.node_cols[right_node]),
+                )
+                left_action = {
+                    (-1, 0): Action.UP,
+                    (1, 0): Action.DOWN,
+                    (0, -1): Action.LEFT,
+                    (0, 1): Action.RIGHT,
+                }[(right_row - left_row, right_col - left_col)]
+                right_action = {
+                    (-1, 0): Action.UP,
+                    (1, 0): Action.DOWN,
+                    (0, -1): Action.LEFT,
+                    (0, 1): Action.RIGHT,
+                }[(left_row - right_row, left_col - right_col)]
+                length = float(self.edge_lengths_m[edge_index])
+                indexed[left_node].append((right_node, left_action, length))
+                indexed[right_node].append((left_node, right_action, length))
+            index = tuple(
+                tuple(sorted(items, key=lambda item: (int(item[1]), item[0])))
+                for items in indexed
+            )
+            object.__setattr__(self, "_neighbor_index", index)
+        return list(index[node])

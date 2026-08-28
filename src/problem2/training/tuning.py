@@ -9,6 +9,7 @@ import os
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
@@ -715,6 +716,39 @@ def _validate_partition_scenario(partition: str, scenario_id: int) -> None:
         raise ValueError(f"only {partition} scenarios {start}-{stop} may be constructed in G5")
 
 
+@lru_cache(maxsize=12)
+def _load_static_environment_inputs(
+    repository_root: str, scale: str
+) -> tuple[Any, Any, Any, Path, dict[str, Any], Any, str, str]:
+    """Load frozen contract, configuration, and road data once per process."""
+
+    root = Path(repository_root).resolve()
+    contract = load_g5_contract(root)
+    config = load_g2_config(root / "configs" / "problem2" / "g2_deterministic.yaml")
+    scale_config = next((item for item in config.scales if item.scale_id == scale), None)
+    if scale_config is None:
+        raise ValueError(f"unknown frozen scale {scale!r}")
+    cache_root = root / "outputs" / "problem2_sr_mappo_v1" / "g2" / "roads" / scale
+    metadata_path = cache_root / "metadata.json"
+    graph_path = cache_root / "road_graph.npz"
+    metadata = _load_json(metadata_path, "frozen G2 road metadata")
+    graph = load_road_cache(
+        graph_path,
+        metadata_path,
+        _road_cache_expectation(metadata),
+    )
+    return (
+        contract,
+        config,
+        scale_config,
+        cache_root,
+        metadata,
+        graph,
+        _file_sha256(metadata_path),
+        _file_sha256(graph_path),
+    )
+
+
 def _build_physical_environment(
     repository_root: Path | str,
     *,
@@ -724,19 +758,17 @@ def _build_physical_environment(
 ) -> ActionDrivenValidationEnv:
     _validate_partition_scenario(partition, scenario_id)
     root = Path(repository_root).resolve()
-    contract = load_g5_contract(root)
+    (
+        contract,
+        config,
+        scale_config,
+        cache_root,
+        metadata,
+        graph,
+        metadata_sha256,
+        graph_sha256,
+    ) = _load_static_environment_inputs(str(root), scale)
     scenario_contract = contract.physical_scenario
-    config = load_g2_config(root / "configs" / "problem2" / "g2_deterministic.yaml")
-    scale_config = next((item for item in config.scales if item.scale_id == scale), None)
-    if scale_config is None:
-        raise ValueError(f"unknown frozen scale {scale!r}")
-    cache_root = root / "outputs" / "problem2_sr_mappo_v1" / "g2" / "roads" / scale
-    metadata = _load_json(cache_root / "metadata.json", "frozen G2 road metadata")
-    graph = load_road_cache(
-        cache_root / "road_graph.npz",
-        cache_root / "metadata.json",
-        _road_cache_expectation(metadata),
-    )
     if INITIAL_ONBOARD_PESTICIDE_L > config.usable_capacity_l + config.tolerance:
         raise ValueError("frozen initial onboard pesticide exceeds usable UAV capacity")
     rng = np.random.default_rng(scenario_id)
@@ -805,8 +837,8 @@ def _build_physical_environment(
     source_provenance = {
         "environment_factory": f"problem2.training.tuning.build_{partition}_environment",
         "road_cache_scale": scale,
-        "road_cache_metadata_sha256": _file_sha256(cache_root / "metadata.json"),
-        "road_cache_graph_sha256": _file_sha256(cache_root / "road_graph.npz"),
+        "road_cache_metadata_sha256": metadata_sha256,
+        "road_cache_graph_sha256": graph_sha256,
         "road_source_sha256": str(metadata["source"]["sha256"]),
         "physical_scenario_contract": str(scenario_contract_path),
         "physical_scenario_contract_sha256": scenario_contract_sha256,

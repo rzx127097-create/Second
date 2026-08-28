@@ -333,3 +333,45 @@ def test_maddpg_critic_dimensions_follow_the_frozen_scale_uav_count() -> None:
 
     assert algorithm.uav_critic.uav_count == 4
     assert algorithm.vehicle_critic.uav_count == 4
+
+
+def test_road_neighbor_queries_index_the_immutable_edge_table_once() -> None:
+    graph = make_raster_graph(
+        [(0, 0), (0, 1), (1, 1)],
+        [(0, 1), (1, 2)],
+    )
+
+    class CountingEdges:
+        def __init__(self, edges: np.ndarray) -> None:
+            self.edges = edges
+            self.iterations = 0
+
+        def __iter__(self):
+            self.iterations += 1
+            return iter(self.edges)
+
+    counting_edges = CountingEdges(graph.edges)
+    object.__setattr__(graph, "edges", counting_edges)
+
+    assert graph.neighbors(0)
+    assert graph.neighbors(1)
+    assert graph.neighbors(2)
+    assert counting_edges.iterations == 1
+
+
+def test_environment_factory_reuses_frozen_static_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
+    import problem2.training.tuning as tuning
+
+    calls = 0
+    original = tuning.load_g5_contract
+
+    def counted_load(root: Path):
+        nonlocal calls
+        calls += 1
+        return original(root)
+
+    monkeypatch.setattr(tuning, "load_g5_contract", counted_load)
+    tuning.build_development_environment(ROOT, scenario_id=10000, scale="g30x50_d4")
+    tuning.build_development_environment(ROOT, scenario_id=10001, scale="g30x50_d4")
+
+    assert calls <= 1
