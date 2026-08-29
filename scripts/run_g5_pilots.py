@@ -11,7 +11,7 @@ from typing import Any, Mapping
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from problem2.experiments.artifacts import atomic_write_bytes
-from problem2.experiments.ecology_policy import EcologyMode, resolve_output_root
+from problem2.experiments.ecology_policy import DYNAMIC_OUTPUT_ROOT, EcologyMode, resolve_output_root
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.training.conditions import resolve_condition_execution
 from problem2.training.physical_training import run_physical_development_refit_training
@@ -21,6 +21,7 @@ from problem2.training.pilot import (
     freeze_validation_candidates,
     run_pilot_matrix,
     write_pilot_artifact_manifest,
+    verify_pilot_artifacts,
 )
 
 
@@ -63,6 +64,33 @@ def _run_dynamic_pilot_job(
     return result
 
 
+def _reuse_complete_pilot(
+    contract: Any, output_root: Path
+) -> dict[str, Any] | None:
+    """Reuse an already audited complete replacement matrix without retraining."""
+
+    episodes_path = output_root / "validated" / "pilot-episodes.jsonl"
+    audit_path = output_root / "audits" / "pilot-audit.json"
+    manifest_path = output_root / "audits" / "pilot-artifact-manifest.json"
+    if not all(path.is_file() for path in (episodes_path, audit_path, manifest_path)):
+        return None
+    audit = verify_pilot_artifacts(
+        contract,
+        episodes_path,
+        audit_path,
+        manifest_path,
+    )
+    if audit.get("status") != "pass" or audit.get("matrix_complete") is not True:
+        return None
+    return {
+        **audit,
+        "episodes_path": str(episodes_path.resolve()),
+        "audit_path": str(audit_path.resolve()),
+        "artifact_manifest_path": str(manifest_path.resolve()),
+        "reused_existing": True,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the development-only G5 pilot matrix.")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
@@ -96,19 +124,21 @@ def main() -> int:
     }
     try:
         contract = load_g5_contract(ROOT)
-        jobs = build_pilot_matrix(contract)
-        if args.limit is not None:
-            if isinstance(args.limit, bool) or args.limit <= 0:
-                raise ValueError("--limit must be positive")
-            jobs = jobs[: args.limit]
-        result = run_pilot_matrix(
-            contract,
-            output_root,
-            jobs=jobs,
-            interactions=args.interactions,
-            device=args.device,
-            runner=_run_dynamic_pilot_job,
-        )
+        result = _reuse_complete_pilot(contract, output_root)
+        if result is None:
+            jobs = build_pilot_matrix(contract)
+            if args.limit is not None:
+                if isinstance(args.limit, bool) or args.limit <= 0:
+                    raise ValueError("--limit must be positive")
+                jobs = jobs[: args.limit]
+            result = run_pilot_matrix(
+                contract,
+                output_root,
+                jobs=jobs,
+                interactions=args.interactions,
+                device=args.device,
+                runner=_run_dynamic_pilot_job,
+            )
         report.update(result)
         if result["status"] != "pass":
             raise RuntimeError("pilot matrix failed; candidate freeze is blocked")
@@ -128,6 +158,7 @@ def main() -> int:
         ]
         decision = select_pilot_budget(runtime_rows)
         pilot_base = output_root.parent if output_root.name == "pilots" else output_root
+        (ROOT / DYNAMIC_OUTPUT_ROOT / "g5" / "validation").mkdir(parents=True, exist_ok=True)
         candidate_path = pilot_base / "manifests" / "validation-candidates.json"
         candidates = freeze_validation_candidates(contract, decision, candidate_path)
         budget_payload = {
