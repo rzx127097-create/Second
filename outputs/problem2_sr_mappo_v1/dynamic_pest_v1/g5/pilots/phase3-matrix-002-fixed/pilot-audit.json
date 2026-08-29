@@ -1,0 +1,101 @@
+{
+  "schema_version": "g6-readiness-phase3-matrix-pilot-audit-v1",
+  "status": "pass",
+  "maturity": "M2",
+  "data_status": "development_pilot_descriptive",
+  "matrix_index_zero_based": 1,
+  "matrix_job_count": 510,
+  "pilot_job_identity": "05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b",
+  "source_commit": "eafff2fa259e57a358f03135277611ef32d86bf8",
+  "attempt_count": 2,
+  "failed_attempts": [
+    {
+      "attempt": 1,
+      "failure_stage": "physical_job_contract_validation",
+      "reason": "physical refit condition semantics are incomplete",
+      "artifact_writes_before_failure": false,
+      "record": "attempt-000001-failed.json"
+    }
+  ],
+  "completed_attempt": 2,
+  "method": "sr_mappo_mobile",
+  "condition_id": "sr_mappo_fixed",
+  "vehicle_controller": "fixed_support",
+  "vehicle_trainable": false,
+  "training_mode": "uav_only",
+  "candidate_id": "c01",
+  "candidate_config_hash": "15209e2c8425a697957421fd843759dbae1edc070973cc41cddb98722e58befe",
+  "partition": "development",
+  "scenario_id": 10000,
+  "scenario_ids": [10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019],
+  "training_seed": 51001,
+  "scale": "g20x20_d2",
+  "interactions": 128,
+  "episode_count": 1,
+  "dynamic_step_count": 128,
+  "spray_action_count": 22,
+  "sprayed_pesticide_l": 0.4275000000000001,
+  "team_reward_sum": -0.017464440712744077,
+  "initial_total_pest": 9.088605068072038,
+  "final_total_pest": 9.247332472444928,
+  "initial_total_predator": 48.325209183591014,
+  "final_total_predator": 11.515503835309339,
+  "metric_source": "dynamic_ecology_environment",
+  "ecology_mode": "dynamic",
+  "ecology_id": "dynamic_pest_v1",
+  "ecology_version": "problem2-dynamic-pest-v1",
+  "ecology_config_sha256": "d40a369d8006b6d156e5eb1321bc6fdc699cd5646d772a6cf5e4a1d7f63ac8b1",
+  "ecology_scenario_sha256": "65b28c5be6575facca89d09f47ef432dd2a6269799785b6c25ee0c585432e5bb",
+  "resource_conservation": {
+    "status": "pass",
+    "replenished_resource": "pesticide",
+    "enforced_on_each_physical_transition": true,
+    "completion_without_resource_invariant_error": true,
+    "focused_regression": "19 passed in 42.98s"
+  },
+  "completion_validated": true,
+  "manifest_hashes_validated": true,
+  "git_byte_preservation": {
+    "status": "pass",
+    "json_jsonl_eol": "lf",
+    "checkpoint_type": "binary"
+  },
+  "checkpoint_round_trip_validated": true,
+  "finite_metrics": true,
+  "evaluation_frozen": true,
+  "validation_accessed": false,
+  "sealed_accessed": false,
+  "battery_replenishment_enabled": false,
+  "evidence_status": "noncanonical_test_only",
+  "artifacts": [
+    {
+      "path": "attempt-000001-failed.json",
+      "bytes": 1158,
+      "sha256": "b995f2d91742856a83e1fbd7f33b9bfff3b7b460df5da73385c1c90aa8d23a75"
+    },
+    {
+      "path": "sr_mappo_mobile__sr_mappo_fixed__51001/checkpoint.pt",
+      "bytes": 1116178,
+      "sha256": "d48556e1394d2fe0c16169ae03a5681bc220c7eab6ec77da1b5d8fd9af2f3601"
+    },
+    {
+      "path": "sr_mappo_mobile__sr_mappo_fixed__51001/manifest.json",
+      "bytes": 4270,
+      "sha256": "296d69d48dd51cbfc3fc045a12a5ee65ec3736a35e44a8839efab0a5f8fe897e"
+    },
+    {
+      "path": "sr_mappo_mobile__sr_mappo_fixed__51001/physical-episodes.jsonl",
+      "bytes": 866,
+      "sha256": "60bd6d5d108d186aa979e91300daf7222a508d7d753c451e911d7e0d8ebbd10f"
+    },
+    {
+      "path": "sr_mappo_mobile__sr_mappo_fixed__51001/summary.json",
+      "bytes": 6168,
+      "sha256": "714baa0f02372739ddba5c746613d89344dbec5f0a90882ca867d1b68fbb6144"
+    }
+  ],
+  "matrix_complete": false,
+  "replacement_g5_freeze_authorized": false,
+  "formal_g6_authorized": false,
+  "sealed_unlock_count": 0
+}

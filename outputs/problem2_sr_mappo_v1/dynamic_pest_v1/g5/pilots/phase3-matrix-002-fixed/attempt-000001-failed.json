@@ -1,0 +1,32 @@
+{
+  "schema_version": "g6-readiness-phase3-failed-attempt-v1",
+  "status": "failed",
+  "maturity": "M2",
+  "evidence_status": "development_pilot_diagnostic",
+  "attempt": 1,
+  "source_commit": "eafff2fa259e57a358f03135277611ef32d86bf8",
+  "identity": {
+    "method": "sr_mappo_mobile",
+    "condition_id": "sr_mappo_fixed",
+    "candidate_id": "c01",
+    "scale": "g20x20_d2",
+    "training_seed": 51001,
+    "scenario_id": 10000,
+    "scenario_ids": [10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019],
+    "interactions": 128,
+    "partition": "development"
+  },
+  "failure_stage": "physical_job_contract_validation",
+  "exception_type": "ValueError",
+  "reason": "physical refit condition semantics are incomplete",
+  "artifact_writes_before_failure": false,
+  "validation_accessed": false,
+  "sealed_accessed": false,
+  "battery_replenishment_enabled": false,
+  "recovery": {
+    "action": "retry_identical_identity_with_required_condition_semantics",
+    "vehicle_controller": "fixed_support",
+    "vehicle_trainable": false,
+    "training_mode": "uav_only"
+  }
+}

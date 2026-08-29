@@ -1,3 +1,6 @@
 outputs/problem2_sr_mappo_v1/g2/**/*.json text eol=lf
 outputs/problem2_sr_mappo_v1/g2/**/*.jsonl text eol=lf
 outputs/problem2_sr_mappo_v1/g2/**/*.npz binary
+outputs/problem2_sr_mappo_v1/dynamic_pest_v1/**/*.json text eol=lf
+outputs/problem2_sr_mappo_v1/dynamic_pest_v1/**/*.jsonl text eol=lf
+outputs/problem2_sr_mappo_v1/dynamic_pest_v1/**/*.pt binary

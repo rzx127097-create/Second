@@ -203,3 +203,43 @@ matrix, one job at a time.
 - The successful post-fix condition artifacts, revalidated first-pilot
   artifacts, and post-controller dynamic audit are to be recorded in the
   following phase persistence commit.
+
+## Phase 3 Continuation: Matrix Identity 002
+
+The next frozen development identity after the revalidated matrix index `0`
+was resolved mechanically from `build_pilot_matrix`: zero-based index `1`,
+identity `05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`.
+It keeps method `sr_mappo_mobile`, candidate `c01`, scale `g20x20_d2`, seed
+`51001`, and development scenarios `10000-10019`, while executing condition
+`sr_mappo_fixed` for 128 physical interactions.
+
+The first invocation failed before any training artifact write because the
+manual job mapping omitted the explicit Phase 2 condition-semantics fields.
+The failure is preserved as
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-002-fixed/attempt-000001-failed.json`.
+The identical identity was then rerun with the frozen execution tuple
+`fixed_support`, `vehicle_trainable=false`, and `uav_only`; no method,
+candidate, seed, scale, scenario panel, interaction count, or budget changed.
+
+The completed attempt produced one episode and 128 dynamic ecology steps, 22
+accepted spray actions, and `0.4275000000000001 L` sprayed pesticide. The
+terminal checkpoint round trip passed, all three manifest artifact hashes and
+byte counts matched, finite metrics and frozen evaluation were confirmed, and
+the physical path completed without a resource-conservation invariant error.
+The focused resource/controller regression returned `19 passed in 42.98s`.
+An attribute RED/GREEN check also fixed dynamic evidence JSON/JSONL to LF and
+checkpoint files to binary so Git checkout conversion cannot invalidate the
+recorded byte hashes.
+
+Boundary flags remain `validation_accessed=false`, `sealed_accessed=false`,
+and `battery_replenishment_enabled=false`; the sealed unlock count remains
+`0`. This is `noncanonical_test_only` M2 engineering evidence. The negative
+team reward and increased terminal pest total are retained as descriptive
+development observations and support no efficacy or ranking claim.
+
+Artifacts and the per-pilot audit are confined to
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-002-fixed/`.
+The replacement dynamic G5 matrix remains incomplete, so replacement freeze,
+Phase 4 preflight, formal G6, validation selection, and G7 remain blocked. The
+next authorized action remains one new controlled development identity after
+review and persistence of this result.
