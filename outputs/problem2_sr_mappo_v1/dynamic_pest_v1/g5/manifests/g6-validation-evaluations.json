@@ -11,7 +11,7 @@
   "partition": "validation",
   "provenance": {
     "protocol_hash": "3b07a5917dc4c4961eb5fb6f978102e5cf2681afb561a9c8364e1ec6138667f9",
-    "source_commit": "a6a777bd8346635552354759b9aa75997b9b94de"
+    "source_commit": "b34a5124470a1f22abe94cd345a9a081b23ca5db"
   },
   "scenario_content": null,
   "scenario_ids": [
