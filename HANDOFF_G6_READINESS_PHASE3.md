@@ -63,17 +63,19 @@ modify or relabel it.
 Persisted repository state at the time of this handoff:
 
 ```text
-HEAD       9f0336391304b727cb4a7b0bc9fb3439ae68e5d2
-upstream   9f0336391304b727cb4a7b0bc9fb3439ae68e5d2
-remote     9f0336391304b727cb4a7b0bc9fb3439ae68e5d2
+HEAD       c976d62 (state record; full hash recorded below)
+upstream   c976d62 (state record; full hash recorded below)
+remote     c976d62 (state record; full hash recorded below)
 ```
 
 The latest content commit is `5b6d3ef83135d0965b4b438319adc3b46c7baabc`
 (`data: record seventh dynamic phase3 pilot`); the latest state-record commit
-is `9f0336391304b727cb4a7b0bc9fb3439ae68e5d2` (`docs: persist seventh
-dynamic phase3 pilot state`). Local, upstream, and GitHub remote matched at
-handoff. The worktree is not clean because the replacement-matrix draft and
-pre-existing untracked artifacts are present; inspect them, do not clean them.
+is `c976d62` (`docs: record refreshed g6 handoff state`), whose full hash is
+`c976d628fda86647efd14be83f7eee274459d99b`.
+The preceding handoff content commit is `4cb579c`.
+Local, upstream, and GitHub remote matched at handoff. The worktree is not
+clean because the replacement-matrix draft and pre-existing untracked
+artifacts are present; inspect them, do not clean them.
 
 ## 4. Completed Work
 
@@ -398,7 +400,8 @@ git ls-remote origin refs/heads/codex/problem2-dynamic-pest-model
 python -m pytest tests/g6 -q --tb=short
 ```
 
-Expected baseline is HEAD/upstream/remote `9f0336391304b727cb4a7b0bc9fb3439ae68e5d2`,
+Expected baseline is HEAD/upstream/remote
+`c976d628fda86647efd14be83f7eee274459d99b`,
 with the tracked draft modifications and preserved untracked directories
 listed above, and the recorded G6 suite passing. If the baseline differs,
 reconcile against `docs/PROJECT_STATE.md` before running or editing pilots.
