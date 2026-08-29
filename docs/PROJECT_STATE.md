@@ -2717,3 +2717,53 @@ authorized action is to mechanically resolve and review zero-based matrix
 index `4`, `sr_mappo_mobile + sr_mappo_two_stage`, then run at most that one
 dynamic development pilot. No validation or sealed scenario payload may be
 accessed, and the G7 unlock count remains `0`.
+
+## G6 Readiness Phase 3: Matrix Identity 005 Persistence
+
+The repaired 120-job executable matrix resolved zero-based index `4` to the
+following single development identity:
+
+```text
+identity=31837fe943ba86c6d03dd9ab1cb122e6bfefa08e3d61733d313c741ac5b493b2
+method=sr_mappo_mobile
+condition_id=sr_mappo_two_stage
+vehicle_controller=learned_two_stage
+vehicle_trainable=true
+training_mode=two_stage
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+partition=development
+scenario_ids=10000-10019
+scenario_id=10000
+interactions=128
+ecology=dynamic_pest_v1
+```
+
+The pilot executed under source commit
+`492de00c8fe4c12ea09eb0cd7d74dda6481d0320` and completed one dynamic episode
+with `128` ecology steps, `25` accepted spray actions, and
+`0.48750000000000016 L` sprayed pesticide. Team reward was
+`0.3913904742247592`; total pest changed from `9.088605068072038` to
+`5.531411620437773`. These values are descriptive `M2` engineering evidence
+only and do not support efficacy, significance, superiority, ranking, or
+deployment claims.
+
+The strict terminal checkpoint reload passed at the current source commit with
+evaluation-state digest
+`3072c12632b71aad1d79ec5d24b02e19a68702069802f10e52dc15abf1e9c685`. The
+three physical artifacts and the four artifact references in
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-005-two-stage/pilot-audit.json`
+matched their recorded SHA-256 values and byte counts. The audit records
+`completion_validated=true`, finite metrics, dynamic ecology, and the exact
+two-stage condition semantics.
+
+The development boundary remained closed:
+`validation_accessed=false`, `sealed_accessed=false`,
+`battery_replenishment_enabled=false`, and sealed unlock count `0`. Pesticide
+remained the only replenished resource. The highest maturity remains `M2`, and
+the replacement dynamic G5 freeze, Phase 4 preflight, formal G6, validation
+selection, and G7 remain blocked. The next authorized action is to mechanically
+resolve and review zero-based matrix index `5`,
+`sr_mappo_mobile + sr_mappo_nearest`, then run at most that one dynamic
+development pilot. No validation or sealed scenario payload may be accessed.
