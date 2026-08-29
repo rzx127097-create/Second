@@ -2923,3 +2923,12 @@ The replacement matrix, replacement G5 freeze, Phase 4 preflight, formal G6,
 validation selection, and G7 remain blocked. The next authorized implementation
 step is to revise and test the 48-job replacement contract, then commit and
 push that contract before running any replacement development job.
+
+## G6 Readiness Phase 3: Final Handoff Hash Alignment
+
+The handoff baseline was aligned with the state record and pushed as
+`c6886f4aabfff85bb6aa0308bc541d6b98a781c5`
+(`docs: align handoff with persisted state`). The next state-record commit
+must preserve the same current gate: `M2`, dynamic development continuation,
+formal G6 blocked, validation/sealed access false, battery replenishment false,
+and G7 unlock count `0`.
