@@ -272,3 +272,48 @@ Attempt `2` remains byte-preserved historical development evidence but is
 superseded for current-source revalidation by attempt `3`. No new matrix
 identity, validation scenario, sealed scenario, battery replenishment, formal
 job, or replacement freeze was introduced.
+
+## Phase 3 Continuation: Matrix Identity 003
+
+The next uncovered frozen development identity was resolved mechanically from
+`build_pilot_matrix`: zero-based index `2` of `510`, identity
+`5e48578dcbc0bd88d4fb6391c8fad51c9f8566335964068a96bb8f525b3ff260`.
+The exact execution tuple was:
+
+```text
+method=sr_mappo_mobile
+condition_id=sr_mappo_astar
+vehicle_controller=rolling_astar
+vehicle_trainable=false
+training_mode=uav_only
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+scenario_ids=10000-10019
+interactions=128
+```
+
+One attempt completed under source commit
+`3b69fd15566e89707d721e8e12d7912572d3164e`. Strict checkpoint reload,
+the three-entry manifest, all artifact SHA-256 values and byte counts, exact
+identity and controller semantics, finite metrics, frozen evaluation state,
+and development-only access flags were independently revalidated. The focused
+heuristic/environment/controller/resource regression returned `43 passed in
+40.67s`.
+
+The completed episode contains `128` dynamic ecology steps, `30` accepted
+spray actions, and `0.5750000000000003 L` sprayed pesticide. The observed team
+reward was `-0.009897712772544845`; total pest changed from
+`9.088605068072038` to `9.178561470538911`. These values are retained as
+descriptive M2 observations without selection or suppression. They do not
+support an efficacy or method-ranking claim.
+
+Artifacts and the machine-readable audit are confined to
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-003-astar/`.
+The audit records `validation_accessed=false`, `sealed_accessed=false`,
+`battery_replenishment_enabled=false`, and sealed unlock count `0`. Pesticide
+remains the only replenished resource.
+
+The replacement matrix remains incomplete. Replacement G5 freeze generation,
+Phase 4 preflight, formal G6, validation selection, and G7 remain blocked. This
+pilot is `noncanonical_test_only` development evidence at maturity `M2`.
