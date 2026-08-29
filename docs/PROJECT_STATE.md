@@ -2321,3 +2321,30 @@ Phase 3 is paused after the first pilot as required by the handoff. The next
 authorized action is another controlled dynamic development pilot, one at a
 time, after review of the completed result. Replacement G5 freeze generation,
 Phase 4 preflight, formal G6 jobs, and G7 remain blocked.
+
+## G6 Readiness Phase 3: Rolling A* Route Validation Remediation
+
+On 2026-08-29, a newly reproduced development-refit blocker was corrected in
+`RollingAStarController`. During an active dispatch, the controller now
+reports the current vehicle-to-service A* distance on every decision while
+preserving the existing replan interval, cached plan state, and plan version.
+This closes the stale `route_length_m` validation failure observed when the
+vehicle moved between replans. The change remains bounded development-pilot
+correctness evidence at `M2`; it does not authorize formal G6 execution,
+validation tuning, sealed evaluation, or efficacy/superiority claims.
+
+Fresh verification:
+
+- TDD RED: the new regression failed pre-fix with `assert 40.0 == 30.0`;
+- TDD GREEN: `python -m pytest tests/g5/test_heuristics.py -q` returned
+  `18 passed`;
+- `python -m pytest tests/g6/test_controller_wiring.py -q` returned
+  `3 passed`;
+- `python -m compileall -q src scripts` and `git diff --check` passed.
+
+Persistence:
+
+- controller fix, regression test, and audit note commit `d10d30e` was pushed
+  to `origin/codex/problem2-dynamic-pest-model`;
+- detailed note: `docs/audits/g5-rolling-astar-current-route-fix.md`;
+- no validation/sealed payload or historical pilot output was modified.
