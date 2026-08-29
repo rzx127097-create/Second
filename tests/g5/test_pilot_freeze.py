@@ -10,6 +10,7 @@ from problem2.experiments.g5_contract import BudgetDecision, load_g5_contract
 from problem2.training.budget import aggregate_runtime, select_pilot_budget
 from problem2.training.pilot import (
     PILOT_CONDITIONS,
+    PILOT_EXCLUDED_CONDITIONS,
     PILOT_METHODS,
     PILOT_SCALES,
     build_pilot_matrix,
@@ -25,9 +26,11 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_pilot_matrix_covers_exact_development_panel_without_duplicates() -> None:
     contract = load_g5_contract(ROOT)
     jobs = build_pilot_matrix(contract)
-    assert len(jobs) == 20 * 2 * 3
+    assert len(jobs) == 8 * 2 * 3
     assert {job.method for job in jobs} == set(PILOT_METHODS)
     assert {job.condition_id for job in jobs} == set(PILOT_CONDITIONS)
+    assert set(PILOT_CONDITIONS).isdisjoint(PILOT_EXCLUDED_CONDITIONS)
+    assert len(PILOT_EXCLUDED_CONDITIONS) == 12
     assert {job.scale for job in jobs} == set(PILOT_SCALES)
     assert {job.training_seed for job in jobs} == {51001, 51002, 51003}
     assert {job.scenario_id for job in jobs} == {10000}
@@ -46,27 +49,30 @@ def test_pilot_matrix_uses_only_semantically_executable_method_condition_pairs()
         ("sr_mappo_mobile", "sr_mappo_astar"),
         ("mappo_mobile", "mappo_mobile"),
         ("sr_mappo_mobile", "sr_mappo_two_stage"),
-        ("sr_mappo_mobile", "sr_mappo_nearest"),
-        ("sr_mappo_mobile", "sr_mappo_urgency"),
         ("ippo_mobile", "ippo_mobile"),
         ("maddpg_mobile", "maddpg_mobile"),
         ("iql_mobile", "iql_mobile"),
-        ("sr_mappo_mobile", "no_observation_normalization"),
-        ("sr_mappo_mobile", "no_return_normalization"),
-        ("sr_mappo_mobile", "no_network_stabilization"),
-        ("sr_mappo_mobile", "no_robust_value_update"),
-        ("sr_mappo_mobile", "no_learning_rate_decay"),
-        ("sr_mappo_mobile", "learning_rate"),
-        ("sr_mappo_mobile", "clip_range"),
-        ("sr_mappo_mobile", "entropy_coef"),
-        ("sr_mappo_mobile", "gamma"),
-        ("sr_mappo_mobile", "gae_lambda"),
     )
-    assert [(job.method, job.condition_id) for job in jobs[:20]] == list(expected_pairs)
+    assert [(job.method, job.condition_id) for job in jobs[:8]] == list(expected_pairs)
     assert all(job.method == job.condition_id for job in jobs if job.condition_id in {
         "sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile"
     })
     assert {(job.method, job.condition_id) for job in jobs} == set(expected_pairs)
+
+
+def test_pilot_matrix_rejects_excluded_diagnostic_condition(tmp_path: Path) -> None:
+    contract = load_g5_contract(ROOT)
+    jobs = build_pilot_matrix(contract)
+    excluded_job = replace(jobs[0], condition_id="gamma")
+    with pytest.raises(ValueError, match="outside the frozen matrix"):
+        run_pilot_matrix(
+            contract,
+            tmp_path,
+            jobs=(excluded_job,),
+            interactions=1,
+            runner=lambda *_args: {},
+            allow_noncanonical_output_root=True,
+        )
 
 
 def test_pilot_identity_serialization_is_stable_for_initial_canonical_jobs() -> None:
@@ -172,13 +178,13 @@ def test_run_pilot_matrix_writes_descriptive_development_records_and_audit(tmp_p
         allow_noncanonical_output_root=True,
     )
     assert result["status"] == "pass"
-    assert result["job_count"] == 120
-    assert result["episode_count"] == 2400
+    assert result["job_count"] == 48
+    assert result["episode_count"] == 960
     assert result["coverage"]["scales"] == ["g20x20_d2", "g30x50_d4"]
     assert result["validation_accessed"] is False
     assert result["sealed_accessed"] is False
     records = Path(result["episodes_path"]).read_text(encoding="utf-8").splitlines()
-    assert len(records) == 2400
+    assert len(records) == 960
     assert {json.loads(row)["scenario_id"] for row in records} == set(range(10000, 10020))
     assert json.loads(records[0])["data_status"] == "development_pilot_descriptive"
     assert all(json.loads(row)["record_type"] == "scenario_reference" for row in records)

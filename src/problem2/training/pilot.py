@@ -38,11 +38,13 @@ PILOT_CONDITIONS = (
     "sr_mappo_astar",
     "mappo_mobile",
     "sr_mappo_two_stage",
-    "sr_mappo_nearest",
-    "sr_mappo_urgency",
     "ippo_mobile",
     "maddpg_mobile",
     "iql_mobile",
+)
+PILOT_EXCLUDED_CONDITIONS = (
+    "sr_mappo_nearest",
+    "sr_mappo_urgency",
     "no_observation_normalization",
     "no_return_normalization",
     "no_network_stabilization",
@@ -60,21 +62,9 @@ PILOT_METHOD_BY_CONDITION = MappingProxyType({
     "sr_mappo_astar": "sr_mappo_mobile",
     "mappo_mobile": "mappo_mobile",
     "sr_mappo_two_stage": "sr_mappo_mobile",
-    "sr_mappo_nearest": "sr_mappo_mobile",
-    "sr_mappo_urgency": "sr_mappo_mobile",
     "ippo_mobile": "ippo_mobile",
     "maddpg_mobile": "maddpg_mobile",
     "iql_mobile": "iql_mobile",
-    "no_observation_normalization": "sr_mappo_mobile",
-    "no_return_normalization": "sr_mappo_mobile",
-    "no_network_stabilization": "sr_mappo_mobile",
-    "no_robust_value_update": "sr_mappo_mobile",
-    "no_learning_rate_decay": "sr_mappo_mobile",
-    "learning_rate": "sr_mappo_mobile",
-    "clip_range": "sr_mappo_mobile",
-    "entropy_coef": "sr_mappo_mobile",
-    "gamma": "sr_mappo_mobile",
-    "gae_lambda": "sr_mappo_mobile",
 })
 PILOT_TRAINING_SEEDS = (51001, 51002, 51003)
 PILOT_SCENARIO_IDS = tuple(range(10000, 10020))
@@ -639,6 +629,7 @@ def freeze_validation_candidates(
 
 __all__ = [
     "PILOT_CONDITIONS",
+    "PILOT_EXCLUDED_CONDITIONS",
     "PILOT_METHOD_BY_CONDITION",
     "PILOT_METHODS",
     "PILOT_SCALES",
