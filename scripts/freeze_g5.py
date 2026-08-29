@@ -19,6 +19,7 @@ from problem2.training.tuning import CanonicalValidationStore, validate_validati
 
 
 G5_RELATIVE = Path("outputs/problem2_sr_mappo_v1/g5")
+DYNAMIC_G5_RELATIVE = Path("outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5")
 METHODS = ("sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_SCOPE = (
@@ -28,6 +29,17 @@ _SOURCE_SCOPE = (
     "configs/problem2/g5",
     "docs/evidence/g5/physical_scenario_contract.yaml",
 )
+
+
+def _dynamic_evaluator_hash(root: Path) -> str:
+    """Bind validation to the maintained evaluator/selector implementation."""
+
+    return _stable_hash(
+        {
+            "runner": artifact_sha256(root / "src/problem2/evaluation/runner.py"),
+            "selector": artifact_sha256(root / "src/problem2/evaluation/selection.py"),
+        }
+    )
 _PROTECTED_FILE_HASHES = {
     "C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper/方向.docx": "dd614abf8d221b79ce379d6830b0dd9dd384ed53a449f512ece424ccdb833a89",
     "C:/Users/RZX/Desktop/论文/毕业论文/locust-rl-paper/无人机蝗灾.docx": "363284c6d7dd4f0d46a95e1f45ad723e2c2b1780bcd87c1c50db428ffd30d127",
@@ -225,6 +237,80 @@ def _selected_jobs(
     return jobs, references, skeleton.get("decomposition", {})
 
 
+def write_dynamic_replacement_manifests(
+    root: Path,
+    *,
+    source_commit: str | None = None,
+    source_scope_sha256: str | None = None,
+) -> dict[str, Path]:
+    """Write Phase 2 replacement manifests below the dynamic G5 root."""
+
+    root = Path(root).resolve()
+    historical = _load(root / G5_RELATIVE / "manifests" / "g6-training-jobs.json")
+    jobs = historical.get("jobs")
+    if not isinstance(jobs, list) or len(jobs) != 375:
+        raise ValueError("historical G6 skeleton must contain 375 jobs")
+    validation = _load(root / G5_RELATIVE / "manifests" / "g6-validation-evaluations.json")
+    panel_hash = validation.get("scenario_panel_hash")
+    protocol_hash = validation.get("provenance", {}).get("protocol_hash")
+    commit = source_commit or _git_commit(root)
+    scope = source_scope_sha256 or _source_scope_hash(root)
+    rebound_jobs: list[dict[str, Any]] = []
+    for original in jobs:
+        job = dict(original)
+        job["git_commit"] = commit
+        job["source_scope_sha256"] = scope
+        dependency = dict(job.get("dependency_graph") or {})
+        dependency["source_commit"] = commit
+        dependency["source_scope_sha256"] = scope
+        job["dependency_graph"] = dependency
+        canonical = canonical_training_identity(
+            str(job["method"]),
+            str(job["scale"]),
+            int(job["training_seed"]),
+            str(job["config_hash"]),
+            commit,
+        )
+        job["canonical_training_identity"] = canonical
+        job["identity"] = experiment_identity(
+            str(job["family"]), str(job["condition_id"]), str(protocol_hash), canonical
+        )
+        rebound_jobs.append(job)
+    jobs = rebound_jobs
+    payloads = build_formal_freeze_payloads(
+        jobs,
+        validation_scenario_ids=range(20000, 20050),
+        validation_panel_hash=panel_hash,
+        sealed_scenario_ids=range(30000, 30100),
+        sealed_panel_hash=_stable_hash(list(range(30000, 30100))),
+        source_commit=commit,
+        protocol_hash=protocol_hash,
+        source_scope_sha256=scope,
+    )
+    payloads["g6_training"].update({
+        "manifest_id": "G6-TRAINING-JOBS",
+        "output_root": "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6",
+        "ecology_id": "dynamic_pest_v1",
+    })
+    payloads["g6_validation"].update({
+        "manifest_id": "G6-VALIDATION-EVALUATIONS",
+        "output_root": "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6",
+        "ecology_id": "dynamic_pest_v1",
+        "deterministic_policy": True,
+        "checkpoint_count_per_job": 20,
+        "evaluator_hash": _dynamic_evaluator_hash(root),
+    })
+    manifest_root = root / DYNAMIC_G5_RELATIVE / "manifests"
+    manifest_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "g6_training": manifest_root / "g6-training-jobs.json",
+        "g6_validation": manifest_root / "g6-validation-evaluations.json",
+    }
+    for name, path in paths.items():
+        _write(path, payloads[name])
+    return paths
+
+
 def freeze(root: Path, *, write: bool) -> dict[str, Any]:
     root = root.resolve()
     g5 = root / G5_RELATIVE
@@ -344,12 +430,21 @@ def freeze(root: Path, *, write: bool) -> dict[str, Any]:
         "checkpoint_count": 20,
         "environment_interactions": 200000,
     })
+    payloads["g6_training"]["ecology_id"] = "dynamic_pest_v1"
+    payloads["g6_training"]["output_root"] = "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6"
+    payloads["g6_training"]["source_scope_sha256"] = source_scope_hash
     payloads["g6_validation"].update({
         "manifest_id": "G6-VALIDATION-EVALUATIONS",
         "checkpoint_count_per_job": 20,
         "expected_evaluation_count": 375 * 20 * 50,
-        "evaluator_hash": hashlib.sha256((root / "scripts/run_g6_jobs.py").read_bytes()).hexdigest(),
+        "evaluator_hash": _dynamic_evaluator_hash(root),
         "checkpoint_selection_contract_sha256": artifact_sha256(root / "docs/evidence/g5/checkpoint_selection.yaml"),
+    })
+    payloads["g6_validation"].update({
+        "deterministic_policy": True,
+        "ecology_id": "dynamic_pest_v1",
+        "output_root": "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6",
+        "source_scope_sha256": source_scope_hash,
     })
     g7_analysis = {
         "schema_version": "g5.v1",
@@ -395,6 +490,11 @@ def freeze(root: Path, *, write: bool) -> dict[str, Any]:
             _write(paths[name], expected)
         else:
             _assert_json_payload(paths[name], expected)
+    if write:
+        dynamic_manifest_root = root / DYNAMIC_G5_RELATIVE / "manifests"
+        dynamic_manifest_root.mkdir(parents=True, exist_ok=True)
+        _write(dynamic_manifest_root / "g6-training-jobs.json", payloads["g6_training"])
+        _write(dynamic_manifest_root / "g6-validation-evaluations.json", payloads["g6_validation"])
     for name, path in paths.items():
         if not path.is_file():
             raise ValueError(f"frozen artifact is missing: {name}")

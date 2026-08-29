@@ -43,7 +43,12 @@ def atomic_checkpoint_write(path: Path, payload: dict[str, Any]) -> str:
     return artifact_sha256(path)
 
 
-def recover_checkpoint(path: Path, *, expected_identity: str | None = None) -> dict[str, Any]:
+def recover_checkpoint(
+    path: Path,
+    *,
+    expected_identity: str | None = None,
+    expected_sha256: str | None = None,
+) -> dict[str, Any]:
     path = Path(path)
     candidates = [path, path.with_suffix(path.suffix + ".previous")]
     errors: list[str] = []
@@ -51,6 +56,8 @@ def recover_checkpoint(path: Path, *, expected_identity: str | None = None) -> d
         if not candidate.exists():
             continue
         try:
+            if expected_sha256 is not None and artifact_sha256(candidate) != expected_sha256:
+                raise ValueError("checkpoint hash mismatch")
             payload = json.loads(candidate.read_text(encoding="utf-8"))
             if not isinstance(payload, dict):
                 raise ValueError("checkpoint is not an object")

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import hashlib
+import importlib
 import shutil
 import subprocess
 import platform
@@ -164,7 +165,159 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
     except Exception:
         checks["sealed_lock"] = False
     details["sealed_lock"] = "read-only; no mutation attempted"
-    return {"gate": gate, "checks": checks, "details": details, "all_pass": all(checks.values()), "queue_created": False, "sealed_accessed": False}
+    # G6 replacement manifests are read-only inputs and live in their own
+    # dynamic-ecology root.  Keep these checks independent of the historical
+    # G5 artifacts above so old evidence remains byte-preserved.
+    dynamic_manifest_root = root / "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/manifests"
+    dynamic_training = dynamic_manifest_root / "g6-training-jobs.json"
+    dynamic_validation = dynamic_manifest_root / "g6-validation-evaluations.json"
+    training_payload: dict[str, object] = {}
+    validation_payload: dict[str, object] = {}
+    try:
+        training_payload = json.loads(dynamic_training.read_text(encoding="utf-8"))
+        validation_payload = json.loads(dynamic_validation.read_text(encoding="utf-8"))
+        if not isinstance(training_payload, dict) or not isinstance(validation_payload, dict):
+            raise ValueError("replacement manifests must be JSON objects")
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError):
+        training_payload = {}
+        validation_payload = {}
+
+    jobs = training_payload.get("jobs")
+    training_provenance = training_payload.get("provenance")
+    validation_provenance = validation_payload.get("provenance")
+    if not isinstance(training_provenance, dict):
+        training_provenance = {}
+    if not isinstance(validation_provenance, dict):
+        validation_provenance = {}
+    source_commit_values = {
+        str(training_provenance.get("source_commit", "")),
+        str(validation_provenance.get("source_commit", "")),
+    }
+    source_scope_values = {
+        str(training_payload.get("source_scope_sha256", "")),
+        str(validation_payload.get("source_scope_sha256", "")),
+    }
+    frozen_commit = next(iter(source_commit_values), "")
+    checks["frozen_source_commit"] = len(source_commit_values) == 1 and bool(frozen_commit) and all(
+        len(value) == 40 and all(char in "0123456789abcdef" for char in value.lower())
+        for value in source_commit_values
+    )
+    frozen_scope = next(iter(source_scope_values), "")
+    checks["frozen_source_scope"] = len(source_scope_values) == 1 and bool(frozen_scope) and all(
+        len(value) == 64 and all(char in "0123456789abcdef" for char in value.lower())
+        for value in source_scope_values
+    )
+    if isinstance(jobs, list) and checks["frozen_source_commit"]:
+        checks["frozen_source_commit"] = all(job.get("git_commit") == frozen_commit for job in jobs if isinstance(job, dict))
+    if isinstance(jobs, list) and checks["frozen_source_scope"]:
+        checks["frozen_source_scope"] = all(job.get("source_scope_sha256") == frozen_scope for job in jobs if isinstance(job, dict))
+
+    def _module_has(name: str, attribute: str | None = None) -> bool:
+        try:
+            module = importlib.import_module(name)
+            return attribute is None or callable(getattr(module, attribute, None))
+        except Exception:
+            return False
+
+    checks["runner_available"] = _module_has("problem2.training.runner")
+    checks["recovery_available"] = _module_has("problem2.experiments.recovery", "recover_checkpoint")
+    checks["checkpoint_validator_available"] = _module_has("problem2.evaluation.validator", "validate_long_table")
+    checks["validation_evaluator_available"] = _module_has("problem2.evaluation.runner", "evaluate_episode")
+
+    identities = [job.get("canonical_training_identity") for job in jobs if isinstance(job, dict)] if isinstance(jobs, list) else []
+    checks["scheduler_order"] = (
+        isinstance(jobs, list)
+        and len(jobs) == 375
+        and isinstance(training_payload.get("scheduler_order"), list)
+        and training_payload["scheduler_order"] == sorted(str(value) for value in identities)
+        and len(identities) == len(jobs)
+        and len(set(identities)) == len(identities)
+    )
+    expected_storage = training_payload.get("expected_storage_bytes")
+    expected_gpu_hours = training_payload.get("expected_gpu_hours")
+    headroom = training_payload.get("atomic_storage_headroom_bytes", 0)
+    checks["storage_budget"] = type(expected_storage) is int and expected_storage > 0
+    checks["gpu_hours"] = isinstance(expected_gpu_hours, (int, float)) and not isinstance(expected_gpu_hours, bool) and float(expected_gpu_hours) > 0.0
+    checks["dynamic_ecology"] = (
+        training_payload.get("ecology_id") == "dynamic_pest_v1"
+        and validation_payload.get("ecology_id") == "dynamic_pest_v1"
+        and isinstance(jobs, list)
+        and len(jobs) == 375
+        and all(isinstance(job, dict) and job.get("ecology_id") == "dynamic_pest_v1" for job in jobs)
+    )
+    expected_dynamic_root = "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6"
+    checks["dynamic_output_root"] = (
+        training_payload.get("output_root") == expected_dynamic_root
+        and validation_payload.get("output_root") == expected_dynamic_root
+    )
+    restricted_ok = True
+    if isinstance(jobs, list):
+        for job in jobs:
+            if not isinstance(job, dict):
+                restricted_ok = False
+                break
+            if job.get("family") in {"sr_mappo_ablation", "sr_mappo_sensitivity"} and job.get("method") != "sr_mappo_mobile":
+                restricted_ok = False
+                break
+    else:
+        restricted_ok = False
+    checks["restricted_experiment_families"] = restricted_ok
+    checks["validation_panel"] = (
+        validation_payload.get("scenario_ids") == list(range(20000, 20050))
+        and validation_payload.get("scenario_content") is None
+        and validation_payload.get("deterministic_policy") is True
+        and validation_payload.get("sealed_accessed") is False
+    )
+    try:
+        import torch
+
+        hardware = {
+            "python": platform.python_version(),
+            "system": platform.system(),
+            "machine": platform.machine(),
+            "torch_version": torch.__version__,
+            "cuda_available": bool(torch.cuda.is_available()),
+            "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+            "vram_bytes": int(torch.cuda.get_device_properties(0).total_memory) if torch.cuda.is_available() else None,
+        }
+        checks["hardware_inventory"] = bool(hardware["python"] and hardware["system"] and hardware["machine"] and hardware["torch_version"])
+        details["hardware_inventory"] = json.dumps(hardware, sort_keys=True)
+    except Exception:
+        checks["hardware_inventory"] = False
+
+    try:
+        disk = shutil.disk_usage(root)
+        expected_bytes = int(expected_storage) if checks["storage_budget"] else 0
+        atomic_headroom = int(headroom) if isinstance(headroom, int) and headroom > 0 else max(1, expected_bytes // 10)
+        required_bytes = expected_bytes + atomic_headroom
+        resource_budget = {
+            "expected_storage_bytes": expected_bytes,
+            "atomic_headroom_bytes": atomic_headroom,
+            "required_bytes_with_atomic_headroom": required_bytes,
+            "available_bytes": int(disk.free),
+            "expected_gpu_hours": float(expected_gpu_hours) if checks["gpu_hours"] else 0.0,
+        }
+        checks["disk_budget"] = expected_bytes > 0 and int(disk.free) >= required_bytes
+    except OSError:
+        resource_budget = {
+            "expected_storage_bytes": 0,
+            "atomic_headroom_bytes": 0,
+            "required_bytes_with_atomic_headroom": 0,
+            "available_bytes": 0,
+            "expected_gpu_hours": 0.0,
+        }
+        checks["disk_budget"] = False
+    details["resource_budget"] = json.dumps(resource_budget, sort_keys=True)
+    result = {
+        "gate": gate,
+        "checks": checks,
+        "details": details,
+        "resource_budget": resource_budget,
+        "all_pass": all(checks.values()),
+        "queue_created": False,
+        "sealed_accessed": False,
+    }
+    return result
 
 
 def run_cli(name: str, *, default_partition: str = "development", blocked_reason: str | None = None) -> int:

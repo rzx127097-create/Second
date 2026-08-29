@@ -7,6 +7,9 @@ from enum import Enum
 import hashlib
 import json
 import math
+from datetime import datetime, timezone
+import os
+import platform
 from pathlib import Path
 import re
 import time
@@ -80,8 +83,15 @@ class AppendOnlyLedger:
             self._apply(event, replay=True)
 
     def _append(self, event: dict[str, Any]) -> None:
-        append_jsonl(self.path, event)
-        self._apply(event, replay=False)
+        enriched = {
+            **event,
+            "utc_time": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "host_id": platform.node() or "unknown",
+            "process_id": os.getpid(),
+            "artifact_hashes": dict(event.get("artifact_hashes") or {}),
+        }
+        append_jsonl(self.path, enriched)
+        self._apply(enriched, replay=False)
 
     def _apply(self, event: dict[str, Any], *, replay: bool) -> None:
         identity = event.get("identity")
@@ -189,13 +199,28 @@ class AppendOnlyLedger:
             raise LedgerError("lease ownership mismatch")
         return lease
 
-    def complete(self, identity: str, *, lease_id: str, worker_id: str) -> None:
+    def complete(
+        self,
+        identity: str,
+        *,
+        lease_id: str,
+        worker_id: str,
+        artifact_hashes: dict[str, str] | None = None,
+    ) -> None:
         lease = self._check_lease(identity, lease_id, worker_id)
-        self._append({"event": "transition", "identity": identity, "old_state": "running", "new_state": "completed", "attempt": lease.attempt, "lease_id": lease_id, "worker_id": worker_id})
+        self._append({"event": "transition", "identity": identity, "old_state": "running", "new_state": "completed", "attempt": lease.attempt, "lease_id": lease_id, "worker_id": worker_id, "artifact_hashes": artifact_hashes or {}})
 
-    def fail(self, identity: str, *, lease_id: str, worker_id: str, reason: str) -> None:
+    def fail(
+        self,
+        identity: str,
+        *,
+        lease_id: str,
+        worker_id: str,
+        reason: str,
+        artifact_hashes: dict[str, str] | None = None,
+    ) -> None:
         lease = self._check_lease(identity, lease_id, worker_id)
-        self._append({"event": "transition", "identity": identity, "old_state": "running", "new_state": "failed", "attempt": lease.attempt, "lease_id": lease_id, "worker_id": worker_id, "reason": reason})
+        self._append({"event": "transition", "identity": identity, "old_state": "running", "new_state": "failed", "attempt": lease.attempt, "lease_id": lease_id, "worker_id": worker_id, "reason": reason, "artifact_hashes": artifact_hashes or {}})
 
     def retry(self, identity: str, *, worker_id: str, input_hash: str, config_hash: str | None = None, protocol_hash: str | None = None, source_commit: str | None = None, checkpoint_hash: str | None = None, scenario_panel_hash: str | None = None) -> Lease:
         job = self._job(identity)

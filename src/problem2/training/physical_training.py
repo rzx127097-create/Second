@@ -30,6 +30,7 @@ from problem2.experiments.ecology_policy import DYNAMIC_OUTPUT_ROOT, resolve_fro
 from problem2.experiments.g5_contract import G5Contract, load_g5_contract
 
 from .preflight import run_preflight
+from .conditions import resolve_condition_execution
 from .runner import _provenance, _validate_preflight, evaluation_state_digest
 from .tuning import CanonicalValidationStore, DEVELOPMENT_SCENARIO_IDS, build_development_environment
 
@@ -300,8 +301,19 @@ def _validate_job(
         raise TypeError("physical training job must be a mapping")
     method = str(job.get("method", ""))
     condition = str(job.get("condition_id", method))
-    if method not in ON_POLICY_METHODS | OFF_POLICY_METHODS or condition != method:
+    if method not in ON_POLICY_METHODS | OFF_POLICY_METHODS:
         raise ValueError("physical candidate training requires one exact frozen learning method identity")
+    if condition != method:
+        try:
+            execution = resolve_condition_execution(condition)
+        except ValueError as exc:
+            raise ValueError("physical refit condition is not executable") from exc
+        if (
+            job.get("vehicle_controller") != execution.vehicle_controller
+            or job.get("vehicle_trainable") is not execution.vehicle_trainable
+            or job.get("training_mode") != execution.training_mode
+        ):
+            raise ValueError("physical refit condition semantics are incomplete")
     candidate_id = job.get("candidate_id")
     candidates = contract.tuning_candidates.get(method, ())
     if not isinstance(candidate_id, str) or candidate_id not in {item.candidate_id for item in candidates}:
@@ -329,6 +341,7 @@ def validate_physical_training_completion(
     *,
     contract: G5Contract,
     method: str,
+    condition_id: str | None = None,
     candidate_id: str,
     config_hash: str,
     seed: int,
@@ -339,6 +352,7 @@ def validate_physical_training_completion(
 ) -> dict[str, Any]:
     """Validate a manifest-complete physical identity and strictly reload its policy."""
 
+    condition = str(condition_id or method)
     manifest_file = Path(manifest_path).resolve()
     if not manifest_file.is_file():
         raise RuntimeError(f"physical training completion manifest is missing: {manifest_file}")
@@ -357,7 +371,7 @@ def validate_physical_training_completion(
     expected_identity = {
         "method": method,
         "algorithm_id": method,
-        "condition_id": method,
+        "condition_id": condition,
         "partition": "development",
         "scenario_id": DEVELOPMENT_SCENARIO_IDS.start,
         "scenario_ids": list(DEVELOPMENT_SCENARIO_IDS),
@@ -408,7 +422,7 @@ def validate_physical_training_completion(
         "scenario_execution": True,
         "method": method,
         "algorithm_id": method,
-        "condition_id": method,
+        "condition_id": condition,
         "partition": "development",
         "scenario_id": DEVELOPMENT_SCENARIO_IDS.start,
         "scenario_ids": list(DEVELOPMENT_SCENARIO_IDS),
@@ -427,6 +441,21 @@ def validate_physical_training_completion(
         "resumable_mid_training": False,
         "canonical": canonical,
         "evidence_status": evidence_status,
+        "vehicle_controller": (
+            resolve_condition_execution(condition).vehicle_controller
+            if condition != method
+            else "learned"
+        ),
+        "vehicle_trainable": (
+            resolve_condition_execution(condition).vehicle_trainable
+            if condition != method
+            else True
+        ),
+        "condition_training_mode": (
+            resolve_condition_execution(condition).training_mode
+            if condition != method
+            else "joint"
+        ),
     }
     if not isinstance(summary, dict) or any(summary.get(key) != value for key, value in expected_summary.items()):
         raise RuntimeError("physical training summary identity or finite-state declaration drifted")
@@ -731,6 +760,21 @@ def _run_physical_candidate_training(
         "sealed_accessed": False,
         "canonical": canonical,
         "evidence_status": "canonical_candidate_evidence" if canonical else "noncanonical_test_only",
+        "vehicle_controller": (
+            resolve_condition_execution(condition).vehicle_controller
+            if condition != method
+            else "learned"
+        ),
+        "vehicle_trainable": (
+            resolve_condition_execution(condition).vehicle_trainable
+            if condition != method
+            else True
+        ),
+        "condition_training_mode": (
+            resolve_condition_execution(condition).training_mode
+            if condition != method
+            else "joint"
+        ),
         "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if str(device).lower() == "cuda" else 0,
         "peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if str(device).lower() == "cuda" else 0,
     }
@@ -767,6 +811,7 @@ def _run_physical_candidate_training(
         manifest_path,
         contract=contract,
         method=method,
+        condition_id=condition,
         candidate_id=candidate_id,
         config_hash=candidate.config_hash,
         seed=seed,

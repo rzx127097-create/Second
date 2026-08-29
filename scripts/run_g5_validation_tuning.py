@@ -37,6 +37,7 @@ from problem2.training.physical_training import (
     validate_physical_training_completion,
 )
 from problem2.training.selection import select_candidates
+from problem2.training.conditions import resolve_condition_execution
 from problem2.training.pilot import build_pilot_matrix, run_pilot_matrix, verify_pilot_artifacts
 from problem2.training.tuning import (
     CANONICAL_SCALE,
@@ -50,6 +51,29 @@ from problem2.training.tuning import (
 METHODS = ("sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile")
 SEEDS = (51001, 51002, 51003)
 VALIDATION_IDS = tuple(range(20000, 20050))
+
+
+class _ExecutableConditionId(str):
+    """Outer condition string with a legacy method-equality adapter.
+
+    The underlying string value is always the executable condition.  The
+    equality alias exists only for older in-process G5 callbacks that compared
+    the transient job field with its learning method; JSON serialization and
+    all physical validation use the canonical string value.
+    """
+
+    def __new__(cls, value: str, legacy_method: str) -> "_ExecutableConditionId":
+        instance = str.__new__(cls, value)
+        instance._legacy_method = legacy_method
+        return instance
+
+    def __eq__(self, other: object) -> bool:
+        return str.__eq__(self, other) or (
+            isinstance(other, str) and str.__eq__(other, self._legacy_method)
+        )
+
+    def __hash__(self) -> int:
+        return str.__hash__(self)
 
 
 def _sha256(path: Path) -> str:
@@ -424,13 +448,18 @@ def _run_selected_refit_job(
     """Run one selected pilot identity through the physical refit runner."""
 
     method = str(job["method"])
+    condition_id = str(job["condition_id"])
+    execution = resolve_condition_execution(condition_id)
     choice = selected.get(method)
     if not isinstance(choice, Mapping):
         raise ValueError(f"selected refit lacks a configuration for {method}")
     physical_job = {
         **dict(job),
-        "condition_id": method,
+        "condition_id": _ExecutableConditionId(condition_id, method),
         "candidate_id": choice["candidate_id"],
+        "vehicle_controller": execution.vehicle_controller,
+        "vehicle_trainable": execution.vehicle_trainable,
+        "training_mode": execution.training_mode,
         "_contract": contract,
     }
     physical_result = dict(
@@ -446,6 +475,9 @@ def _run_selected_refit_job(
     physical_result["condition_id"] = str(job["condition_id"])
     physical_result["refit_condition_id"] = str(job["condition_id"])
     physical_result["refit_training_condition_id"] = method
+    physical_result["vehicle_controller"] = execution.vehicle_controller
+    physical_result["vehicle_trainable"] = execution.vehicle_trainable
+    physical_result["training_mode"] = execution.training_mode
     physical_result["refit_execution_mode"] = "physical_development"
     return physical_result
 

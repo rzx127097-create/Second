@@ -10,6 +10,14 @@ from collections import defaultdict
 from typing import Any, Iterable, Mapping, Sequence
 
 
+DYNAMIC_ECOLOGY_ID = "dynamic_pest_v1"
+DYNAMIC_OUTPUT_ROOT = "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6"
+_DEFAULT_STORAGE_BYTES_PER_JOB = 8 * 1024 * 1024
+_ATOMIC_STORAGE_HEADROOM_BYTES = 64 * 1024 * 1024
+_GPU_HOURS_PER_JOB = 0.25
+_EVALUATOR_HASH = hashlib.sha256(b"problem2-deterministic-evaluator-v2").hexdigest()
+
+
 def _sha256(value: object) -> str:
     raw = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
     return hashlib.sha256(raw).hexdigest()
@@ -111,6 +119,7 @@ def build_formal_freeze_payloads(
     sealed_panel_hash: str,
     source_commit: str,
     protocol_hash: str,
+    source_scope_sha256: str | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Build content-free formal identity plans and enforce the frozen counts."""
 
@@ -139,6 +148,31 @@ def build_formal_freeze_payloads(
     for job in jobs:
         _require_sha256(job.get("config_hash"), "training configuration hash")
 
+    scopes = {
+        str(job["source_scope_sha256"])
+        for job in jobs
+        if isinstance(job.get("source_scope_sha256"), str)
+    }
+    if source_scope_sha256 is not None:
+        source_scope = _require_sha256(source_scope_sha256, "source scope hash")
+    elif len(scopes) == 1:
+        source_scope = _require_sha256(next(iter(scopes)), "source scope hash")
+    elif len(scopes) > 1:
+        raise ValueError("training jobs must share one frozen source scope")
+    else:
+        source_scope = _sha256(sorted(str(value) for value in canonical))
+    for job in jobs:
+        declared_scope = job.get("source_scope_sha256")
+        if declared_scope is not None and declared_scope != source_scope:
+            raise ValueError("training job source scope differs from the frozen scope")
+        declared_commit = job.get("git_commit")
+        if declared_commit is not None and declared_commit != commit:
+            raise ValueError("training job source commit differs from the frozen commit")
+        job["source_scope_sha256"] = source_scope
+        job["git_commit"] = commit
+        job.setdefault("ecology_id", DYNAMIC_ECOLOGY_ID)
+        job.setdefault("output_root", DYNAMIC_OUTPUT_ROOT)
+
     mechanism_refs = tuple(
         _sha256({"kind": "mechanism_sensitivity", "axis": axis, "level": level, "seed_index": seed_index})
         for axis in range(5)
@@ -153,6 +187,9 @@ def build_formal_freeze_payloads(
         [_sha256({"source": source, "scenario_id": scenario}) for source in evaluation_sources for scenario in sealed_ids]
     )
     provenance = {"source_commit": commit, "protocol_hash": protocol}
+    scheduler_order = sorted(str(value) for value in canonical)
+    expected_storage_bytes = len(jobs) * _DEFAULT_STORAGE_BYTES_PER_JOB
+    expected_gpu_hours = len(jobs) * _GPU_HOURS_PER_JOB
     return {
         "g6_training": {
             "schema_version": "g5.v1",
@@ -162,6 +199,13 @@ def build_formal_freeze_payloads(
             "job_count": len(jobs),
             "jobs": jobs,
             "provenance": provenance,
+            "source_scope_sha256": source_scope,
+            "ecology_id": DYNAMIC_ECOLOGY_ID,
+            "output_root": DYNAMIC_OUTPUT_ROOT,
+            "scheduler_order": scheduler_order,
+            "expected_storage_bytes": expected_storage_bytes,
+            "expected_gpu_hours": expected_gpu_hours,
+            "atomic_storage_headroom_bytes": _ATOMIC_STORAGE_HEADROOM_BYTES,
             "sealed_accessed": False,
         },
         "g6_validation": {
@@ -174,6 +218,11 @@ def build_formal_freeze_payloads(
             "evaluation_results": [],
             "expected_evaluation_count": len(jobs) * 20 * len(validation_ids),
             "checkpoint_selection": "frozen_g5_checkpoint_selection_rule",
+            "deterministic_policy": True,
+            "ecology_id": DYNAMIC_ECOLOGY_ID,
+            "output_root": DYNAMIC_OUTPUT_ROOT,
+            "evaluator_hash": _EVALUATOR_HASH,
+            "source_scope_sha256": source_scope,
             "provenance": provenance,
             "sealed_accessed": False,
         },
