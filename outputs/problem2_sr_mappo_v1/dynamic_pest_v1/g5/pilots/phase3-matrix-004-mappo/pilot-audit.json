@@ -1,0 +1,130 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1263432,
+      "path": "attempt-000001/mappo_mobile__mappo_mobile__51001/checkpoint.pt",
+      "sha256": "7ab199e139f706de839448c20c5fe4c73944b184af237b6d496e0c8aa58c0e78"
+    },
+    {
+      "bytes": 4262,
+      "path": "attempt-000001/mappo_mobile__mappo_mobile__51001/manifest.json",
+      "sha256": "c2ff5f81bbf017e71b32a84e2e9b14fe9bf7a3ef1403487e977a28dd60e903b0"
+    },
+    {
+      "bytes": 875,
+      "path": "attempt-000001/mappo_mobile__mappo_mobile__51001/physical-episodes.jsonl",
+      "sha256": "0068072f81090d8aaed1443dfdc0743bccffac7713777ea921d3c2300ee5e823"
+    },
+    {
+      "bytes": 6194,
+      "path": "attempt-000001/mappo_mobile__mappo_mobile__51001/summary.json",
+      "sha256": "728f4fc0bccae998073788cf0e72452fe22bc07b20fa2ffbee119e9cbfb42441"
+    },
+    {
+      "bytes": 450,
+      "path": "audit-generation-recovery.json",
+      "sha256": "96f479e7e72fe0f5cd0f049d977edb7de763b120a6c6aad19b0ee75e47baac80"
+    }
+  ],
+  "attempt_count": 1,
+  "audit_generation_recovery": {
+    "battery_replenishment_enabled": false,
+    "reason": "outer wrapper first read completion_validated from summary.json; that field is returned by the strict validator and is not persisted in summary.json",
+    "schema_version": "g6-readiness-phase3-audit-recovery-v1",
+    "sealed_accessed": false,
+    "stage": "audit_generation",
+    "status": "recovered",
+    "training_artifacts_reused": true,
+    "training_rerun": false,
+    "validation_accessed": false
+  },
+  "battery_replenishment_enabled": false,
+  "candidate_config_hash": "9b47674560692e920dc28361bc8bf0dc1210923fbec424ad442cefede0695de9",
+  "candidate_id": "c01",
+  "checkpoint_round_trip_validated": true,
+  "completed_attempt": 1,
+  "completion_validated": true,
+  "condition_id": "mappo_mobile",
+  "data_status": "development_pilot_descriptive",
+  "dynamic_step_count": 128,
+  "ecology_config_sha256": "d40a369d8006b6d156e5eb1321bc6fdc699cd5646d772a6cf5e4a1d7f63ac8b1",
+  "ecology_id": "dynamic_pest_v1",
+  "ecology_mode": "dynamic",
+  "ecology_scenario_sha256": "65b28c5be6575facca89d09f47ef432dd2a6269799785b6c25ee0c585432e5bb",
+  "ecology_version": "problem2-dynamic-pest-v1",
+  "episode_count": 1,
+  "evaluation_frozen": true,
+  "evidence_status": "noncanonical_test_only",
+  "failed_attempts": [],
+  "final_total_pest": 7.527074942060645,
+  "final_total_predator": 13.467733411787473,
+  "finite_metrics": true,
+  "formal_g6_authorized": false,
+  "git_byte_preservation": {
+    "checkpoint_type": "binary",
+    "json_jsonl_eol": "lf",
+    "status": "pass"
+  },
+  "initial_total_pest": 9.088605068072038,
+  "initial_total_predator": 48.325209183591014,
+  "interactions": 128,
+  "manifest_artifact_count": 3,
+  "manifest_hashes_validated": true,
+  "matrix_complete": false,
+  "matrix_index_zero_based": 3,
+  "matrix_job_count": 120,
+  "maturity": "M2",
+  "method": "mappo_mobile",
+  "metric_source": "dynamic_ecology_environment",
+  "partition": "development",
+  "pilot_job_identity": "c88c56866c9d7db3ea7059233019c2f014fe39375d736a0de14d8c5a7f2f51de",
+  "replacement_g5_freeze_authorized": false,
+  "resource_conservation": {
+    "completion_without_resource_invariant_error": true,
+    "enforced_on_each_physical_transition": true,
+    "replenished_resource": "pesticide",
+    "status": "pass"
+  },
+  "scale": "g20x20_d2",
+  "scenario_id": 10000,
+  "scenario_ids": [
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019
+  ],
+  "schema_version": "g6-readiness-phase3-matrix-pilot-audit-v1",
+  "sealed_accessed": false,
+  "sealed_unlock_count": 0,
+  "source_commit": "97783d8d51e73458feb4172418d9d772857fa150",
+  "spray_action_count": 11,
+  "sprayed_pesticide_l": 0.21999999999999997,
+  "status": "pass",
+  "strict_checkpoint_reload": {
+    "generation_source_commit": "97783d8d51e73458feb4172418d9d772857fa150",
+    "status": "pass",
+    "validated_current_commit": "97783d8d51e73458feb4172418d9d772857fa150"
+  },
+  "team_reward_sum": 0.17181185829022255,
+  "training_mode": "joint",
+  "training_seed": 51001,
+  "validation_accessed": false,
+  "vehicle_controller": "learned",
+  "vehicle_trainable": true
+}

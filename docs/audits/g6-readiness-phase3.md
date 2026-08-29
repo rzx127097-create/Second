@@ -351,3 +351,48 @@ read-only historical diagnostics and cannot satisfy the replacement freeze
 counts. The replacement dynamic freeze, Phase 4 preflight, formal G6,
 validation selection, and G7 remain blocked until the complete dynamic pilot
 matrix and its refit are freshly generated and audited.
+
+## Phase 3 Continuation: Matrix Identity 004
+
+The next uncovered identity from the repaired executable matrix was resolved
+mechanically as zero-based index `3`:
+
+```text
+identity=c88c56866c9d7db3ea7059233019c2f014fe39375d736a0de14d8c5a7f2f51de
+method=mappo_mobile
+condition_id=mappo_mobile
+vehicle_controller=learned
+vehicle_trainable=true
+training_mode=joint
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+scenario_ids=10000-10019
+interactions=128
+```
+
+One physical development attempt completed under source commit
+`97783d8d51e73458feb4172418d9d772857fa150`. The terminal checkpoint reload,
+manifest identity, three execution artifact hashes and byte counts, finite
+metrics, dynamic ecology path, and development-only access flags all passed.
+The episode contains `128` dynamic ecology steps, `11` accepted spray actions,
+and `0.21999999999999997 L` sprayed pesticide. Team reward was
+`0.17181185829022255`; total pest changed from `9.088605068072038` to
+`7.527074942060645`. These are retained as descriptive `M2` engineering
+observations and support no efficacy, significance, or ranking claim.
+
+The artifacts and machine-readable audit are confined to
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-004-mappo/`.
+The audit records five verified evidence files, `completion_validated=true`,
+`validation_accessed=false`, `sealed_accessed=false`, and
+`battery_replenishment_enabled=false`. An outer audit wrapper initially failed
+after training because it looked for the returned-only `completion_validated`
+field in `summary.json`; `audit-generation-recovery.json` records that the
+existing artifacts were reused and training was not rerun. This is a recovered
+audit-generation diagnostic, not a failed pilot identity.
+
+The replacement matrix remains incomplete. Replacement G5 freeze generation,
+Phase 4 preflight, formal G6, validation selection, and G7 remain blocked. The
+next authorized action is to review and, after persistence, run only zero-based
+index `4` (`sr_mappo_mobile` with `sr_mappo_two_stage`) from the same dynamic
+development boundary.

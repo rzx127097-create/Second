@@ -1,0 +1,11 @@
+{
+  "battery_replenishment_enabled": false,
+  "reason": "outer wrapper first read completion_validated from summary.json; that field is returned by the strict validator and is not persisted in summary.json",
+  "schema_version": "g6-readiness-phase3-audit-recovery-v1",
+  "sealed_accessed": false,
+  "stage": "audit_generation",
+  "status": "recovered",
+  "training_artifacts_reused": true,
+  "training_rerun": false,
+  "validation_accessed": false
+}

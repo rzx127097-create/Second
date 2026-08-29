@@ -301,3 +301,20 @@ matrix, and the old static 510-job pilot/refit remains historical diagnostics
 only. Persist and review the repair before running the next development job;
 replacement freeze, Phase 4 preflight, formal G6, validation selection, and
 G7 remain blocked.
+
+## 11. Matrix Identity 004 Result
+
+The first pilot from the repaired matrix was zero-based index `3`:
+`mappo_mobile + mappo_mobile`, identity
+`c88c56866c9d7db3ea7059233019c2f014fe39375d736a0de14d8c5a7f2f51de`.
+It completed one 128-interaction dynamic development episode with 11 accepted
+spray actions and 0.22 L sprayed pesticide. The strict checkpoint and artifact
+audit passed; validation, sealed, and battery flags remained false. The output
+is under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-004-mappo/`
+and is descriptive `M2` evidence only. An audit-wrapper field mismatch was
+recovered by reusing the completed files; training was not rerun.
+
+The next authorized identity is zero-based index `4`,
+`sr_mappo_mobile + sr_mappo_two_stage`, still one dynamic development pilot at
+a time. No replacement freeze or formal G6 action is authorized.
