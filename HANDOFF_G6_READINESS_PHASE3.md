@@ -330,6 +330,27 @@ checks, or provides a specification. Do not write proves, significantly
 outperforms, formal experiments show, real deployment verified, or universally
 optimal.
 
+## 12. Replacement Runner Hardening Checkpoint
+
+Before executing the replacement matrix, commit
+`83c14073ad1a2f8300dda61c288aa4554991b4ee` was pushed and verified on the
+current branch. The strict runner contract requires explicit development
+partition, physical dynamic training, real scenario execution, completion
+validation, pesticide-only replenishment, and `dynamic_pest_v1` provenance.
+The audit now records the canonical expected/completed identity sets,
+replacement scope, and `matrix_complete`; historical static artifacts remain
+readable only as historical diagnostics. `scripts/run_g5_pilots.py` uses the
+physical refit runner with `resolve_condition_execution`, candidate `c01`, and
+the default output root
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/replacement-48/`.
+
+Verification on that pushed commit returned `46 passed` for the focused pilot
+and remediation tests, `139 passed` for the affected matrix/physical/G6 suite,
+successful `compileall`, `git diff --check`, and a successful pilot CLI help
+check. No replacement identity was run by the hardening checkpoint. The next
+authorized action is the sequential 48-job replacement matrix; preserve any
+failed attempt and retry only the same identity.
+
 ## 9. Absolute Do-Not-Repeat Rules
 
 - Do not treat 30 jobs as 120 jobs, or any partial matrix as complete.

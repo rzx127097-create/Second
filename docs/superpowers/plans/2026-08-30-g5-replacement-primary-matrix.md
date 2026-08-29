@@ -32,11 +32,11 @@
 - `build_pilot_matrix(contract)` returns exactly 48 unique development `PilotJob` values.
 - `run_pilot_matrix` rejects excluded conditions and incomplete replacement coverage.
 
-- [ ] **Step 1: Update tests to assert the 48-job replacement scope and excluded diagnostics.**
-- [ ] **Step 2: Run the focused tests and observe the expected failures against the current 120-job contract.**
-- [ ] **Step 3: Implement the minimum constants/mapping change in `pilot.py`.**
-- [ ] **Step 4: Run the focused pilot-freeze suite and affected G5 tests.**
-- [ ] **Step 5: Commit the contract implementation and tests.**
+- [x] **Step 1: Update tests to assert the 48-job replacement scope and excluded diagnostics.**
+- [x] **Step 2: Run the focused tests and observe the expected failures against the current 120-job contract.**
+- [x] **Step 3: Implement the minimum constants/mapping change in `pilot.py`.**
+- [x] **Step 4: Run the focused pilot-freeze suite and affected G5 tests.**
+- [x] **Step 5: Commit the contract implementation and tests.**
 
 ### Task 2: Record and audit the replacement freeze boundary
 
@@ -49,9 +49,9 @@
 - The audit record names the exact eight-condition scope, 48-job count, excluded diagnostics, and formal G6 invariants.
 - `PROJECT_STATE.md` and the handoff identify the replacement matrix as the only next authorized development scope.
 
-- [ ] **Step 1: Record the implementation commit, test result, and scope hash after Task 1.**
-- [ ] **Step 2: Run documentation diff checks and verify no protected or historical output changed.**
-- [ ] **Step 3: Commit and push the replacement scope/state record.**
+- [x] **Step 1: Record the implementation commit, test result, and scope hash after Task 1.**
+- [x] **Step 2: Run documentation diff checks and verify no protected or historical output changed.**
+- [x] **Step 3: Commit and push the replacement scope/state record.**
 
 ### Task 3: Generate and verify the replacement G5 freeze
 

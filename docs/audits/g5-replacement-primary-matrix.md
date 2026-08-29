@@ -150,3 +150,25 @@ IPPO artifact remain outside the replacement aggregate. The next authorized
 action is to execute the new 48 identities one at a time under the committed
 contract, preserve failed attempts, audit each completion, and generate the
 replacement freeze only after all 48 identities pass.
+
+## Runner Hardening Before Execution
+
+Commit `83c14073ad1a2f8300dda61c288aa4554991b4ee` hardens the replacement
+execution boundary before any replacement identity is run. `run_pilot_matrix`
+now rejects missing or non-development partitions, non-physical training,
+non-executed scenarios, missing completion validation, non-pesticide resource
+claims, and incomplete or malformed dynamic ecology provenance. Its artifact
+verification cross-checks every recorded identity against the canonical 48-job
+matrix and requires the audit's expected/completed identity sets and
+replacement scope to agree. Historical static G5 paths remain readable only
+under the legacy compatibility branch and cannot satisfy the new replacement
+contract.
+
+The CLI now dispatches all replacement jobs through the physical dynamic refit
+runner, injects controller semantics from `resolve_condition_execution`, fixes
+candidate `c01`, and writes below
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/replacement-48/`.
+Focused and affected verification on the pushed commit returned `46 passed`
+and `139 passed`, respectively, with successful `compileall`, `git diff
+--check`, and CLI help checks. This hardening checkpoint does not change the
+gate status: `matrix_complete=false` until all 48 physical identities pass.

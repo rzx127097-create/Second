@@ -2983,3 +2983,36 @@ unlock count remains `0`. The next authorized action is to execute the new 48
 development identities one at a time, preserve failed attempts, validate each
 identity automatically, and generate the replacement dynamic G5 freeze only
 after all 48 identities pass.
+
+## G5 Replacement Runner Hardening
+
+The replacement pilot runner and audit contract were hardened before any new
+replacement identity was executed. Commit `83c14073ad1a2f8300dda61c288aa4554991b4ee`
+(`fix: enforce dynamic g5 pilot evidence contract`) is pushed to
+`origin/codex/problem2-dynamic-pest-model`; local HEAD, upstream HEAD, and the
+remote branch all resolve to this hash.
+
+The runner now requires every replacement result to explicitly prove
+`partition=development`, `training_mode=physical_development`,
+`scenario_execution=true`, `completion_validated=true`, pesticide-only
+replenishment, and complete `dynamic_pest_v1` provenance. Missing partition or
+provenance fields fail closed. The audit records and verifies the canonical
+expected identity list, completed identity list, replacement scope, and
+`matrix_complete` declaration, while historical static G5 artifacts remain
+readable but cannot satisfy the replacement evidence contract. The CLI now
+dispatches to `run_physical_development_refit_training` with condition semantics
+from `resolve_condition_execution`, candidate `c01`, and output root
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/replacement-48/`.
+
+Fresh verification on the pushed commit:
+
+- `python -m pytest tests/g5/test_pilot_freeze.py tests/g5/test_task12_remediation2.py -q --tb=short`: `46 passed`;
+- `python -m pytest tests/g5/test_experiment_matrix.py tests/g5/test_physical_candidate_training.py tests/g5/test_environment_metrics.py tests/g6 -q --tb=short`: `139 passed`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass;
+- `python scripts/run_g5_pilots.py --help`: exit `0`.
+
+No replacement identity, validation scenario, sealed scenario, or G7 unlock
+was executed by this hardening change. Highest maturity remains `M2`;
+`matrix_complete=false`, replacement freeze and Phase 4 preflight remain
+blocked until the complete 48-job dynamic pilot matrix passes.
