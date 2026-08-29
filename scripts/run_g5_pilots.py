@@ -218,7 +218,10 @@ def main() -> int:
             for method, values in aggregates["g30x50_d4"].items()
         ]
         decision = select_pilot_budget(runtime_rows)
-        pilot_base = output_root.parent if output_root.name == "pilots" else output_root
+        # Candidate and budget manifests are G5-wide frozen inputs. Keep them
+        # beside the canonical gate manifests even when pilots live in a
+        # named subdirectory such as ``replacement-48``.
+        pilot_base = G5_ROOT
         (ROOT / DYNAMIC_OUTPUT_ROOT / "g5" / "validation").mkdir(parents=True, exist_ok=True)
         candidate_path = pilot_base / "manifests" / "validation-candidates.json"
         candidates = freeze_validation_candidates(contract, decision, candidate_path)
