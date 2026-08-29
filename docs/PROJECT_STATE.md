@@ -2890,3 +2890,36 @@ Persistence and verification:
 The next authorized action after this state synchronization is one controlled
 run of zero-based matrix index `7` (`ippo_mobile` with `ippo_mobile`). No batch
 or later-gate action is authorized.
+
+## G6 Readiness Phase 3: No-Context Handoff Refresh
+
+On 2026-08-30, the no-context handoff was refreshed in
+`HANDOFF_G6_READINESS_PHASE3.md` so a new conversation can resume without
+mistaking the current 30-job draft for an accepted gate result. The handoff
+records the seven completed dynamic development identities, the persisted
+controller and audit evidence, the current uncommitted draft state, and the
+remaining G6 boundary.
+
+The user-approved direction is to reduce development-pilot time with a
+replacement matrix, but the first 30-job proposal is incompatible with the
+existing runtime-budget/refit contract because it omits three of the five
+`LEARNING_METHODS`. The next implementation must therefore revise the scope to
+`8 conditions x 2 representative scales x 3 development seeds = 48 jobs`,
+covering `sr_mappo_mobile`, `mappo_mobile`, `ippo_mobile`, `maddpg_mobile`, and
+`iql_mobile`. The 30-job changes in `src/problem2/training/pilot.py`,
+`tests/g5/test_pilot_freeze.py`, and the associated untracked design/plan are
+working material and are not accepted or authorized for commit as-is.
+
+Handoff content commit `4cb579c` (`docs: refresh g6 readiness phase3 handoff`)
+was pushed to `origin/codex/problem2-dynamic-pest-model`. Fresh document
+verification returned no content errors from `git diff --check`; the handoff
+range and identity checks confirmed validation `20000-20049`, sealed
+`30000-30099`, the current state hash, latest pilot identity, and the 48-job
+direction. No pilot, validation/sealed payload, G7 unlock, battery
+replenishment, protected external asset, or historical output was changed by
+this handoff update.
+
+The replacement matrix, replacement G5 freeze, Phase 4 preflight, formal G6,
+validation selection, and G7 remain blocked. The next authorized implementation
+step is to revise and test the 48-job replacement contract, then commit and
+push that contract before running any replacement development job.
