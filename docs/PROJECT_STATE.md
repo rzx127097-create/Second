@@ -2307,6 +2307,9 @@ Persistence:
   pushed to the same branch;
 - first-pilot evidence commit `61f552b4f93250d72ab0aa3a9770f6a5f7c7baf1` was
   pushed to the same branch;
+- raw first-pilot artifact commit `acd71c396637e1523eb3e6e4b94e0bffc8b93112`
+  was pushed to the same branch and contains the checkpoint, summary,
+  manifest, and physical episode log;
 - the detailed audit is `docs/audits/g6-readiness-phase3.md`.
 
 No validation scenario payload, sealed scenario payload, protected external
