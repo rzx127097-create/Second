@@ -2125,3 +2125,8 @@ Persistence for this phase:
 - After the push, local HEAD, upstream HEAD, and
   `git ls-remote origin refs/heads/codex/problem2-dynamic-pest-model` all
   matched `fc12e389754b2017c53ebed4704d2fd370b718e8`.
+
+The current conversation handoff is
+`HANDOFF_G6_READINESS_PHASE0.md`. It is the concise current-context entry
+document for the next conversation and supplements the longer historical
+`HANDOFF_G6_READINESS.md`.
