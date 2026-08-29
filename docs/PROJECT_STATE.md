@@ -2541,3 +2541,62 @@ pesticide-only replenishment, battery replenishment disabled,
 4 preflight, formal G6, validation selection, and G7 remain blocked. The next
 authorized action remains a single controlled run of zero-based matrix index
 `2` after review of this persisted result.
+
+## G6 Readiness Phase 3: Third Controlled Matrix Pilot
+
+On 2026-08-29, zero-based matrix index `2` was resolved mechanically from the
+frozen 510-job development matrix and executed as one bounded job. Its identity
+is `5e48578dcbc0bd88d4fb6391c8fad51c9f8566335964068a96bb8f525b3ff260`:
+
+```text
+method=sr_mappo_mobile
+condition_id=sr_mappo_astar
+vehicle_controller=rolling_astar
+vehicle_trainable=false
+training_mode=uav_only
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+scenario_ids=10000-10019
+interactions=128
+```
+
+The first and only attempt completed with one dynamic episode, `128` ecology
+steps, `30` accepted spray actions, and `0.5750000000000003 L` sprayed
+pesticide. Team reward was `-0.009897712772544845`, and total pest changed from
+`9.088605068072038` to `9.178561470538911`. These are retained descriptive M2
+observations only and support no efficacy or ranking claim.
+
+Fresh verification for this identity:
+
+- startup G6 readiness baseline: `50 passed in 30.32s`;
+- focused heuristic/environment/controller/resource regression: `43 passed in
+  40.67s`;
+- strict physical completion reload: `pass`, with exact A* condition semantics,
+  finite evaluation state, and closed validation/sealed flags;
+- audit reference validation: `pass`, four files matched recorded SHA-256 and
+  byte counts; the three manifest entries independently matched;
+- Git evidence attributes: JSON/JSONL use LF and checkpoint files are binary;
+- Git-index byte preservation: `pass` for all six staged paths;
+- `git diff --cached --check`: pass before the content commit.
+
+Artifacts and the detailed audit are under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-003-astar/`
+and `docs/audits/g6-readiness-phase3.md`. The content commit
+`ab05bfe9a9afad47bafa42bec09e36d1bc0dca86` (`data: record third dynamic
+phase3 pilot`) was pushed to `origin/codex/problem2-dynamic-pest-model`.
+Local, upstream, and remote hashes matched that commit immediately after the
+push.
+
+After persistence advanced `HEAD`, strict checkpoint reload passed again with
+generation commit `3b69fd15566e89707d721e8e12d7912572d3164e` and current commit
+`ab05bfe9a9afad47bafa42bec09e36d1bc0dca86`; the generation commit is an
+ancestor and the recorded source bundle is unchanged.
+
+Boundary status remains unchanged: highest maturity `M2`, dynamic ecology only,
+pesticide-only replenishment, battery replenishment disabled,
+`validation_accessed=false`, `sealed_accessed=false`, and sealed unlock count
+`0`. The replacement matrix remains incomplete; replacement G5 freeze, Phase 4
+preflight, formal G6, validation selection, and G7 remain blocked. The next
+authorized action after this state record is one controlled run of zero-based
+matrix index `3`, not a batch or later-gate action.
