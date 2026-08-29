@@ -2268,3 +2268,53 @@ next authorized work is Phase 3 dynamic G3-G5 revalidation and replacement
 freeze. Formal G6 execution remains blocked until Phase 3 and the later full
 read-only preflight pass. No efficacy, superiority, significance,
 formal-result, real-deployment, or universally-optimal claim is permitted.
+
+## G6 Readiness Phase 3: Dynamic Revalidation Started
+
+On 2026-08-29, Phase 3 began after the Phase 2 implementation and state
+record were pushed. The physical execution path now injects the executable
+vehicle controller for non-learned conditions, enforces controller
+slot/request identity before reservation, keeps `sr_mappo_mobile` sampled
+vehicle actions, and rejects unknown explicit condition IDs. Phase 3 remains
+at maturity `M2` and does not authorize formal G6 execution, validation
+selection, or the G7 sealed-test unlock.
+
+Fresh verification:
+
+- affected dynamic ecology/G3/G4/G5 suite: `361 passed in 371.33s`;
+- `python scripts/audit_dynamic_pest.py --root . --output outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g3/audits/dynamic-pest-implementation-phase3.json`:
+  `status=pass`;
+- `python scripts/run_g5_smoke.py --device cpu --interactions 128 --method sr_mappo_mobile --ecology-mode dynamic`:
+  `status=pass jobs=1`;
+- first physical pilot completion validation: `completion_validated=true`,
+  one dynamic episode, 128 ecology steps, 25 accepted spray actions;
+- pilot boundary: `validation_accessed=false`, `sealed_accessed=false`,
+  `battery_replenishment_enabled=false`.
+
+The first controlled development pilot is recorded under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-first/` with
+`method=sr_mappo_mobile`, `condition_id=sr_mappo_mobile`, `candidate_id=c01`,
+`scale=g20x20_d2`, `training_seed=51001`, and `interactions=128`. It is
+`noncanonical_test_only` descriptive evidence only; it is not a formal result
+and supports no efficacy, superiority, significance, deployment, or
+optimality claim.
+
+Persistence:
+
+- controller wiring commit `913d573239a713e6af4c455e8ded32caaa9de95f` was
+  pushed to `origin/codex/problem2-dynamic-pest-model`;
+- dynamic revalidation commit `5d5b9fdea3f0cea8cf18d5761280d10aecd03df7` was
+  pushed to the same branch;
+- first-pilot evidence commit `61f552b4f93250d72ab0aa3a9770f6a5f7c7baf1` was
+  pushed to the same branch;
+- the detailed audit is `docs/audits/g6-readiness-phase3.md`.
+
+No validation scenario payload, sealed scenario payload, protected external
+asset, OSM input, or historical static G5 output was modified or accessed;
+the actual G7 unlock count remains `0`. The dynamic replacement candidate and
+budget freeze has not been regenerated from a complete Phase 3 pilot matrix.
+
+Phase 3 is paused after the first pilot as required by the handoff. The next
+authorized action is another controlled dynamic development pilot, one at a
+time, after review of the completed result. Replacement G5 freeze generation,
+Phase 4 preflight, formal G6 jobs, and G7 remain blocked.
