@@ -2130,3 +2130,8 @@ The current conversation handoff is
 `HANDOFF_G6_READINESS_PHASE0.md`. It is the concise current-context entry
 document for the next conversation and supplements the longer historical
 `HANDOFF_G6_READINESS.md`.
+
+The handoff content/state commit
+`0993b2574996ca2653b74f58c1228b028f375a0c` (`docs: add g6 readiness phase 0
+handoff`) was pushed to `origin/codex/problem2-dynamic-pest-model`. After that
+push, local HEAD, upstream HEAD, and the remote branch all matched this hash.
