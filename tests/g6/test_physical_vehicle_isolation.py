@@ -12,6 +12,7 @@ from problem2.training.physical_training import (
     _update_physical_algorithm,
     build_physical_envelope,
 )
+from problem2.training import physical_training
 from problem2.training.tuning import build_development_environment
 
 
@@ -97,3 +98,34 @@ def test_non_trainable_sr_update_preserves_vehicle_optimizer_state() -> None:
     after_trainer = algorithm.trainer.state_dict()
     assert after_trainer["optimizers"]["vehicle"] == before_trainer["optimizers"]["vehicle"]
     assert after_trainer["schedulers"]["vehicle"] == before_trainer["schedulers"]["vehicle"]
+
+
+def test_physical_runner_routes_non_trainable_observation_through_isolation_boundary(
+    tmp_path: Path, monkeypatch
+) -> None:
+    calls = []
+    real_observe = physical_training._observe_physical_algorithm
+
+    def observe(algorithm, envelope, *, vehicle_trainable):
+        calls.append((algorithm.method_id, vehicle_trainable))
+        return real_observe(algorithm, envelope, vehicle_trainable=vehicle_trainable)
+
+    monkeypatch.setattr(physical_training, "_observe_physical_algorithm", observe)
+    job = {
+        "source_root": ROOT,
+        "method": "iql_mobile",
+        "condition_id": "sr_mappo_fixed",
+        "vehicle_controller": "fixed_support",
+        "vehicle_trainable": False,
+        "training_mode": "uav_only",
+        "candidate_id": "c01",
+        "partition": "development",
+        "scenario_id": 10000,
+        "scenario_ids": list(range(10000, 10020)),
+        "training_seed": 51001,
+        "scale": "g20x20_d2",
+    }
+    physical_training.run_noncanonical_physical_candidate_training_for_test(
+        job, "cpu", 1, tmp_path / "runner"
+    )
+    assert calls == [("iql_mobile", False)]

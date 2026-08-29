@@ -757,7 +757,11 @@ def _run_physical_candidate_training(
             transition_index=transition_index,
             vehicle_trainable=condition_vehicle_trainable,
         )
-        algorithm.observe(envelope)
+        _observe_physical_algorithm(
+            algorithm,
+            envelope,
+            vehicle_trainable=condition_vehicle_trainable,
+        )
         fresh_since_update += 1
         episode_interactions += 1
         episode_reward += team_reward

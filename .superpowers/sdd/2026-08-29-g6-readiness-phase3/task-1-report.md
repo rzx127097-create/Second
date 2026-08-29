@@ -57,4 +57,6 @@ Focused GREEN: `python -m pytest tests/g6/test_physical_vehicle_isolation.py -q 
 
 Affecting protocol regression suite: `python -m pytest tests/g5/test_physical_candidate_training.py tests/g6/test_controller_wiring.py tests/g6/test_condition_semantics.py tests/g5/test_off_policy_algorithms.py tests/g5/test_on_policy_algorithms.py -q --tb=short` -> `198 passed in 164.81s`.
 
+Runner wiring follow-up: the physical collection loop now calls `_observe_physical_algorithm`; a fixed-support IQL runner spy regression confirms the non-trainable boundary is used (`1 passed`). The trainer snapshot reads the attached algorithm `_trainer` (the concrete trainer backing `algorithm.trainer`) and restores vehicle role optimizer/scheduler state after UAV updates.
+
 No validation or sealed scenario payloads were accessed; historical outputs remain unchanged. Phase 3 remains `M2` and no formal G6/G7 work was run.
