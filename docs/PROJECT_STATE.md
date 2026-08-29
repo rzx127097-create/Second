@@ -2348,3 +2348,67 @@ Persistence:
   to `origin/codex/problem2-dynamic-pest-model`;
 - detailed note: `docs/audits/g5-rolling-astar-current-route-fix.md`;
 - no validation/sealed payload or historical pilot output was modified.
+
+## G6 Readiness Phase 3: Controller Remediation Continuation
+
+On 2026-08-29, Phase 3 controller remediation was revalidated on the dynamic
+ecology path. The physical runner now preserves the selected outer condition
+through refit dispatch, isolates vehicle learning for non-learned conditions,
+records the executed controller slot, refreshes rolling-A* route distance
+between replans, and retains the active locked service node after UAV movement.
+These are bounded development correctness results at `M2`.
+
+Fresh verification after the fixes:
+
+- `python -m pytest tests/g6 -q --tb=short`: `50 passed in 32.10s`;
+- affected dynamic ecology/G3/G4/G5 suite: `381 passed in 462.35s`;
+- `python scripts/audit_dynamic_pest.py --root . --output outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g3/audits/dynamic-pest-implementation-phase3-post-controller.json`: `status=pass`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass;
+- artifact integrity check: `6` manifests, all referenced files present with
+  matching byte counts and SHA-256 values.
+
+The five non-mobile development paths were each run for 8 physical
+interactions with `method=sr_mappo_mobile`, `candidate_id=c01`,
+`scale=g20x20_d2`, `training_seed=51001`, and development scenario panel
+`10000-10019`. They completed with these executable semantics:
+
+| condition | controller | training mode | vehicle trainable |
+|---|---|---|---:|
+| `sr_mappo_fixed` | `fixed_support` | `uav_only` | false |
+| `sr_mappo_astar` | `rolling_astar` | `uav_only` | false |
+| `sr_mappo_nearest` | `nearest_feasible` | `uav_only` | false |
+| `sr_mappo_urgency` | `urgency_priority` | `uav_only` | false |
+| `sr_mappo_two_stage` | `learned_two_stage` | `two_stage` | true |
+
+The successful artifacts are under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-controller-checks/`;
+the first failed A* and nearest attempts remain preserved as empty attempt
+directories and were not silently overwritten or retried. The same first-pilot
+identity was revalidated in a new directory after the source changes:
+`sr_mappo_mobile`, `c01`, `g20x20_d2`, seed `51001`, 128 interactions,
+one dynamic episode, 128 ecology steps, 25 accepted spray actions, and
+`0.48750000000000016` L sprayed pesticide. Its artifact set is under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-first-revalidated/`.
+
+All continuation artifacts are `noncanonical_test_only` development evidence.
+No validation scenario payload (`20000-20049`) or sealed payload
+(`30000-30099`) was accessed; validation and sealed flags remain false, the
+actual G7 unlock count remains `0`, and battery replenishment remains disabled.
+Replacement dynamic G5 freeze generation, validation selection, Phase 4
+preflight, formal G6 jobs, and G7 remain blocked. The next authorized action is
+one controlled development pilot at a time toward a complete replacement G5
+pilot matrix.
+
+Persistence:
+
+- `50a053a` routes the physical observation loop through the vehicle-isolation
+  boundary; `c4eff19` records its round-5 report;
+- `d10d30e` refreshes rolling-A* current-route validation; `dc21895` records
+  that remediation;
+- `48e771f` preserves active locked service nodes and adds nearest/urgency
+  regressions and audit evidence;
+- content commit `3f70603` (`docs: persist phase 3 controller revalidation`)
+  records the Phase 3 audit, successful controller artifacts, revalidated
+  first-pilot artifacts, and the post-controller dynamic audit; it was pushed
+  to `origin/codex/problem2-dynamic-pest-model`.
