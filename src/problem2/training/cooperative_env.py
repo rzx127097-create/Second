@@ -456,8 +456,8 @@ class Problem2CooperativeEnv:
             sampled_slot = decision.sampled_slot
             if sampled_slot > 0:
                 request_id = decision.request_id
-                if request_id not in mapping:
-                    raise ValueError("controller selected request absent from candidate mapping")
+                if request_id is None or sampled_slot > len(mapping) or mapping[sampled_slot - 1] != request_id:
+                    raise ValueError("controller decision request does not match candidate mapping")
                 self._candidate_nodes[request_id] = (int(decision.selected_service_node), float(decision.route_length_m))
                 dispatch = self._commit_dispatch(requests, sampled_slot, mapping, events)
         elif dispatch is None and sampled_slot > 0:

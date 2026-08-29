@@ -894,13 +894,8 @@ def _build_physical_environment(
         inventory_l=config.vehicle_inventory_l,
     )
     if vehicle_controller is None and condition_id is not None:
-        try:
-            execution = resolve_condition_execution(condition_id)
-        except ValueError:
-            execution = None
-        if execution is None:
-            pass
-        elif not execution.vehicle_trainable:
+        execution = resolve_condition_execution(condition_id)
+        if not execution.vehicle_trainable:
             controller_name = execution.vehicle_controller
             if controller_name == "fixed_support":
                 support_node = int(primary_nodes[0])

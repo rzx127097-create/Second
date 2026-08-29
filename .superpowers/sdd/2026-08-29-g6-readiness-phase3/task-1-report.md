@@ -30,3 +30,7 @@ Implementation commit recorded after verification: `18604d4e974f6f80e39bfcb751b3
 ## Unresolved concerns
 
 The fixed-support factory selects the first primary-component road node as its deterministic support node, and rolling A* uses a fixed five-step replan interval. These are readiness defaults and require dynamic G3-G5 pilot validation before any formal G6 execution. No validation or sealed scenarios were accessed.
+
+## Fix Round 1
+
+Added fail-closed controller decision mapping validation, ensuring slot and request identity agree before reservation, plus condition semantics and learned-mobile regression coverage. Unknown explicit condition IDs now raise; algorithm-only methods omit condition factory dispatch. Verification: `python -m pytest tests/g6/test_controller_wiring.py tests/g5/test_environment_metrics.py tests/g5/test_physical_candidate_training.py::test_all_methods_follow_their_frozen_physical_update_cadence -q --tb=short` -> `23 passed`.

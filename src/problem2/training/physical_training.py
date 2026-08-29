@@ -565,8 +565,9 @@ def _run_physical_candidate_training(
     job_output.mkdir(parents=True, exist_ok=True)
 
     scenario_cursor = 0
+    condition_for_factory = condition if condition in {"sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar", "sr_mappo_nearest", "sr_mappo_urgency", "sr_mappo_two_stage"} else None
     environment = build_development_environment(
-        root, scenario_id=scenario_ids[scenario_cursor], scale=scale, condition_id=condition
+        root, scenario_id=scenario_ids[scenario_cursor], scale=scale, condition_id=condition_for_factory
     )
     if getattr(environment, "primary_eligible", False) is not True or getattr(environment, "ecology_mode", None) != "dynamic":
         raise RuntimeError("physical candidate training requires the dynamic primary environment")
@@ -652,7 +653,7 @@ def _run_physical_candidate_training(
         if next_view["truncated"] and not final_interaction:
             scenario_cursor = (scenario_cursor + 1) % len(scenario_ids)
             environment = build_development_environment(
-                root, scenario_id=scenario_ids[scenario_cursor], scale=scale, condition_id=condition
+                root, scenario_id=scenario_ids[scenario_cursor], scale=scale, condition_id=condition_for_factory
             )
             if getattr(environment, "primary_eligible", False) is not True or getattr(environment, "ecology_mode", None) != "dynamic":
                 raise RuntimeError("physical candidate training requires the dynamic primary environment")
