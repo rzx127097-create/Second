@@ -2817,3 +2817,18 @@ selection, and G7 remain blocked. The next authorized action is to mechanically
 resolve and review zero-based matrix index `6`,
 `sr_mappo_mobile + sr_mappo_urgency`, then run at most that one dynamic
 development pilot. No validation or sealed scenario payload may be accessed.
+
+Persistence verification for Matrix Identity 006:
+
+- Content commit `d87247d951cf1bb8206db752bc73e744f509e5fd` (`data: record sixth
+  dynamic phase3 pilot`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`.
+- After the push, `git rev-parse HEAD`, `git rev-parse '@{upstream}'`, and
+  `git ls-remote origin refs/heads/codex/problem2-dynamic-pest-model` all
+  returned `d87247d951cf1bb8206db752bc73e744f509e5fd`.
+- Fresh verification for the persisted identity returned `64 passed` for
+  `python -m pytest tests/g6 -q --tb=short`, exit `0` for
+  `python -m compileall -q src scripts`, no content errors from
+  `git diff --check`, and a passing four-artifact audit with matching SHA-256
+  values and byte counts. The existing untracked temporary directories remain
+  preserved and unstaged.
