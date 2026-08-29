@@ -378,10 +378,14 @@ class Problem2CooperativeEnv:
         for request in candidates:
             uav = next(item for item in self._state.uavs if item.uav_id == request.uav_id)
             slot = mapping.index(request.request_id)
+            service_nodes = self._primary_nodes_within_radius(uav)
+            if active is not None and request.request_id == active.request_id:
+                if active.selected_service_node not in service_nodes:
+                    service_nodes = (*service_nodes, active.selected_service_node)
             request_rows.append(ObservableRequest(
                 request.request_id, request.uav_id, slot, request.created_step,
                 request.requested_l, uav.pesticide_l, self.config.usable_capacity_l,
-                float(max(0, self.max_steps - self._state.step)), self._primary_nodes_within_radius(uav),
+                float(max(0, self.max_steps - self._state.step)), service_nodes,
             ))
         observation = DispatchObservation(
             step=self._state.step, graph=self.graph, vehicle=self._state.vehicle,
