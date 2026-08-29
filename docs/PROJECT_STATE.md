@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-28
+Last updated: 2026-08-29
 
 ## Final Goal
 
@@ -2187,3 +2187,25 @@ needed to turn the focused tests GREEN. Formal G6 execution remains blocked
 until Phase 3 creates and persists a replacement dynamic G5 freeze and Phase 4
 preflight passes. No efficacy, superiority, significance, real-deployment, or
 universal-optimality claim is permitted.
+
+## G6 Readiness Phase 1: Current Session Handoff
+
+The current no-context entry document is
+`HANDOFF_G6_READINESS_PHASE1.md`. It supersedes Phase 0 as the first handoff to
+read while preserving the older handoff as historical context. It records the
+Phase 2 implementation order, the focused RED failure groups, the minimum
+gate-critical verification policy, protected assets and untracked directories,
+and the actions that remain unauthorized.
+
+The handoff commit
+`c58c72b6ab9a0f318b1f0db22f3fc828d17baa3d`
+(`docs: add g6 readiness phase 1 handoff`) was pushed to
+`origin/codex/problem2-dynamic-pest-model`. After that push, local HEAD,
+upstream HEAD, and the remote branch all matched this hash. The closing-session
+focused reproduction remained the expected RED baseline: `30 failed, 10
+passed`. No production implementation, experiment, validation scenario,
+sealed scenario, protected external asset, historical static output, or
+pre-existing untracked directory was modified or accessed.
+
+The next authorized work remains G6 readiness Phase 2 implementation and
+testing. Formal G6 execution remains blocked.
