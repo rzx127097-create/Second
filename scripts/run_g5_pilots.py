@@ -14,7 +14,10 @@ from problem2.experiments.artifacts import atomic_write_bytes
 from problem2.experiments.ecology_policy import DYNAMIC_OUTPUT_ROOT, EcologyMode, resolve_output_root
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.training.conditions import resolve_condition_execution
-from problem2.training.physical_training import run_physical_development_refit_training
+from problem2.training.physical_training import (
+    run_physical_development_refit_training,
+    validate_physical_training_completion,
+)
 from problem2.training.budget import select_pilot_budget
 from problem2.training.pilot import (
     build_pilot_matrix,
@@ -44,14 +47,25 @@ def _run_dynamic_pilot_job(
         "vehicle_trainable": execution.vehicle_trainable,
         "training_mode": execution.training_mode,
     }
-    result = dict(
-        run_physical_development_refit_training(
-            physical_job,
-            device,
-            interactions,
-            output_root,
+    result = _reuse_physical_identity(physical_job, device, interactions, output_root)
+    if result is None:
+        run_root = output_root
+        if output_root.exists() and any(output_root.iterdir()):
+            attempt_numbers = [
+                int(path.name.split("-", 1)[1])
+                for path in output_root.glob("attempt-*")
+                if path.is_dir() and path.name.split("-", 1)[1].isdigit()
+            ]
+            next_attempt = max(attempt_numbers, default=0) + 1
+            run_root = output_root / f"attempt-{next_attempt:06d}"
+        result = dict(
+            run_physical_development_refit_training(
+                physical_job,
+                device,
+                interactions,
+                run_root,
+            )
         )
-    )
     if result.get("completion_validated") is not True:
         raise RuntimeError("physical dynamic pilot completion was not validated")
     if result.get("candidate_id") != "c01":
@@ -62,6 +76,53 @@ def _run_dynamic_pilot_job(
     result["training_mode"] = "physical_development"
     result["condition_training_mode"] = execution.training_mode
     return result
+
+
+def _reuse_physical_identity(
+    job: Mapping[str, Any], device: str, interactions: int, output_root: Path
+) -> dict[str, Any] | None:
+    """Return a strictly validated prior attempt for one pilot identity."""
+
+    contract = job.get("_contract")
+    method = str(job["method"])
+    condition = str(job["condition_id"])
+    seed = int(job["training_seed"])
+    scale = str(job["scale"])
+    candidate_id = str(job.get("candidate_id", "c01"))
+    candidates = getattr(contract, "tuning_candidates", {}).get(method, ())
+    candidate = next((item for item in candidates if item.candidate_id == candidate_id), None)
+    if candidate is None:
+        raise ValueError("replacement pilot candidate is not frozen for the method")
+    relative_output = f"{method}__{condition}__{seed}"
+    candidate_roots = [output_root / relative_output]
+    candidate_roots.extend(
+        path / relative_output
+        for path in sorted(output_root.glob("attempt-*"))
+        if path.is_dir()
+    )
+    for candidate_root in candidate_roots:
+        manifest = candidate_root / "manifest.json"
+        if not manifest.is_file():
+            continue
+        try:
+            result = validate_physical_training_completion(
+                manifest,
+                contract=contract,
+                method=method,
+                condition_id=condition,
+                candidate_id=candidate_id,
+                config_hash=candidate.config_hash,
+                seed=seed,
+                interactions=interactions,
+                scale=scale,
+                device=device,
+                canonical=False,
+            )
+        except Exception:
+            continue
+        if result.get("completion_validated") is True:
+            return dict(result)
+    return None
 
 
 def _reuse_complete_pilot(

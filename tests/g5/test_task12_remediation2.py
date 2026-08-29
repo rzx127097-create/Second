@@ -49,6 +49,17 @@ def _validation_script():
     return module
 
 
+def _pilot_script():
+    spec = importlib.util.spec_from_file_location(
+        "run_g5_pilots_under_test",
+        ROOT / "scripts" / "run_g5_pilots.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _frozen_manifests(tmp_path: Path) -> tuple[Path, Path]:
     tmp_path.mkdir(parents=True, exist_ok=True)
     candidates = tmp_path / "validation-candidates.json"
@@ -468,6 +479,57 @@ def test_selected_refit_runner_uses_physical_development_training(
     assert observed["candidate_id"] == "c01"
     assert observed["condition_id"] == "sr_mappo_mobile"
     assert result["condition_id"] == "sr_mappo_fixed"
+
+
+def test_replacement_pilot_reuses_validated_physical_identity(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    module = _pilot_script()
+    contract = load_g5_contract(ROOT)
+    output = tmp_path / "identity"
+    physical = output / "sr_mappo_mobile__sr_mappo_mobile__51001"
+    physical.mkdir(parents=True)
+    manifest = physical / "manifest.json"
+    manifest.write_text("{}\n", encoding="utf-8")
+    observed: dict[str, object] = {}
+
+    def fake_validate(path: Path, **kwargs: object) -> dict[str, object]:
+        observed["path"] = path
+        observed.update(kwargs)
+        return {
+            "method": "sr_mappo_mobile",
+            "condition_id": "sr_mappo_mobile",
+            "candidate_id": "c01",
+            "candidate_config_hash": "a" * 64,
+            "scale": "g20x20_d2",
+            "training_seed": 51001,
+            "scenario_id": 10000,
+            "scenario_ids": list(range(10000, 10020)),
+            "partition": "development",
+            "interactions": 128,
+            "completion_validated": True,
+        }
+
+    monkeypatch.setattr(module, "validate_physical_training_completion", fake_validate)
+    result = module._reuse_physical_identity(
+        {
+            "method": "sr_mappo_mobile",
+            "condition_id": "sr_mappo_mobile",
+            "candidate_id": "c01",
+            "scale": "g20x20_d2",
+            "training_seed": 51001,
+            "scenario_id": 10000,
+            "scenario_ids": list(range(10000, 10020)),
+            "partition": "development",
+            "_contract": contract,
+        },
+        "cpu",
+        128,
+        output,
+    )
+    assert result is not None
+    assert observed["path"] == manifest
+    assert observed["canonical"] is False
 
 
 def test_freeze_source_clean_guard_rejects_tracked_dirty_state(
