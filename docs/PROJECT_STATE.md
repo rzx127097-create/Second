@@ -2932,3 +2932,54 @@ The handoff baseline was aligned with the state record and pushed as
 must preserve the same current gate: `M2`, dynamic development continuation,
 formal G6 blocked, validation/sealed access false, battery replenishment false,
 and G7 unlock count `0`.
+
+## G6 Readiness Phase 3: Simplified Dynamic G5 Reacceptance And Replacement Contract
+
+On 2026-08-30, the dynamic G5 development-pilot preparation was simplified by
+removing repeated full-suite rechecks while preserving the complete evidence
+coverage required by the existing runtime-budget and selected-refit contracts.
+The valid replacement matrix is now:
+
+```text
+8 executable conditions x 2 representative scales x 3 development seeds = 48 jobs
+```
+
+It covers the five learning methods `sr_mappo_mobile`, `mappo_mobile`,
+`ippo_mobile`, `maddpg_mobile`, and `iql_mobile`. The twelve normalization,
+stability, hyperparameter, nearest, and urgency probes are diagnostic-only and
+are explicitly excluded from primary selection. The formal G6 scales, seeds,
+statistics, validation/test partitions, and sealed-test lock are unchanged.
+
+The matrix contract, tests, design, and plan were committed and pushed in:
+
+- `c92b70678727511e8ac19d0531d9b81a54277295`
+  (`feat: define dynamic g5 replacement matrix`)
+
+The dynamic G3-G5 reacceptance evidence was regenerated from that source and
+committed/pushed in:
+
+- `b0ab4cd5719e7fab93a810fdb9f7717b9796cb4a`
+  (`test: record dynamic g3-g5 reacceptance`)
+
+Fresh verification for the simplified gate:
+
+- `python -m pytest tests/g5/test_pilot_freeze.py -q --tb=short`: `20 passed`;
+- affected matrix/condition/controller suite: `63 passed`;
+- physical metrics/candidate-training suite: `67 passed`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass;
+- dynamic ecology audit: `status=pass`;
+- dynamic CPU smoke: `status=pass`, `jobs=1`.
+
+The audit and smoke both record `validation_accessed=false`,
+`sealed_accessed=false`, `battery_replenishment_enabled=false`, and
+`ecology=dynamic_pest_v1`. Their source commit is
+`c92b70678727511e8ac19d0531d9b81a54277295`; artifact hashes and byte counts
+are recorded in `docs/audits/g5-replacement-primary-matrix.md`.
+
+This phase does not pass G5. `matrix_complete=false`, no replacement freeze has
+been generated, Phase 4 preflight is blocked, formal G6 is blocked, and the G7
+unlock count remains `0`. The next authorized action is to execute the new 48
+development identities one at a time, preserve failed attempts, validate each
+identity automatically, and generate the replacement dynamic G5 freeze only
+after all 48 identities pass.

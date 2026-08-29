@@ -12,15 +12,14 @@ handoff summary. If they conflict, `AGENTS.md` and then
 ## 1. What The User Asked For
 
 The user asked to continue the approved plan for reducing the time spent on
-the remaining development pilots, and now asks for a complete handoff for a
-new conversation. The intended change is a smaller, explicitly justified
-replacement G5 development matrix. The user did not authorize bypassing G5,
-Phase 4 preflight, formal G6, validation access, or G7.
+the remaining development pilots. The 30-job draft was revised to the valid
+48-job replacement contract, while repeated G3/G4 reacceptance work was
+reduced to source-scope reuse plus targeted dynamic checks. The user did not
+authorize bypassing G5, Phase 4 preflight, formal G6, validation access, or G7.
 
-The earlier 30-job proposal is not a valid implementation as written. The
-existing runtime-budget and refit contracts require evidence for all five
-learning methods. The next conversation must revise the proposal to the
-48-job scope in Section 6; it must not commit the current 30-job draft.
+The replacement contract and tests are committed and pushed in
+`c92b70678727511e8ac19d0531d9b81a54277295`; dynamic reacceptance evidence is
+committed and pushed in `b0ab4cd5719e7fab93a810fdb9f7717b9796cb4a`.
 
 ## 2. Research Identity And Hard Boundary
 
@@ -172,27 +171,10 @@ provenance guards because a later test is inconvenient.
 
 ## 5. Current Uncommitted Material
 
-`git status --short --branch` currently shows these tracked modifications:
-
-```text
-M src/problem2/training/pilot.py
-M tests/g5/test_pilot_freeze.py
-```
-
-It also shows untracked drafts:
-
-```text
-docs/superpowers/specs/2026-08-30-g5-replacement-primary-matrix-design.md
-docs/superpowers/plans/2026-08-30-g5-replacement-primary-matrix.md
-```
-
-Those drafts describe a 30-job matrix (`5 conditions x 2 scales x 3 seeds`).
-The corresponding TDD attempt is incomplete: after the partial implementation,
-the focused suite was `10 failed, 10 passed`, because the runtime mapping guard
-still requires coverage for all five `LEARNING_METHODS`. Treat the 30-job
-draft, its test edits, and any generated aggregate as unaccepted working
-material. Revise them to the 48-job contract below, or preserve them as an
-explicit superseded draft; do not commit them as a completed gate.
+The 48-job replacement contract, tests, design, plan, and dynamic reacceptance
+audit are now committed. The worktree contains only pre-existing untracked
+temporary directories and the preserved old-matrix IPPO artifact listed below;
+do not stage, delete, or merge them automatically.
 
 There is also an important pre-existing untracked artifact directory:
 
@@ -297,26 +279,23 @@ one-job-at-a-time execution.
    `docs/audits/g6-readiness-phase3.md`. Run `git status --short --branch` and
    verify that local, upstream, and remote still agree with the state record.
 
-2. Inspect the uncommitted 30-job changes. Do not run or commit a matrix that
-   claims 30 jobs while the five-method runtime guard is active. Revise
-   `src/problem2/training/pilot.py`, `tests/g5/test_pilot_freeze.py`, and the
-   replacement design/plan to the 48-job scope. Keep `LEARNING_METHODS`, the
-   budget coverage check, and selected-candidate/refit rules intact.
+2. Confirm the pushed 48-job contract and its source-scope-bound dynamic
+   reacceptance evidence. Keep `LEARNING_METHODS`, the budget coverage check,
+   and selected-candidate/refit rules intact.
 
-3. Use TDD to assert: exactly 48 unique jobs; exactly eight executable
-   conditions; exactly twelve excluded diagnostics; all five learning methods
-   obtain runtime coverage; excluded conditions are rejected; incomplete
-   matrices fail closed; identities and development scenario panels remain
-   deterministic.
+3. The TDD contract is now persisted: exactly 48 unique jobs, eight executable
+   conditions, twelve excluded diagnostics, all five learning methods covered,
+   excluded conditions rejected, incomplete matrices fail closed, and
+   deterministic identities/development panels.
 
-4. Run focused pilot-freeze tests, affected G5/G6 tests, the full test suite,
-   `python -m compileall -q src scripts`, and `git diff --check`. Review the
-   diff manually for accidental changes to historical outputs, formal
-   protocols, validation/sealed access, or battery settings.
+4. The simplified reacceptance has passed focused pilot/condition/controller/
+   physical tests, dynamic ecology audit, CPU smoke, `compileall`, and
+   `git diff --check`. Rerun the full repository suite only if the source-scope
+   gate identifies a G3/G4 implementation or configuration change.
 
-5. Commit and push the matrix implementation and its audit/state documentation
-   with descriptive commits. Stage named files only. Record the pushed hashes
-   and fresh verification in `docs/PROJECT_STATE.md` and this handoff.
+5. Matrix and dynamic reacceptance content are committed and pushed in
+   `c92b706` and `b0ab4cd`; record these hashes and the fresh verification in
+   `docs/PROJECT_STATE.md` before running the first replacement identity.
 
 6. Only after the 48-job replacement contract is committed and pushed, execute
    its development identities one at a time. For every job, mechanically
