@@ -2425,3 +2425,68 @@ results, next controlled-pilot action, and the absolute do-not-repeat rules.
 Handoff content commit `e066337` (`docs: add phase 3 readiness handoff`) was
 pushed to `origin/codex/problem2-dynamic-pest-model`. The latest state-record
 commit must record this handoff before any later gate begins.
+
+## G6 Readiness Phase 3: Second Controlled Matrix Pilot
+
+On 2026-08-29, the next uncovered frozen development identity was resolved
+mechanically from the 510-job pilot matrix and executed as one bounded job.
+It is zero-based matrix index `1`, identity
+`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`:
+
+```text
+method=sr_mappo_mobile
+condition_id=sr_mappo_fixed
+vehicle_controller=fixed_support
+vehicle_trainable=false
+training_mode=uav_only
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+scenario_ids=10000-10019
+interactions=128
+```
+
+The first invocation failed at the job-contract boundary before any training
+artifact write because the manual mapping omitted the explicit condition
+semantics. The failure is preserved as `attempt-000001-failed.json`. The
+identical identity was then recovered with the required frozen execution tuple;
+no method, candidate, scale, seed, scenario panel, interaction count, or budget
+changed.
+
+The completed attempt produced one dynamic episode, 128 ecology steps, 22
+accepted spray actions, and `0.4275000000000001 L` sprayed pesticide. Its
+terminal checkpoint round trip, exact identity, finite metrics, evaluation
+freeze, controller isolation, artifact bytes, and SHA-256 values were
+independently revalidated. The observed team reward was negative and terminal
+pest total exceeded initial pest total; these values are retained without
+selection or suppression and support no efficacy or ranking claim.
+
+Fresh verification for this continuation:
+
+- `python -m pytest tests/g6 -q --tb=short`: `50 passed in 33.23s`;
+- `python -m pytest tests/g5/test_environment_metrics.py tests/g6/test_physical_vehicle_isolation.py -q --tb=short`: `19 passed in 42.98s`;
+- physical completion reload and manifest check: `pass`, three artifacts with
+  matching working-tree and Git-index SHA-256 values and byte counts;
+- dynamic evidence Git attributes: RED with unspecified text/binary handling,
+  then GREEN with JSON/JSONL fixed to LF and checkpoints fixed to binary;
+- per-pilot audit validation: `pass`, five referenced success/failure evidence
+  files matched their recorded SHA-256 values and byte counts;
+- `git diff --cached --check`: pass before the content commit.
+
+Artifacts are confined to
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-002-fixed/`.
+The content commit
+`9282893712b17eeab2e8486cfdef5efa598d2998` (`data: record second dynamic
+phase3 pilot`) was pushed to `origin/codex/problem2-dynamic-pest-model`; local,
+upstream, and remote hashes matched immediately after the push.
+
+Boundary status remains unchanged: `validation_accessed=false`,
+`sealed_accessed=false`, battery replenishment is disabled, pesticide is the
+only replenished resource, and the G7 unlock count is `0`. Historical static
+G5 outputs and protected external assets were not modified. The highest
+maturity remains `M2`; the 510-job replacement matrix is incomplete, so the
+replacement G5 freeze, Phase 4 preflight, formal G6, validation selection, and
+G7 remain blocked. After review and persistence of this result, the next
+authorized action is one controlled run of the next uncovered matrix identity,
+zero-based index `2` (`sr_mappo_mobile` with `sr_mappo_astar`), not a batch or
+later-gate action.
