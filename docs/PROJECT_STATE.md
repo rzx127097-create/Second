@@ -2135,3 +2135,55 @@ The handoff content/state commit
 `0993b2574996ca2653b74f58c1228b028f375a0c` (`docs: add g6 readiness phase 0
 handoff`) was pushed to `origin/codex/problem2-dynamic-pest-model`. After that
 push, local HEAD, upstream HEAD, and the remote branch all matched this hash.
+
+## G6 Readiness Phase 1: RED Contracts
+
+On 2026-08-29, the focused G6 readiness tests were written and run before any
+G6 production implementation. Phase 1 is a test-contract milestone only. It
+does not authorize a formal G6 job, validation evaluation, or G7 sealed
+access, and the highest research maturity remains `M2`.
+
+The new tests under `tests/g6/` cover exact frozen source and source-scope
+binding, tracked-tree and remote-parity rejection, executable entry-point
+availability, scheduler/resource estimates, canonical identities, append-only
+attempts, same-identity recovery, checkpoint validation, validation partition
+and coverage, selected-checkpoint rules, condition/controller semantics,
+dynamic ecology/output confinement, and SR-MAPPO-only ablation/sensitivity
+families. The detailed failure classification is recorded in
+`docs/audits/g6-readiness-phase1-red.md`.
+
+Fresh verification for the Phase 1 content:
+
+- relevant G5 baseline suite: `120 passed`;
+- `python -m pytest tests/g6 -q --tb=short`: `30 failed, 10 passed`;
+- `git diff --cached --check`: pass before the content commit.
+
+The nonzero G6 test result is the required RED evidence. The 30 failures are
+the currently missing behavior: executable condition dispatch/resolution,
+complete G6 preflight and import-safe entry points, source-scope and
+scheduler/resource fields, event metadata, expected checkpoint-hash
+validation, deterministic dynamic manifests/evaluator binding, and complete
+frozen checkpoint selection. The 10 passes confirm the reusable identity,
+duplicate, dirty/parity, ledger retry/stale, validation-range, sealed-input,
+and SR-MAPPO-family guards.
+
+Persistence:
+
+- Content commit `340c834dd1f42ea15efac1b4f0e4e874848f3bb0`
+  (`test: define g6 readiness red contracts`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`.
+- After the push, local HEAD, upstream HEAD, and the remote branch all matched
+  `340c834dd1f42ea15efac1b4f0e4e874848f3bb0`.
+
+No production source, historical static G5 output, protected external asset,
+OSM input, validation scenario content, or sealed scenario content was
+modified or accessed. No G6 or G7 job was started. Existing untracked
+temporary directories remained untouched and unstaged.
+
+Phase 1 status: `pass` as a RED test milestone. The next authorized work is
+Phase 2 implementation of the minimum shared runner, recovery, condition
+execution, validation selection, manifest generation, and complete preflight
+needed to turn the focused tests GREEN. Formal G6 execution remains blocked
+until Phase 3 creates and persists a replacement dynamic G5 freeze and Phase 4
+preflight passes. No efficacy, superiority, significance, real-deployment, or
+universal-optimality claim is permitted.
