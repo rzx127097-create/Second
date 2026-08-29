@@ -6,8 +6,8 @@
   "matrix_index_zero_based": 1,
   "matrix_job_count": 510,
   "pilot_job_identity": "05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b",
-  "source_commit": "eafff2fa259e57a358f03135277611ef32d86bf8",
-  "attempt_count": 2,
+  "source_commit": "0e887e3f41d2c8a18bcd6eb4863c95f0d67ca4bd",
+  "attempt_count": 3,
   "failed_attempts": [
     {
       "attempt": 1,
@@ -17,7 +17,15 @@
       "record": "attempt-000001-failed.json"
     }
   ],
-  "completed_attempt": 2,
+  "superseded_completed_attempts": [
+    {
+      "attempt": 2,
+      "source_commit": "eafff2fa259e57a358f03135277611ef32d86bf8",
+      "reason": "physical validation source changed before persisted strict reload"
+    }
+  ],
+  "completed_attempt": 3,
+  "metrics_reproduced_from_attempt_2": true,
   "method": "sr_mappo_mobile",
   "condition_id": "sr_mappo_fixed",
   "vehicle_controller": "fixed_support",
@@ -72,6 +80,26 @@
       "path": "attempt-000001-failed.json",
       "bytes": 1158,
       "sha256": "b995f2d91742856a83e1fbd7f33b9bfff3b7b460df5da73385c1c90aa8d23a75"
+    },
+    {
+      "path": "attempt-000003/sr_mappo_mobile__sr_mappo_fixed__51001/checkpoint.pt",
+      "bytes": 1116178,
+      "sha256": "91df8b5c174673b0685e48024d1f1e9b41bf5afa976f581ac6b9893db0d17862"
+    },
+    {
+      "path": "attempt-000003/sr_mappo_mobile__sr_mappo_fixed__51001/manifest.json",
+      "bytes": 4270,
+      "sha256": "2ead0d306c7ec73ffb471d367ec93bdd1872a9a915ec153d46ea855f280fc2b4"
+    },
+    {
+      "path": "attempt-000003/sr_mappo_mobile__sr_mappo_fixed__51001/physical-episodes.jsonl",
+      "bytes": 866,
+      "sha256": "60bd6d5d108d186aa979e91300daf7222a508d7d753c451e911d7e0d8ebbd10f"
+    },
+    {
+      "path": "attempt-000003/sr_mappo_mobile__sr_mappo_fixed__51001/summary.json",
+      "bytes": 6232,
+      "sha256": "1694b7669528ed2c387f10b20df4a18167eac46a1875675f9900a7769cabf303"
     },
     {
       "path": "sr_mappo_mobile__sr_mappo_fixed__51001/checkpoint.pt",

@@ -243,3 +243,32 @@ The replacement dynamic G5 matrix remains incomplete, so replacement freeze,
 Phase 4 preflight, formal G6, validation selection, and G7 remain blocked. The
 next authorized action remains one new controlled development identity after
 review and persistence of this result.
+
+## Matrix Identity 002: Persisted-Provenance Remediation
+
+The first post-persistence strict reload of attempt `2` correctly exposed that
+the validator required the generation `source_commit` to equal the current
+`HEAD`. Evidence and state commits had advanced `HEAD` even though every
+recorded physical execution source hash remained identical. The generation
+commit was verified as an ancestor and all three recorded source hashes matched
+both its Git blobs and the current working files.
+
+The TDD remediation is recorded in
+`docs/audits/g5-persisted-checkpoint-provenance-fix.md`. It permits an ancestor
+generation commit only when every other provenance field is unchanged; source
+scope drift and non-ancestor commits remain rejected. The fix commit
+`0e887e3f41d2c8a18bcd6eb4863c95f0d67ca4bd` was pushed before any rerun.
+
+Because `physical_training.py` belongs to the execution source bundle, the same
+matrix identity was rerun as attempt `3` under that exact pushed commit. Its
+checkpoint, summary, physical log, and manifest are under
+`phase3-matrix-002-fixed/attempt-000003/`. The runner returned
+`completion_validated=true`; all identity, controller, dynamic ecology, and
+access fields matched the frozen job. Attempt `3` exactly reproduced attempt
+`2` for interaction count, team reward, initial/final pest totals, accepted
+spray count, sprayed pesticide, dynamic step count, and ecology scenario hash.
+
+Attempt `2` remains byte-preserved historical development evidence but is
+superseded for current-source revalidation by attempt `3`. No new matrix
+identity, validation scenario, sealed scenario, battery replenishment, formal
+job, or replacement freeze was introduced.
