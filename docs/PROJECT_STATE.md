@@ -2832,3 +2832,61 @@ Persistence verification for Matrix Identity 006:
   `git diff --check`, and a passing four-artifact audit with matching SHA-256
   values and byte counts. The existing untracked temporary directories remain
   preserved and unstaged.
+
+## G6 Readiness Phase 3: Matrix Identity 007 Persistence
+
+The repaired 120-job executable matrix resolved zero-based index `6` to the
+following single development identity:
+
+```text
+identity=56a1f99f7b0ac8512dab8cfff2fe5c7cd6c1485053d92f2cfb2869ef227f729c
+method=sr_mappo_mobile
+condition_id=sr_mappo_urgency
+vehicle_controller=urgency_priority
+vehicle_trainable=false
+training_mode=uav_only
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+partition=development
+scenario_ids=10000-10019
+scenario_id=10000
+interactions=128
+ecology=dynamic_pest_v1
+```
+
+It completed one dynamic development episode under source commit
+`000df84c3e5b6df1f7ef54d101491b0e3a330d67`, with `128` ecology steps, `25`
+accepted spray actions, and `0.48750000000000016 L` sprayed pesticide. Team
+reward was `-0.035699709362087946`; total pest changed from
+`9.088605068072038` to `9.41306562750901`. These are descriptive `M2`
+engineering observations only and support no efficacy, significance,
+superiority, ranking, or deployment claim.
+
+The strict completion validator and terminal checkpoint reload passed with
+evaluation-state digest
+`ac71cd10c620659b12ddc717fb67066662ecec5827f19478e240183fa5fc6327`. The
+physical artifact set and matrix audit matched their recorded byte counts and
+SHA-256 values. The machine audit is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-007-urgency/pilot-audit.json`
+(`3670` bytes; SHA-256
+`1ab070f0d41b182c0155717ca3ac41d49887fabc82751f84eaadb816b03529b4`).
+
+The development boundary remains closed:
+`validation_accessed=false`, `sealed_accessed=false`,
+`battery_replenishment_enabled=false`, and sealed unlock count `0`. Pesticide
+remains the only replenished resource. The replacement matrix is incomplete,
+so replacement G5 freeze, Phase 4 preflight, formal G6, validation selection,
+and G7 remain blocked.
+
+Persistence and verification:
+
+- Pilot evidence and the Phase 3 audit were committed as
+  `5b6d3ef83135d0965b4b438319adc3b46c7baabc` (`data: record seventh dynamic
+  phase3 pilot`) and pushed to `origin/codex/problem2-dynamic-pest-model`.
+- `python -m pytest tests/g6 -q --tb=short`: `64 passed in 28.09s`.
+- `python -m compileall -q src scripts`: exit `0`; `git diff --check`: pass.
+
+The next authorized action after this state synchronization is one controlled
+run of zero-based matrix index `7` (`ippo_mobile` with `ippo_mobile`). No batch
+or later-gate action is authorized.
