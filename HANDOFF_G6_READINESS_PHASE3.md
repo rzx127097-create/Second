@@ -397,8 +397,10 @@ the physical checkpoint, manifest, episode log, and summary are under the same
 pilot directory. `completion_validated=true`,
 `validation_accessed=false`, `sealed_accessed=false`, and
 `battery_replenishment_enabled=false` remain recorded. The persistence commit
-for this result is to be recorded after the audit/state files are committed and
-pushed.
+for this result is
+`d87247d951cf1bb8206db752bc73e744f509e5fd` (`data: record sixth dynamic phase3
+pilot`), pushed to `origin/codex/problem2-dynamic-pest-model`; local, upstream,
+and remote hashes matched after the push.
 
 The highest maturity remains `M2`; the replacement G5 freeze, Phase 4
 preflight, formal G6, validation selection, and G7 remain blocked. The next
