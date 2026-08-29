@@ -59,4 +59,19 @@ Affecting protocol regression suite: `python -m pytest tests/g5/test_physical_ca
 
 Runner wiring follow-up: the physical collection loop now calls `_observe_physical_algorithm`; a fixed-support IQL runner spy regression confirms the non-trainable boundary is used (`1 passed`). The trainer snapshot reads the attached algorithm `_trainer` (the concrete trainer backing `algorithm.trainer`) and restores vehicle role optimizer/scheduler state after UAV updates.
 
-No validation or sealed scenario payloads were accessed; historical outputs remain unchanged. Phase 3 remains `M2` and no formal G6/G7 work was run.
+## Fix Round 5
+
+Resolved the load-bearing runner integration defect identified in scoped review `5a54e41..6d309d6`: the physical transition loop now routes every envelope through `_observe_physical_algorithm(algorithm, envelope, vehicle_trainable=condition_vehicle_trainable)`. This makes the non-trainable IQL/MADDPG replay-isolation boundary effective during real candidate execution while preserving the existing executed-action envelope binding.
+
+TDD RED (with the pre-fix direct `algorithm.observe(envelope)` call):
+
+`python -m pytest tests/g6/test_physical_vehicle_isolation.py::test_physical_runner_routes_non_trainable_observation_through_isolation_boundary -q --tb=short` -> `1 failed`; the spy recorded `[]` instead of `[('iql_mobile', False)]`.
+
+GREEN:
+
+- `python -m pytest tests/g6/test_physical_vehicle_isolation.py -q --tb=short` -> `4 passed`.
+- `python -m pytest tests/g6/test_physical_vehicle_isolation.py tests/g6/test_controller_wiring.py tests/g6/test_condition_semantics.py -q --tb=short` -> `18 passed`.
+- `python -m pytest tests/g5/test_physical_candidate_training.py::test_all_methods_follow_their_frozen_physical_update_cadence -q --tb=short` -> `5 passed`.
+- Bounded one-interaction development runner checks for `sr_mappo_mobile` and `sr_mappo_two_stage` returned respectively `1 1 learned True joint False False` and `1 1 learned_two_stage True two_stage False False` (interaction count, update count, controller, trainable flag, training mode, validation access, sealed access).
+
+No validation or sealed scenario payloads were accessed; no formal job ran; historical outputs remain unchanged. Phase 3 remains `M2`.
