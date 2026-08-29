@@ -2490,3 +2490,54 @@ G7 remain blocked. After review and persistence of this result, the next
 authorized action is one controlled run of the next uncovered matrix identity,
 zero-based index `2` (`sr_mappo_mobile` with `sr_mappo_astar`), not a batch or
 later-gate action.
+
+## G6 Readiness Phase 3: Persisted Provenance Revalidation
+
+The first strict checkpoint reload after persistence of matrix identity `1`
+failed because the validator regenerated provenance at the current `HEAD`,
+while the checkpoint correctly retained its earlier generation commit. The
+generation commit was an ancestor, and the recorded hashes for
+`physical_training.py`, `runner.py`, and `tuning.py` matched both the
+generation-commit Git blobs and current files. No checkpoint or execution
+source corruption occurred; the exact-HEAD comparison was the blocker.
+
+TDD remediation now accepts a persisted generation commit only when it is a
+verified Git ancestor and every other provenance field is unchanged. It still
+rejects source-scope drift, non-ancestor commits, forged summaries, missing or
+extra artifacts, hash/byte mismatches, and non-finite evaluation state.
+
+Fresh fix verification:
+
+- RED ancestor-generation regression: `1 failed in 25.43s` at the old exact
+  source-commit comparison;
+- GREEN ancestor-generation regression: `1 passed in 18.96s`;
+- torn/tampered/non-finite rejection cases: `5 passed in 42.36s`;
+- complete physical-candidate test file: `52 passed in 147.79s`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass.
+
+The fix and its audit were pushed in commit
+`0e887e3f41d2c8a18bcd6eb4863c95f0d67ca4bd` (`fix: revalidate persisted
+physical checkpoints`). Because the validator file is itself part of the
+physical execution source bundle, matrix identity `1` was rerun unchanged as
+attempt `3` under that exact pushed commit. Attempt `3` exactly reproduced
+attempt `2` for interaction count, team reward, initial/final pest totals,
+accepted spray count, sprayed pesticide, dynamic step count, and ecology
+scenario hash. Attempt `2` remains byte-preserved but is superseded for the
+current source by attempt `3`.
+
+Attempt `3` and the updated audit were pushed in commit
+`c5a9f1e8b567b48bf021d480acc62cc91054de5f` (`data: revalidate second phase3
+pilot provenance`). After that persistence advanced `HEAD`, strict completion
+reload passed with generation commit `0e887e3` and current commit `c5a9f1e`;
+the generation commit was verified as an ancestor, all nine audit-referenced
+files matched their SHA-256 and byte counts, and local, upstream, and remote
+branch hashes all matched `c5a9f1e8b567b48bf021d480acc62cc91054de5f`.
+
+Boundary status is unchanged: highest maturity `M2`, dynamic ecology only,
+pesticide-only replenishment, battery replenishment disabled,
+`validation_accessed=false`, `sealed_accessed=false`, and sealed unlock count
+`0`. The replacement matrix remains incomplete; replacement G5 freeze, Phase
+4 preflight, formal G6, validation selection, and G7 remain blocked. The next
+authorized action remains a single controlled run of zero-based matrix index
+`2` after review of this persisted result.
