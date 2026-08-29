@@ -361,6 +361,45 @@ def completed_noncanonical_identity(tmp_path: Path) -> tuple[dict[str, object], 
     return result, Path(result["manifest"])
 
 
+def test_completion_validator_accepts_ancestor_generation_commit_when_sources_unchanged(
+    completed_noncanonical_identity: tuple[dict[str, object], Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    result, manifest = completed_noncanonical_identity
+    summary = json.loads((manifest.parent / "summary.json").read_text(encoding="utf-8"))
+    generation_commit = summary["checkpoint_provenance"]["source_commit"]
+    descendant_commit = "b" * 40
+    real_provenance = physical_training._provenance
+    ancestry_checks: list[tuple[Path, str, str]] = []
+
+    def descendant_provenance(*args: object, **kwargs: object) -> dict[str, str]:
+        provenance = real_provenance(*args, **kwargs)
+        assert provenance["source_commit"] == generation_commit
+        return {**provenance, "source_commit": descendant_commit}
+
+    def is_ancestor(root: Path, ancestor: str, descendant: str) -> bool:
+        ancestry_checks.append((root, ancestor, descendant))
+        return True
+
+    monkeypatch.setattr(physical_training, "_provenance", descendant_provenance)
+    monkeypatch.setattr(physical_training, "_is_git_ancestor", is_ancestor, raising=False)
+
+    validated = _load_training_result(
+        manifest,
+        root=ROOT,
+        method="iql_mobile",
+        candidate_id="c01",
+        config_hash=str(result["candidate_config_hash"]),
+        seed=51001,
+        interactions=1,
+        device="cpu",
+        canonical=False,
+    )
+
+    assert validated["completion_validated"] is True
+    assert ancestry_checks == [(ROOT, generation_commit, descendant_commit)]
+
+
 @pytest.mark.parametrize("damage", ("missing_manifest", "checkpoint_hash", "forged_summary", "extra_artifact", "nonfinite"))
 def test_completion_validator_rejects_torn_tampered_or_nonfinite_identity(
     completed_noncanonical_identity: tuple[dict[str, object], Path], damage: str

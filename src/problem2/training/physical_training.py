@@ -103,6 +103,39 @@ def physical_checkpoint_provenance(
     return provenance, source_hashes
 
 
+def _is_git_ancestor(root: Path, ancestor: str, descendant: str) -> bool:
+    if (
+        len(ancestor) != 40
+        or len(descendant) != 40
+        or any(character not in "0123456789abcdef" for character in (ancestor + descendant).lower())
+    ):
+        return False
+    result = subprocess.run(
+        ["git", "-C", str(root), "merge-base", "--is-ancestor", ancestor, descendant],
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def _validated_generation_provenance(
+    recorded: object,
+    current: Mapping[str, str],
+    root: Path,
+) -> dict[str, str]:
+    if not isinstance(recorded, Mapping) or set(recorded) != set(current):
+        raise RuntimeError("physical training provenance schema drifted")
+    generation = recorded.get("source_commit")
+    current_commit = current.get("source_commit")
+    if not isinstance(generation, str) or not isinstance(current_commit, str):
+        raise RuntimeError("physical training source commit is invalid")
+    if any(recorded.get(key) != value for key, value in current.items() if key != "source_commit"):
+        raise RuntimeError("physical training source scope drifted")
+    if generation != current_commit and not _is_git_ancestor(root, generation, current_commit):
+        raise RuntimeError("physical training generation commit is not an ancestor")
+    return {str(key): str(value) for key, value in recorded.items()}
+
+
 def _json_bytes(payload: Mapping[str, Any]) -> bytes:
     return (json.dumps(dict(payload), sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
@@ -603,8 +636,13 @@ def validate_physical_training_completion(
         "canonical": canonical,
         "evidence_status": evidence_status,
     }
-    if summary.get("checkpoint_provenance") != expected_provenance:
-        raise RuntimeError("physical training checkpoint provenance drifted from current source")
+    try:
+        checkpoint_provenance = _validated_generation_provenance(
+            summary.get("checkpoint_provenance"), expected_provenance, contract.source_root
+        )
+    except RuntimeError as exc:
+        raise RuntimeError("physical training checkpoint provenance drifted from current source") from exc
+    expected_source["source_commit"] = checkpoint_provenance["source_commit"]
     if summary.get("source_provenance") != expected_source or manifest["source_provenance"] != expected_source:
         raise RuntimeError("physical training source provenance drifted from current source")
     checkpoint = manifest_file.parent / "checkpoint.pt"
@@ -612,7 +650,7 @@ def validate_physical_training_completion(
         restored, _ = load_training_checkpoint(
             checkpoint,
             lambda: build_algorithm(method, contract, device, candidate_id=candidate_id, scale=scale),
-            expected_provenance,
+            checkpoint_provenance,
         )
     except Exception as exc:
         raise RuntimeError("physical training checkpoint strict reload failed") from exc
