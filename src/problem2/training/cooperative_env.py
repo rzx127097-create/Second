@@ -449,6 +449,7 @@ class Problem2CooperativeEnv:
         dispatch = self._dispatch
         mapping = tuple(self._current_view["candidate_mapping"]["vehicle"])
         sampled_slot = int(action_result.actions["vehicle"][0])
+        executed_vehicle_slot = sampled_slot
         uavs = {uav.uav_id: uav for uav in before.uavs}
         uav_actions: dict[str, Action] = {}
 
@@ -470,6 +471,7 @@ class Problem2CooperativeEnv:
         if dispatch is None and self.vehicle_controller is not None:
             decision = self._controller_decision()
             sampled_slot = decision.sampled_slot
+            executed_vehicle_slot = sampled_slot
             if sampled_slot > 0:
                 request_id = decision.request_id
                 if request_id is None or sampled_slot > len(mapping) or mapping[sampled_slot - 1] != request_id:
@@ -481,6 +483,7 @@ class Problem2CooperativeEnv:
         elif dispatch is not None:
             if self.vehicle_controller is not None:
                 decision = self._controller_decision(active=dispatch)
+                executed_vehicle_slot = decision.sampled_slot
                 if decision.sampled_slot != dispatch.sampled_slot or decision.request_id != dispatch.request_id:
                     raise ValueError("controller changed an active dispatch identity")
                 dispatch = replace(
@@ -701,6 +704,8 @@ class Problem2CooperativeEnv:
         view["sampled_actions"] = {
             role: values.copy() for role, values in action_result.actions.items()
         }
+        if self.vehicle_controller is not None:
+            view["sampled_actions"]["vehicle"] = np.asarray([executed_vehicle_slot])
         return view
 
     def episode_record(self) -> EpisodeRecord:

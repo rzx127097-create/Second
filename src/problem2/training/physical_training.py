@@ -7,6 +7,7 @@ import json
 import math
 import random
 import subprocess
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -134,6 +135,7 @@ def build_physical_envelope(
     *,
     team_reward: float,
     transition_index: int,
+    vehicle_trainable: bool = True,
 ) -> OnPolicyEnvelope | OffPolicyEnvelope:
     """Bind one exact physical transition to the strict algorithm protocol."""
 
@@ -165,7 +167,8 @@ def build_physical_envelope(
         "team_reward": float(team_reward),
         "valid_sample": True,
         "valid_actor_sample": {
-            role: np.count_nonzero(np.asarray(action_details["masks"][role], dtype=bool), axis=-1) > 1
+            role: (np.count_nonzero(np.asarray(action_details["masks"][role], dtype=bool), axis=-1) > 1)
+            if role != "vehicle" or vehicle_trainable else np.zeros(np.asarray(action_details["masks"][role]).shape[0], dtype=bool)
             for role in algorithm.roles
         },
         "agent_ids": current_view["agent_ids"],
@@ -236,9 +239,20 @@ def _update_interval(algorithm: Any) -> tuple[str, int]:
     return "batch_size", int(algorithm.trainer.batch_size)
 
 
-def _update_physical_algorithm(algorithm: Any) -> Mapping[str, Any]:
+def _update_physical_algorithm(algorithm: Any, *, vehicle_trainable: bool = True) -> Mapping[str, Any]:
+    vehicle_snapshot = None
+    if not vehicle_trainable:
+        vehicle_snapshot = {
+            name: deepcopy(getattr(algorithm, name).state_dict())
+            for name in ("vehicle_actor", "vehicle_q", "vehicle_target_actor", "vehicle_target_q")
+            if hasattr(algorithm, name)
+        }
     if algorithm.method_id != "ippo_mobile":
-        return algorithm.update()
+        result = algorithm.update()
+        if vehicle_snapshot:
+            for name, state in vehicle_snapshot.items():
+                getattr(algorithm, name).load_state_dict(state)
+        return result
     empty_roles = [
         role
         for role in algorithm.roles
@@ -567,6 +581,7 @@ def _run_physical_candidate_training(
 
     scenario_cursor = 0
     condition_for_factory = condition if condition in {"sr_mappo_mobile", "sr_mappo_fixed", "sr_mappo_astar", "sr_mappo_nearest", "sr_mappo_urgency", "sr_mappo_two_stage"} else None
+    condition_vehicle_trainable = condition_for_factory is None or resolve_condition_execution(condition_for_factory).vehicle_trainable
     environment = build_development_environment(
         root, scenario_id=scenario_ids[scenario_cursor], scale=scale, condition_id=condition_for_factory
     )
@@ -635,6 +650,7 @@ def _run_physical_candidate_training(
             details,
             team_reward=team_reward,
             transition_index=transition_index,
+            vehicle_trainable=condition_vehicle_trainable,
         )
         algorithm.observe(envelope)
         fresh_since_update += 1
@@ -642,7 +658,7 @@ def _run_physical_candidate_training(
         episode_reward += team_reward
 
         if fresh_since_update == update_interval:
-            last_metrics = _update_physical_algorithm(algorithm)
+            last_metrics = _update_physical_algorithm(algorithm, vehicle_trainable=condition_vehicle_trainable)
             update_count += 1
             fresh_since_update = 0
             if method in OFF_POLICY_METHODS:
@@ -666,7 +682,7 @@ def _run_physical_candidate_training(
 
     final_partial_size = fresh_since_update
     if method in ON_POLICY_METHODS and fresh_since_update:
-        last_metrics = _update_physical_algorithm(algorithm)
+        last_metrics = _update_physical_algorithm(algorithm, vehicle_trainable=condition_vehicle_trainable)
         update_count += 1
         fresh_since_update = 0
     if method in OFF_POLICY_METHODS:

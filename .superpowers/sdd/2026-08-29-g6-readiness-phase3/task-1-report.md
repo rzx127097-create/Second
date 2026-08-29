@@ -38,3 +38,7 @@ Added fail-closed controller decision mapping validation, ensuring slot and requ
 ## Fix Round 2
 
 Checkpoint provenance now binds to the learning method while outer condition metadata remains separate. Fixed-support environments place the initial vehicle at the frozen support node. Injected decisions are validated for request/slot identity, integer primary-component node, allowed service node, reachability, and exact A* route length before reservation and active replans. Focused verification: `18 passed`; compileall passed. No validation, sealed, or formal jobs were run.
+
+## Fix Round 3
+
+Controller-driven views now report the executed controller slot. Physical envelopes accept `vehicle_trainable`; uav-only transitions mark vehicle actor samples invalid, and update snapshots restore vehicle networks after generic updates while preserving UAV learning. Verification: controller/environment suite `18 passed`; compileall passed.
