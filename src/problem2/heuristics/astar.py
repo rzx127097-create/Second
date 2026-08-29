@@ -116,27 +116,27 @@ class RollingAStarController:
                 or observation.step - self.last_replan_step
                 >= self.replan_interval_steps
             )
+            try:
+                current_distance = astar_distance(
+                    observation.graph,
+                    observation.vehicle.current_node,
+                    service_node,
+                )
+            except NoPathError:
+                current_distance = 0.0
             if replan_due:
-                try:
-                    distance = astar_distance(
-                        observation.graph,
-                        observation.vehicle.current_node,
-                        service_node,
-                    )
-                except NoPathError:
-                    distance = 0.0
                 self._record_plan(
                     observation,
                     request_id=observation.active_request_id,
                     sampled_slot=sampled_slot,
                     selected_service_node=service_node,
-                    route_length_m=distance,
+                    route_length_m=current_distance,
                 )
             return ControllerDecision(
                 sampled_slot,
                 observation.active_request_id,
                 service_node,
-                self.cached_route_length_m,
+                current_distance,
                 perf_counter() - started,
                 replanned=replan_due,
                 plan_version=self.plan_version,

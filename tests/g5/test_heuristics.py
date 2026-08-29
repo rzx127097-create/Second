@@ -227,6 +227,43 @@ def test_astar_controller_executes_frozen_replan_cadence_without_slot_drift() ->
     }
 
 
+def test_astar_active_dispatch_reports_current_distance_between_replans() -> None:
+    graph = _graph()
+    request = _request("active", 2, 4)
+    controller = RollingAStarController(replan_interval_steps=5)
+    active = {
+        "active_request_id": "active",
+        "active_sampled_slot": 3,
+        "selected_service_node": 4,
+    }
+
+    first = controller.decide(_observation(graph, (request,), step=1, **active))
+    moved_vehicle = VehicleState(
+        "vehicle-0",
+        current_node=1,
+        x_m=float(graph.node_x_m[1]),
+        y_m=float(graph.node_y_m[1]),
+        inventory_l=1.0,
+    )
+    moved = DispatchObservation(
+        step=2,
+        graph=graph,
+        vehicle=moved_vehicle,
+        requests=(request,),
+        candidate_mapping=(None, None, request.request_id, None),
+        service_cap_l=0.6,
+        tolerance=1e-9,
+        **active,
+    )
+    second = controller.decide(moved)
+
+    assert first.replanned is True
+    assert second.replanned is False
+    assert second.route_length_m == pytest.approx(30.0)
+    assert second.plan_version == first.plan_version == 1
+    assert controller.state_dict()["cached_route_length_m"] == pytest.approx(40.0)
+
+
 def test_controller_public_decisions_accept_observable_state_only() -> None:
     assert list(inspect.signature(RollingAStarController.decide).parameters) == [
         "self",
