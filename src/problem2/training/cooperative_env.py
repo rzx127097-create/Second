@@ -31,6 +31,7 @@ from problem2.heuristics import ControllerDecision, DispatchObservation, Observa
 from problem2.resources.ledger import apply_spray, assert_conserved
 from problem2.road.models import RasterRoadGraph
 from problem2.road.search import NoPathError
+from problem2.road.search import astar_distance
 from problem2.service.state_machine import (
     advance_service,
     cancel_terminal_requests,
@@ -394,6 +395,21 @@ class Problem2CooperativeEnv:
         decision = self.vehicle_controller.decide(observation)
         if not isinstance(decision, ControllerDecision):
             raise TypeError("vehicle_controller.decide must return ControllerDecision")
+        if decision.sampled_slot:
+            request = next((item for item in request_rows if item.request_id == decision.request_id), None)
+            node = decision.selected_service_node
+            if request is None or type(node) is not int or node < 0 or node >= len(self.graph.node_rows):
+                raise ValueError("controller decision identifies an invalid request or service node")
+            if node not in request.service_nodes:
+                raise ValueError("controller service node is not allowed for the selected request")
+            if int(self.graph.component_id[int(self.graph.node_rows[node]), int(self.graph.node_cols[node])]) != self.graph.primary_component_id:
+                raise ValueError("controller service node is outside the primary road component")
+            try:
+                distance = astar_distance(self.graph, self._state.vehicle.current_node, node)
+            except NoPathError as exc:
+                raise ValueError("controller service node is unreachable") from exc
+            if not math.isclose(float(decision.route_length_m), float(distance), rel_tol=0.0, abs_tol=self.config.tolerance):
+                raise ValueError("controller route length does not match the road distance")
         return decision
 
     def _physical_vehicle_action(self, dispatch: _Dispatch) -> Action:

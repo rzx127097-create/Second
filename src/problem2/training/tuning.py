@@ -886,6 +886,8 @@ def _build_physical_environment(
         for index, node in enumerate(selected[:-1])
     )
     vehicle_node = int(selected[-1])
+    if condition_id == "sr_mappo_fixed":
+        vehicle_node = int(primary_nodes[0])
     vehicle = VehicleState(
         "vehicle-0",
         vehicle_node,

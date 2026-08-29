@@ -10,6 +10,7 @@ from problem2.heuristics import ControllerDecision
 from problem2.resources.ledger import new_ledger
 from problem2.training.cooperative_env import Problem2CooperativeEnv
 from problem2.training.conditions import resolve_condition_execution
+from problem2.road.search import astar_distance
 from tests.g2.helpers import make_raster_graph
 from tests.g5.test_environment_metrics import CONFIG
 
@@ -26,7 +27,7 @@ class _SelectNodeController:
             sampled_slot=request.slot + 1,
             request_id=request.request_id,
             selected_service_node=self.node,
-            route_length_m=0.0,
+            route_length_m=astar_distance(observation.graph, observation.vehicle.current_node, self.node),
             decision_runtime_s=0.0,
         )
 
@@ -49,7 +50,7 @@ def test_nonlearned_controller_decision_selects_service_node() -> None:
     vehicle = VehicleState("vehicle-0", 0, float(graph.node_x_m[0]), float(graph.node_y_m[0]), 0.4)
     state = EpisodeState(0, (uav,), vehicle, (request,), new_ledger((uav,), vehicle.inventory_l))
     controller = _SelectNodeController(2)
-    environment = Problem2CooperativeEnv(state, graph, CONFIG, max_steps=2, scenario_id=10000,
+    environment = Problem2CooperativeEnv(state, graph, replace(CONFIG, rendezvous_radius_m=100.0), max_steps=2, scenario_id=10000,
                                           vehicle_controller=controller)
     view = environment.reset()
     result = ActionResult(actions={"uav": np.asarray([4]), "vehicle": np.asarray([1])}, masks=view["masks"])

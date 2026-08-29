@@ -85,12 +85,13 @@ def physical_checkpoint_provenance(
     candidate_id: str,
     *,
     canonical: bool,
+    method: str | None = None,
 ) -> tuple[dict[str, str], dict[str, str]]:
     root = contract.source_root
     if canonical:
         _require_clean_tracked_physical_sources(root)
     source_hashes = _physical_source_hashes(root)
-    provenance = _provenance(contract, condition, candidate_id)
+    provenance = _provenance(contract, method or condition, candidate_id)
     bundle_payload = {
         "contract_files": dict(sorted(contract.file_hashes.items())),
         "physical_training_sources": source_hashes,
@@ -466,7 +467,7 @@ def validate_physical_training_completion(
             raise RuntimeError(f"physical training summary {field} path drifted")
 
     expected_provenance, source_hashes = physical_checkpoint_provenance(
-        contract, method, candidate_id, canonical=canonical
+        contract, condition, candidate_id, canonical=canonical, method=method
     )
     expected_environment = build_development_environment(
         contract.source_root,
@@ -554,7 +555,7 @@ def _run_physical_candidate_training(
     candidate = next(item for item in contract.tuning_candidates[method] if item.candidate_id == candidate_id)
     algorithm = build_algorithm(method, contract, device, candidate_id=candidate_id, scale=scale)
     checkpoint_provenance, physical_source_hashes = physical_checkpoint_provenance(
-        contract, condition, candidate_id, canonical=canonical
+        contract, condition, candidate_id, canonical=canonical, method=method
     )
     schedule_name, update_interval = _update_interval(algorithm)
     target = int(max_interactions)

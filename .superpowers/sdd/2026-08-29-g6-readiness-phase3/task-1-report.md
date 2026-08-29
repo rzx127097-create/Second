@@ -34,3 +34,7 @@ The fixed-support factory selects the first primary-component road node as its d
 ## Fix Round 1
 
 Added fail-closed controller decision mapping validation, ensuring slot and request identity agree before reservation, plus condition semantics and learned-mobile regression coverage. Unknown explicit condition IDs now raise; algorithm-only methods omit condition factory dispatch. Verification: `python -m pytest tests/g6/test_controller_wiring.py tests/g5/test_environment_metrics.py tests/g5/test_physical_candidate_training.py::test_all_methods_follow_their_frozen_physical_update_cadence -q --tb=short` -> `23 passed`.
+
+## Fix Round 2
+
+Checkpoint provenance now binds to the learning method while outer condition metadata remains separate. Fixed-support environments place the initial vehicle at the frozen support node. Injected decisions are validated for request/slot identity, integer primary-component node, allowed service node, reachability, and exact A* route length before reservation and active replans. Focused verification: `18 passed`; compileall passed. No validation, sealed, or formal jobs were run.
