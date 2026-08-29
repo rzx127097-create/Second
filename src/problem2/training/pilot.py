@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import subprocess
 import time
 from types import MappingProxyType
@@ -70,6 +71,9 @@ PILOT_TRAINING_SEEDS = (51001, 51002, 51003)
 PILOT_SCENARIO_IDS = tuple(range(10000, 10020))
 VALIDATION_SCENARIO_IDS = tuple(range(20000, 20050))
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+_DYNAMIC_ECOLOGY_VERSION = "problem2-dynamic-pest-v1"
+_HEX64 = re.compile(r"^[0-9a-f]{64}$")
+_HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
 
 @dataclass(frozen=True)
@@ -137,6 +141,41 @@ def _contract_guard(contract: G5Contract) -> None:
     observed_scenarios = tuple(contract.partitions["development_scenarios"])
     if observed_seeds != PILOT_TRAINING_SEEDS or observed_scenarios != PILOT_SCENARIO_IDS:
         raise ValueError("development pilot partition drifted")
+
+
+def _validate_dynamic_pilot_result(result: Mapping[str, Any]) -> None:
+    """Require an executed physical dynamic-environment result.
+
+    Missing fields are rejected instead of defaulting to a safe value.  This
+    keeps a synthetic or historical runner from being promoted to replacement
+    G5 evidence merely by returning identity and boundary flags.
+    """
+
+    if result.get("partition") != "development":
+        raise ValueError("pilot runner must explicitly prove partition=development")
+    if result.get("training_mode") != "physical_development":
+        raise ValueError("pilot runner must prove physical_development training")
+    if result.get("scenario_execution") is not True:
+        raise ValueError("pilot runner must prove scenario_execution=true")
+    if result.get("completion_validated") is not True:
+        raise ValueError("pilot runner must prove completion_validated=true")
+    if result.get("replenished_resource") != "pesticide":
+        raise ValueError("pilot runner must prove pesticide-only replenishment")
+    provenance = result.get("source_provenance")
+    if not isinstance(provenance, Mapping) or provenance.get("ecology_mode") != "dynamic":
+        raise ValueError("pilot runner must provide dynamic ecology provenance")
+    if provenance.get("ecology_version") != _DYNAMIC_ECOLOGY_VERSION:
+        raise ValueError("pilot runner returned an invalid dynamic ecology version")
+    implementation_version = provenance.get("ecology_implementation_version")
+    if implementation_version != _DYNAMIC_ECOLOGY_VERSION:
+        raise ValueError("pilot runner returned an invalid dynamic implementation version")
+    for field in ("ecology_config_sha256", "ecology_scenario_sha256"):
+        value = provenance.get(field)
+        if not isinstance(value, str) or _HEX64.fullmatch(value) is None:
+            raise ValueError(f"pilot runner returned invalid dynamic ecology {field}")
+    source_commit = provenance.get("ecology_source_commit")
+    if not isinstance(source_commit, str) or _HEX40.fullmatch(source_commit) is None:
+        raise ValueError("pilot runner returned invalid dynamic ecology source commit")
 
 
 def build_pilot_matrix(
@@ -316,6 +355,34 @@ def verify_pilot_artifacts(
         raise ValueError("pilot audit is unreadable") from exc
     if not isinstance(audit_payload, Mapping) or audit_payload.get("artifact_manifest_path") != str(manifest) or audit_payload.get("episodes_path") != str(episodes):
         raise ValueError("pilot audit does not bind its artifact manifest")
+    historical_artifact = base.is_relative_to(_historical_g5_root())
+    if not historical_artifact:
+        expected_job_identities = [job.identity for job in build_pilot_matrix(contract)]
+        if audit_payload.get("expected_job_identities") != expected_job_identities:
+            raise ValueError("pilot audit expected identity set drifted")
+        completed_job_identities = audit_payload.get("completed_job_identities")
+        if not isinstance(completed_job_identities, list) or len(completed_job_identities) != len(set(completed_job_identities)):
+            raise ValueError("pilot audit completed identity set is invalid")
+        if not set(completed_job_identities).issubset(set(expected_job_identities)):
+            raise ValueError("pilot audit completed identity set is outside the replacement matrix")
+        replacement_scope = audit_payload.get("replacement_scope")
+        expected_scope = {
+            "job_count": len(expected_job_identities),
+            "conditions": list(PILOT_CONDITIONS),
+            "methods": list(PILOT_METHODS),
+            "scales": list(PILOT_SCALES),
+            "training_seeds": list(PILOT_TRAINING_SEEDS),
+            "scenario_ids": list(PILOT_SCENARIO_IDS),
+        }
+        if replacement_scope != expected_scope:
+            raise ValueError("pilot audit replacement scope drifted")
+        matrix_complete = audit_payload.get("matrix_complete")
+        if matrix_complete is not (
+            audit_payload.get("status") == "pass"
+            and len(completed_job_identities) == len(expected_job_identities)
+            and set(completed_job_identities) == set(expected_job_identities)
+        ):
+            raise ValueError("pilot audit matrix completeness declaration is invalid")
     if not isinstance(audit_payload.get("provenance"), Mapping) or audit_payload["provenance"].get("source_commit") != recorded.get("source_commit"):
         raise ValueError("pilot audit source commit mismatch")
     recorded_hashes = audit_payload["provenance"].get("contract_hashes")
@@ -337,9 +404,40 @@ def verify_pilot_artifacts(
         raise ValueError("pilot episodes are unreadable") from exc
     if len(records) != audit_payload.get("episode_count"):
         raise ValueError("pilot episode count mismatch")
+    expected_jobs_by_identity = {job.identity: job for job in build_pilot_matrix(contract)}
+    observed_identities: set[str] = set()
     for record in records:
         if not isinstance(record, Mapping) or record.get("data_status") != "development_pilot_descriptive" or record.get("record_type") != "scenario_reference" or record.get("scenario_execution") is not False or record.get("partition") != "development":
             raise ValueError("pilot episode record is invalid")
+        if historical_artifact:
+            continue
+        identity = record.get("pilot_job_identity")
+        job = expected_jobs_by_identity.get(identity) if isinstance(identity, str) else None
+        if job is None:
+            raise ValueError("pilot episode identity is outside the replacement matrix")
+        observed_identities.add(identity)
+        for field, expected_value in {
+            "method": job.method,
+            "algorithm_id": job.method,
+            "condition_id": job.condition_id,
+            "scale": job.scale,
+            "training_seed": job.training_seed,
+            "partition": "development",
+        }.items():
+            if record.get(field) != expected_value:
+                raise ValueError(f"pilot episode identity field drifted: {field}")
+        if record.get("scenario_id") not in PILOT_SCENARIO_IDS:
+            raise ValueError("pilot episode scenario is outside the development panel")
+        training_result = record.get("training_result")
+        if not isinstance(training_result, Mapping):
+            raise ValueError("pilot episode training result is missing")
+        if training_result.get("training_scenario_id") != job.scenario_id or training_result.get("scenario_ids") != list(job.scenario_ids):
+            raise ValueError("pilot episode training scenario panel drifted")
+        _validate_dynamic_pilot_result(training_result)
+        if training_result.get("method") != job.method or training_result.get("condition_id") != job.condition_id:
+            raise ValueError("pilot episode training identity drifted")
+    if not historical_artifact and observed_identities != set(audit_payload.get("completed_job_identities", ())):
+        raise ValueError("pilot audit completed identities do not match episode records")
     return dict(recorded)
 
 
@@ -363,7 +461,8 @@ def run_pilot_matrix(
     if len(identities) != len(set(identities)):
         raise ValueError("pilot jobs contain duplicate identities")
     expected_jobs = build_pilot_matrix(contract)
-    expected_identities = {job.identity for job in expected_jobs}
+    expected_job_identities = [job.identity for job in expected_jobs]
+    expected_identities = set(expected_job_identities)
     for job in selected_jobs:
         if job.partition != "development":
             raise ValueError("pilot jobs must use the development partition")
@@ -389,6 +488,7 @@ def run_pilot_matrix(
     records: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     runtime_rows: list[dict[str, Any]] = []
+    completed_identities: list[str] = []
     boundary_flags = {"validation_accessed": False, "sealed_accessed": False, "battery_replenishment_enabled": False}
     boundary_status = {field: "unknown" for field in boundary_flags}
     for job in selected_jobs:
@@ -417,8 +517,6 @@ def run_pilot_matrix(
                 else:
                     boundary_status[field] = "unsafe" if value is True else "unknown"
                     raise ValueError(f"pilot runner did not prove {field}=false")
-            if result.get("partition", "development") != "development":
-                raise ValueError("pilot runner returned a non-development partition")
             expected_result_identity = {
                 "method": job.method,
                 "algorithm_id": job.method,
@@ -432,6 +530,7 @@ def run_pilot_matrix(
                     raise ValueError(f"pilot runner returned mismatched {field}")
             if result.get("scenario_ids") != list(job.scenario_ids):
                 raise ValueError("pilot runner returned mismatched scenario_ids")
+            _validate_dynamic_pilot_result(result)
             if result.get("finite_metrics") is not True or result.get("evaluation_frozen") is not True:
                 raise ValueError("pilot runner did not prove finite metrics and frozen evaluation")
             result_interactions = result.get("interactions", interactions)
@@ -443,7 +542,6 @@ def run_pilot_matrix(
                 # they are never presented as independent scenario executions.
                 scenario_result["training_scenario_id"] = job.scenario_id
                 scenario_result["scenario_id"] = scenario_id
-                scenario_result["scenario_execution"] = False
                 record = {
                     "schema_version": "g5-pilot-episode-v1",
                     "data_status": "development_pilot_descriptive",
@@ -475,6 +573,7 @@ def run_pilot_matrix(
                 "interactions": result_interactions,
                 "elapsed_seconds": elapsed,
             })
+            completed_identities.append(job.identity)
         except Exception as exc:
             failures.append({"pilot_job_identity": job.identity, "error": f"{type(exc).__name__}: {exc}"})
             break
@@ -490,6 +589,20 @@ def run_pilot_matrix(
         "training_seeds": sorted({record["training_seed"] for record in records}),
         "scenario_ids": sorted({record["scenario_id"] for record in records}),
     }
+    matrix_complete = (
+        not failures
+        and len(completed_identities) == len(expected_job_identities)
+        and set(completed_identities) == set(expected_job_identities)
+        and len(records) == len(expected_job_identities) * len(PILOT_SCENARIO_IDS)
+    )
+    replacement_scope = {
+        "job_count": len(expected_job_identities),
+        "conditions": list(PILOT_CONDITIONS),
+        "methods": list(PILOT_METHODS),
+        "scales": list(PILOT_SCALES),
+        "training_seeds": list(PILOT_TRAINING_SEEDS),
+        "scenario_ids": list(PILOT_SCENARIO_IDS),
+    }
     artifact_manifest_path = _pilot_base_root(root) / "audits" / "pilot-artifact-manifest.json"
     audit: dict[str, Any] = {
         "schema_version": "g5-pilot-audit-v1",
@@ -499,6 +612,10 @@ def run_pilot_matrix(
         "job_count": len(selected_jobs),
         "episode_count": len(records),
         "training_job_count": len(selected_jobs),
+        "matrix_complete": matrix_complete,
+        "expected_job_identities": expected_job_identities,
+        "completed_job_identities": completed_identities,
+        "replacement_scope": replacement_scope,
         "coverage": coverage,
         "runtime_aggregates": aggregate_runtime(runtime_rows) if runtime_rows else {},
         "failures": failures,

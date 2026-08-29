@@ -6,12 +6,15 @@ import argparse
 import json
 from pathlib import Path
 import sys
+from typing import Any, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from problem2.experiments.artifacts import atomic_write_bytes
 from problem2.experiments.ecology_policy import EcologyMode, resolve_output_root
 from problem2.experiments.g5_contract import load_g5_contract
+from problem2.training.conditions import resolve_condition_execution
+from problem2.training.physical_training import run_physical_development_refit_training
 from problem2.training.budget import select_pilot_budget
 from problem2.training.pilot import (
     build_pilot_matrix,
@@ -23,6 +26,41 @@ from problem2.training.pilot import (
 
 ROOT = Path(__file__).resolve().parents[1]
 G5_ROOT = ROOT / "outputs" / "problem2_sr_mappo_v1" / "dynamic_pest_v1" / "g5"
+REPLACEMENT_ROOT = G5_ROOT / "pilots" / "replacement-48"
+
+
+def _run_dynamic_pilot_job(
+    job: Mapping[str, Any], device: str, interactions: int, output_root: Path
+) -> dict[str, Any]:
+    """Execute one replacement identity through the physical dynamic path."""
+
+    condition_id = str(job["condition_id"])
+    execution = resolve_condition_execution(condition_id)
+    physical_job = {
+        **dict(job),
+        "candidate_id": "c01",
+        "vehicle_controller": execution.vehicle_controller,
+        "vehicle_trainable": execution.vehicle_trainable,
+        "training_mode": execution.training_mode,
+    }
+    result = dict(
+        run_physical_development_refit_training(
+            physical_job,
+            device,
+            interactions,
+            output_root,
+        )
+    )
+    if result.get("completion_validated") is not True:
+        raise RuntimeError("physical dynamic pilot completion was not validated")
+    if result.get("candidate_id") != "c01":
+        raise RuntimeError("replacement pilot did not execute frozen candidate c01")
+    result["condition_id"] = condition_id
+    result["vehicle_controller"] = execution.vehicle_controller
+    result["vehicle_trainable"] = execution.vehicle_trainable
+    result["training_mode"] = "physical_development"
+    result["condition_training_mode"] = execution.training_mode
+    return result
 
 
 def main() -> int:
@@ -30,7 +68,7 @@ def main() -> int:
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--interactions", type=int, default=128)
     parser.add_argument("--limit", type=int, help="development-only bounded probe; cannot freeze candidates")
-    parser.add_argument("--output-root", type=Path, default=G5_ROOT / "pilots")
+    parser.add_argument("--output-root", type=Path, default=REPLACEMENT_ROOT)
     parser.add_argument(
         "--ecology-mode",
         choices=tuple(mode.value for mode in EcologyMode),
@@ -63,7 +101,14 @@ def main() -> int:
             if isinstance(args.limit, bool) or args.limit <= 0:
                 raise ValueError("--limit must be positive")
             jobs = jobs[: args.limit]
-        result = run_pilot_matrix(contract, output_root, jobs=jobs, interactions=args.interactions, device=args.device)
+        result = run_pilot_matrix(
+            contract,
+            output_root,
+            jobs=jobs,
+            interactions=args.interactions,
+            device=args.device,
+            runner=_run_dynamic_pilot_job,
+        )
         report.update(result)
         if result["status"] != "pass":
             raise RuntimeError("pilot matrix failed; candidate freeze is blocked")

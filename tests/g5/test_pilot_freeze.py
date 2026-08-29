@@ -23,6 +23,38 @@ from problem2.training.pilot import (
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _valid_dynamic_pilot_result(job: dict[str, object], interactions: int) -> dict[str, object]:
+    return {
+        "method": job["method"],
+        "algorithm_id": job["method"],
+        "condition_id": job["condition_id"],
+        "partition": "development",
+        "scale": job["scale"],
+        "scenario_id": job["scenario_id"],
+        "scenario_ids": list(job["scenario_ids"]),
+        "training_seed": job["training_seed"],
+        "interactions": interactions,
+        "updates": 1,
+        "finite_metrics": True,
+        "evaluation_frozen": True,
+        "training_mode": "physical_development",
+        "scenario_execution": True,
+        "completion_validated": True,
+        "replenished_resource": "pesticide",
+        "source_provenance": {
+            "ecology_mode": "dynamic",
+            "ecology_version": "problem2-dynamic-pest-v1",
+            "ecology_config_sha256": "a" * 64,
+            "ecology_scenario_sha256": "b" * 64,
+            "ecology_source_commit": "c" * 40,
+            "ecology_implementation_version": "problem2-dynamic-pest-v1",
+        },
+        "validation_accessed": False,
+        "sealed_accessed": False,
+        "battery_replenishment_enabled": False,
+    }
+
+
 def test_pilot_matrix_covers_exact_development_panel_without_duplicates() -> None:
     contract = load_g5_contract(ROOT)
     jobs = build_pilot_matrix(contract)
@@ -73,6 +105,67 @@ def test_pilot_matrix_rejects_excluded_diagnostic_condition(tmp_path: Path) -> N
             runner=lambda *_args: {},
             allow_noncanonical_output_root=True,
         )
+
+
+def test_run_pilot_matrix_requires_explicit_development_partition(tmp_path: Path) -> None:
+    contract = load_g5_contract(ROOT)
+
+    def missing_partition(job, _device, interactions, _output_root):
+        result = _valid_dynamic_pilot_result(job, interactions)
+        result.pop("partition")
+        return result
+
+    result = run_pilot_matrix(
+        contract,
+        tmp_path,
+        jobs=build_pilot_matrix(contract),
+        interactions=1,
+        runner=missing_partition,
+        allow_noncanonical_output_root=True,
+    )
+    assert result["status"] == "fail"
+    assert "partition" in result["failures"][0]["error"]
+
+
+def test_run_pilot_matrix_requires_dynamic_ecology_and_pesticide_provenance(tmp_path: Path) -> None:
+    contract = load_g5_contract(ROOT)
+
+    def missing_dynamic_provenance(job, _device, interactions, _output_root):
+        result = _valid_dynamic_pilot_result(job, interactions)
+        result.pop("source_provenance")
+        return result
+
+    result = run_pilot_matrix(
+        contract,
+        tmp_path,
+        jobs=build_pilot_matrix(contract),
+        interactions=1,
+        runner=missing_dynamic_provenance,
+        allow_noncanonical_output_root=True,
+    )
+    assert result["status"] == "fail"
+    assert "dynamic ecology" in result["failures"][0]["error"]
+
+
+def test_pilot_audit_records_complete_replacement_identity_set(tmp_path: Path) -> None:
+    contract = load_g5_contract(ROOT)
+
+    result = run_pilot_matrix(
+        contract,
+        tmp_path,
+        jobs=build_pilot_matrix(contract),
+        interactions=1,
+        runner=lambda job, _device, interactions, _output_root: _valid_dynamic_pilot_result(job, interactions),
+        allow_noncanonical_output_root=True,
+    )
+    assert result["status"] == "pass"
+    audit = json.loads(Path(result["audit_path"]).read_text(encoding="utf-8"))
+    expected = [job.identity for job in build_pilot_matrix(contract)]
+    assert audit["matrix_complete"] is True
+    assert audit["expected_job_identities"] == expected
+    assert audit["completed_job_identities"] == expected
+    assert audit["replacement_scope"]["job_count"] == 48
+    assert audit["replacement_scope"]["conditions"] == list(PILOT_CONDITIONS)
 
 
 def test_pilot_identity_serialization_is_stable_for_initial_canonical_jobs() -> None:
@@ -151,23 +244,7 @@ def test_run_pilot_matrix_writes_descriptive_development_records_and_audit(tmp_p
     def fake_runner(job, device, max_interactions, output_root):
         output = Path(output_root) / "fake"
         output.mkdir(parents=True, exist_ok=True)
-        return {
-            "method": job["method"],
-            "algorithm_id": job["method"],
-            "condition_id": job["condition_id"],
-            "partition": "development",
-            "scale": job["scale"],
-            "scenario_id": job["scenario_id"],
-            "scenario_ids": list(job["scenario_ids"]),
-            "training_seed": job["training_seed"],
-            "interactions": max_interactions,
-            "updates": 1,
-            "finite_metrics": True,
-            "evaluation_frozen": True,
-            "validation_accessed": False,
-            "sealed_accessed": False,
-            "battery_replenishment_enabled": False,
-        }
+        return _valid_dynamic_pilot_result(job, max_interactions)
 
     result = run_pilot_matrix(
         contract,
@@ -211,23 +288,7 @@ def test_pilot_artifact_manifest_detects_consolidated_table_tampering(tmp_path: 
     jobs = build_pilot_matrix(contract)
 
     def fake_runner(job, device, max_interactions, output_root):
-        return {
-            "method": job["method"],
-            "algorithm_id": job["method"],
-            "condition_id": job["condition_id"],
-            "partition": "development",
-            "scale": job["scale"],
-            "scenario_id": job["scenario_id"],
-            "scenario_ids": list(job["scenario_ids"]),
-            "training_seed": job["training_seed"],
-            "interactions": max_interactions,
-            "updates": 1,
-            "finite_metrics": True,
-            "evaluation_frozen": True,
-            "validation_accessed": False,
-            "sealed_accessed": False,
-            "battery_replenishment_enabled": False,
-        }
+        return _valid_dynamic_pilot_result(job, max_interactions)
 
     result = run_pilot_matrix(
         contract,

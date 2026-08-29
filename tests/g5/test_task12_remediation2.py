@@ -61,7 +61,7 @@ def _frozen_manifests(tmp_path: Path) -> tuple[Path, Path]:
 def test_g5_freeze_refit_counts_follow_the_executable_pilot_matrix() -> None:
     contract = load_g5_contract(ROOT)
 
-    assert freeze_module._expected_refit_counts(contract) == (120, 2400)
+    assert freeze_module._expected_refit_counts(contract) == (48, 960)
 
 
 def _row(store: CanonicalValidationStore, *, scenario_id: int = 20000) -> dict[str, object]:
