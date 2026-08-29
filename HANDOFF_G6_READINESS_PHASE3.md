@@ -1,14 +1,28 @@
-# G6 Readiness Handoff: Phase 3 Continuation
+# G6 Readiness Phase 3 Handoff
 
-Date: 2026-08-29
+Date: 2026-08-30
 
-This is the current no-context handoff for the second thesis problem. Read it
-together with `AGENTS.md` and `docs/PROJECT_STATE.md`. If an older handoff
-conflicts with `docs/PROJECT_STATE.md`, the project state is authoritative.
-This document supersedes the Phase 1 entry instructions for the next session;
-older handoffs remain historical records.
+This document is the no-context startup record for the next conversation. Read
+it together with `AGENTS.md` and `docs/PROJECT_STATE.md` before doing any work.
+`AGENTS.md` contains repository instructions, `docs/PROJECT_STATE.md` is the
+authoritative record of the current gate and maturity, and this file is a
+handoff summary. If they conflict, `AGENTS.md` and then
+`docs/PROJECT_STATE.md` take precedence.
 
-## 1. Task And Research Identity
+## 1. What The User Asked For
+
+The user asked to continue the approved plan for reducing the time spent on
+the remaining development pilots, and now asks for a complete handoff for a
+new conversation. The intended change is a smaller, explicitly justified
+replacement G5 development matrix. The user did not authorize bypassing G5,
+Phase 4 preflight, formal G6, validation access, or G7.
+
+The earlier 30-job proposal is not a valid implementation as written. The
+existing runtime-budget and refit contracts require evidence for all five
+learning methods. The next conversation must revise the proposal to the
+48-job scope in Section 6; it must not commit the current 30-job draft.
+
+## 2. Research Identity And Hard Boundary
 
 Repository: `C:/Users/RZX/Documents/ChatGPT/Second`
 
@@ -16,49 +30,73 @@ Branch: `codex/problem2-dynamic-pest-model`
 
 Remote: `https://github.com/rzx127097-create/Second.git`
 
-The thesis problem is road-constrained air-ground heterogeneous cooperative
-pesticide spraying with multiple UAVs and a mobile pesticide replenishment
-vehicle. The public flagship algorithm name is **SR-MAPPO**. Problem 2 is an
-air-ground heterogeneous extension of SR-MAPPO.
+Public algorithm identity: **SR-MAPPO**. Problem 2 is a road-constrained
+air-ground heterogeneous cooperative pesticide-spraying extension with a
+mobile pesticide replenishment vehicle.
 
-The current engineering task is **G6 readiness Phase 3 continuation**:
-revalidate the dynamic physical execution path, preserve executable controller
-semantics, and build bounded development-pilot evidence for a future
-replacement G5 freeze. This is not formal G6 execution.
+The only replenished resource is pesticide. Battery replenishment must remain
+`false`. OSM data is simulation input for road-constrained modeling, not field
+deployment evidence.
 
-All new evidence belongs under:
+All new evidence must be under:
 
 ```text
 outputs/problem2_sr_mappo_v1/dynamic_pest_v1/
 ```
 
-The mandatory ecology is `dynamic_pest_v1`. Historical static-ecology output
-under `outputs/problem2_sr_mappo_v1/g5/` is read-only diagnostics.
+Historical static-ecology G5 output is read-only diagnostic material. Do not
+modify or relabel it.
 
-## 2. Current Gate Boundary
+## 3. Current State At Handoff
 
-- Maturity remains `M2`.
-- G6 readiness Phase 0, Phase 1, and Phase 2 are persisted milestones.
-- Phase 3 is controlled continuation after controller remediation; no
-  replacement G5 freeze exists yet.
-- Phase 4 preflight and formal G6 jobs are blocked.
-- G7 sealed-test unlock count is `0` (maximum `1`).
-- Validation scenarios are `20000-20049`; sealed scenarios are `30000-30099`.
-  Do not access either payload range during this continuation.
-- Pesticide is the only replenished resource. Battery replenishment is false.
+- Highest maturity: `M2` implementation and scoped mechanism evidence.
+- Current work: G6 readiness Phase 3, dynamic development-pilot continuation.
+- Formal G6: blocked.
+- Replacement dynamic G5 freeze: not generated.
+- Phase 4 preflight: not run or not authorized yet.
+- G7 sealed-test unlock count: `0` of maximum `1`.
+- Validation scenarios: `20000-20049`; sealed scenarios: `30000-30099`.
+  Neither range may be accessed, copied, inspected, hashed, or generated during
+  this work.
+- Development panel used by the pilots below: `10000-10019`.
 
-At `M2`, say proposes, defines, implements, revalidates, or verifies bounded
-engineering behavior. Do not claim efficacy, superiority, significance, real
-deployment, or universal optimality.
+Persisted repository state at the time of this handoff:
 
-## 3. Completed Work
+```text
+HEAD       9f0336391304b727cb4a7b0bc9fb3439ae68e5d2
+upstream   9f0336391304b727cb4a7b0bc9fb3439ae68e5d2
+remote     9f0336391304b727cb4a7b0bc9fb3439ae68e5d2
+```
 
-### 3.1 Executable controller semantics
+The latest content commit is `5b6d3ef83135d0965b4b438319adc3b46c7baabc`
+(`data: record seventh dynamic phase3 pilot`); the latest state-record commit
+is `9f0336391304b727cb4a7b0bc9fb3439ae68e5d2` (`docs: persist seventh
+dynamic phase3 pilot state`). Local, upstream, and GitHub remote matched at
+handoff. The worktree is not clean because the replacement-matrix draft and
+pre-existing untracked artifacts are present; inspect them, do not clean them.
 
-The physical path now executes the selected condition rather than passing
-`sr_mappo_mobile` internally and relabeling it:
+## 4. Completed Work
 
-| condition | vehicle controller | training mode | vehicle trainable |
+### 4.1 Dynamic execution and controller remediation
+
+The dynamic ecology implementation is `dynamic_pest_v1`, with the inherited
+Holling-Tanner reaction-diffusion pest dynamics, wind advection, and persistent
+decaying pesticide-effect field. The Phase 3 controller work now:
+
+- preserves the selected outer condition through physical refit dispatch;
+- executes the actual controller for each condition rather than passing the
+  mobile controller and relabeling it;
+- checks slot/request identity, allowed primary-component node, reachability,
+  and distance before reservation or service;
+- starts fixed support at the frozen support node;
+- isolates vehicle replay/optimizer updates for non-learned conditions;
+- records the executed controller slot in the physical envelope;
+- refreshes rolling-A* current route distance between replans; and
+- retains the active locked service node after UAV movement.
+
+The validated controller semantics are:
+
+| condition | controller | training mode | vehicle trainable |
 |---|---|---|---:|
 | `sr_mappo_mobile` | `learned` | `joint` | true |
 | `sr_mappo_fixed` | `fixed_support` | `uav_only` | false |
@@ -67,157 +105,119 @@ The physical path now executes the selected condition rather than passing
 | `sr_mappo_urgency` | `urgency_priority` | `uav_only` | false |
 | `sr_mappo_two_stage` | `learned_two_stage` | `two_stage` | true |
 
-The remediation covers selected-refit provenance, fixed-support initialization,
-request/slot/node/reachability/distance checks, vehicle actor/replay/optimizer
-isolation for non-learned conditions, executed-controller logging, current
-rolling-A* route distance, and retention of an active locked service node.
+### 4.2 Phase 3 development pilots already completed
 
-### 3.2 Development revalidation
+These are seven zero-based identities from the old repaired 120-job matrix.
+They are dynamic, development-only, descriptive `M2` evidence. They must not
+be silently counted as rows in a new replacement aggregate.
 
-Five non-mobile paths were run for 8 physical interactions using
-`method=sr_mappo_mobile`, `candidate_id=c01`, `scale=g20x20_d2`,
-`training_seed=51001`, and development panel `10000-10019`. All completed.
-Artifacts are under:
+| index | method / condition | controller | interactions | result |
+|---:|---|---|---:|---|
+| 0 | `sr_mappo_mobile` / `sr_mappo_mobile` | learned | 128 | completion validated |
+| 1 | `sr_mappo_mobile` / `sr_mappo_fixed` | fixed_support | 128 | completion validated |
+| 2 | `sr_mappo_mobile` / `sr_mappo_astar` | rolling_astar | 128 | completion validated |
+| 3 | `mappo_mobile` / `mappo_mobile` | learned | 128 | completion validated |
+| 4 | `sr_mappo_mobile` / `sr_mappo_two_stage` | learned_two_stage | 128 | completion validated |
+| 5 | `sr_mappo_mobile` / `sr_mappo_nearest` | nearest_feasible | 128 | completion validated |
+| 6 | `sr_mappo_mobile` / `sr_mappo_urgency` | urgency_priority | 128 | completion validated |
 
-```text
-outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-controller-checks/
-```
-
-The first A* and nearest attempts failed before artifact writes. Their empty
-attempt directories remain local markers; successful reruns use separate
-`astar-after-route-fix` and `nearest-after-node-fix` directories.
-
-The original mobile pilot identity was rerun after source changes under:
-
-```text
-outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-first-revalidated/
-```
+All seven used `candidate_id=c01`, `scale=g20x20_d2`,
+`training_seed=51001`, `partition=development`, scenario panel
+`10000-10019`, start scenario `10000`, and `ecology=dynamic_pest_v1`.
+Each has raw episode log, checkpoint, summary, manifest, identity/provenance,
+completion validation, and per-pilot artifact audit. The latest identity is:
 
 ```text
+identity=56a1f99f7b0ac8512dab8cfff2fe5c7cd6c1485053d92f2cfb2869ef227f729c
 method=sr_mappo_mobile
-condition_id=sr_mappo_mobile
-vehicle_controller=learned
-training_mode=joint
-candidate_id=c01
-scale=g20x20_d2
-training_seed=51001
-scenario_id=10000
+condition_id=sr_mappo_urgency
+vehicle_controller=urgency_priority
+vehicle_trainable=false
+training_mode=uav_only
 interactions=128
-dynamic episodes=1
-dynamic ecology steps=128
-accepted spray actions=25
-sprayed pesticide=0.48750000000000016 L
+dynamic_ecology_steps=128
+accepted_spray_actions=25
+sprayed_pesticide_l=0.48750000000000016
 completion_validated=true
 validation_accessed=false
 sealed_accessed=false
 battery_replenishment_enabled=false
-evidence_status=noncanonical_test_only
 ```
 
-This is descriptive engineering evidence only, not a formal result.
+The latest pilot audit is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-007-urgency/pilot-audit.json`.
+Its recorded size is `3670` bytes and its SHA-256 is
+`1ab070f0d41b182c0155717ca3ac41d49887fabc82751f84eaadb816b03529b4`.
 
-### 3.3 Audits And Commits
+The seven pilots and all controller checks are engineering evidence only.
+They do not support claims of efficacy, superiority, statistical
+significance, ranking, deployment, or universal optimality.
 
-Dynamic audit:
+### 4.3 Verification already recorded
+
+The latest persisted checks recorded in project state include:
 
 ```text
-outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g3/audits/dynamic-pest-implementation-phase3-post-controller.json
+python -m pytest tests/g6 -q --tb=short       64 passed
+python -m compileall -q src scripts           exit 0
+git diff --check                              pass
 ```
 
-Detailed audit: `docs/audits/g6-readiness-phase3.md`
+The Phase 3 dynamic implementation audit passed, strict completion and
+checkpoint reloads passed for the completed pilots, and referenced artifact
+byte counts and SHA-256 values matched. Do not weaken the dirty-tree and
+provenance guards because a later test is inconvenient.
 
-The important pushed commits are recorded in `docs/PROJECT_STATE.md`; the
-latest content commit is `3f70603` and the latest state commit is `3a6e2e4`.
-The current full commit is:
+## 5. Current Uncommitted Material
+
+`git status --short --branch` currently shows these tracked modifications:
 
 ```text
-3a6e2e4fc438e3e5ee20c1484e373270bf9dd88b
+M src/problem2/training/pilot.py
+M tests/g5/test_pilot_freeze.py
 ```
 
-Local HEAD, upstream, and the remote branch matched this hash at handoff.
-
-## 4. Fresh Verification
-
-Fresh checks after the content commit:
+It also shows untracked drafts:
 
 ```text
-python -m pytest tests/g6 -q --tb=short
-50 passed in 32.10s
-
-python -m pytest tests/ecology tests/g3 tests/g4 tests/g5/test_heuristics.py tests/g5/test_physical_candidate_training.py tests/g5/test_environment_metrics.py tests/g5/test_end_to_end_smoke.py tests/g5/test_experiment_matrix.py -q --tb=short
-381 passed in 462.35s
-
-python -m compileall -q src scripts
-exit 0
-
-git diff --check
-pass
+docs/superpowers/specs/2026-08-30-g5-replacement-primary-matrix-design.md
+docs/superpowers/plans/2026-08-30-g5-replacement-primary-matrix.md
 ```
 
-Six manifests were checked; every referenced artifact existed with matching
-byte count and SHA-256. A prior run gave `377 passed, 4 failed` only because an
-uncommitted tracked `PROJECT_STATE.md` edit correctly triggered the matrix
-dirty-tree guard. After the content commit, the matrix subset passed `8` and
-the full affected suite passed `381`. Do not weaken that guard.
+Those drafts describe a 30-job matrix (`5 conditions x 2 scales x 3 seeds`).
+The corresponding TDD attempt is incomplete: after the partial implementation,
+the focused suite was `10 failed, 10 passed`, because the runtime mapping guard
+still requires coverage for all five `LEARNING_METHODS`. Treat the 30-job
+draft, its test edits, and any generated aggregate as unaccepted working
+material. Revise them to the 48-job contract below, or preserve them as an
+explicit superseded draft; do not commit them as a completed gate.
 
-## 5. Immediate Next Plan
+There is also an important pre-existing untracked artifact directory:
 
-Run another controlled dynamic development pilot, one job at a time, using a
-new uncovered development identity toward a complete replacement G5 pilot
-matrix.
+```text
+outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-008-ippo/
+```
 
-For each pilot:
+It belongs to the old 120-job matrix and has:
 
-1. Use `dynamic_pest_v1` and the dynamic output root only.
-2. Use development scenarios only; do not read validation or sealed payloads.
-3. Keep pesticide as the only replenished resource and battery disabled.
-4. Preserve method, candidate, scale, seed, horizon, budget, and condition
-   semantics unless a replacement decision is documented before evaluation.
-5. Write raw logs, checkpoint, summary, manifest, and completion/audit evidence.
-6. Validate identity, ecology, controller semantics, conservation, completion,
-   and access flags before starting the next job.
-7. Preserve failed attempts and diagnostics; never silently retry or overwrite.
-8. Update audit/state, commit, and push before moving to the next gate.
+```text
+matrix_index_zero_based=7
+matrix_job_count=120
+identity=16edaea51bee952905a5089c2793a800895ffc27f4e53f07a00fb699efd818fe
+method=ippo_mobile
+condition_id=ippo_mobile
+source_commit=9f0336391304b727cb4a7b0bc9fb3439ae68e5d2
+completion_validated=true
+validation_accessed=false
+sealed_accessed=false
+```
 
-After the pilot/refit evidence is complete:
+Preserve it. Do not overwrite, rename, delete, or automatically merge it into
+the replacement aggregate. Audit and persistence decisions for it must be
+explicit.
 
-1. Generate and persist a replacement dynamic G5 freeze.
-2. Run the full read-only Phase 4 preflight against that exact pushed freeze.
-3. Only a passing preflight can authorize the first formal G6 job; stop and
-   inspect diagnostics after that first job.
-4. G7 remains later and may use the single sealed unlock only after its gate.
-
-Do not jump directly to formal G6, validation selection, or G7.
-
-## 6. Absolute Do-Not-Repeat Rules
-
-- Do not run formal G6, validation selection/evaluation, or sealed evaluation.
-- Do not access, inspect, copy, hash, or manufacture payloads for `20000-20049`
-  or `30000-30099`.
-- Do not unlock G7; actual unlock count stays `0`.
-- Do not modify, move, relabel, or overwrite historical static G5 outputs.
-- Do not write new evidence outside the dynamic output root.
-- Do not introduce HAPPO, rename SR-MAPPO, or use `AG-SR-MAPPO` publicly.
-- Do not claim treatment efficacy, superiority, significance, deployment, or
-  optimality from M2 development evidence.
-- Do not pass mobile internally and relabel fixed/A*/nearest/urgency/two-stage.
-- Do not enable battery replenishment or broaden ablation/sensitivity beyond
-  exactly `sr_mappo_mobile`.
-- Do not alter budgets, ranges, statistics, or selection rules after validation
-  access; issue a replacement freeze instead.
-- A Windows checkpoint `PermissionError` is a failed attempt, not success.
-  Record it and recover only the identical identity while preserving the prior
-  valid checkpoint.
-- Do not use `git add .`, `git add -A`, `git clean`, force-push,
-  `git reset --hard`, or destructive checkout commands.
-- Do not stage, delete, or clean pre-existing untracked directories.
-- Do not create another worktree or touch detached `Second-tdd-clean`.
-- Do not modify protected first-problem, base-project/OSM, planning-evidence,
-  or external Word thesis files.
-
-## 7. Pre-existing Untracked Directories
-
-Leave these untouched and unstaged:
+The following pre-existing untracked directories are also to be left untouched
+and unstaged:
 
 ```text
 _tmp_docx_assets/
@@ -239,9 +239,149 @@ tmp-task11-cli/
 tmp-task12-repro/
 ```
 
-Inspect any additional status entries at startup; never auto-revert or clean.
+## 6. Approved Replacement Matrix Direction
 
-## 8. Startup Checklist
+The 30-job primary-only scope is too small for the existing budget and refit
+contracts. The replacement should be:
+
+```text
+8 conditions x 2 representative scales x 3 development seeds = 48 jobs
+```
+
+The eight executable condition-to-learning-method pairs are:
+
+| condition | learning method | controller/training path |
+|---|---|---|
+| `sr_mappo_mobile` | `sr_mappo_mobile` | learned, joint |
+| `sr_mappo_fixed` | `sr_mappo_mobile` | fixed_support, UAV-only |
+| `sr_mappo_astar` | `sr_mappo_mobile` | rolling_astar, UAV-only |
+| `mappo_mobile` | `mappo_mobile` | learned, joint |
+| `sr_mappo_two_stage` | `sr_mappo_mobile` | learned_two_stage, two-stage |
+| `ippo_mobile` | `ippo_mobile` | IPPO mobile path |
+| `maddpg_mobile` | `maddpg_mobile` | MADDPG mobile path |
+| `iql_mobile` | `iql_mobile` | IQL mobile path |
+
+This preserves runtime evidence for all five required learning methods:
+`sr_mappo_mobile`, `mappo_mobile`, `ippo_mobile`, `maddpg_mobile`, and
+`iql_mobile`. It also retains the five required primary comparison paths.
+
+The following twelve conditions become diagnostic-only and must be explicitly
+excluded from primary selection:
+
+```text
+sr_mappo_nearest
+sr_mappo_urgency
+no_observation_normalization
+no_return_normalization
+no_network_stabilization
+no_robust_value_update
+no_learning_rate_decay
+learning_rate
+clip_range
+entropy_coef
+gamma
+gae_lambda
+```
+
+This is a G5 development replacement only. It does not change the formal G6
+scales, formal training seeds, validation/test partitions, evaluation
+horizons, statistics, or sealed-test lock. All replacement jobs remain
+development-only, use `dynamic_pest_v1`, pesticide-only replenishment, and
+one-job-at-a-time execution.
+
+## 7. Exact Next Steps
+
+1. At startup, read `AGENTS.md`, `docs/PROJECT_STATE.md`, this file, and
+   `docs/audits/g6-readiness-phase3.md`. Run `git status --short --branch` and
+   verify that local, upstream, and remote still agree with the state record.
+
+2. Inspect the uncommitted 30-job changes. Do not run or commit a matrix that
+   claims 30 jobs while the five-method runtime guard is active. Revise
+   `src/problem2/training/pilot.py`, `tests/g5/test_pilot_freeze.py`, and the
+   replacement design/plan to the 48-job scope. Keep `LEARNING_METHODS`, the
+   budget coverage check, and selected-candidate/refit rules intact.
+
+3. Use TDD to assert: exactly 48 unique jobs; exactly eight executable
+   conditions; exactly twelve excluded diagnostics; all five learning methods
+   obtain runtime coverage; excluded conditions are rejected; incomplete
+   matrices fail closed; identities and development scenario panels remain
+   deterministic.
+
+4. Run focused pilot-freeze tests, affected G5/G6 tests, the full test suite,
+   `python -m compileall -q src scripts`, and `git diff --check`. Review the
+   diff manually for accidental changes to historical outputs, formal
+   protocols, validation/sealed access, or battery settings.
+
+5. Commit and push the matrix implementation and its audit/state documentation
+   with descriptive commits. Stage named files only. Record the pushed hashes
+   and fresh verification in `docs/PROJECT_STATE.md` and this handoff.
+
+6. Only after the 48-job replacement contract is committed and pushed, execute
+   its development identities one at a time. For every job, mechanically
+   resolve the identity, preserve failed attempts, validate completion,
+   provenance, ecology, controller semantics, conservation, artifact bytes and
+   SHA-256 values, and confirm validation/sealed access remain false.
+
+7. After all 48 identities pass their audit, generate a new dynamic G5 freeze
+   with `matrix_complete=true`. Persist it and run the read-only Phase 4
+   preflight against that exact pushed freeze.
+
+8. Only a passing replacement freeze and Phase 4 preflight may authorize the
+   first formal G6 job. Run that first formal job under the locked six-scale,
+   five-seed protocol, stop to inspect recovery and validation immediately
+   afterward, and do not jump to G7.
+
+## 8. When Formal G6 Is Allowed
+
+Formal G6 is not allowed merely because seven development pilots completed, a
+smoke test passed, or the 30-job draft exists. The minimum chain is:
+
+```text
+48-job dynamic development matrix complete and audited
+-> replacement dynamic G5 freeze committed and pushed
+-> read-only Phase 4 preflight passes against that exact freeze
+-> first immutable formal G6 job authorized
+```
+
+Until the chain is recorded in `docs/PROJECT_STATE.md`, remain at `M2` and use
+only descriptive engineering language: implements, defines, revalidates,
+checks, or provides a specification. Do not write proves, significantly
+outperforms, formal experiments show, real deployment verified, or universally
+optimal.
+
+## 9. Absolute Do-Not-Repeat Rules
+
+- Do not treat 30 jobs as 120 jobs, or any partial matrix as complete.
+- Do not weaken or delete the five `LEARNING_METHODS` runtime and refit guards.
+- Do not fabricate IPPO, MADDPG, or IQL runtime rows.
+- Do not merge the seven old 120-matrix pilots or the untracked index-7 IPPO
+  artifact into the new replacement aggregate without an explicit, audited
+  decision.
+- Do not use historical static-ecology G5 artifacts as dynamic evidence.
+- Do not access, copy, hash, inspect, or manufacture validation payloads
+  `20000-20049` or sealed payloads `30000-30099`.
+- Do not unlock G7; its actual unlock count must remain `0`.
+- Do not enable battery replenishment.
+- Do not introduce HAPPO or rename the public method to `AG-SR-MAPPO`.
+- Do not pass `sr_mappo_mobile` internally and relabel fixed, A*, nearest,
+  urgency, or two-stage conditions.
+- Do not run batch or parallel pilots; the current boundary is one job at a
+  time.
+- A Windows checkpoint `PermissionError` or an audit-wrapper failure is a
+  failed attempt/diagnostic, not success. Preserve the attempt and recover
+  only the identical frozen identity.
+- Do not alter budgets, seeds, scenario ranges, horizons, statistics, or
+  selection rules after any validation access. Any legitimate change requires
+  a new replacement freeze.
+- Do not use `git add .`, `git add -A`, `git clean`, force-push,
+  `git reset --hard`, or destructive checkout. Do not stage, delete, or clean
+  existing untracked directories.
+- Do not modify protected assets in the first-problem repository, base project
+  or OSM inputs, planning-evidence directory, or external Word thesis files.
+
+## 10. Startup Commands
+
+Run these commands before making changes:
 
 ```powershell
 Get-Content -Raw AGENTS.md
@@ -258,12 +398,12 @@ git ls-remote origin refs/heads/codex/problem2-dynamic-pest-model
 python -m pytest tests/g6 -q --tb=short
 ```
 
-Expected current state is HEAD/upstream/remote
-`3a6e2e4fc438e3e5ee20c1484e373270bf9dd88b`, clean tracked files, preserved
-untracked temporary directories, and `50 passed`. If the baseline differs,
-stop and reconcile against `docs/PROJECT_STATE.md`.
+Expected baseline is HEAD/upstream/remote `9f0336391304b727cb4a7b0bc9fb3439ae68e5d2`,
+with the tracked draft modifications and preserved untracked directories
+listed above, and the recorded G6 suite passing. If the baseline differs,
+reconcile against `docs/PROJECT_STATE.md` before running or editing pilots.
 
-## 9. Evidence Chain
+## 11. Evidence Chain Reminder
 
 Every later formal result must remain traceable through:
 
@@ -277,192 +417,6 @@ source parameter/literature
 -> thesis statement
 ```
 
-Training completion, a smoke test, a dry-run, a preflight printout, or one
-development pilot is not a thesis efficacy result. G6 readiness and Phase 3
-development evidence do not authorize method ranking or superiority claims.
-
-## 10. Matrix Contract Update
-
-The historical dynamic audit for
-`phase3-matrix-002-fixed` retains the manually recorded label
-`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`. The
-historical and current `PilotJob.identity` serializer independently produce
-the canonical identity
-`05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1` for the
-same tuple. Treat the former as a byte-preserved historical audit-label typo;
-do not modify or relabel its output artifacts.
-
-The replacement executable pilot matrix is now an explicit condition-to-method
-mapping with 20 conditions, five learning methods, two scales, three
-development seeds, and 120 jobs (2,400 scenario-reference rows). The first
-three canonical identities are stable for the mobile, fixed-support, and
-rolling-A* tuples. Subsequent pilot indices must be resolved from this new
-matrix, and the old static 510-job pilot/refit remains historical diagnostics
-only. Persist and review the repair before running the next development job;
-replacement freeze, Phase 4 preflight, formal G6, validation selection, and
-G7 remain blocked.
-
-## 11. Matrix Identity 004 Result
-
-The first pilot from the repaired matrix was zero-based index `3`:
-`mappo_mobile + mappo_mobile`, identity
-`c88c56866c9d7db3ea7059233019c2f014fe39375d736a0de14d8c5a7f2f51de`.
-It completed one 128-interaction dynamic development episode with 11 accepted
-spray actions and 0.22 L sprayed pesticide. The strict checkpoint and artifact
-audit passed; validation, sealed, and battery flags remained false. The output
-is under
-`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-004-mappo/`
-and is descriptive `M2` evidence only. An audit-wrapper field mismatch was
-recovered by reusing the completed files; training was not rerun.
-
-The next authorized identity is zero-based index `4`,
-`sr_mappo_mobile + sr_mappo_two_stage`, still one dynamic development pilot at
-a time. No replacement freeze or formal G6 action is authorized.
-
-## 12. Matrix Identity 005 Result
-
-The next uncovered identity from the repaired matrix was zero-based index `4`:
-
-```text
-identity=31837fe943ba86c6d03dd9ab1cb122e6bfefa08e3d61733d313c741ac5b493b2
-method=sr_mappo_mobile
-condition_id=sr_mappo_two_stage
-vehicle_controller=learned_two_stage
-vehicle_trainable=true
-training_mode=two_stage
-candidate_id=c01
-scale=g20x20_d2
-training_seed=51001
-partition=development
-scenario_ids=10000-10019
-scenario_id=10000
-interactions=128
-```
-
-It completed one dynamic development episode under source commit
-`492de00c8fe4c12ea09eb0cd7d74dda6481d0320`, with `128` ecology steps, `25`
-accepted spray actions, and `0.48750000000000016 L` sprayed pesticide. Team
-reward was `0.3913904742247592`; total pest changed from
-`9.088605068072038` to `5.531411620437773`. These remain descriptive `M2`
-engineering observations only and support no efficacy, superiority,
-significance, ranking, or deployment claim.
-
-The strict checkpoint reload and artifact audit passed. The machine audit is
-`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-005-two-stage/pilot-audit.json`;
-the physical checkpoint, manifest, episode log, and summary are under the same
-pilot directory. `completion_validated=true`,
-`validation_accessed=false`, `sealed_accessed=false`, and
-`battery_replenishment_enabled=false` remain recorded. The persistence commit
-is `61fc3649a5dbfab730f9af84db2b0f881ad38d03` (`data: record fifth dynamic
-phase3 pilot`), pushed to `origin/codex/problem2-dynamic-pest-model`.
-
-The highest maturity remains `M2`; the replacement G5 freeze, Phase 4
-preflight, formal G6, validation selection, and G7 remain blocked. The next
-authorized identity is zero-based matrix index `5`,
-`sr_mappo_mobile + sr_mappo_nearest`, and it may be run only as one controlled
-dynamic development pilot after this handoff state is persisted. No validation
-or sealed payload access is permitted, and the G7 unlock count remains `0`.
-
-## 13. Matrix Identity 006 Result
-
-The next uncovered identity from the repaired matrix was zero-based index `5`:
-
-```text
-identity=411f2fdd00a89b1d024ec4560dfeb35d08bf841ad7d90ec504e403d50a28b3b8
-method=sr_mappo_mobile
-condition_id=sr_mappo_nearest
-vehicle_controller=nearest_feasible
-vehicle_trainable=false
-training_mode=uav_only
-candidate_id=c01
-scale=g20x20_d2
-training_seed=51001
-partition=development
-scenario_ids=10000-10019
-scenario_id=10000
-interactions=128
-```
-
-It completed one dynamic development episode under source commit
-`53e2238ab36d25c2c8c1fd1be24f74772507d060`, with `128` ecology steps, `25`
-accepted spray actions, and `0.48750000000000016 L` sprayed pesticide. Team
-reward was `-0.035699709362087946`; total pest changed from
-`9.088605068072038` to `9.41306562750901`. These remain descriptive `M2`
-engineering observations only and support no efficacy, superiority,
-significance, ranking, or deployment claim.
-
-The strict checkpoint reload and artifact audit passed. The machine audit is
-`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-006-nearest/pilot-audit.json`;
-the physical checkpoint, manifest, episode log, and summary are under the same
-pilot directory. `completion_validated=true`,
-`validation_accessed=false`, `sealed_accessed=false`, and
-`battery_replenishment_enabled=false` remain recorded. The persistence commit
-for this result is
-`d87247d951cf1bb8206db752bc73e744f509e5fd` (`data: record sixth dynamic phase3
-pilot`), pushed to `origin/codex/problem2-dynamic-pest-model`; local, upstream,
-and remote hashes matched after the push.
-
-The highest maturity remains `M2`; the replacement G5 freeze, Phase 4
-preflight, formal G6, validation selection, and G7 remain blocked. The next
-authorized identity is zero-based matrix index `6`,
-`sr_mappo_mobile + sr_mappo_urgency`, and it may be run only as one controlled
-dynamic development pilot after this handoff state is persisted. No validation
-or sealed payload access is permitted, and the G7 unlock count remains `0`.
-
-## 14. Matrix Identity 007 Result
-
-The next uncovered identity from the repaired executable matrix was resolved
-mechanically as zero-based index `6`:
-
-```text
-identity=56a1f99f7b0ac8512dab8cfff2fe5c7cd6c1485053d92f2cfb2869ef227f729c
-method=sr_mappo_mobile
-condition_id=sr_mappo_urgency
-vehicle_controller=urgency_priority
-vehicle_trainable=false
-training_mode=uav_only
-candidate_id=c01
-scale=g20x20_d2
-training_seed=51001
-partition=development
-scenario_ids=10000-10019
-scenario_id=10000
-interactions=128
-ecology=dynamic_pest_v1
-```
-
-It completed one dynamic development episode under source commit
-`000df84c3e5b6df1f7ef54d101491b0e3a330d67`, with `128` ecology steps, `25`
-accepted spray actions, and `0.48750000000000016 L` sprayed pesticide. Team
-reward was `-0.035699709362087946`; total pest changed from
-`9.088605068072038` to `9.41306562750901`. These remain descriptive `M2`
-engineering observations only and support no efficacy, superiority,
-significance, ranking, or deployment claim.
-
-The strict completion validator and terminal checkpoint reload passed with
-evaluation-state digest
-`ac71cd10c620659b12ddc717fb67066662ecec5827f19478e240183fa5fc6327`. The
-physical artifact set and matrix audit matched their recorded byte counts and
-SHA-256 values. The machine audit is
-`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-007-urgency/pilot-audit.json`
-(`3670` bytes; SHA-256
-`1ab070f0d41b182c0155717ca3ac41d49887fabc82751f84eaadb816b03529b4`).
-
-The development boundary remains closed:
-`validation_accessed=false`, `sealed_accessed=false`,
-`battery_replenishment_enabled=false`, and sealed unlock count `0`. Pesticide
-is still the only replenished resource. The replacement matrix is incomplete;
-replacement G5 freeze, Phase 4 preflight, formal G6, validation selection, and
-G7 remain blocked.
-
-Persistence and verification:
-
-- Pilot evidence and the Phase 3 audit were committed as
-  `5b6d3ef83135d0965b4b438319adc3b46c7baabc` (`data: record seventh dynamic
-  phase3 pilot`) and pushed to `origin/codex/problem2-dynamic-pest-model`.
-- `python -m pytest tests/g6 -q --tb=short`: `64 passed in 28.09s`.
-- `python -m compileall -q src scripts`: exit `0`; `git diff --check`: pass.
-
-After this state synchronization is pushed, the next authorized action is one
-controlled run of zero-based matrix index `7` (`ippo_mobile` with
-`ippo_mobile`). No batch or later-gate action is authorized.
+Training completion, a smoke test, a dry run, a preflight printout, or one
+development pilot is not a thesis efficacy result. Keep all conclusions
+inside the currently authorized maturity gate.
