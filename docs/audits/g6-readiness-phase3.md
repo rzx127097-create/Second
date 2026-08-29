@@ -85,3 +85,121 @@ action is another controlled dynamic development pilot, one at a time, after
 the completed result has been reviewed. Replacement G5 freeze generation and
 Phase 4 preflight remain blocked until the required pilot/refit evidence is
 complete.
+
+## Phase 3 Continuation: Controller Remediation And Revalidation
+
+After the initial pilot, scoped review identified and closed three development
+correctness gaps before further pilot execution:
+
+- physical refit provenance is bound to the learning method even when the
+  outer condition is fixed, A*, nearest, urgency, or two-stage;
+- fixed support starts at the frozen support node and injected decisions are
+  checked for request/slot identity, allowed primary-component node,
+  reachability, and exact current A* distance;
+- non-learned conditions route observations through the vehicle-isolation
+  boundary, keep vehicle replay/optimizer state unchanged while UAV updates
+  continue, and bind the executed controller slot into the physical envelope;
+- rolling A* reports the current route distance between replans, while active
+  reservations retain their locked service node after UAV movement.
+
+The controller task reached a clean scoped review after five fix rounds. The
+source-level review artifacts and reports remain in the SDD workspace; the
+production commits are listed under Persistence below.
+
+## Post-Fix Verification
+
+```text
+python -m pytest tests/g6 -q --tb=short
+50 passed in 28.15s
+
+python -m pytest tests/ecology tests/g3 tests/g4 tests/g5/test_heuristics.py tests/g5/test_physical_candidate_training.py tests/g5/test_environment_metrics.py tests/g5/test_end_to_end_smoke.py tests/g5/test_experiment_matrix.py -q --tb=short
+381 passed in 450.53s
+
+python scripts/audit_dynamic_pest.py --root . --output outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g3/audits/dynamic-pest-implementation-phase3-post-controller.json
+status=pass
+
+python -m compileall -q src scripts
+exit 0
+
+git diff --check
+pass
+```
+
+Focused controller/heuristic/isolation checks returned `28 passed`. The
+independent A* review found no Critical or Important issue, and the active
+service-node regression retained rejection of unrelated nodes.
+
+## Condition Path Revalidation
+
+Each path used method `sr_mappo_mobile`, candidate `c01`, scale
+`g20x20_d2`, training seed `51001`, and only development scenario panel
+`10000-10019`; each was bounded to 8 physical interactions:
+
+| condition | controller | training mode | vehicle trainable | result |
+|---|---|---|---:|---|
+| `sr_mappo_fixed` | `fixed_support` | `uav_only` | false | completion validated |
+| `sr_mappo_astar` | `rolling_astar` | `uav_only` | false | completion validated after route fix |
+| `sr_mappo_nearest` | `nearest_feasible` | `uav_only` | false | completion validated after active-node fix |
+| `sr_mappo_urgency` | `urgency_priority` | `uav_only` | false | completion validated |
+| `sr_mappo_two_stage` | `learned_two_stage` | `two_stage` | true | completion validated |
+
+Artifacts are under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-controller-checks/`.
+The first A* and nearest attempts failed before artifact writes and their
+directories remain as preserved attempt markers; they were not overwritten or
+silently retried.
+
+## Revalidated First Pilot Identity
+
+Because the controller and environment sources changed after the original
+pilot, the same first-pilot identity was rerun in a new directory without
+altering the original `phase3-first` artifacts:
+
+```text
+method=sr_mappo_mobile
+condition_id=sr_mappo_mobile
+vehicle_controller=learned
+training_mode=joint
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+scenario_id=10000
+interactions=128
+dynamic episodes=1
+dynamic ecology steps=128
+accepted spray actions=25
+sprayed pesticide=0.48750000000000016 L
+completion_validated=true
+validation_accessed=false
+sealed_accessed=false
+battery_replenishment_enabled=false
+```
+
+The revalidated raw artifact set is under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-first-revalidated/`
+and is `noncanonical_test_only` descriptive evidence. It is not a formal
+result and supports no efficacy, superiority, significance, deployment, or
+optimality claim.
+
+## Continuation Boundary
+
+The dynamic implementation audit, all condition paths, and the revalidated
+pilot remain bounded engineering evidence at `M2`. No validation scenario
+payload (`20000-20049`) or sealed payload (`30000-30099`) was accessed, the
+G7 unlock count remains `0`, and pesticide is the only replenished resource.
+Replacement dynamic G5 freeze generation, Phase 4 preflight, formal G6 jobs,
+validation selection, and G7 remain blocked. The next authorized action is
+still controlled development work toward a complete replacement G5 pilot
+matrix, one job at a time.
+
+## Additional Persistence
+
+- `50a053a` routes the physical observation loop through the vehicle-isolation
+  boundary; `c4eff19` records its round-5 report.
+- `d10d30e` fixes rolling A* current-route validation; `dc21895` records that
+  remediation in project state.
+- `48e771f` preserves active locked service nodes for heuristic controllers
+  and adds nearest/urgency regressions and audit evidence.
+- The successful post-fix condition artifacts, revalidated first-pilot
+  artifacts, and post-controller dynamic audit are to be recorded in the
+  following phase persistence commit.
