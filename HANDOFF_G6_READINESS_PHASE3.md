@@ -362,3 +362,47 @@ authorized identity is zero-based matrix index `5`,
 `sr_mappo_mobile + sr_mappo_nearest`, and it may be run only as one controlled
 dynamic development pilot after this handoff state is persisted. No validation
 or sealed payload access is permitted, and the G7 unlock count remains `0`.
+
+## 13. Matrix Identity 006 Result
+
+The next uncovered identity from the repaired matrix was zero-based index `5`:
+
+```text
+identity=411f2fdd00a89b1d024ec4560dfeb35d08bf841ad7d90ec504e403d50a28b3b8
+method=sr_mappo_mobile
+condition_id=sr_mappo_nearest
+vehicle_controller=nearest_feasible
+vehicle_trainable=false
+training_mode=uav_only
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+partition=development
+scenario_ids=10000-10019
+scenario_id=10000
+interactions=128
+```
+
+It completed one dynamic development episode under source commit
+`53e2238ab36d25c2c8c1fd1be24f74772507d060`, with `128` ecology steps, `25`
+accepted spray actions, and `0.48750000000000016 L` sprayed pesticide. Team
+reward was `-0.035699709362087946`; total pest changed from
+`9.088605068072038` to `9.41306562750901`. These remain descriptive `M2`
+engineering observations only and support no efficacy, superiority,
+significance, ranking, or deployment claim.
+
+The strict checkpoint reload and artifact audit passed. The machine audit is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-006-nearest/pilot-audit.json`;
+the physical checkpoint, manifest, episode log, and summary are under the same
+pilot directory. `completion_validated=true`,
+`validation_accessed=false`, `sealed_accessed=false`, and
+`battery_replenishment_enabled=false` remain recorded. The persistence commit
+for this result is to be recorded after the audit/state files are committed and
+pushed.
+
+The highest maturity remains `M2`; the replacement G5 freeze, Phase 4
+preflight, formal G6, validation selection, and G7 remain blocked. The next
+authorized identity is zero-based matrix index `6`,
+`sr_mappo_mobile + sr_mappo_urgency`, and it may be run only as one controlled
+dynamic development pilot after this handoff state is persisted. No validation
+or sealed payload access is permitted, and the G7 unlock count remains `0`.

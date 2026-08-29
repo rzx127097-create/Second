@@ -448,3 +448,54 @@ G7 remain blocked. After this result is persisted, the next authorized action
 is one controlled run of zero-based matrix index `5`
 (`sr_mappo_mobile` with `sr_mappo_nearest`); no batch or later-gate action is
 authorized.
+
+## Phase 3 Continuation: Matrix Identity 006 (Nearest)
+
+The next uncovered identity from the repaired executable matrix was resolved
+mechanically as zero-based index `5`:
+
+```text
+identity=411f2fdd00a89b1d024ec4560dfeb35d08bf841ad7d90ec504e403d50a28b3b8
+method=sr_mappo_mobile
+condition_id=sr_mappo_nearest
+vehicle_controller=nearest_feasible
+vehicle_trainable=false
+training_mode=uav_only
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+partition=development
+scenario_ids=10000-10019
+scenario_id=10000
+interactions=128
+```
+
+One physical development attempt completed under source commit
+`53e2238ab36d25c2c8c1fd1be24f74772507d060`. It produced one dynamic episode,
+`128` ecology steps, `25` accepted spray actions, and
+`0.48750000000000016 L` sprayed pesticide. Team reward was
+`-0.035699709362087946`; total pest changed from `9.088605068072038` to
+`9.41306562750901`. These are retained as descriptive `M2` engineering
+observations only and support no efficacy, significance, superiority, or
+ranking claim.
+
+The terminal checkpoint was strictly reloaded at the current source commit;
+the evaluation-state digest was
+`ac71cd10c620659b12ddc717fb67066662ecec5827f19478e240183fa5fc6327`. The
+physical manifest's three artifacts and the matrix pilot audit's four
+artifact references matched their recorded SHA-256 values and byte counts.
+The machine audit is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-006-nearest/pilot-audit.json`.
+It records `completion_validated=true`, finite metrics, dynamic ecology,
+`vehicle_controller=nearest_feasible`, `vehicle_trainable=false`, and
+`training_mode=uav_only`.
+
+The development boundary stayed closed:
+`validation_accessed=false`, `sealed_accessed=false`,
+`battery_replenishment_enabled=false`, and sealed unlock count `0`. Pesticide
+remained the only replenished resource. The replacement matrix is still
+incomplete, so the replacement G5 freeze, Phase 4 preflight, formal G6,
+validation selection, and G7 remain blocked. After this result is persisted,
+the next authorized action is one controlled run of zero-based matrix index
+`6` (`sr_mappo_mobile` with `sr_mappo_urgency`); no batch or later-gate action
+is authorized.
