@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Final Goal
 
@@ -2639,6 +2639,23 @@ Fresh verification of the repair:
 The repair remains `M2` engineering/provenance work. No validation or sealed
 scenario payload was accessed, the G7 unlock count remains `0`, and the
 replacement dynamic freeze, Phase 4 preflight, formal G6, validation selection,
-and G7 remain blocked. The next authorized action is to persist this repair,
-then resolve and review the next uncovered identity from the new 120-job matrix
-before any pilot execution.
+and G7 remain blocked.
+
+Persistence and post-push verification:
+
+- content commit `05f5b49080e7f9cc10d73be4f23ccaf2673c5f1f` (`fix: repair
+  executable g5 pilot matrix contract`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`;
+- local `HEAD`, upstream `HEAD`, and `git ls-remote` all resolve to
+  `05f5b49080e7f9cc10d73be4f23ccaf2673c5f1f`;
+- persisted-commit regression: `934 passed in 625.15s`;
+- persisted-commit matrix/pilot/G6 subset: `114 passed in 104.34s`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass;
+- canonical matrix check: `120` unique jobs, `20` conditions, `5` methods;
+- pre-existing untracked directories remain preserved and unstaged.
+
+The next authorized action after this state record is to resolve and review
+zero-based index `3` from the new 120-job matrix, then run at most that one
+development pilot. No replacement freeze, Phase 4 preflight, formal G6,
+validation selection, or G7 action is authorized.
