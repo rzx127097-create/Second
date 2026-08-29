@@ -27,6 +27,7 @@ from problem2.environment.observations import (
 )
 from problem2.evaluation.metrics import EpisodeMetrics, EpisodeRecord
 from problem2.heuristics.astar import astar_path_and_distance
+from problem2.heuristics import ControllerDecision, DispatchObservation, ObservableRequest
 from problem2.resources.ledger import apply_spray, assert_conserved
 from problem2.road.models import RasterRoadGraph
 from problem2.road.search import NoPathError
@@ -82,6 +83,7 @@ class Problem2CooperativeEnv:
         field_summary: Iterable[float] = (),
         initial_total_pest: float | None = None,
         final_total_pest: float | None = None,
+        vehicle_controller: Any | None = None,
     ) -> None:
         if not isinstance(initial_state, EpisodeState):
             raise TypeError("initial_state must be an EpisodeState")
@@ -104,6 +106,9 @@ class Problem2CooperativeEnv:
         self.field_summary = field
         self.initial_total_pest = initial_total_pest
         self.final_total_pest = final_total_pest
+        if vehicle_controller is not None and not callable(getattr(vehicle_controller, "decide", None)):
+            raise TypeError("vehicle_controller must implement decide(observation)")
+        self.vehicle_controller = vehicle_controller
         self.ecology_global_context: tuple[float, ...] = ()
         self.uav_ecology_context: dict[str, tuple[float, ...]] = {}
         self._initial_vehicle_inventory_l = initial_state.vehicle.inventory_l
@@ -366,6 +371,31 @@ class Problem2CooperativeEnv:
         )
         return dispatch
 
+    def _controller_decision(self, *, active: _Dispatch | None = None) -> ControllerDecision:
+        candidates, mapping = self._candidate_requests()
+        request_rows = []
+        for request in candidates:
+            uav = next(item for item in self._state.uavs if item.uav_id == request.uav_id)
+            slot = mapping.index(request.request_id)
+            request_rows.append(ObservableRequest(
+                request.request_id, request.uav_id, slot, request.created_step,
+                request.requested_l, uav.pesticide_l, self.config.usable_capacity_l,
+                float(max(0, self.max_steps - self._state.step)), self._primary_nodes_within_radius(uav),
+            ))
+        observation = DispatchObservation(
+            step=self._state.step, graph=self.graph, vehicle=self._state.vehicle,
+            requests=tuple(request_rows), candidate_mapping=tuple(mapping),
+            service_cap_l=self.config.service_cap_l, tolerance=self.config.tolerance,
+            active_request_id=active.request_id if active else None,
+            active_sampled_slot=active.sampled_slot if active else None,
+            selected_service_node=active.selected_service_node if active else None,
+            vehicle_speed_mps=self.config.vehicle_speed_mps,
+        )
+        decision = self.vehicle_controller.decide(observation)
+        if not isinstance(decision, ControllerDecision):
+            raise TypeError("vehicle_controller.decide must return ControllerDecision")
+        return decision
+
     def _physical_vehicle_action(self, dispatch: _Dispatch) -> Action:
         vehicle = self._state.vehicle
         if vehicle.mode is VehicleMode.SERVING:
@@ -421,11 +451,30 @@ class Problem2CooperativeEnv:
                 events.append(spray_event)
             uavs[uav.uav_id] = moved
 
-        if dispatch is None and sampled_slot > 0:
+        if dispatch is None and self.vehicle_controller is not None:
+            decision = self._controller_decision()
+            sampled_slot = decision.sampled_slot
+            if sampled_slot > 0:
+                request_id = decision.request_id
+                if request_id not in mapping:
+                    raise ValueError("controller selected request absent from candidate mapping")
+                self._candidate_nodes[request_id] = (int(decision.selected_service_node), float(decision.route_length_m))
+                dispatch = self._commit_dispatch(requests, sampled_slot, mapping, events)
+        elif dispatch is None and sampled_slot > 0:
             dispatch = self._commit_dispatch(requests, sampled_slot, mapping, events)
         elif dispatch is not None:
+            if self.vehicle_controller is not None:
+                decision = self._controller_decision(active=dispatch)
+                if decision.sampled_slot != dispatch.sampled_slot or decision.request_id != dispatch.request_id:
+                    raise ValueError("controller changed an active dispatch identity")
+                dispatch = replace(
+                    dispatch,
+                    selected_service_node=int(decision.selected_service_node),
+                    route_length_m=float(decision.route_length_m),
+                )
             if sampled_slot != dispatch.sampled_slot or mapping != dispatch.candidate_mapping:
-                raise ValueError("active dispatch must preserve its original sampled slot and mapping")
+                if self.vehicle_controller is None:
+                    raise ValueError("active dispatch must preserve its original sampled slot and mapping")
 
         vehicle = before.vehicle
         if dispatch is None:

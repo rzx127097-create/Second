@@ -566,7 +566,7 @@ def _run_physical_candidate_training(
 
     scenario_cursor = 0
     environment = build_development_environment(
-        root, scenario_id=scenario_ids[scenario_cursor], scale=scale
+        root, scenario_id=scenario_ids[scenario_cursor], scale=scale, condition_id=condition
     )
     if getattr(environment, "primary_eligible", False) is not True or getattr(environment, "ecology_mode", None) != "dynamic":
         raise RuntimeError("physical candidate training requires the dynamic primary environment")
@@ -652,7 +652,7 @@ def _run_physical_candidate_training(
         if next_view["truncated"] and not final_interaction:
             scenario_cursor = (scenario_cursor + 1) % len(scenario_ids)
             environment = build_development_environment(
-                root, scenario_id=scenario_ids[scenario_cursor], scale=scale
+                root, scenario_id=scenario_ids[scenario_cursor], scale=scale, condition_id=condition
             )
             if getattr(environment, "primary_eligible", False) is not True or getattr(environment, "ecology_mode", None) != "dynamic":
                 raise RuntimeError("physical candidate training requires the dynamic primary environment")

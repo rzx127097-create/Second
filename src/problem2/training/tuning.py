@@ -33,6 +33,8 @@ from problem2.ecology.system import DynamicEcologySystem
 
 from .cooperative_env import Problem2CooperativeEnv
 from .dynamic_env import DynamicPestEnvironment
+from problem2.heuristics import FixedSupportController, NearestRequestController, RollingAStarController, UrgencyController
+from .conditions import resolve_condition_execution
 
 
 INITIAL_ONBOARD_PESTICIDE_L = 0.2875
@@ -842,6 +844,8 @@ def _build_physical_environment(
     scenario_id: int,
     scale: str,
     partition: str,
+    vehicle_controller: Any | None = None,
+    condition_id: str | None = None,
 ) -> tuple[Problem2CooperativeEnv, np.ndarray, dict[str, Any]]:
     _validate_partition_scenario(partition, scenario_id)
     root = Path(repository_root).resolve()
@@ -889,6 +893,34 @@ def _build_physical_environment(
         float(graph.node_y_m[vehicle_node]),
         inventory_l=config.vehicle_inventory_l,
     )
+    if vehicle_controller is None and condition_id is not None:
+        try:
+            execution = resolve_condition_execution(condition_id)
+        except ValueError:
+            execution = None
+        if execution is None:
+            pass
+        elif not execution.vehicle_trainable:
+            controller_name = execution.vehicle_controller
+            if controller_name == "fixed_support":
+                support_node = int(primary_nodes[0])
+                vehicle_controller = FixedSupportController(
+                    support_node=support_node,
+                    initial_inventory_l=config.vehicle_inventory_l,
+                    service_cap_l=config.service_cap_l,
+                    transfer_rate_lpm=config.transfer_rate_lpm,
+                    setup_time_s=config.setup_time_s,
+                    mobile_initial_inventory_l=config.vehicle_inventory_l,
+                    mobile_service_cap_l=config.service_cap_l,
+                    mobile_transfer_rate_lpm=config.transfer_rate_lpm,
+                    mobile_setup_time_s=config.setup_time_s,
+                )
+            elif controller_name == "rolling_astar":
+                vehicle_controller = RollingAStarController(replan_interval_steps=5)
+            elif controller_name == "nearest_feasible":
+                vehicle_controller = NearestRequestController()
+            elif controller_name == "urgency_priority":
+                vehicle_controller = UrgencyController()
     state = EpisodeState(0, uavs, vehicle, ledger=new_ledger(uavs, vehicle.inventory_l))
     raw_pest = rng.gamma(
         shape=scenario_contract.gamma_shape,
@@ -904,6 +936,7 @@ def _build_physical_environment(
         config,
         max_steps=scale_config.max_steps,
         scenario_id=scenario_id,
+        vehicle_controller=vehicle_controller,
     )
     scenario_contract_path = root / "docs/evidence/g5/physical_scenario_contract.yaml"
     scenario_contract_sha256 = contract.file_hashes[
@@ -977,11 +1010,14 @@ def _build_dynamic_environment(
     scenario_id: int,
     scale: str,
     partition: str,
+    vehicle_controller: Any | None = None,
+    condition_id: str | None = None,
 ) -> DynamicPestEnvironment:
     _validate_partition_scenario(partition, scenario_id)
     root = Path(repository_root).resolve()
     physical, _, physical_provenance = _build_physical_environment(
         root, scenario_id=scenario_id, scale=scale, partition=partition,
+        vehicle_controller=vehicle_controller, condition_id=condition_id,
     )
     _, _, scale_config, _, _, _, _, _ = _load_static_environment_inputs(str(root), scale)
     ecology_config = DynamicEcologyConfig.from_yaml(
@@ -1050,6 +1086,8 @@ def build_development_environment(
     *,
     scenario_id: int,
     scale: str = "g20x20_d2",
+    vehicle_controller: Any | None = None,
+    condition_id: str | None = None,
 ) -> DynamicPestEnvironment:
     """Create one dynamic development scenario from the frozen G2 road cache."""
 
@@ -1058,6 +1096,8 @@ def build_development_environment(
         scenario_id=scenario_id,
         scale=scale,
         partition="development",
+        vehicle_controller=vehicle_controller,
+        condition_id=condition_id,
     )
 
 
