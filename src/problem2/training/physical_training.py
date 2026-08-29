@@ -142,6 +142,20 @@ def build_physical_envelope(
     if not math.isfinite(float(team_reward)):
         raise ValueError("physical team reward must be finite")
     action_result = _as_action_result(action_details)
+    executed_actions = {
+        role: np.asarray(values, dtype=np.int64).copy()
+        for role, values in action_result.actions.items()
+    }
+    executed_view_actions = next_view.get("sampled_actions")
+    if (
+        not vehicle_trainable
+        and isinstance(executed_view_actions, Mapping)
+        and "vehicle" in executed_view_actions
+    ):
+        executed_actions["vehicle"] = np.asarray(
+            executed_view_actions["vehicle"], dtype=np.int64
+        ).reshape(-1)
+    action_result = ActionResult(actions=executed_actions, masks=action_result.masks)
     rewards = {
         role: np.full(
             np.asarray(current_view["observations"][role]).shape[0],
@@ -181,10 +195,21 @@ def build_physical_envelope(
             **common,
         )
 
+    old_log_probs = action_details["log_probs"]
+    if not vehicle_trainable:
+        old_log_probs = {
+            role: values for role, values in action_details["log_probs"].items()
+        }
+        replayed = algorithm.replay_log_probs(
+            action_details["policy_observations"],
+            action_result.masks,
+            action_result.actions,
+        )
+        old_log_probs["vehicle"] = replayed["vehicle"]
     policy_common = {
         **common,
         "policy_observations": action_details["policy_observations"],
-        "old_log_probs": action_details["log_probs"],
+        "old_log_probs": old_log_probs,
         "normalization_versions": action_details["normalization_versions"],
     }
     if algorithm.method_id == "ippo_mobile":
@@ -217,6 +242,8 @@ def build_physical_envelope(
 def _clear_off_policy_replay(algorithm: Any) -> None:
     if algorithm.method_id == "maddpg_mobile":
         algorithm.replay = JointReplayBuffer(algorithm.replay.capacity, seed=0)
+        if hasattr(algorithm, "_physical_replay_before_observe"):
+            delattr(algorithm, "_physical_replay_before_observe")
     elif algorithm.method_id == "iql_mobile":
         algorithm.uav_replay = JointReplayBuffer(algorithm.uav_replay.capacity, seed=0)
         algorithm.vehicle_replay = JointReplayBuffer(algorithm.vehicle_replay.capacity, seed=1)
@@ -233,6 +260,75 @@ def _terminal_buffer_counts(algorithm: Any) -> tuple[int, int]:
     return pending, replay_rows
 
 
+def _observe_physical_algorithm(
+    algorithm: Any,
+    envelope: OnPolicyEnvelope | OffPolicyEnvelope,
+    *,
+    vehicle_trainable: bool,
+) -> None:
+    """Collect a physical transition without creating a vehicle-only replay row."""
+
+    if vehicle_trainable or algorithm.method_id not in OFF_POLICY_METHODS:
+        algorithm.observe(envelope)
+        return
+    if algorithm.method_id == "iql_mobile":
+        algorithm.uav_replay.append(envelope)
+        algorithm.diagnostics.increment("observed_transitions")
+        return
+    # MADDPG has one joint replay. Keep the transition available for its UAV
+    # update, then restore the pre-transition replay after the update boundary.
+    if not hasattr(algorithm, "_physical_replay_before_observe"):
+        algorithm._physical_replay_before_observe = deepcopy(algorithm.replay.state_dict())
+    algorithm.replay.append(envelope)
+    algorithm.diagnostics.increment("observed_transitions")
+
+
+def _vehicle_training_snapshot(algorithm: Any) -> dict[str, Any]:
+    snapshot: dict[str, Any] = {"modules": {}, "normalizers": {}, "trainer": {}}
+    for name, value in vars(algorithm).items():
+        if name.startswith("vehicle_") and isinstance(value, torch.nn.Module):
+            snapshot["modules"][name] = deepcopy(value.state_dict())
+        elif name.startswith("vehicle_") and hasattr(value, "state_dict"):
+            snapshot["normalizers"][name] = deepcopy(value.state_dict())
+    trainer = getattr(algorithm, "_trainer", None)
+    if trainer is not None:
+        for name in ("optimizers", "actor_optimizers", "critic_optimizers", "schedulers"):
+            mapping = getattr(trainer, name, None)
+            if isinstance(mapping, Mapping) and "vehicle" in mapping:
+                snapshot["trainer"][name] = deepcopy(mapping["vehicle"].state_dict())
+        for name in ("role_update_count", "target_update_count"):
+            mapping = getattr(trainer, name, None)
+            if isinstance(mapping, Mapping) and "vehicle" in mapping:
+                snapshot["trainer"][name] = deepcopy(mapping["vehicle"])
+    if algorithm.method_id == "iql_mobile" and hasattr(algorithm, "vehicle_replay"):
+        snapshot["vehicle_replay"] = deepcopy(algorithm.vehicle_replay.state_dict())
+    if algorithm.method_id == "maddpg_mobile" and hasattr(algorithm, "_physical_replay_before_observe"):
+        snapshot["shared_replay"] = deepcopy(algorithm._physical_replay_before_observe)
+    return snapshot
+
+
+def _restore_vehicle_training_snapshot(algorithm: Any, snapshot: Mapping[str, Any]) -> None:
+    for name, state in snapshot.get("modules", {}).items():
+        getattr(algorithm, name).load_state_dict(state)
+    for name, state in snapshot.get("normalizers", {}).items():
+        getattr(algorithm, name).load_state_dict(state)
+    trainer = getattr(algorithm, "_trainer", None)
+    if trainer is not None:
+        for name, state in snapshot.get("trainer", {}).items():
+            target = getattr(trainer, name)
+            if isinstance(target, Mapping) and "vehicle" in target:
+                if name in {"role_update_count", "target_update_count"}:
+                    target["vehicle"] = deepcopy(state)
+                else:
+                    target["vehicle"].load_state_dict(state)
+    if "vehicle_replay" in snapshot:
+        algorithm.vehicle_replay.load_state_dict(snapshot["vehicle_replay"])
+    if "shared_replay" in snapshot:
+        algorithm.replay.load_state_dict(snapshot["shared_replay"])
+        if hasattr(algorithm, "_physical_replay_before_observe"):
+            delattr(algorithm, "_physical_replay_before_observe")
+
+
 def _update_interval(algorithm: Any) -> tuple[str, int]:
     if algorithm.method_id in ON_POLICY_METHODS:
         return "rollout_horizon", int(algorithm.training_config["rollout_horizon"])
@@ -240,71 +336,80 @@ def _update_interval(algorithm: Any) -> tuple[str, int]:
 
 
 def _update_physical_algorithm(algorithm: Any, *, vehicle_trainable: bool = True) -> Mapping[str, Any]:
-    vehicle_snapshot = None
-    if not vehicle_trainable:
-        vehicle_snapshot = {
-            name: deepcopy(getattr(algorithm, name).state_dict())
-            for name in ("vehicle_actor", "vehicle_q", "vehicle_target_actor", "vehicle_target_q")
-            if hasattr(algorithm, name)
-        }
-    if algorithm.method_id != "ippo_mobile":
-        result = algorithm.update()
-        if vehicle_snapshot:
-            for name, state in vehicle_snapshot.items():
-                getattr(algorithm, name).load_state_dict(state)
-        return result
-    empty_roles = [
-        role
-        for role in algorithm.roles
-        if not any(
-            bool(envelope.valid_sample) and np.asarray(envelope.valid_actor_sample[role], dtype=bool).any()
-            for envelope in algorithm._pending_envelopes
-        )
-    ]
-    if not empty_roles:
-        return algorithm.update()
-
-    batch = algorithm._rollout_from_envelopes()
-    actor_snapshots: dict[str, dict[str, torch.Tensor]] = {}
-    gradient_flags: dict[str, list[bool]] = {}
-    for role in empty_roles:
-        actor = algorithm.uav_actor if role == "uav" else algorithm.vehicle_actor
-        actor_snapshots[role] = {
-            key: value.detach().cpu().clone() for key, value in actor.state_dict().items()
-        }
-        parameters = list(actor.parameters())
-        gradient_flags[role] = [parameter.requires_grad for parameter in parameters]
-        for parameter in parameters:
-            parameter.requires_grad_(False)
-        for record in batch.transitions:
-            record["valid_actor_sample"][role] = np.ones_like(
-                record["valid_actor_sample"][role], dtype=bool
-            )
+    vehicle_snapshot = _vehicle_training_snapshot(algorithm) if not vehicle_trainable else None
     try:
-        metrics = dict(
-            algorithm.trainer.update(
-                batch,
-                epochs=int(algorithm.training_config.get("ppo_epochs", 1)),
+        if algorithm.method_id == "iql_mobile" and not vehicle_trainable and not len(algorithm.vehicle_replay):
+            rows = algorithm.uav_replay.sample(
+                min(algorithm.trainer.batch_size, len(algorithm.uav_replay))
             )
-        )
-    finally:
+            result = algorithm.trainer.update_role("uav", rows)
+            algorithm._diagnostics.increment("updates")
+            return {
+                "uav_loss": float(result["loss"]),
+                "vehicle_loss": 0.0,
+                "updates": float(algorithm.trainer.update_count),
+            }
+        if algorithm.method_id != "ippo_mobile":
+            return algorithm.update()
+        empty_roles = [
+            role
+            for role in algorithm.roles
+            if not any(
+                bool(envelope.valid_sample)
+                and np.asarray(envelope.valid_actor_sample[role], dtype=bool).any()
+                for envelope in algorithm._pending_envelopes
+            )
+        ]
+        if not empty_roles:
+            return algorithm.update()
+
+        batch = algorithm._rollout_from_envelopes()
+        actor_snapshots: dict[str, dict[str, torch.Tensor]] = {}
+        gradient_flags: dict[str, list[bool]] = {}
         for role in empty_roles:
             actor = algorithm.uav_actor if role == "uav" else algorithm.vehicle_actor
-            for parameter, enabled in zip(actor.parameters(), gradient_flags[role]):
-                parameter.requires_grad_(enabled)
-    for role in empty_roles:
-        actor = algorithm.uav_actor if role == "uav" else algorithm.vehicle_actor
-        if any(
-            not torch.equal(value.detach().cpu(), actor_snapshots[role][key])
-            for key, value in actor.state_dict().items()
-        ):
-            raise RuntimeError(f"forced {role} actor changed during the physical IPPO value update")
-        metrics[f"{role}_actor_updates"] = 0
-        metrics[f"{role}_valid_samples"] = 0
-    algorithm._pending_envelopes = []
-    algorithm._update_count += 1
-    algorithm._diagnostics.increment("updates")
-    return metrics
+            actor_snapshots[role] = {
+                key: value.detach().cpu().clone()
+                for key, value in actor.state_dict().items()
+            }
+            parameters = list(actor.parameters())
+            gradient_flags[role] = [parameter.requires_grad for parameter in parameters]
+            for parameter in parameters:
+                parameter.requires_grad_(False)
+            for record in batch.transitions:
+                record["valid_actor_sample"][role] = np.ones_like(
+                    record["valid_actor_sample"][role], dtype=bool
+                )
+        try:
+            metrics = dict(
+                algorithm.trainer.update(
+                    batch,
+                    epochs=int(algorithm.training_config.get("ppo_epochs", 1)),
+                )
+            )
+        finally:
+            for role in empty_roles:
+                actor = algorithm.uav_actor if role == "uav" else algorithm.vehicle_actor
+                for parameter, enabled in zip(actor.parameters(), gradient_flags[role]):
+                    parameter.requires_grad_(enabled)
+        for role in empty_roles:
+            actor = algorithm.uav_actor if role == "uav" else algorithm.vehicle_actor
+            if any(
+                not torch.equal(value.detach().cpu(), actor_snapshots[role][key])
+                for key, value in actor.state_dict().items()
+            ):
+                raise RuntimeError(
+                    f"forced {role} actor changed during the physical IPPO value update"
+                )
+            metrics[f"{role}_actor_updates"] = 0
+            metrics[f"{role}_valid_samples"] = 0
+        algorithm._pending_envelopes = []
+        algorithm._update_count += 1
+        algorithm._diagnostics.increment("updates")
+        return metrics
+    finally:
+        if vehicle_snapshot is not None:
+            _restore_vehicle_training_snapshot(algorithm, vehicle_snapshot)
 
 
 def _validate_job(

@@ -42,3 +42,19 @@ Checkpoint provenance now binds to the learning method while outer condition met
 ## Fix Round 3
 
 Controller-driven views now report the executed controller slot. Physical envelopes accept `vehicle_trainable`; uav-only transitions mark vehicle actor samples invalid, and update snapshots restore vehicle networks after generic updates while preserving UAV learning. Verification: controller/environment suite `18 passed`; compileall passed.
+
+## Fix Round 4
+
+Closed the remaining controller-isolation gaps identified in review `ca90e43..5a54e41`:
+
+- Physical envelopes now bind the executed controller vehicle slot from the environment view. For non-learned on-policy conditions, the vehicle behavior log probability is recomputed for that executed action so behavior replay remains exact while the vehicle actor is invalidated.
+- Added `_observe_physical_algorithm` to keep non-trainable IQL transitions out of vehicle replay while retaining the UAV replay row. MADDPG's joint replay is held only through the UAV update boundary and restored afterward.
+- Vehicle update state is snapshotted/restored across modules, role normalizers/replay, role optimizers, schedulers, and role counters. UAV learning and shared critic updates continue.
+
+TDD RED: `python -m pytest tests/g6/test_physical_vehicle_isolation.py -q --tb=short` failed during collection because `_observe_physical_algorithm` was not present.
+
+Focused GREEN: `python -m pytest tests/g6/test_physical_vehicle_isolation.py -q --tb=short` -> `3 passed`.
+
+Affecting protocol regression suite: `python -m pytest tests/g5/test_physical_candidate_training.py tests/g6/test_controller_wiring.py tests/g6/test_condition_semantics.py tests/g5/test_off_policy_algorithms.py tests/g5/test_on_policy_algorithms.py -q --tb=short` -> `198 passed in 164.81s`.
+
+No validation or sealed scenario payloads were accessed; historical outputs remain unchanged. Phase 3 remains `M2` and no formal G6/G7 work was run.
