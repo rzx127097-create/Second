@@ -2083,3 +2083,36 @@ The highest maturity remains `M2`; G3-G5 require fresh acceptance under the
 new ecological semantics, G6 formal execution remains unauthorized, and the
 G7 sealed unlock count remains `0`. No efficacy, superiority, significance,
 formal-result, real-deployment, or universally optimal claim is permitted.
+
+## G6 Readiness Phase 0: Preserve And Isolate
+
+On 2026-08-29, the G6 readiness Phase 0 entry audit was performed. This phase
+is readiness remediation only; it is not authorization to execute formal G6
+jobs. All future primary, formal, ablation, and sensitivity experiments remain
+bound to `dynamic_pest_v1`, and ablation/sensitivity work remains restricted to
+`sr_mappo_mobile`.
+
+The current dynamic revalidation branch is the authoritative starting point:
+
+- branch: `codex/problem2-dynamic-pest-model`;
+- local HEAD: `465aac3df1ac2f60d5162a1b4f302d05934fa16e`;
+- upstream HEAD: `465aac3df1ac2f60d5162a1b4f302d05934fa16e`;
+- remote branch HEAD: `465aac3df1ac2f60d5162a1b4f302d05934fa16e`;
+- tracked working tree: clean;
+- index: clean;
+- `git diff --check`: pass.
+
+The checkout is a normal authoritative repository checkout. The existing
+detached `Second-tdd-clean` worktree and the pre-existing untracked temporary
+directories remain untouched and were not staged. Protected external assets,
+OSM inputs, historical static G5 outputs, validation scenarios, and sealed
+scenario content were not modified or accessed. The required G6 design,
+Task12 handoff, G5 plan, G5 compliance audit, and G5 evidence/configuration
+contracts were reviewed before readiness work.
+
+Phase 0 result: `pass`. The next authorized action is Phase B, which must add
+focused failing readiness tests before implementing the real G6 runner,
+recovery, evaluator, and complete preflight. The existing G6 entry scripts
+remain blocking stubs, so no formal G6 job may run until the real path is
+implemented, independently verified, and a replacement dynamic G5 freeze is
+committed, pushed, and recorded.
