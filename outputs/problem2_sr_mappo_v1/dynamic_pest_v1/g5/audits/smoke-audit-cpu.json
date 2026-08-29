@@ -62,7 +62,7 @@
         "config_hash": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
         "protocol_hash": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
         "source_bundle_sha256": "f7ed7e0673513405a6248474f4230bdc20d6b27256c8886aab0a1022201eebfa",
-        "source_commit": "913d573239a713e6af4c455e8ded32caaa9de95f"
+        "source_commit": "c92b70678727511e8ac19d0531d9b81a54277295"
       },
       "replenished_resource": "pesticide",
       "resume_comparison": {
