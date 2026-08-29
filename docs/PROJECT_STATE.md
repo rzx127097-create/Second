@@ -2429,9 +2429,12 @@ commit must record this handoff before any later gate begins.
 ## G6 Readiness Phase 3: Second Controlled Matrix Pilot
 
 On 2026-08-29, the next uncovered frozen development identity was resolved
-mechanically from the 510-job pilot matrix and executed as one bounded job.
-It is zero-based matrix index `1`, identity
-`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`:
+mechanically from the historical 510-job pilot matrix and executed as one
+bounded job. The historical dynamic audit recorded the label
+`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`; the
+canonical `PilotJob.identity` serialization for the exact same tuple is
+`05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1`.
+It is the historical zero-based matrix index `1`:
 
 ```text
 method=sr_mappo_mobile
@@ -2600,3 +2603,42 @@ pesticide-only replenishment, battery replenishment disabled,
 preflight, formal G6, validation selection, and G7 remain blocked. The next
 authorized action after this state record is one controlled run of zero-based
 matrix index `3`, not a batch or later-gate action.
+
+## G6 Readiness Phase 3: Pilot Identity Reconciliation And Matrix Contract Repair
+
+The historical dynamic audit for
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-002-fixed/`
+contains a manually recorded identity label
+`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`. The
+historical source implementation, the old static pilot artifact, and the
+current canonical serializer independently produce
+`05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1` for the
+same tuple. The discrepancy is classified as a historical audit-label typo;
+the dynamic outputs remain byte-preserved and were not modified or relabeled.
+
+The pilot matrix contract is repaired in the working tree to enumerate only
+semantically executable condition-to-method pairs. It now covers 20 conditions,
+five learning methods, two pilot scales, three development training seeds, and
+one scenario-reference job per tuple: `120` jobs and `2,400` descriptive rows.
+`mappo_mobile`, `ippo_mobile`, `maddpg_mobile`, and `iql_mobile` now have
+explicit learned/joint execution semantics, while ablation and sensitivity
+conditions are restricted to `sr_mappo_mobile`. The old static 510-job pilot
+and refit artifacts remain historical diagnostics and cannot satisfy the
+replacement freeze counts.
+
+Fresh verification of the repair:
+
+- focused pilot/condition/freeze suite: `128 passed in 123.40s`;
+- canonical matrix count/identity check: `120` jobs, `20` conditions, `5`
+  methods, and the first three canonical identities matched the regression
+  contract;
+- freeze-count regression: `1 passed`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass.
+
+The repair remains `M2` engineering/provenance work. No validation or sealed
+scenario payload was accessed, the G7 unlock count remains `0`, and the
+replacement dynamic freeze, Phase 4 preflight, formal G6, validation selection,
+and G7 remain blocked. The next authorized action is to persist this repair,
+then resolve and review the next uncovered identity from the new 120-job matrix
+before any pilot execution.

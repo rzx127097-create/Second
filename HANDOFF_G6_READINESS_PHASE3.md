@@ -280,3 +280,24 @@ source parameter/literature
 Training completion, a smoke test, a dry-run, a preflight printout, or one
 development pilot is not a thesis efficacy result. G6 readiness and Phase 3
 development evidence do not authorize method ranking or superiority claims.
+
+## 10. Matrix Contract Update
+
+The historical dynamic audit for
+`phase3-matrix-002-fixed` retains the manually recorded label
+`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`. The
+historical and current `PilotJob.identity` serializer independently produce
+the canonical identity
+`05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1` for the
+same tuple. Treat the former as a byte-preserved historical audit-label typo;
+do not modify or relabel its output artifacts.
+
+The replacement executable pilot matrix is now an explicit condition-to-method
+mapping with 20 conditions, five learning methods, two scales, three
+development seeds, and 120 jobs (2,400 scenario-reference rows). The first
+three canonical identities are stable for the mobile, fixed-support, and
+rolling-A* tuples. Subsequent pilot indices must be resolved from this new
+matrix, and the old static 510-job pilot/refit remains historical diagnostics
+only. Persist and review the repair before running the next development job;
+replacement freeze, Phase 4 preflight, formal G6, validation selection, and
+G7 remain blocked.

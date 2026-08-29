@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_pilot_matrix_covers_exact_development_panel_without_duplicates() -> None:
     contract = load_g5_contract(ROOT)
     jobs = build_pilot_matrix(contract)
-    assert len(jobs) == 5 * 17 * 2 * 3
+    assert len(jobs) == 20 * 2 * 3
     assert {job.method for job in jobs} == set(PILOT_METHODS)
     assert {job.condition_id for job in jobs} == set(PILOT_CONDITIONS)
     assert {job.scale for job in jobs} == set(PILOT_SCALES)
@@ -35,6 +35,49 @@ def test_pilot_matrix_covers_exact_development_panel_without_duplicates() -> Non
     assert all(job.partition == "development" for job in jobs)
     identities = [job.identity for job in jobs]
     assert len(identities) == len(set(identities))
+
+
+def test_pilot_matrix_uses_only_semantically_executable_method_condition_pairs() -> None:
+    contract = load_g5_contract(ROOT)
+    jobs = build_pilot_matrix(contract)
+    expected_pairs = (
+        ("sr_mappo_mobile", "sr_mappo_mobile"),
+        ("sr_mappo_mobile", "sr_mappo_fixed"),
+        ("sr_mappo_mobile", "sr_mappo_astar"),
+        ("mappo_mobile", "mappo_mobile"),
+        ("sr_mappo_mobile", "sr_mappo_two_stage"),
+        ("sr_mappo_mobile", "sr_mappo_nearest"),
+        ("sr_mappo_mobile", "sr_mappo_urgency"),
+        ("ippo_mobile", "ippo_mobile"),
+        ("maddpg_mobile", "maddpg_mobile"),
+        ("iql_mobile", "iql_mobile"),
+        ("sr_mappo_mobile", "no_observation_normalization"),
+        ("sr_mappo_mobile", "no_return_normalization"),
+        ("sr_mappo_mobile", "no_network_stabilization"),
+        ("sr_mappo_mobile", "no_robust_value_update"),
+        ("sr_mappo_mobile", "no_learning_rate_decay"),
+        ("sr_mappo_mobile", "learning_rate"),
+        ("sr_mappo_mobile", "clip_range"),
+        ("sr_mappo_mobile", "entropy_coef"),
+        ("sr_mappo_mobile", "gamma"),
+        ("sr_mappo_mobile", "gae_lambda"),
+    )
+    assert [(job.method, job.condition_id) for job in jobs[:20]] == list(expected_pairs)
+    assert all(job.method == job.condition_id for job in jobs if job.condition_id in {
+        "sr_mappo_mobile", "mappo_mobile", "ippo_mobile", "maddpg_mobile", "iql_mobile"
+    })
+    assert {(job.method, job.condition_id) for job in jobs} == set(expected_pairs)
+
+
+def test_pilot_identity_serialization_is_stable_for_initial_canonical_jobs() -> None:
+    contract = load_g5_contract(ROOT)
+    jobs = build_pilot_matrix(contract)
+
+    assert [job.identity for job in jobs[:3]] == [
+        "f3a070e3fa5ebc1d3df679d7fbf806aceba2b58338dee4967b9fef7308930f63",
+        "05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1",
+        "5e48578dcbc0bd88d4fb6391c8fad51c9f8566335964068a96bb8f525b3ff260",
+    ]
 
 
 def test_runtime_aggregation_is_conservative_and_budget_selection_is_frozen() -> None:
@@ -129,13 +172,13 @@ def test_run_pilot_matrix_writes_descriptive_development_records_and_audit(tmp_p
         allow_noncanonical_output_root=True,
     )
     assert result["status"] == "pass"
-    assert result["job_count"] == 510
-    assert result["episode_count"] == 10200
+    assert result["job_count"] == 120
+    assert result["episode_count"] == 2400
     assert result["coverage"]["scales"] == ["g20x20_d2", "g30x50_d4"]
     assert result["validation_accessed"] is False
     assert result["sealed_accessed"] is False
     records = Path(result["episodes_path"]).read_text(encoding="utf-8").splitlines()
-    assert len(records) == 10200
+    assert len(records) == 2400
     assert {json.loads(row)["scenario_id"] for row in records} == set(range(10000, 10020))
     assert json.loads(records[0])["data_status"] == "development_pilot_descriptive"
     assert all(json.loads(row)["record_type"] == "scenario_reference" for row in records)

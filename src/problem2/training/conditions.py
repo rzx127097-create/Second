@@ -36,6 +36,25 @@ _CONDITION_EXECUTIONS = MappingProxyType(
         "sr_mappo_two_stage": ConditionExecution(
             "sr_mappo_two_stage", "learned_two_stage", True, "two_stage"
         ),
+        **{
+            condition_id: ConditionExecution(condition_id, "learned", True, "joint")
+            for condition_id in (
+                "mappo_mobile",
+                "ippo_mobile",
+                "maddpg_mobile",
+                "iql_mobile",
+                "no_observation_normalization",
+                "no_return_normalization",
+                "no_network_stabilization",
+                "no_robust_value_update",
+                "no_learning_rate_decay",
+                "learning_rate",
+                "clip_range",
+                "entropy_coef",
+                "gamma",
+                "gae_lambda",
+            )
+        },
     }
 )
 

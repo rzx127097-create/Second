@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from problem2.experiments.artifacts import artifact_sha256, atomic_write_bytes
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.experiments.identity import canonical_training_identity, experiment_identity
+from problem2.training.pilot import PILOT_SCENARIO_IDS, build_pilot_matrix
 from problem2.training.selection import build_formal_freeze_payloads, select_candidates
 from problem2.training.tuning import CanonicalValidationStore, validate_validation_episode
 
@@ -64,6 +65,13 @@ def _load(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"expected JSON object: {path}")
     return payload
+
+
+def _expected_refit_counts(contract: Any) -> tuple[int, int]:
+    """Return the selected-refit job and scenario-reference counts from the frozen pilot matrix."""
+
+    job_count = len(build_pilot_matrix(contract))
+    return job_count, job_count * len(PILOT_SCENARIO_IDS)
 
 
 def _assert_source_clean(root: Path) -> None:
@@ -351,6 +359,7 @@ def freeze(root: Path, *, write: bool) -> dict[str, Any]:
         raise ValueError("G5 access contract is unsafe")
     if any(artifact_sha256(root / relative) != expected for relative, expected in contract.file_hashes.items()):
         raise ValueError("frozen contract artifact hash drifted")
+    expected_refit_jobs, expected_refit_episodes = _expected_refit_counts(contract)
     candidates = _load(candidate_path)
     validation_hash = candidates.get("scenario_panel", {}).get("scenario_ids_hash")
     if not isinstance(validation_hash, str) or not _SHA256.fullmatch(validation_hash):
@@ -380,7 +389,7 @@ def freeze(root: Path, *, write: bool) -> dict[str, Any]:
     if artifact_sha256(episodes_path) != artifact_sha256(validated_path):
         raise ValueError("validated and canonical validation tables differ")
     refit = _load(refit_path)
-    if refit.get("status") != "pass" or refit.get("job_count") != 510 or refit.get("episode_count") != 10200:
+    if refit.get("status") != "pass" or refit.get("job_count") != expected_refit_jobs or refit.get("episode_count") != expected_refit_episodes:
         raise ValueError("selected development refit is incomplete")
     refit_records_path = validation / "refit" / "validated" / "pilot-episodes.jsonl"
     refit_audit_path = validation / "refit" / "audits" / "pilot-audit.json"
@@ -388,7 +397,7 @@ def freeze(root: Path, *, write: bool) -> dict[str, Any]:
     if not all(path.is_file() for path in (refit_records_path, refit_audit_path, refit_manifest_path)):
         raise ValueError("selected development refit artifacts are incomplete")
     refit_records = [json.loads(line) for line in refit_records_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    if len(refit_records) != 10200:
+    if len(refit_records) != expected_refit_episodes:
         raise ValueError("selected development refit long table is incomplete")
     if any(
         item.get("training_result", {}).get("refit_execution_mode") != "physical_development"
@@ -507,7 +516,7 @@ def freeze(root: Path, *, write: bool) -> dict[str, Any]:
         "validation_accessed": True,
         "sealed_accessed": False,
         "actual_unlock_count": 0,
-        "counts": {"validation_rows": len(rows), "refit_jobs": 510, "refit_episodes": 10200, "g6_base_jobs": 150, "g6_total_jobs": 375, "g7_expected_evaluations": 42500},
+        "counts": {"validation_rows": len(rows), "refit_jobs": expected_refit_jobs, "refit_episodes": expected_refit_episodes, "g6_base_jobs": 150, "g6_total_jobs": 375, "g7_expected_evaluations": 42500},
         "contract_hashes": dict(contract.file_hashes),
         "protected_asset_audit": protected_audit,
         "artifacts": {str(path.relative_to(root)).replace("\\", "/"): artifact_sha256(path) for path in artifact_paths},

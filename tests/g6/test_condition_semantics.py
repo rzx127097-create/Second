@@ -96,3 +96,34 @@ def test_condition_selects_the_intended_controller_and_training_behavior(
     assert execution.vehicle_controller == controller
     assert execution.vehicle_trainable is vehicle_trainable
     assert execution.training_mode == training_mode
+
+
+@pytest.mark.parametrize(
+    "condition_id",
+    [
+        "mappo_mobile",
+        "ippo_mobile",
+        "maddpg_mobile",
+        "iql_mobile",
+        "no_observation_normalization",
+        "no_return_normalization",
+        "no_network_stabilization",
+        "no_robust_value_update",
+        "no_learning_rate_decay",
+        "learning_rate",
+        "clip_range",
+        "entropy_coef",
+        "gamma",
+        "gae_lambda",
+    ],
+)
+def test_baseline_and_sr_mappo_restricted_conditions_have_explicit_execution_semantics(
+    condition_id: str,
+) -> None:
+    from problem2.training.conditions import resolve_condition_execution
+
+    execution = resolve_condition_execution(condition_id)
+    assert execution.condition_id == condition_id
+    assert execution.vehicle_controller == "learned"
+    assert execution.vehicle_trainable is True
+    assert execution.training_mode == "joint"

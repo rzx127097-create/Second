@@ -207,8 +207,12 @@ matrix, one job at a time.
 ## Phase 3 Continuation: Matrix Identity 002
 
 The next frozen development identity after the revalidated matrix index `0`
-was resolved mechanically from `build_pilot_matrix`: zero-based index `1`,
-identity `05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`.
+was resolved mechanically from `build_pilot_matrix`: zero-based index `1`.
+The historical dynamic audit recorded the label
+`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b`.
+Independent recomputation from the frozen `PilotJob.identity` serialization
+gives the canonical identity
+`05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1`.
 It keeps method `sr_mappo_mobile`, candidate `c01`, scale `g20x20_d2`, seed
 `51001`, and development scenarios `10000-10019`, while executing condition
 `sr_mappo_fixed` for 128 physical interactions.
@@ -317,3 +321,33 @@ remains the only replenished resource.
 The replacement matrix remains incomplete. Replacement G5 freeze generation,
 Phase 4 preflight, formal G6, validation selection, and G7 remain blocked. This
 pilot is `noncanonical_test_only` development evidence at maturity `M2`.
+
+## Pilot Identity Reconciliation And Executable Matrix Repair
+
+The historical `phase3-matrix-002-fixed/pilot-audit.json` retains the
+manually recorded identity label
+`05202683b9a9add68cc7e72c8ae6e9adf7fb44dd7d0e47be9ba121ae7c9acb4b` as
+byte-preserved evidence. That label does not hash to the identity payload in
+the historical or current `PilotJob.identity` implementation. The canonical
+identity for its exact tuple is
+`05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1`, which
+also matches the old static pilot artifact for the same method, condition,
+scale, seed, partition, and scenario panel. The discrepancy is therefore
+classified as a historical audit-label typo, not an execution or checkpoint
+identity change. No historical output was modified, relabeled, or used as a
+replacement canonical artifact.
+
+The executable replacement pilot matrix is now an explicit condition-to-method
+mapping: each condition is paired only with the method and controller path that
+can execute it. It contains 20 conditions, five learning methods, two scales,
+three development training seeds, and one scenario-reference job per tuple,
+for `120` jobs and `2,400` descriptive scenario-reference rows. The first
+three canonical identities remain stable for the historical mobile, fixed,
+and rolling-A* tuples; subsequent indices are recomputed from this 120-job
+matrix and must not be inferred from the obsolete 510-job Cartesian product.
+
+The old static `outputs/problem2_sr_mappo_v1/g5/` pilot/refit artifacts remain
+read-only historical diagnostics and cannot satisfy the replacement freeze
+counts. The replacement dynamic freeze, Phase 4 preflight, formal G6,
+validation selection, and G7 remain blocked until the complete dynamic pilot
+matrix and its refit are freshly generated and audited.
