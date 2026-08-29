@@ -2209,3 +2209,62 @@ pre-existing untracked directory was modified or accessed.
 
 The next authorized work remains G6 readiness Phase 2 implementation and
 testing. Formal G6 execution remains blocked.
+
+## G6 Readiness Phase 2: Contracts Implemented
+
+On 2026-08-29, Phase 2 implemented the readiness behavior specified by
+`HANDOFF_G6_READINESS_PHASE1.md`. The phase remains at maturity `M2` and does
+not authorize formal G6 training, validation evaluation, or the G7 sealed-test
+unlock.
+
+Implemented and persisted:
+
+- executable condition resolution for `sr_mappo_mobile`, `sr_mappo_fixed`,
+  `sr_mappo_astar`, `sr_mappo_nearest`, `sr_mappo_urgency`, and
+  `sr_mappo_two_stage`, with selected-refit dispatch bound to the real outer
+  condition;
+- complete validation checkpoint selection over exactly `20000-20049`, with
+  the frozen tie-break order and retention of every candidate row;
+- UTC/host/process/attempt/artifact metadata in the append-only ledger and
+  expected-checkpoint-hash validation with previous-copy recovery;
+- dynamic replacement freeze payloads with common source scope, deterministic
+  scheduler order, positive storage/GPU estimates, `dynamic_pest_v1`, dynamic
+  output confinement, deterministic evaluation, and a maintained evaluator
+  hash;
+- complete read-only G6 preflight and import-safe `main()` entry points for
+  run, resume, and preflight scripts.
+
+Replacement manifests are located only under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/manifests/`. Historical G5
+outputs, protected external assets, OSM inputs, validation scenario content, and
+sealed scenario content were not modified or accessed. Battery replenishment
+remains inactive; pesticide remains the only replenished resource.
+
+Fresh verification:
+
+- `python -m pytest tests/g6 -q --tb=short`: `40 passed`;
+- `python -m pytest tests/g5/test_experiment_matrix.py -q`: `8 passed`;
+- physical-training/selected-refit regression: `52 passed`;
+- `python -m pytest -q`: `905 passed`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass.
+
+The detailed audit is `docs/audits/g6-readiness-phase2.md`.
+
+Persistence:
+
+- Content commit `b34a5124470a1f22abe94cd345a9a081b23ca5db`
+  (`feat: implement g6 readiness phase 2 contracts`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`.
+- Dynamic-manifest binding commit
+  `d648378ce509b226d5803d57a72cd2344fbc244f` (`docs: bind dynamic g6
+  manifests to phase 2 source`) was pushed to the same branch.
+- Before this state-record update, local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-dynamic-pest-model` all
+  matched `d648378ce509b226d5803d57a72cd2344fbc244f`.
+
+Phase 2 status: `pass` as a readiness/implementation milestone at `M2`. The
+next authorized work is Phase 3 dynamic G3-G5 revalidation and replacement
+freeze. Formal G6 execution remains blocked until Phase 3 and the later full
+read-only preflight pass. No efficacy, superiority, significance,
+formal-result, real-deployment, or universally-optimal claim is permitted.
