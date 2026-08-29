@@ -2412,3 +2412,16 @@ Persistence:
   records the Phase 3 audit, successful controller artifacts, revalidated
   first-pilot artifacts, and the post-controller dynamic audit; it was pushed
   to `origin/codex/problem2-dynamic-pest-model`.
+
+## Current No-Context Handoff
+
+The current session handoff is
+`HANDOFF_G6_READINESS_PHASE3.md`. It is the entry document for the next
+conversation and supersedes the older Phase 1 handoff for startup context
+while preserving all earlier handoffs as historical records. It summarizes the
+current M2 boundary, controller remediation, development evidence, verification
+results, next controlled-pilot action, and the absolute do-not-repeat rules.
+
+Handoff content commit `e066337` (`docs: add phase 3 readiness handoff`) was
+pushed to `origin/codex/problem2-dynamic-pest-model`. The latest state-record
+commit must record this handoff before any later gate begins.
