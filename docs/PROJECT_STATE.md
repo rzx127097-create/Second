@@ -2116,3 +2116,12 @@ recovery, evaluator, and complete preflight. The existing G6 entry scripts
 remain blocking stubs, so no formal G6 job may run until the real path is
 implemented, independently verified, and a replacement dynamic G5 freeze is
 committed, pushed, and recorded.
+
+Persistence for this phase:
+
+- Content/state commit `fc12e389754b2017c53ebed4704d2fd370b718e8`
+  (`docs: record g6 readiness phase 0 audit`) was pushed to
+  `origin/codex/problem2-dynamic-pest-model`.
+- After the push, local HEAD, upstream HEAD, and
+  `git ls-remote origin refs/heads/codex/problem2-dynamic-pest-model` all
+  matched `fc12e389754b2017c53ebed4704d2fd370b718e8`.
