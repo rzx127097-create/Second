@@ -499,3 +499,64 @@ validation selection, and G7 remain blocked. After this result is persisted,
 the next authorized action is one controlled run of zero-based matrix index
 `6` (`sr_mappo_mobile` with `sr_mappo_urgency`); no batch or later-gate action
 is authorized.
+
+## Phase 3 Continuation: Matrix Identity 007 (Urgency)
+
+The next uncovered identity from the repaired executable matrix was resolved
+mechanically as zero-based index `6`:
+
+```text
+identity=56a1f99f7b0ac8512dab8cfff2fe5c7cd6c1485053d92f2cfb2869ef227f729c
+method=sr_mappo_mobile
+condition_id=sr_mappo_urgency
+vehicle_controller=urgency_priority
+vehicle_trainable=false
+training_mode=uav_only
+candidate_id=c01
+scale=g20x20_d2
+training_seed=51001
+partition=development
+scenario_ids=10000-10019
+scenario_id=10000
+interactions=128
+ecology=dynamic_pest_v1
+```
+
+One physical development attempt completed under source commit
+`000df84c3e5b6df1f7ef54d101491b0e3a330d67`. It produced one dynamic episode,
+`128` ecology steps, `25` accepted spray actions, and
+`0.48750000000000016 L` sprayed pesticide. Team reward was
+`-0.035699709362087946`; total pest changed from `9.088605068072038` to
+`9.41306562750901`. These remain descriptive `M2` engineering observations
+only and support no efficacy, significance, superiority, ranking, or
+deployment claim.
+
+The strict completion validator reloaded the terminal checkpoint successfully
+with evaluation-state digest
+`ac71cd10c620659b12ddc717fb67066662ecec5827f19478e240183fa5fc6327`. The
+physical manifest's three artifacts and the matrix pilot audit's four artifact
+references matched their recorded SHA-256 values and byte counts:
+
+| artifact | bytes | SHA-256 |
+|---|---:|---|
+| `checkpoint.pt` | 1116306 | `5dfbf62e3cf0369af2d105adc235c10ee5ceabf5010345c7fa10b38c1d1479f1` |
+| `manifest.json` | 4272 | `668f53a79f80dfbca30d67d2a36ad6b048d44101c2077418c9aa76c0438a8396` |
+| `physical-episodes.jsonl` | 876 | `9e45024f8dc92d801c00cc6335103e525c4115ed2cb771b55c14f81c95f2e3b9` |
+| `summary.json` | 6253 | `3c6aec5e1e073904bfd70585abd8c90706cc437273b38679ad8dea70468e0bd2` |
+
+The machine-readable audit is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/pilots/phase3-matrix-007-urgency/pilot-audit.json`
+(`3670` bytes; SHA-256
+`1ab070f0d41b182c0155717ca3ac41d49887fabc82751f84eaadb816b03529b4`). It
+records `completion_validated=true`, finite metrics, dynamic ecology, and the
+exact urgency-priority condition semantics.
+
+The development boundary stayed closed:
+`validation_accessed=false`, `sealed_accessed=false`,
+`battery_replenishment_enabled=false`, and sealed unlock count `0`. Pesticide
+remained the only replenished resource. The replacement matrix is still
+incomplete, so the replacement G5 freeze, Phase 4 preflight, formal G6,
+validation selection, and G7 remain blocked. After this result is persisted,
+the next authorized action is one controlled run of zero-based matrix index
+`7` (`ippo_mobile` with `ippo_mobile`); no batch or later-gate action is
+authorized.
