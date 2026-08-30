@@ -3089,3 +3089,62 @@ in the same step.
 The current no-context continuation record is
 `HANDOFF_DYNAMIC_G5_TO_G6.md`; older `HANDOFF_G6_READINESS_PHASE3.md` and
 `HANDOFF_G6_READINESS.md` describe superseded pre-freeze states.
+
+## G6 Formal Executor Readiness And Dynamic Freeze Rebind
+
+On 2026-08-30, the G6 formal entry path was implemented and revalidated on the
+dynamic ecology. `src/problem2/training/formal_g6.py` now executes one frozen
+identity with atomic checkpoints, strict checkpoint reload, append-only ledger
+transitions, same-identity recovery, fixed-panel evaluation, and frozen
+checkpoint selection. The CLI entry points in `scripts/run_g6_jobs.py`,
+`scripts/resume_g6_jobs.py`, and `scripts/preflight_g6.py` are executable and
+remain single-job entry points. Scheduler lookup follows the manifest's frozen
+`scheduler_order`, with identity-set and order consistency checks.
+
+The implementation also rejects candidate/dependency hash drift, scale-horizon
+drift, validation-manifest/panel/source/protocol drift, evaluator hash drift,
+checkpoint paths outside the dynamic G6 job directory, and incomplete recovery
+checkpoint indexes. Frozen source compatibility is fail-closed on source-scope
+hash equality and Git ancestry, allowing only later evidence-record commits
+after the scientific source was frozen.
+
+Fresh verification:
+
+- `python -m pytest tests/g6 -q --tb=short`: `73 passed`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass;
+- `python scripts/freeze_g5.py --dynamic-replacement --check-only --root .`:
+  exit `0`;
+- `python scripts/preflight_g6.py --root .`: `all_pass=true`, with zero queue
+  creation and zero sealed access;
+- short interruption/resume regression: resumed and uninterrupted checkpoint
+  formal state are equal.
+
+Persistence:
+
+- `641fffb1a3d57a779c60cca464297ba4ad923517` implements the formal executor
+  and entry points;
+- `d1b026c7932419313e98b74939bfa451fc1d5d66` binds execution to frozen
+  validation evidence and source scope;
+- `273af2646f6a0e89df72cc2e0f90d6f4e69860cc` hardens script-context imports;
+- `5c9d8a5fff9ba787af65367836b1fb1f1935cf95` rebinds and pushes the dynamic
+  freeze artifacts. Local HEAD, upstream HEAD, and `git ls-remote` match.
+
+Current dynamic freeze hashes are:
+
+```text
+freeze_manifest_sha256=e52daee1cede46e5dc16925acf7f640ffc9796b12cb9ccc47db8cc33aac4a0e3
+g6_training_manifest_sha256=54b3061286a882e51d488d51abc79a0ada396c425c8c49b388eaf03dd6733f24
+g6_validation_manifest_sha256=5e200831c06995ac568adde3a95fc676cbd24738476283e7a507994ffa6b1eff
+freeze_source_commit=273af2646f6a0e89df72cc2e0f90d6f4e69860cc
+freeze_source_scope_sha256=d9ab5bc74f46ea016fae5bb24bbb1ab878aa44890f34badfb6f2b65d5b805192
+```
+
+The highest maturity remains `M2`. G6 formal execution is now the next
+authorized action, but no formal job has run, no validation row has been
+generated, and the sealed-test lock remains at actual unlock count `0`.
+The first scheduler entry must be read from the manifest at execution time;
+the current entry is identity `01238942da69c8cfbdd9e6ebc8d92e40277f8651c9c2c62406b7a876cc2e62d9`
+(`sr_mappo_mobile`, `g20x20_d2`, candidate `c02`, seed `2024`). The next gate
+step is exactly one formal job, followed by checkpoint/recovery/validation
+verification and persistence before any second job.
