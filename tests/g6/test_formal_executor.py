@@ -106,6 +106,21 @@ def test_validate_job_rejects_candidate_configuration_drift() -> None:
         formal_g6._validate_job(ROOT, job)
 
 
+def test_frozen_source_commit_accepts_ancestor_with_matching_source_scope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from problem2.training import formal_g6
+    from scripts.freeze_g5 import _source_scope_hash
+
+    frozen_commit = __import__("subprocess").check_output(
+        ["git", "rev-parse", "HEAD^"], cwd=ROOT, text=True
+    ).strip()
+    source_scope = _source_scope_hash(ROOT)
+    monkeypatch.setattr(formal_g6, "_source_scope_hash", lambda root: source_scope)
+
+    assert formal_g6._source_commit_compatible(ROOT, frozen_commit, source_scope)
+
+
 def test_formal_cli_modules_expose_real_entry_points_without_blocked_guard() -> None:
     from scripts import run_g6_jobs, resume_g6_jobs
 

@@ -181,6 +181,36 @@ def _source_commit(root: Path) -> str:
     return value
 
 
+def _source_scope_hash(root: Path) -> str:
+    from scripts.freeze_g5 import _source_scope_hash as compute_source_scope_hash
+
+    return str(compute_source_scope_hash(root))
+
+
+def _source_commit_compatible(root: Path, frozen_commit: str, source_scope: str) -> bool:
+    """Allow evidence-only commits after freeze when the scientific scope is unchanged."""
+
+    if not isinstance(frozen_commit, str) or _SHA1.fullmatch(frozen_commit) is None:
+        return False
+    current = _source_commit(root)
+    if frozen_commit == current:
+        return True
+    import subprocess
+
+    ancestry = subprocess.run(
+        ["git", "-C", str(root), "merge-base", "--is-ancestor", frozen_commit, current],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if ancestry.returncode != 0:
+        return False
+    try:
+        return _source_scope_hash(root) == source_scope
+    except Exception:
+        return False
+
+
 def _validate_job(root: Path, job: Mapping[str, Any]) -> tuple[Any, Any, Any, str]:
     required = {
         "method", "condition_id", "scale", "candidate_id", "selected_candidate_config_hash", "training_seed", "config_hash", "git_commit",
@@ -249,10 +279,10 @@ def _validate_job(root: Path, job: Mapping[str, Any]) -> tuple[Any, Any, Any, st
     expected_identity = canonical_training_identity(method, str(job["scale"]), seed, str(job["config_hash"]), str(job["git_commit"]))
     if expected_identity != job["canonical_training_identity"]:
         raise ValueError("formal canonical training identity mismatch")
-    if job.get("git_commit") != _source_commit(root):
-        raise ValueError("formal job source commit differs from current HEAD")
     if not isinstance(job["source_scope_sha256"], str) or _SHA256.fullmatch(job["source_scope_sha256"]) is None:
         raise ValueError("formal job source scope hash is invalid")
+    if not _source_commit_compatible(root, str(job["git_commit"]), str(job["source_scope_sha256"])):
+        raise ValueError("formal job source commit or scope differs from current source")
     if dependency.get("source_commit") != job["git_commit"] or dependency.get("source_scope_sha256") != job["source_scope_sha256"]:
         raise ValueError("formal job dependency graph drifted")
     return contract, execution, dependency, expected_identity

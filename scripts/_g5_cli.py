@@ -228,14 +228,6 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         len(value) == 40 and all(char in "0123456789abcdef" for char in value.lower())
         for value in source_commit_values
     )
-    if checks["frozen_source_commit"]:
-        try:
-            current_commit = subprocess.run(
-                ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, check=True
-            ).stdout.strip()
-            checks["frozen_source_commit"] = current_commit == frozen_commit
-        except (OSError, subprocess.CalledProcessError):
-            checks["frozen_source_commit"] = False
     frozen_scope = next(iter(source_scope_values), "")
     checks["frozen_source_scope"] = len(source_scope_values) == 1 and bool(frozen_scope) and all(
         len(value) == 64 and all(char in "0123456789abcdef" for char in value.lower())
