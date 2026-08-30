@@ -3085,3 +3085,7 @@ next authorized action is one immutable formal G6 training job under the
 dynamic G6 manifest, followed immediately by recovery and validation checks.
 Do not batch-run G6 jobs, access validation payloads for tuning, or unlock G7
 in the same step.
+
+The current no-context continuation record is
+`HANDOFF_DYNAMIC_G5_TO_G6.md`; older `HANDOFF_G6_READINESS_PHASE3.md` and
+`HANDOFF_G6_READINESS.md` describe superseded pre-freeze states.
