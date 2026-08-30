@@ -3,7 +3,7 @@
   "artifact_bytes": {
     "budget_manifest": 1622,
     "candidate_manifest": 16942,
-    "g6_training_manifest": 1121360,
+    "g6_training_manifest": 1121555,
     "g6_validation_manifest": 1521,
     "pilot_artifact_manifest": 761,
     "pilot_audit": 13505,
@@ -12,8 +12,8 @@
   "artifact_hashes": {
     "budget_manifest": "6c97e5e882dfbbba3cba133185f1a589268d9191beb51f2874a0202cbcc0920d",
     "candidate_manifest": "c5aee01a2ad180301aa8f2d2d39b067500f6297ac3ac1b503f68814334ba8918",
-    "g6_training_manifest": "9ef2224c669f20277e2085843679508aa5b37abefc88f3be2ba9b1f16adcc225",
-    "g6_validation_manifest": "e8b67d5e54ae5bc6b740b9434ba759db6c032db39c21cff4509721e3c8b34a31",
+    "g6_training_manifest": "2e2fdd22fd48e53645de3f026cdd8193e2efc01b9404622af1170513edcd6cc5",
+    "g6_validation_manifest": "d40c27616308b2731edb5ecf61dda03e6a7a73512257c4f6055dac8d173e377f",
     "pilot_artifact_manifest": "f1e1c25615560aaaae585a7cc712053703250530d7bd466d6da682814e40055b",
     "pilot_audit": "02dff0dc1f2f74ac639dabd0396a8afac36e1dd214ecc72cb22219dd29a3acaf",
     "pilot_episodes": "bafc575453c3ceb9a9ff56e1ccacb26d805a166cc181a004565a52b9624683ac"
@@ -218,8 +218,8 @@
   "replenished_resource": "pesticide",
   "schema_version": "g5-dynamic-replacement-freeze-v1",
   "sealed_accessed": false,
-  "source_commit": "1cc9748b9143a604bd89a5bf754e118b6cab6c6c",
-  "source_scope_sha256": "eb654f00d9ee1e61c8c1d43574759748098155ffb2b6c7252ae28b644ed6557a",
+  "source_commit": "6b0aa05cf801e1a1b0d87e9a73ed508b7d44363e",
+  "source_scope_sha256": "183f6ef57255789a2be998b843574087296293b5143f85ed278908c873cf33bf",
   "status": "pass",
   "validation_accessed": false
 }
