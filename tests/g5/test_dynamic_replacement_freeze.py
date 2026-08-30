@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 
 from scripts import _g5_cli, freeze_g5
 
@@ -37,3 +38,11 @@ def test_dynamic_replacement_freeze_is_the_preflight_authority() -> None:
     assert report["checks"]["dynamic_replacement_matrix"] is True
     assert report["details"]["dynamic_g5_freeze"].endswith("freeze-manifest.json")
 
+
+def test_dynamic_freeze_cli_mode_checks_the_dynamic_manifest(monkeypatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["freeze_g5.py", "--dynamic-replacement", "--check-only", "--root", str(ROOT)],
+    )
+    assert freeze_g5.main() == 0

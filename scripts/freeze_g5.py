@@ -765,13 +765,23 @@ def freeze(root: Path, *, write: bool) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate or verify the final G5 freeze.")
+    parser = argparse.ArgumentParser(description="Generate or verify a G5 freeze.")
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument(
+        "--dynamic-replacement",
+        action="store_true",
+        help="use the dynamic 48-job replacement freeze instead of the historical static freeze",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(freeze(args.root, write=args.write), indent=2, sort_keys=True))
+    payload = (
+        freeze_dynamic_replacement(args.root, write=args.write)
+        if args.dynamic_replacement
+        else freeze(args.root, write=args.write)
+    )
+    print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 
 
