@@ -30,11 +30,14 @@ Branch: `codex/problem2-dynamic-pest-model`
 
 Remote: `https://github.com/rzx127097-create/Second.git`
 
-At handoff, local HEAD, upstream HEAD, and GitHub remote all equal:
+The verified code/evidence base immediately before this handoff document was
+committed was:
 
 ```text
 df75d67ef9f5679b090e3db5eb763037ec7fa7d6
 ```
+
+The handoff document was then committed and pushed as `7f952a2`.
 
 Current maturity is `M2`. This is implementation and scoped mechanism
 evidence, not formal efficacy evidence. The only replenished resource is
