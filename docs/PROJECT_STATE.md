@@ -3178,3 +3178,55 @@ required before another formal job. Highest maturity remains `M2`; validation
 and sealed access remain closed, pesticide is the only replenished resource,
 battery replenishment remains disabled, and actual sealed unlock count remains
 `0`.
+
+## G6 Recovery Audit And Second G5 Reopen
+
+The first post-repair scheduler identity was executed only as a controlled
+recovery probe and is permanently stale:
+
+```text
+identity=00436bcf5a1d7d78ed4c96734e323876a5c76a04cd35244f2896ad8c7844f1b0
+method=sr_mappo_mobile
+condition_id=sr_mappo_astar
+scale=g30x40_d4
+candidate_id=c02
+training_seed=3407
+```
+
+The run was interrupted at `10000` interactions and resumed with the same
+identity. The preserved directory contains three checkpoints and 150
+validation rows, while the frozen summary declares one checkpoint; this
+inconsistent artifact set is retained as failed historical evidence and must
+not be resumed, relabeled, or used for selection. Its ledger state is
+`stale`, and its validation rows remain confined to scenarios `20000-20049`.
+
+Read-only review found four scientific/recovery defects in the pre-repair
+executor: incomplete checkpoint schedules were not rejected, existing
+validation panels were trusted by scenario count without revalidation,
+validation JSONL panels were appended row-by-row, and validation rows recorded
+the total target interaction count instead of the checkpoint's interaction
+count. Custom output roots were also not propagated to evaluation paths.
+
+The second repair is persisted in commit
+`abc2855b4c226e66173968a0948f6bfe0d3f62c6` (`fix: harden g6 checkpoint
+recovery validation`) and pushed to
+`origin/codex/problem2-dynamic-pest-model`. It adds frozen-prefix and complete
+checkpoint schedule checks, checkpoint payload/provenance/formal-state
+validation, complete-panel `validate_long_table` revalidation, atomic panel
+append, output-root propagation, and checkpoint-derived validation
+`interaction_count`. The short recovery fixture now isolates its two-checkpoint
+contract from the real twenty-checkpoint validation manifest.
+
+Fresh verification before the next freeze:
+
+- `python -m pytest tests/g6 -q --tb=short`: `80 passed` while the source was
+  intentionally dirty; the only failure was the expected clean-tree preflight
+  assertion;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass;
+- the source and tests are now clean, with local/upstream/remote at
+  `abc2855b4c226e66173968a0948f6bfe0d3f62c6`.
+
+G5 therefore remains reopened until a new dynamic freeze is generated from
+this committed source. Validation and sealed access remain closed,
+`battery_replenishment_enabled=false`, and sealed unlock count remains `0`.
