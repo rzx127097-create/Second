@@ -7,14 +7,21 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-from typing import Any
+from typing import Any, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from problem2.experiments.artifacts import artifact_sha256, atomic_write_bytes
 from problem2.experiments.g5_contract import load_g5_contract
 from problem2.experiments.identity import canonical_training_identity, experiment_identity
-from problem2.training.pilot import PILOT_SCENARIO_IDS, build_pilot_matrix
+from problem2.training.pilot import (
+    PILOT_CONDITIONS,
+    PILOT_METHODS,
+    PILOT_SCENARIO_IDS,
+    PILOT_SCALES,
+    PILOT_TRAINING_SEEDS,
+    build_pilot_matrix,
+)
 from problem2.training.selection import build_formal_freeze_payloads, select_candidates
 from problem2.training.tuning import CanonicalValidationStore, validate_validation_episode
 
@@ -317,6 +324,231 @@ def write_dynamic_replacement_manifests(
     for name, path in paths.items():
         _write(path, payloads[name])
     return paths
+
+
+def _dynamic_relative(root: Path, path: Path) -> str:
+    return path.resolve().relative_to(root.resolve()).as_posix()
+
+
+def _dynamic_artifact_record(root: Path, path: Path) -> dict[str, Any]:
+    return {
+        "path": _dynamic_relative(root, path),
+        "sha256": artifact_sha256(path),
+        "bytes": path.stat().st_size,
+    }
+
+
+def freeze_dynamic_replacement(root: Path, *, write: bool) -> dict[str, Any]:
+    """Freeze or verify the completed dynamic 48-job replacement pilot.
+
+    This entry point intentionally does not read the historical G5 validation
+    or refit payloads.  It binds only the dynamic replacement evidence and the
+    read-only G6 manifests generated from the current source scope.
+    """
+
+    root = Path(root).resolve()
+    dynamic_root = root / DYNAMIC_G5_RELATIVE
+    pilot_root = dynamic_root / "pilots" / "replacement-48"
+    paths = {
+        "pilot_audit": pilot_root / "audits" / "pilot-audit.json",
+        "pilot_artifact_manifest": pilot_root / "audits" / "pilot-artifact-manifest.json",
+        "pilot_episodes": pilot_root / "validated" / "pilot-episodes.jsonl",
+        "candidate_manifest": dynamic_root / "manifests" / "validation-candidates.json",
+        "budget_manifest": dynamic_root / "manifests" / "pilot-budget.json",
+        "g6_training_manifest": dynamic_root / "manifests" / "g6-training-jobs.json",
+        "g6_validation_manifest": dynamic_root / "manifests" / "g6-validation-evaluations.json",
+    }
+    freeze_path = dynamic_root / "freeze-manifest.json"
+    _assert_source_clean(root)
+    current_commit = _git_commit(root)
+    recorded = _load(freeze_path) if freeze_path.is_file() else None
+    if write:
+        source_commit = current_commit
+    else:
+        if not isinstance(recorded, dict):
+            raise ValueError("dynamic replacement freeze manifest is missing")
+        source_commit = recorded.get("source_commit")
+        if not isinstance(source_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+            raise ValueError("dynamic replacement freeze source commit is invalid")
+        if not _is_ancestor(root, source_commit, current_commit):
+            raise ValueError("dynamic replacement freeze source commit is not an ancestor of current HEAD")
+    source_scope_hash = _source_scope_hash(root)
+    if not write and recorded.get("source_scope_sha256") != source_scope_hash:
+        raise ValueError("dynamic replacement freeze source scope drifted")
+    if write:
+        write_dynamic_replacement_manifests(
+            root,
+            source_commit=source_commit,
+            source_scope_sha256=source_scope_hash,
+        )
+    for name, path in paths.items():
+        if not path.is_file():
+            raise ValueError(f"dynamic replacement freeze input is missing: {name}")
+
+    contract = load_g5_contract(root)
+    expected_jobs = build_pilot_matrix(contract)
+    expected_identities = [job.identity for job in expected_jobs]
+    expected_scope = {
+        "job_count": len(expected_identities),
+        "conditions": list(PILOT_CONDITIONS),
+        "methods": list(PILOT_METHODS),
+        "scales": list(PILOT_SCALES),
+        "training_seeds": list(PILOT_TRAINING_SEEDS),
+        "scenario_ids": list(PILOT_SCENARIO_IDS),
+    }
+    audit = _load(paths["pilot_audit"])
+    if audit.get("status") != "pass" or audit.get("matrix_complete") is not True:
+        raise ValueError("dynamic replacement pilot audit is incomplete")
+    if audit.get("expected_job_identities") != expected_identities or audit.get("completed_job_identities") != expected_identities:
+        raise ValueError("dynamic replacement pilot identities are incomplete")
+    if audit.get("replacement_scope") != expected_scope:
+        raise ValueError("dynamic replacement pilot scope drifted")
+    if audit.get("job_count") != 48 or audit.get("episode_count") != 960:
+        raise ValueError("dynamic replacement pilot counts are incomplete")
+    if any(audit.get(field) is not False for field in ("validation_accessed", "sealed_accessed", "battery_replenishment_enabled")):
+        raise ValueError("dynamic replacement pilot boundary is unsafe")
+    provenance = audit.get("provenance")
+    if not isinstance(provenance, Mapping):
+        raise ValueError("dynamic replacement pilot provenance is missing")
+    evidence_commit = provenance.get("source_commit")
+    if not isinstance(evidence_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", evidence_commit) or not _is_ancestor(root, evidence_commit, source_commit):
+        raise ValueError("dynamic replacement pilot source commit is invalid")
+    recorded_contract_hashes = provenance.get("contract_hashes")
+    if recorded_contract_hashes != dict(sorted(contract.file_hashes.items())):
+        raise ValueError("dynamic replacement pilot contract hashes drifted")
+
+    candidate = _load(paths["candidate_manifest"])
+    if (
+        candidate.get("status") != "frozen_before_validation"
+        or candidate.get("partition") != "validation"
+        or candidate.get("validation_accessed") is not False
+        or candidate.get("sealed_accessed") is not False
+        or candidate.get("battery_replenishment_enabled") is not False
+        or candidate.get("provenance", {}).get("source_commit") != evidence_commit
+    ):
+        raise ValueError("dynamic candidate manifest is unsafe or not bound to the pilot")
+    candidate_sets = candidate.get("candidates")
+    if not isinstance(candidate_sets, Mapping) or set(candidate_sets) != set(METHODS) or any(
+        not isinstance(items, list) or len(items) != 4 for items in candidate_sets.values()
+    ):
+        raise ValueError("dynamic candidate manifest is incomplete")
+    budget = _load(paths["budget_manifest"])
+    decision = budget.get("decision")
+    if (
+        budget.get("status") != "frozen_before_validation"
+        or budget.get("validation_accessed") is not False
+        or budget.get("sealed_accessed") is not False
+        or budget.get("battery_replenishment_enabled") is not False
+        or not isinstance(decision, Mapping)
+        or decision.get("selected_budget") != 200000
+        or decision.get("checkpoint_interval") != 10000
+        or decision.get("checkpoint_count") != 20
+    ):
+        raise ValueError("dynamic pilot budget manifest is unsafe or drifted")
+
+    artifact_manifest = _load(paths["pilot_artifact_manifest"])
+    if artifact_manifest.get("schema_version") != "g5-pilot-artifact-manifest-v1" or artifact_manifest.get("status") != "pass":
+        raise ValueError("dynamic pilot artifact manifest is invalid")
+    manifest_entries = {
+        item.get("path"): item
+        for item in artifact_manifest.get("artifacts", [])
+        if isinstance(item, Mapping)
+    }
+    expected_entries = {"validated/pilot-episodes.jsonl", "audits/pilot-audit.json"}
+    if set(manifest_entries) != expected_entries:
+        raise ValueError("dynamic pilot artifact manifest is incomplete")
+    for relative, item in manifest_entries.items():
+        artifact_path = pilot_root / relative
+        if artifact_sha256(artifact_path) != item.get("sha256") or artifact_path.stat().st_size != item.get("bytes"):
+            raise ValueError(f"dynamic pilot artifact drifted: {relative}")
+
+    try:
+        records = [json.loads(line) for line in paths["pilot_episodes"].read_text(encoding="utf-8").splitlines() if line.strip()]
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("dynamic pilot episode table is unreadable") from exc
+    if len(records) != 960:
+        raise ValueError("dynamic pilot episode table is incomplete")
+    observed: set[str] = set()
+    for record in records:
+        if not isinstance(record, Mapping) or record.get("pilot_job_identity") not in expected_identities:
+            raise ValueError("dynamic pilot episode identity is invalid")
+        identity = str(record["pilot_job_identity"])
+        observed.add(identity)
+        training = record.get("training_result")
+        dynamic = training.get("source_provenance") if isinstance(training, Mapping) else None
+        if (
+            record.get("partition") != "development"
+            or record.get("validation_accessed") is not False
+            or record.get("sealed_accessed") is not False
+            or record.get("battery_replenishment_enabled") is not False
+            or not isinstance(training, Mapping)
+            or training.get("partition") != "development"
+            or training.get("training_mode") != "physical_development"
+            or training.get("scenario_execution") is not True
+            or training.get("completion_validated") is not True
+            or training.get("replenished_resource") != "pesticide"
+            or training.get("validation_accessed") is not False
+            or training.get("sealed_accessed") is not False
+            or training.get("battery_replenishment_enabled") is not False
+            or not isinstance(dynamic, Mapping)
+            or dynamic.get("ecology_mode") != "dynamic"
+            or dynamic.get("ecology_version") != "problem2-dynamic-pest-v1"
+            or dynamic.get("ecology_implementation_version") != "problem2-dynamic-pest-v1"
+        ):
+            raise ValueError("dynamic pilot episode lacks required physical provenance")
+    if observed != set(expected_identities):
+        raise ValueError("dynamic pilot episode identities are incomplete")
+
+    g6_training = _load(paths["g6_training_manifest"])
+    g6_validation = _load(paths["g6_validation_manifest"])
+    if (
+        g6_training.get("ecology_id") != "dynamic_pest_v1"
+        or g6_validation.get("ecology_id") != "dynamic_pest_v1"
+        or g6_training.get("source_scope_sha256") != source_scope_hash
+        or g6_validation.get("source_scope_sha256") != source_scope_hash
+        or g6_training.get("provenance", {}).get("source_commit") != source_commit
+        or g6_validation.get("provenance", {}).get("source_commit") != source_commit
+    ):
+        raise ValueError("dynamic G6 manifests are not bound to the replacement freeze")
+
+    artifact_records = {name: _dynamic_artifact_record(root, path) for name, path in paths.items()}
+    payload = {
+        "schema_version": "g5-dynamic-replacement-freeze-v1",
+        "status": "pass",
+        "maturity": "M2",
+        "source_commit": source_commit,
+        "source_scope_sha256": source_scope_hash,
+        "evidence_source_commit": evidence_commit,
+        "ecology_id": "dynamic_pest_v1",
+        "ecology_mode": "dynamic",
+        "partition": "development",
+        "replenished_resource": "pesticide",
+        "matrix_complete": True,
+        "counts": {"jobs": 48, "episodes": 960},
+        "expected_job_identities": expected_identities,
+        "completed_job_identities": expected_identities,
+        "replacement_scope": expected_scope,
+        "validation_accessed": False,
+        "sealed_accessed": False,
+        "battery_replenishment_enabled": False,
+        "actual_unlock_count": 0,
+        "candidate_manifest_sha256": artifact_records["candidate_manifest"]["sha256"],
+        "budget_manifest_sha256": artifact_records["budget_manifest"]["sha256"],
+        "pilot_audit_sha256": artifact_records["pilot_audit"]["sha256"],
+        "pilot_artifact_manifest_sha256": artifact_records["pilot_artifact_manifest"]["sha256"],
+        "artifacts": {name: item["path"] for name, item in artifact_records.items()},
+        "artifact_hashes": {name: item["sha256"] for name, item in artifact_records.items()},
+        "artifact_bytes": {name: item["bytes"] for name, item in artifact_records.items()},
+        "contract_hashes": dict(sorted(contract.file_hashes.items())),
+    }
+    if write:
+        dynamic_root.mkdir(parents=True, exist_ok=True)
+        _write(freeze_path, payload)
+        _assert_json_payload(freeze_path, payload)
+    else:
+        _assert_json_payload(freeze_path, payload)
+    _remote_parity(root)
+    return payload
 
 
 def freeze(root: Path, *, write: bool) -> dict[str, Any]:

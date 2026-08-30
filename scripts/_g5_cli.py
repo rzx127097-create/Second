@@ -171,6 +171,32 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
     dynamic_manifest_root = root / "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/manifests"
     dynamic_training = dynamic_manifest_root / "g6-training-jobs.json"
     dynamic_validation = dynamic_manifest_root / "g6-validation-evaluations.json"
+    dynamic_freeze_path = dynamic_manifest_root.parent / "freeze-manifest.json"
+    try:
+        from scripts.freeze_g5 import freeze_dynamic_replacement
+
+        dynamic_freeze = freeze_dynamic_replacement(root, write=False)
+        checks["dynamic_g5_freeze"] = (
+            dynamic_freeze.get("schema_version") == "g5-dynamic-replacement-freeze-v1"
+            and dynamic_freeze.get("status") == "pass"
+            and dynamic_freeze.get("ecology_id") == "dynamic_pest_v1"
+            and dynamic_freeze.get("partition") == "development"
+            and dynamic_freeze.get("replenished_resource") == "pesticide"
+            and dynamic_freeze.get("validation_accessed") is False
+            and dynamic_freeze.get("sealed_accessed") is False
+            and dynamic_freeze.get("battery_replenishment_enabled") is False
+        )
+        checks["dynamic_replacement_matrix"] = (
+            dynamic_freeze.get("matrix_complete") is True
+            and dynamic_freeze.get("counts", {}).get("jobs") == 48
+            and dynamic_freeze.get("counts", {}).get("episodes") == 960
+            and dynamic_freeze.get("expected_job_identities") == dynamic_freeze.get("completed_job_identities")
+        )
+        details["dynamic_g5_freeze"] = str(dynamic_freeze_path)
+    except Exception as exc:
+        checks["dynamic_g5_freeze"] = False
+        checks["dynamic_replacement_matrix"] = False
+        details["dynamic_g5_freeze"] = f"unavailable: {type(exc).__name__}: {exc}"
     training_payload: dict[str, object] = {}
     validation_payload: dict[str, object] = {}
     try:
