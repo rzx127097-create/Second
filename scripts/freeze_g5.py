@@ -270,12 +270,20 @@ def write_dynamic_replacement_manifests(
     protocol_hash = validation.get("provenance", {}).get("protocol_hash")
     commit = source_commit or _git_commit(root)
     scope = source_scope_sha256 or _source_scope_hash(root)
+    candidate_manifest_sha256 = artifact_sha256(
+        root / DYNAMIC_G5_RELATIVE / "manifests" / "validation-candidates.json"
+    )
+    budget_manifest_sha256 = artifact_sha256(
+        root / DYNAMIC_G5_RELATIVE / "manifests" / "pilot-budget.json"
+    )
     rebound_jobs: list[dict[str, Any]] = []
     for original in jobs:
         job = dict(original)
         job["git_commit"] = commit
         job["source_scope_sha256"] = scope
         dependency = dict(job.get("dependency_graph") or {})
+        dependency["candidate_manifest_sha256"] = candidate_manifest_sha256
+        dependency["budget_manifest_sha256"] = budget_manifest_sha256
         dependency["source_commit"] = commit
         dependency["source_scope_sha256"] = scope
         job["dependency_graph"] = dependency
@@ -306,6 +314,8 @@ def write_dynamic_replacement_manifests(
         "manifest_id": "G6-TRAINING-JOBS",
         "output_root": "outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6",
         "ecology_id": "dynamic_pest_v1",
+        "candidate_manifest_sha256": candidate_manifest_sha256,
+        "budget_manifest_sha256": budget_manifest_sha256,
     })
     payloads["g6_validation"].update({
         "manifest_id": "G6-VALIDATION-EVALUATIONS",

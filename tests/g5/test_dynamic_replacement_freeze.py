@@ -31,6 +31,21 @@ def test_dynamic_replacement_freeze_binds_complete_matrix_and_dynamic_inputs() -
     assert payload["artifacts"]["pilot_artifact_manifest"].endswith("audits/pilot-artifact-manifest.json")
 
 
+def test_dynamic_g6_jobs_bind_dynamic_candidate_and_budget_manifests() -> None:
+    freeze = json.loads((DYNAMIC_ROOT / "freeze-manifest.json").read_text(encoding="utf-8"))
+    training = json.loads(
+        (DYNAMIC_ROOT / "manifests" / "g6-training-jobs.json").read_text(encoding="utf-8")
+    )
+
+    assert freeze["candidate_manifest_sha256"] != "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a"
+    assert freeze["budget_manifest_sha256"] != "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb"
+    assert all(
+        job["dependency_graph"]["candidate_manifest_sha256"] == freeze["candidate_manifest_sha256"]
+        and job["dependency_graph"]["budget_manifest_sha256"] == freeze["budget_manifest_sha256"]
+        for job in training["jobs"]
+    )
+
+
 def test_dynamic_replacement_freeze_is_the_preflight_authority() -> None:
     report = _g5_cli.read_only_preflight(ROOT, gate="G6")
 

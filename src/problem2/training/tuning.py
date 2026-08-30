@@ -276,9 +276,9 @@ class CanonicalValidationStore(ValidationAccessLedger):
         if not allow_noncanonical_test and target_root != canonical_root:
             raise ValueError("canonical validation output must be the dynamic G5 validation root")
         super().__init__(candidate_manifest, candidate_budget, target_ledger)
-        if self.candidate_sha256 != "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a":
+        if self.candidate_sha256 != "c5aee01a2ad180301aa8f2d2d39b067500f6297ac3ac1b503f68814334ba8918":
             raise ValueError("candidate manifest bytes are not the frozen canonical manifest")
-        if self.budget_sha256 != "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb":
+        if self.budget_sha256 != "6c97e5e882dfbbba3cba133185f1a589268d9191beb51f2874a0202cbcc0920d":
             raise ValueError("budget manifest bytes are not the frozen canonical manifest")
         if self.interactions != CANONICAL_INTERACTIONS:
             raise ValueError("canonical validation budget must be exactly 200000")
