@@ -3230,3 +3230,64 @@ Fresh verification before the next freeze:
 G5 therefore remains reopened until a new dynamic freeze is generated from
 this committed source. Validation and sealed access remain closed,
 `battery_replenishment_enabled=false`, and sealed unlock count remains `0`.
+
+## Dynamic G5 Re-freeze After Recovery Hardening
+
+After the recovery repair was pushed, the dynamic replacement freeze was
+regenerated and persisted in commit
+`a40eb7d47ca91234af64db2d108d12aed1da969a` (`data: re-freeze dynamic g6
+after recovery hardening`). The authoritative freeze is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/freeze-manifest.json` with:
+
+```text
+schema=g5-dynamic-replacement-freeze-v1
+matrix_complete=true
+partition=development
+ecology_id=dynamic_pest_v1
+validation_accessed=false
+sealed_accessed=false
+battery_replenishment_enabled=false
+actual_unlock_count=0
+freeze_manifest_sha256=6528e6129106aa68d5cd26f790588db8409f10df52fd3955bd6bfa80e22e8781
+g6_training_manifest_sha256=9aa647ecce77f2129c46e523eb3c1e8cd83d2c4d22714a79448f5ad96f430351
+g6_validation_manifest_sha256=7115fe24f9ba7c0a36d4c51bf20e3e3e816fbf917eeb8c1169304a1c2395bb5d
+source_commit=408c5673cd2a59ecdd03280ee0d9306483c3d881
+source_scope_sha256=97602b9e1d1af3aac2b97a14cd071e553f1915c34dc50e62601bbaf0abf6131f
+```
+
+The first scheduler identity in the regenerated manifest is now resolved at
+execution time as:
+
+```text
+identity=00fa6ffec84f063239b15c87ac15f0deb5ce3dd893ce40e87173e21e00947355
+method=sr_mappo_mobile
+condition_id=sr_mappo_mobile
+scale=g30x50_d4
+candidate_id=c02
+training_seed=7919
+environment_interactions=200000
+checkpoint_interval=10000
+checkpoint_count=20
+```
+
+This identity is distinct from both the earlier failed identity
+`01238942...` and the stale recovery probe `00436bcf...`; neither historical
+identity may be resumed or relabeled.
+
+Fresh clean-source verification after the re-freeze:
+
+- `python scripts/freeze_g5.py --dynamic-replacement --check-only --root .`:
+  exit `0`;
+- `python scripts/preflight_g6.py --root .`: `all_pass=true`, zero queue
+  creation, zero sealed access, and local/upstream/remote parity at
+  `a40eb7d47ca91234af64db2d108d12aed1da969a`;
+- `python -m pytest tests/g6 -q --tb=short`: `81 passed`;
+- `python -m compileall -q src scripts`: exit `0`;
+- `git diff --check`: pass.
+
+The dynamic G5 freeze and Phase 4 readiness prerequisite are restored at
+`M2`. The next authorized action is exactly one formal G6 job for the
+manifest-resolved identity `00fa6ffe...`, followed immediately by controlled
+interruption/recovery and fixed validation-panel auditing. No second job,
+sealed-test unlock, battery replenishment, or efficacy claim is authorized
+before that evidence is persisted.
