@@ -23,8 +23,8 @@ def _finite_rate(value: object, name: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{name} must be finite")
     result = float(value)
-    if not math.isfinite(result) or not 0.0 <= result <= 1.0:
-        raise ValueError(f"{name} must be finite and in [0, 1]")
+    if not math.isfinite(result):
+        raise ValueError(f"{name} must be finite")
     return result
 
 

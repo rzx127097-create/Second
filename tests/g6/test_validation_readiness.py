@@ -122,3 +122,22 @@ def test_checkpoint_selection_rejects_incomplete_validation_row_coverage() -> No
     rows = _validation_rows("a" * 64, reduction=0.80, success_count=40, interaction=10000)
     with pytest.raises(ValueError, match="coverage"):
         select_frozen_checkpoint(rows[:-1], expected_scenarios=range(20000, 20050))
+
+
+@pytest.mark.parametrize("reduction_rate", (-0.25,))
+def test_checkpoint_selection_accepts_finite_negative_reduction_rate(reduction_rate: float) -> None:
+    from problem2.evaluation.selection import select_frozen_checkpoint
+
+    rows = _validation_rows("a" * 64, reduction=reduction_rate, success_count=0, interaction=10000)
+    selected = select_frozen_checkpoint(rows, expected_scenarios=range(20000, 20050))
+
+    assert selected["mean_validation_reduction_rate"] == pytest.approx(reduction_rate)
+
+
+@pytest.mark.parametrize("reduction_rate", (float("nan"), float("inf"), float("-inf")))
+def test_checkpoint_selection_rejects_nonfinite_reduction_rate(reduction_rate: float) -> None:
+    from problem2.evaluation.selection import select_frozen_checkpoint
+
+    rows = _validation_rows("a" * 64, reduction=reduction_rate, success_count=0, interaction=10000)
+    with pytest.raises(ValueError, match="finite"):
+        select_frozen_checkpoint(rows, expected_scenarios=range(20000, 20050))

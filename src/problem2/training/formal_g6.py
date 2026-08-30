@@ -422,6 +422,80 @@ def _existing_checkpoint_records(paths: FormalJobPaths) -> list[dict[str, Any]]:
     return records
 
 
+def _validation_checkpoint_coverage(paths: FormalJobPaths) -> dict[str, int]:
+    """Return validated scenario counts per checkpoint already on disk."""
+
+    if not paths.validation_events.is_file():
+        return {}
+    scenarios: dict[str, set[int]] = {}
+    for line_number, line in enumerate(paths.validation_events.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"formal validation log line {line_number} is invalid JSON") from exc
+        if not isinstance(row, Mapping):
+            raise ValueError(f"formal validation log line {line_number} is not an object")
+        checkpoint_hash = row.get("checkpoint_hash")
+        if not isinstance(checkpoint_hash, str) or _SHA256.fullmatch(checkpoint_hash) is None:
+            raise ValueError("formal validation row checkpoint hash is invalid")
+        scenario_id = row.get("scenario_id")
+        if isinstance(scenario_id, bool) or not isinstance(scenario_id, int) or scenario_id not in VALIDATION_SCENARIOS:
+            raise ValueError("formal validation row scenario is outside the frozen panel")
+        seen = scenarios.setdefault(checkpoint_hash, set())
+        if scenario_id in seen:
+            raise ValueError("duplicate formal validation row prevents recovery")
+        seen.add(scenario_id)
+    return {checkpoint_hash: len(values) for checkpoint_hash, values in scenarios.items()}
+
+
+def _backfill_missing_validation(
+    repository_root: Path,
+    job: Mapping[str, Any],
+    paths: FormalJobPaths,
+    checkpoint_records: list[dict[str, Any]],
+    *,
+    device: str,
+) -> list[dict[str, Any]]:
+    """Evaluate existing checkpoints whose manifest entry lacks validation rows."""
+
+    expected_rows = len(VALIDATION_SCENARIOS)
+    coverage = _validation_checkpoint_coverage(paths)
+    record_hashes = {str(record["sha256"]) for record in checkpoint_records}
+    unknown_hashes = set(coverage) - record_hashes
+    if unknown_hashes:
+        raise ValueError("formal validation rows reference an unknown checkpoint")
+    for record in checkpoint_records:
+        checkpoint_hash = str(record["sha256"])
+        observed = coverage.get(checkpoint_hash, 0)
+        declared = int(record.get("validation_rows", 0))
+        if observed not in (0, expected_rows):
+            raise ValueError("formal validation row coverage is incomplete for recovery")
+        if declared not in (0, expected_rows):
+            raise ValueError("formal checkpoint validation row count is incomplete")
+        if declared and observed != declared:
+            raise ValueError("formal checkpoint validation row count disagrees with log")
+        if observed == expected_rows:
+            record["validation_rows"] = expected_rows
+            continue
+        checkpoint_path = (paths.root / str(record["path"])).resolve()
+        rows = evaluate_formal_checkpoint(
+            repository_root,
+            job,
+            checkpoint_path,
+            device=device,
+            output_path=paths.validation_events,
+        )
+        if len(rows) != expected_rows:
+            raise ValueError("formal checkpoint validation did not produce the frozen panel")
+        coverage = _validation_checkpoint_coverage(paths)
+        if coverage.get(checkpoint_hash) != expected_rows:
+            raise ValueError("formal checkpoint validation log is incomplete after recovery")
+        record["validation_rows"] = expected_rows
+    return checkpoint_records
+
+
 def _checkpoint_state(algorithm: Any, environment: Any, *, interaction_count: int, update_count: int, scenario_cursor: int, episode_interactions: int, episode_reward: float, fresh_since_update: int, executed_scenarios: list[int]) -> dict[str, Any]:
     return {
         "algorithm": algorithm.state_dict(),
@@ -650,6 +724,14 @@ def run_formal_job(root: Path | str, job: Mapping[str, Any], *, device: str = "c
             executed_scenarios = [int(value) for value in formal_state["executed_scenarios"]]
             fresh_since_update = int(formal_state.get("fresh_since_update", 0))
             start_interactions = int(formal_state["interaction_count"])
+        if resume_checkpoint is not None and evaluate_validation:
+            checkpoint_records = _backfill_missing_validation(
+                repository_root,
+                job,
+                paths,
+                checkpoint_records,
+                device=device,
+            )
         _, update_interval = _update_interval(algorithm)
         for offset in range(target - start_interactions):
             interaction_index = start_interactions + offset

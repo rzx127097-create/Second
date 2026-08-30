@@ -238,3 +238,125 @@ def test_short_interruption_and_resume_reproduce_uninterrupted_state(
     direct_payload = __import__("torch").load(direct_checkpoint, map_location="cpu", weights_only=False)
     assert resumed_payload["state"]["algorithm"] == direct_payload["state"]["algorithm"]
     assert resumed_payload["state"]["formal_state"] == direct_payload["state"]["formal_state"]
+
+
+def test_resume_backfills_validation_for_existing_checkpoint_without_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from problem2.training import formal_g6
+
+    manifest = json.loads(TRAINING_MANIFEST.read_text(encoding="utf-8"))
+    job = dict(manifest["jobs"][0])
+    source_commit = __import__("subprocess").check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    job["git_commit"] = source_commit
+    job["canonical_training_identity"] = canonical_training_identity(
+        job["method"], job["scale"], job["training_seed"], job["config_hash"], source_commit
+    )
+    job["environment_interactions"] = 4
+    job["checkpoint_interval"] = 2
+    job["checkpoint_count"] = 2
+    job["dependency_graph"] = dict(job["dependency_graph"], source_commit=source_commit)
+
+    class FakeAlgorithm:
+        method_id = "sr_mappo_mobile"
+
+        def __init__(self) -> None:
+            self.value = 0
+
+        def act(self, observations, masks, *, deterministic=False, return_details=False):
+            return {"actions": {}, "masks": {}} if return_details else SimpleNamespace(actions={}, masks={})
+
+        def state_dict(self):
+            return {"value": self.value, "training": True}
+
+        def load_state_dict(self, state):
+            self.value = int(state["value"])
+
+        def set_evaluation(self, enabled: bool) -> None:
+            del enabled
+
+    class FakeEnvironment:
+        scenario_id = 10000
+        max_steps = 100
+
+        def __init__(self) -> None:
+            self.count = 0
+            self._current_view = None
+            self.state = SimpleNamespace(terminated=False)
+
+        def _view(self, truncated: bool = False):
+            return {"scenario_id": 10000, "observations": {}, "masks": {}, "truncated": truncated, "team_reward": 0.1}
+
+        def reset(self, *, scenario_id=None):
+            del scenario_id
+            self.count = 0
+            self.state.terminated = False
+            self._current_view = self._view()
+            return self._current_view
+
+        def step(self, action_result, **kwargs):
+            del action_result, kwargs
+            self.count += 1
+            self.state.terminated = self.count >= 100
+            self._current_view = self._view(False)
+            return self._current_view
+
+        def state_dict(self):
+            return {"scenario_id": self.scenario_id, "count": self.count}
+
+        def load_state_dict(self, state):
+            self.count = int(state["count"])
+            self.state.terminated = False
+            self._current_view = self._view()
+
+    monkeypatch.setattr(formal_g6, "build_algorithm", lambda *args, **kwargs: FakeAlgorithm())
+    monkeypatch.setattr(formal_g6, "build_development_environment", lambda *args, **kwargs: FakeEnvironment())
+    monkeypatch.setattr(formal_g6, "_as_action_result", lambda details: details)
+    monkeypatch.setattr(formal_g6, "build_physical_envelope", lambda *args, **kwargs: None)
+    monkeypatch.setattr(formal_g6, "_observe_physical_algorithm", lambda *args, **kwargs: None)
+    monkeypatch.setattr(formal_g6, "_update_interval", lambda algorithm: ("fake", 1))
+    monkeypatch.setattr(formal_g6, "_update_physical_algorithm", lambda algorithm, **kwargs: {"loss": 1.0})
+
+    output_root = tmp_path / "resumed"
+    interrupted = formal_g6.run_formal_job(
+        ROOT, job, device="cpu", output_root=output_root,
+        stop_after_interactions=2, evaluate_validation=False,
+    )
+    assert interrupted["status"] == "interrupted"
+
+    evaluated_checkpoints: list[int] = []
+
+    def fake_evaluate(root, frozen_job, checkpoint, *, device="cpu", output_path=None):
+        del root, frozen_job, device
+        interaction_count = int(Path(checkpoint).stem.split("-")[-1])
+        evaluated_checkpoints.append(interaction_count)
+        checkpoint_hash = formal_g6.artifact_sha256(Path(checkpoint))
+        rows = [
+            {
+                "checkpoint_hash": checkpoint_hash,
+                "scenario_id": scenario_id,
+                "reduction_rate": 0.0,
+                "success_at_0_85": False,
+                "interaction_count": interaction_count,
+            }
+            for scenario_id in range(20000, 20050)
+        ]
+        if output_path is not None:
+            for row in rows:
+                formal_g6.append_jsonl(Path(output_path), row)
+        return rows
+
+    monkeypatch.setattr(formal_g6, "evaluate_formal_checkpoint", fake_evaluate)
+    resumed = formal_g6.resume_formal_job(ROOT, job, device="cpu", output_root=output_root, evaluate_validation=True)
+
+    assert resumed["status"] == "completed"
+    assert evaluated_checkpoints == [2, 4]
+    assert [item["validation_rows"] for item in resumed["checkpoints"]] == [50, 50]
+    validation_rows = [
+        json.loads(line)
+        for line in (output_root / "jobs" / job["canonical_training_identity"] / "validation-episodes.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(validation_rows) == 100

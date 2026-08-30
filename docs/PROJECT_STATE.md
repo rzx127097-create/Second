@@ -3148,3 +3148,33 @@ the current entry is identity `01238942da69c8cfbdd9e6ebc8d92e40277f8651c9c2c6240
 (`sr_mappo_mobile`, `g20x20_d2`, candidate `c02`, seed `2024`). The next gate
 step is exactly one formal job, followed by checkpoint/recovery/validation
 verification and persistence before any second job.
+
+## G6 First-Job Defect And G5 Reopen
+
+The first frozen dynamic G6 identity was executed as the sole authorized job
+under the source recorded above. Its initial controlled interruption at 10,000
+interactions was recovered with the same identity, producing 20 atomic
+checkpoints and 950 validation rows for checkpoints 20,000 through 200,000.
+The recovered attempt then failed closed in checkpoint selection with
+`ValueError: reduction_rate must be finite and in [0, 1]`. The generated rows
+contain physically valid dynamic-ecology growth outcomes, including 586 finite
+negative reduction rates; no row exceeded 1 and no sealed scenario was read.
+
+Root-cause audit traced the failure to the selector's stale `[0, 1]` bound,
+which contradicts the dynamic ecology contract allowing `final_total_pest >
+initial_total_pest`. The same run also exposed a recovery gap: a checkpoint
+written during the controlled interruption had `validation_rows=0` and was not
+backfilled on resume. The failed identity and all artifacts under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6/` are preserved byte-for-byte
+as historical failed evidence and are not being relabeled or resumed after a
+source change.
+
+G5 is reopened for this evaluator/recovery repair. The repair adds regression
+tests for finite negative rates, NaN/Inf rejection, and exactly-once validation
+backfill, then removes only the invalid range restriction and backfills missing
+fixed-panel rows with duplicate and partial-coverage checks. A replacement
+dynamic G5 freeze with new evaluator/source hashes and new G6 identities is
+required before another formal job. Highest maturity remains `M2`; validation
+and sealed access remain closed, pesticide is the only replenished resource,
+battery replenishment remains disabled, and actual sealed unlock count remains
+`0`.
