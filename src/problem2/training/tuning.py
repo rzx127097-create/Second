@@ -47,6 +47,10 @@ CANONICAL_METHODS = (
 CANONICAL_SEEDS = (51001, 51002, 51003)
 CANONICAL_SCALE = "g30x50_d4"
 CANONICAL_INTERACTIONS = 200000
+DYNAMIC_CANDIDATE_SHA256 = "c5aee01a2ad180301aa8f2d2d39b067500f6297ac3ac1b503f68814334ba8918"
+DYNAMIC_BUDGET_SHA256 = "6c97e5e882dfbbba3cba133185f1a589268d9191beb51f2874a0202cbcc0920d"
+HISTORICAL_CANDIDATE_SHA256 = "67e6784b3d00d0385310d467c351f5b3374f02c7a7d7c22c571d4de29190419a"
+HISTORICAL_BUDGET_SHA256 = "048138954f336c95e3d339aed594c71e23167ef30cc1f4a373d5c2b10bb049cb"
 
 
 class _Task12PhysicalEnv(Problem2CooperativeEnv):
@@ -276,9 +280,13 @@ class CanonicalValidationStore(ValidationAccessLedger):
         if not allow_noncanonical_test and target_root != canonical_root:
             raise ValueError("canonical validation output must be the dynamic G5 validation root")
         super().__init__(candidate_manifest, candidate_budget, target_ledger)
-        if self.candidate_sha256 != "c5aee01a2ad180301aa8f2d2d39b067500f6297ac3ac1b503f68814334ba8918":
+        dynamic_manifest_root = (root / DYNAMIC_OUTPUT_ROOT / "g5" / "manifests").resolve()
+        uses_dynamic_manifest = self.candidate_manifest.parent == dynamic_manifest_root
+        expected_candidate = DYNAMIC_CANDIDATE_SHA256 if uses_dynamic_manifest else HISTORICAL_CANDIDATE_SHA256
+        expected_budget = DYNAMIC_BUDGET_SHA256 if uses_dynamic_manifest else HISTORICAL_BUDGET_SHA256
+        if self.candidate_sha256 != expected_candidate:
             raise ValueError("candidate manifest bytes are not the frozen canonical manifest")
-        if self.budget_sha256 != "6c97e5e882dfbbba3cba133185f1a589268d9191beb51f2874a0202cbcc0920d":
+        if self.budget_sha256 != expected_budget:
             raise ValueError("budget manifest bytes are not the frozen canonical manifest")
         if self.interactions != CANONICAL_INTERACTIONS:
             raise ValueError("canonical validation budget must be exactly 200000")
