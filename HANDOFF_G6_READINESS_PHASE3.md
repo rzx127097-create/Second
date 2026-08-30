@@ -423,3 +423,62 @@ source parameter/literature
 Training completion, a smoke test, a dry run, a preflight printout, or one
 development pilot is not a thesis efficacy result. Keep all conclusions
 inside the currently authorized maturity gate.
+
+## Dynamic Replacement Freeze Completed
+
+The replacement matrix is now complete and frozen under
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/`:
+
+```text
+matrix_complete=true
+jobs=48
+episode_rows=960
+conditions=8
+scales=g20x20_d2,g30x50_d4
+training_seeds=51001,51002,51003
+partition=development
+ecology=dynamic_pest_v1
+replenished_resource=pesticide
+validation_accessed=false
+sealed_accessed=false
+battery_replenishment_enabled=false
+```
+
+The authoritative freeze is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/freeze-manifest.json`,
+schema `g5-dynamic-replacement-freeze-v1`, source commit
+`1cc9748b9143a604bd89a5bf754e118b6cab6c6c`, and source-scope SHA-256
+`eb654f00d9ee1e61c8c1d43574759748098155ffb2b6c7252ae28b644ed6557a`.
+Its SHA-256 is
+`3b881d9a096580c0a3e95c3ebecb22e7c5c71e2fb75af8302667fbf639786e26`.
+The freeze binds the pilot audit, pilot artifact manifest, validated
+episode table, candidate/budget manifests, and dynamic G6 manifests. The
+48 expected identities exactly equal the 48 completed identities.
+
+Read-only verification completed with:
+
+```text
+python -m pytest tests/g5/test_dynamic_replacement_freeze.py -q --tb=short
+3 passed in 26.00s
+
+python scripts/freeze_g5.py --dynamic-replacement --check-only --root .
+exit 0
+
+read_only_preflight(ROOT, gate="G6")
+all_pass=true
+dynamic_g5_freeze=true
+dynamic_replacement_matrix=true
+no_sealed_identities=true
+queue_created=false
+```
+
+The freeze and replacement raw evidence were persisted in commits
+`2c6663d06ab58c56bf7c0577398303c67d1bb8ea` and
+`890255c7710e97ce88b098cd4c1e9ff8be7931d1`, both pushed to
+`origin/codex/problem2-dynamic-pest-model`. The project remains at `M2`:
+this is a dynamic development freeze and readiness result, not a formal
+efficacy or superiority result. Validation scenarios `20000-20049`, sealed
+scenarios `30000-30099`, and the G7 unlock remain untouched. The next
+authorized action is the first immutable formal G6 training job under the
+dynamic G6 manifest, followed by immediate recovery/validation inspection;
+do not batch-run or unlock G7 in the same step.

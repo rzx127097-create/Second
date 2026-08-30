@@ -28,15 +28,13 @@ real deployment evidence.
   `origin/feature/problem2-code-framework` at
   `52a92c00467fbc3fa6a81e0fcb43469b2f8d1940`.
 - Current highest maturity: `M2` implementation and scoped mechanism evidence.
-- Current gate: the user has required Problem 2 to inherit the complete
-  Problem-1 dynamic pest environment. The approved design reopens G3-G5 before
-  any G6 work: Holling-Tanner reaction-diffusion, dynamic wind advection, and a
-  persistent decaying pesticide-effect field become mandatory defaults for all
-  future primary experiments. The previous G5 linear-local-decrease outputs
-  remain byte-preserved historical diagnostics and are not admissible as
-  dynamic-environment pilot or formal evidence. G6 and G7 remain blocked until
-  the dynamic implementation, renewed G3/G4 acceptance, fair G5 pilot, and new
-  method/statistics freeze are committed, pushed, and verified.
+- Current gate: dynamic G3-G5 reacceptance and the replacement G5 freeze are
+  complete at `M2`. The previous G5 linear-local-decrease outputs remain
+  byte-preserved historical diagnostics and are not admissible as
+  dynamic-environment pilot or formal evidence. A read-only Phase 4 preflight
+  now passes against the dynamic freeze, so the next authorized work is the
+  first immutable formal G6 training job; validation and sealed evaluation
+  remain locked and no G7 unlock has occurred.
 - Sealed-test status: locked; maximum unlock count is `1`, actual unlock count
   is `0`, and no sealed-test result may be used for tuning.
 - Main resource: pesticide-only replenishment.
@@ -3016,3 +3014,64 @@ No replacement identity, validation scenario, sealed scenario, or G7 unlock
 was executed by this hardening change. Highest maturity remains `M2`;
 `matrix_complete=false`, replacement freeze and Phase 4 preflight remain
 blocked until the complete 48-job dynamic pilot matrix passes.
+
+## G5 Dynamic Replacement Freeze And Phase 4 Preflight
+
+On 2026-08-30, the dynamic replacement pilot matrix completed and was frozen.
+The authoritative artifact is
+`outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/freeze-manifest.json` with
+schema `g5-dynamic-replacement-freeze-v1`, `matrix_complete=true`, 48 jobs,
+and 960 validated development episode-reference rows. The scope is eight
+executable conditions, scales `g20x20_d2` and `g30x50_d4`, and training seeds
+`51001`, `51002`, `51003`. It covers all five required learning methods while
+keeping the twelve diagnostic-only probes out of primary selection.
+
+The freeze records the following hard boundaries:
+
+```text
+partition=development
+ecology_id=dynamic_pest_v1
+replenished_resource=pesticide
+validation_accessed=false
+sealed_accessed=false
+battery_replenishment_enabled=false
+actual_unlock_count=0
+```
+
+Freeze provenance and hashes:
+
+- source commit: `1cc9748b9143a604bd89a5bf754e118b6cab6c6c`;
+- source-scope SHA-256: `eb654f00d9ee1e61c8c1d43574759748098155ffb2b6c7252ae28b644ed6557a`;
+- evidence source commit: `7390e891d54ff8eb141a2a4ff02fd2666ba4e316`;
+- freeze bytes/SHA-256: `12910` /
+  `3b881d9a096580c0a3e95c3ebecb22e7c5c71e2fb75af8302667fbf639786e26`;
+- pilot audit SHA-256: `02dff0dc1f2f74ac639dabd0396a8afac36e1dd214ecc72cb22219dd29a3acaf`;
+- pilot artifact manifest SHA-256: `f1e1c25615560aaaae585a7cc712053703250530d7bd466d6da682814e40055b`;
+- validated pilot episodes SHA-256: `bafc575453c3ceb9a9ff56e1ccacb26d805a166cc181a004565a52b9624683ac`;
+- candidate/budget manifest SHA-256: `c5aee01a2ad180301aa8f2d2d39b067500f6297ac3ac1b503f68814334ba8918` /
+  `6c97e5e882dfbbba3cba133185f1a589268d9191beb51f2874a0202cbcc0920d`.
+
+The content and source-scope rebind were pushed in commits
+`2c6663d06ab58c56bf7c0577398303c67d1bb8ea` and
+`890255c7710e97ce88b098cd4c1e9ff8be7931d1` on
+`origin/codex/problem2-dynamic-pest-model`. The new entry point
+`python scripts/freeze_g5.py --dynamic-replacement --check-only --root .`
+performs a read-only dynamic-only verification; the historical static freeze
+entry point remains separate and cannot satisfy this gate.
+
+Fresh Phase 4 verification:
+
+- `python -m pytest tests/g5/test_dynamic_replacement_freeze.py -q --tb=short`:
+  `3 passed`;
+- dynamic freeze check-only: exit `0`;
+- `read_only_preflight(ROOT, gate="G6")`: `all_pass=true`, with
+  `dynamic_g5_freeze=true`, `dynamic_replacement_matrix=true`,
+  `no_sealed_identities=true`, and `queue_created=false`;
+- the preflight is read-only and did not access validation/sealed payloads.
+
+This closes the dynamic replacement G5 freeze and Phase 4 readiness
+prerequisite at `M2`; it does not claim a formal result or raise maturity. The
+next authorized action is one immutable formal G6 training job under the
+dynamic G6 manifest, followed immediately by recovery and validation checks.
+Do not batch-run G6 jobs, access validation payloads for tuning, or unlock G7
+in the same step.

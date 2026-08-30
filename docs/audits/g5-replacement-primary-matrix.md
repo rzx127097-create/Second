@@ -172,3 +172,57 @@ Focused and affected verification on the pushed commit returned `46 passed`
 and `139 passed`, respectively, with successful `compileall`, `git diff
 --check`, and CLI help checks. This hardening checkpoint does not change the
 gate status: `matrix_complete=false` until all 48 physical identities pass.
+
+## Dynamic Replacement Freeze Acceptance
+
+On 2026-08-30, the complete replacement matrix was executed and frozen under
+the dynamic ecology namespace. The freeze is independent of the historical
+static G5 validation/refit payloads and binds only the replacement pilot
+evidence, candidate/budget manifests, and dynamic G6 manifests:
+
+```text
+freeze=outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/freeze-manifest.json
+schema=g5-dynamic-replacement-freeze-v1
+matrix_complete=true
+jobs=48
+episodes=960
+conditions=8
+scales=g20x20_d2,g30x50_d4
+training_seeds=51001,51002,51003
+partition=development
+ecology=dynamic_pest_v1
+replenished_resource=pesticide
+validation_accessed=false
+sealed_accessed=false
+battery_replenishment_enabled=false
+actual_unlock_count=0
+```
+
+The freeze source is commit `1cc9748b9143a604bd89a5bf754e118b6cab6c6c`
+with source-scope SHA-256
+`eb654f00d9ee1e61c8c1d43574759748098155ffb2b6c7252ae28b644ed6557a`.
+The replacement evidence was generated from ancestor commit
+`7390e891d54ff8eb141a2a4ff02fd2666ba4e316`; no validation or sealed payload
+was read. The freeze artifact itself is 12,910 bytes with SHA-256
+`3b881d9a096580c0a3e95c3ebecb22e7c5c71e2fb75af8302667fbf639786e26`.
+
+Bound artifact hashes:
+
+| artifact | bytes | SHA-256 |
+|---|---:|---|
+| `pilots/replacement-48/audits/pilot-audit.json` | 13,505 | `02dff0dc1f2f74ac639dabd0396a8afac36e1dd214ecc72cb22219dd29a3acaf` |
+| `pilots/replacement-48/audits/pilot-artifact-manifest.json` | 761 | `f1e1c25615560aaaae585a7cc712053703250530d7bd466d6da682814e40055b` |
+| `pilots/replacement-48/validated/pilot-episodes.jsonl` | 6,448,460 | `bafc575453c3ceb9a9ff56e1ccacb26d805a166cc181a004565a52b9624683ac` |
+| `manifests/validation-candidates.json` | 16,942 | `c5aee01a2ad180301aa8f2d2d39b067500f6297ac3ac1b503f68814334ba8918` |
+| `manifests/pilot-budget.json` | 1,622 | `6c97e5e882dfbbba3cba133185f1a589268d9191beb51f2874a0202cbcc0920d` |
+| `manifests/g6-training-jobs.json` | 1,121,360 | `9ef2224c669f20277e2085843679508aa5b37abefc88f3be2ba9b1f16adcc225` |
+| `manifests/g6-validation-evaluations.json` | 1,521 | `e8b67d5e54ae5bc6b740b9434ba759db6c032db39c21cff4509721e3c8b34a31` |
+
+The evidence/freeze content commit is
+`2c6663d06ab58c56bf7c0577398303c67d1bb8ea` and the source-scope CLI rebind
+is `890255c7710e97ce88b098cd4c1e9ff8be7931d1`. The read-only preflight
+against the exact freeze returned `all_pass=true`, including
+`dynamic_g5_freeze=true`, `dynamic_replacement_matrix=true`,
+`no_sealed_identities=true`, and remote parity. This closes the replacement
+G5 freeze prerequisite at `M2`; it does not execute formal G6, unlock G7,
+access validation scenarios, or support efficacy/superiority claims.
