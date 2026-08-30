@@ -46,6 +46,7 @@ def _dynamic_evaluator_hash(root: Path) -> str:
         {
             "runner": artifact_sha256(root / "src/problem2/evaluation/runner.py"),
             "selector": artifact_sha256(root / "src/problem2/evaluation/selection.py"),
+            "formal_g6": artifact_sha256(root / "src/problem2/training/formal_g6.py"),
         }
     )
 _PROTECTED_FILE_HASHES = {

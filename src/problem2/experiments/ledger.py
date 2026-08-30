@@ -236,6 +236,24 @@ class AppendOnlyLedger:
         self._append({"event": "transition", "identity": identity, "old_state": "failed", "new_state": "pending", "attempt": int(job["attempt"]), "reason": "same-identity retry"})
         return self.acquire(identity, worker_id=worker_id)
 
+    def requeue(self, identity: str, *, input_hash: str, config_hash: str | None = None, protocol_hash: str | None = None, source_commit: str | None = None, checkpoint_hash: str | None = None, scenario_panel_hash: str | None = None) -> None:
+        """Return a failed identity to pending without acquiring a lease.
+
+        The scheduler uses this two-phase form when recovery must load a
+        checkpoint before claiming the next worker lease.
+        """
+        job = self._job(identity)
+        if job["state"] is JobState.STALE:
+            raise LedgerError("stale job cannot be requeued")
+        observed = {"input_hash": input_hash, "config_hash": config_hash, "protocol_hash": protocol_hash, "source_commit": source_commit, "checkpoint_hash": checkpoint_hash, "scenario_panel_hash": scenario_panel_hash}
+        drift = input_hash != job["input_hash"] or any(value is not None and value != job.get(key) for key, value in observed.items() if key != "input_hash")
+        if drift:
+            self.mark_stale(identity, reason="input/provenance drift", observed_input_hash=input_hash)
+            raise LedgerError("input or provenance drift marks job stale")
+        if job["state"] is not JobState.FAILED:
+            raise LedgerError("only failed jobs may be requeued")
+        self._append({"event": "transition", "identity": identity, "old_state": "failed", "new_state": "pending", "attempt": int(job["attempt"]), "reason": "same-identity recovery requeue"})
+
     def mark_stale(self, identity: str, *, reason: str, observed_input_hash: str | None = None) -> None:
         job = self._job(identity)
         if job["state"] is JobState.STALE:

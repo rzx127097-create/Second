@@ -1111,6 +1111,7 @@ def build_validation_environment(
     *,
     scenario_id: int,
     scale: str = "g30x50_d4",
+    condition_id: str | None = None,
 ) -> DynamicPestEnvironment:
     """Create one dynamic validation-only scenario from the frozen G2 road cache."""
 
@@ -1119,6 +1120,7 @@ def build_validation_environment(
         scenario_id=scenario_id,
         scale=scale,
         partition="validation",
+        condition_id=condition_id,
     )
 
 

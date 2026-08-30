@@ -228,6 +228,14 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         len(value) == 40 and all(char in "0123456789abcdef" for char in value.lower())
         for value in source_commit_values
     )
+    if checks["frozen_source_commit"]:
+        try:
+            current_commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, check=True
+            ).stdout.strip()
+            checks["frozen_source_commit"] = current_commit == frozen_commit
+        except (OSError, subprocess.CalledProcessError):
+            checks["frozen_source_commit"] = False
     frozen_scope = next(iter(source_scope_values), "")
     checks["frozen_source_scope"] = len(source_scope_values) == 1 and bool(frozen_scope) and all(
         len(value) == 64 and all(char in "0123456789abcdef" for char in value.lower())
@@ -245,10 +253,10 @@ def read_only_preflight(root: Path = ROOT, *, gate: str = "G6") -> dict[str, obj
         except Exception:
             return False
 
-    checks["runner_available"] = _module_has("problem2.training.runner")
+    checks["runner_available"] = _module_has("problem2.training.formal_g6", "run_formal_job")
     checks["recovery_available"] = _module_has("problem2.experiments.recovery", "recover_checkpoint")
     checks["checkpoint_validator_available"] = _module_has("problem2.evaluation.validator", "validate_long_table")
-    checks["validation_evaluator_available"] = _module_has("problem2.evaluation.runner", "evaluate_episode")
+    checks["validation_evaluator_available"] = _module_has("problem2.training.formal_g6", "evaluate_formal_checkpoint")
 
     identities = [job.get("canonical_training_identity") for job in jobs if isinstance(job, dict)] if isinstance(jobs, list) else []
     checks["scheduler_order"] = (
