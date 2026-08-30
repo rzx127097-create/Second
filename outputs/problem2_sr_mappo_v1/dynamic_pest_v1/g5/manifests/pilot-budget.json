@@ -1,0 +1,60 @@
+{
+  "battery_replenishment_enabled": false,
+  "decision": {
+    "checkpoint_count": 20,
+    "checkpoint_interval": 10000,
+    "projected_slowest_hours": 0.8806687500029713,
+    "selected_budget": 200000
+  },
+  "manifest_id": "G5-PILOT-BUDGET",
+  "runtime_aggregates": {
+    "g20x20_d2": {
+      "ippo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0032388539063958888
+      },
+      "iql_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0040545179688251665
+      },
+      "maddpg_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.003565471093679662
+      },
+      "mappo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0030129671874874475
+      },
+      "sr_mappo_mobile": {
+        "observations": 12,
+        "seconds_per_interaction": 0.017883633593783088
+      }
+    },
+    "g30x50_d4": {
+      "ippo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.003378185156179825
+      },
+      "iql_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.013648339843712165
+      },
+      "maddpg_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0034734500000013213
+      },
+      "mappo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.003579415624926696
+      },
+      "sr_mappo_mobile": {
+        "observations": 12,
+        "seconds_per_interaction": 0.015852037500053484
+      }
+    }
+  },
+  "schema_version": "g5.v1",
+  "sealed_accessed": false,
+  "status": "frozen_before_validation",
+  "validation_accessed": false
+}

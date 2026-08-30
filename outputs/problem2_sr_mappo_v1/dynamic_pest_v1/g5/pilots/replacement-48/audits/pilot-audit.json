@@ -1,0 +1,303 @@
+{
+  "artifact_manifest_path": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\dynamic_pest_v1\\g5\\pilots\\replacement-48\\audits\\pilot-artifact-manifest.json",
+  "battery_replenishment_enabled": false,
+  "boundary_status": {
+    "battery_replenishment_enabled": "safe",
+    "sealed_accessed": "safe",
+    "validation_accessed": "safe"
+  },
+  "budget_decision": {
+    "checkpoint_count": 20,
+    "checkpoint_interval": 10000,
+    "projected_slowest_hours": 0.8806687500029713,
+    "selected_budget": 200000
+  },
+  "candidate_manifest": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\dynamic_pest_v1\\g5\\manifests\\validation-candidates.json",
+  "completed_job_identities": [
+    "f3a070e3fa5ebc1d3df679d7fbf806aceba2b58338dee4967b9fef7308930f63",
+    "05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1",
+    "5e48578dcbc0bd88d4fb6391c8fad51c9f8566335964068a96bb8f525b3ff260",
+    "c88c56866c9d7db3ea7059233019c2f014fe39375d736a0de14d8c5a7f2f51de",
+    "31837fe943ba86c6d03dd9ab1cb122e6bfefa08e3d61733d313c741ac5b493b2",
+    "16edaea51bee952905a5089c2793a800895ffc27f4e53f07a00fb699efd818fe",
+    "1944149c68c4e2e0f53b49d1bef849927f37099d2f5ccbee27361c6cb2b9c9a4",
+    "46425ca7758cbea351dc6f7f26f50aa56cc28d33ab463483e8e303f3977a9e4a",
+    "a7a1adbe941cf79548f5f83f12256e7a517ba0ed5ab9df777110cc59f5623ef8",
+    "33420c8c65fbf1c2a8dc5ee88dd177619b9651c6ba72ef754746b18e7861b8fc",
+    "befe8e3c7901c728775cf61a415f67764f51a69ef0a8e3d4a7565fdba0e93195",
+    "49abf97e9f8ca0f1fa430283c41cd4a6cdcaa396858284ee585193f1ca595b86",
+    "f6f1fc603a7f0919101efc06d83271699f01d81210c11b4ac929a777fefdca74",
+    "e3f11cdb846d9e0cf63e71b2c3c9fb0d9ba95d1d8b7b9ccada48aeb6d164ab53",
+    "796b839ed848b3d834a62c8f8ce8fc09f8b615ddac44d6337d47734b8fac09db",
+    "d3b8549abf84f04466f4a871e56a7dbafd24504d590cd3341d666e2d2b4f751d",
+    "40999bf74aff59b2c3b3b7123a7573869f299c3fec67c8f9c3324aa2aced17c7",
+    "2a81c301ba0387aacf6b76d6c0fd61ecfa2b0fc3292d6ed4eb2c110441580dae",
+    "3fb5dc56e352a5e28e0d430a927e4dcf17393089bf22b93a4a501e555b013c09",
+    "7fcc9030681be7bbd31d01c2099d4b15ebbbbe506c1da78bcfc85f8a34d42edf",
+    "a98e85addadbbe550d2be52c12063e862386bb00a0fe342c6d2bfb04cf95d32a",
+    "dba8be7e62701a9d47c6b4183bea6cbfb205e8e2cba844c79387232121374d26",
+    "e01a33389538fac3d59f54aaeca2889d014ae45885079a64e9f9cd13b568a2b7",
+    "a5e7b4fd76d02c590e447b149752723c56235e53d1f837e06e59caf4beb66d25",
+    "add79f46ba89efaf0887d48adea92458b7a22a2bb152edff72b9ecf6177e2205",
+    "3b857e4994d9ea1dd1880edfc10eb275160c7b0232d35d4328b3013d7c1db429",
+    "f507b38b9d6450d697de7e5c87eb3fdfd3e7916ed34fdb71fc637c83702351de",
+    "7a58b46e131fe5c7fc908be9b5db1e9f872c51c257ca44aa04e6d98192b006e7",
+    "9c2284b212162a2c490cd7ffb0cab4507bcbe7ee195ccbe97ff4285843e52a9f",
+    "687cd99b9d7fca9555d3a8dbd8a30cca41261fbe46e1c61a2e4e3cb07947fef0",
+    "e3ccebf0d6cd6192031895542fd4ef5be86b70dcd86c6421435eca530f93ffee",
+    "777175766fc7faf05d0d229a6aa969c204230f9933b6bbac1e62ab9c2373d801",
+    "cc58e1039e882a76fb807778daccd21b1de3685b9ca325efd1467672fbd68e6b",
+    "b64aa271b0fa7f1b21c4c36e2ba12875a3ddc322f6a95b198bca2e4c7baec2ac",
+    "03eaca1d8d9381dc35da609278781c324f0f9de708df8dc8540a39e35af5b586",
+    "385f4398fadc7a4dbb54112f9972b189de4025cf2d66dfccb0c7157b0eba4500",
+    "aa93aa563da6f8190720ab082b35d3f49f8ed6aaf51be2dee9c07d6250774f4b",
+    "a56c11e55b85db0f6d5a35b02ed4eb354852e1fccd7776ec8579046079ea4a85",
+    "dc7cb050d3812560370522c80d6db6a2e5e07af716cfce888a8e06ae90c85f48",
+    "006cd4c277e7700d1419bfe635fede4f03dc5c1f458f98947e1e3b411022638c",
+    "70c58bd92284e904d36a809bb7e1e116d0af81421379e49c8b2e5162725d8a91",
+    "da58895fee81a2dc638363394937a66974e1bb781490a707068de5ff1aacc4dd",
+    "6becf87ce7242d4a1486dd8d96fe2fc90cadb511d62383d064f7ee016f1d5eb8",
+    "5644b4875a87299854cb8d91ee751f7ed9fca0cac7d91fe01b671c230bc5c1c7",
+    "23e5d17ce3ea67db738d89226e5426ab979ff03fcab6b2628bf4d0a343901c08",
+    "75be660b06c2a78ce29e032c6000bb401b08d5694bf77bf1f6e18967bf6f982c",
+    "c4747436c860713b0397df012f2cce3b2069a775f761deae57576a496237e9d6",
+    "4d98647c02c2383eca7ae0c395752e93cfd10144dbd32b4433d929635c2f2c96"
+  ],
+  "coverage": {
+    "completed_job_count": 48,
+    "conditions": [
+      "ippo_mobile",
+      "iql_mobile",
+      "maddpg_mobile",
+      "mappo_mobile",
+      "sr_mappo_astar",
+      "sr_mappo_fixed",
+      "sr_mappo_mobile",
+      "sr_mappo_two_stage"
+    ],
+    "expected_job_count": 48,
+    "methods": [
+      "ippo_mobile",
+      "iql_mobile",
+      "maddpg_mobile",
+      "mappo_mobile",
+      "sr_mappo_mobile"
+    ],
+    "scales": [
+      "g20x20_d2",
+      "g30x50_d4"
+    ],
+    "scenario_ids": [
+      10000,
+      10001,
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009,
+      10010,
+      10011,
+      10012,
+      10013,
+      10014,
+      10015,
+      10016,
+      10017,
+      10018,
+      10019
+    ],
+    "training_seeds": [
+      51001,
+      51002,
+      51003
+    ]
+  },
+  "data_status": "development_pilot_descriptive",
+  "episode_count": 960,
+  "episodes_path": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\dynamic_pest_v1\\g5\\pilots\\replacement-48\\validated\\pilot-episodes.jsonl",
+  "expected_job_identities": [
+    "f3a070e3fa5ebc1d3df679d7fbf806aceba2b58338dee4967b9fef7308930f63",
+    "05202683b9a9dd60c693b1ab0eb3662ff3dd3731baba7ca45596508273f005b1",
+    "5e48578dcbc0bd88d4fb6391c8fad51c9f8566335964068a96bb8f525b3ff260",
+    "c88c56866c9d7db3ea7059233019c2f014fe39375d736a0de14d8c5a7f2f51de",
+    "31837fe943ba86c6d03dd9ab1cb122e6bfefa08e3d61733d313c741ac5b493b2",
+    "16edaea51bee952905a5089c2793a800895ffc27f4e53f07a00fb699efd818fe",
+    "1944149c68c4e2e0f53b49d1bef849927f37099d2f5ccbee27361c6cb2b9c9a4",
+    "46425ca7758cbea351dc6f7f26f50aa56cc28d33ab463483e8e303f3977a9e4a",
+    "a7a1adbe941cf79548f5f83f12256e7a517ba0ed5ab9df777110cc59f5623ef8",
+    "33420c8c65fbf1c2a8dc5ee88dd177619b9651c6ba72ef754746b18e7861b8fc",
+    "befe8e3c7901c728775cf61a415f67764f51a69ef0a8e3d4a7565fdba0e93195",
+    "49abf97e9f8ca0f1fa430283c41cd4a6cdcaa396858284ee585193f1ca595b86",
+    "f6f1fc603a7f0919101efc06d83271699f01d81210c11b4ac929a777fefdca74",
+    "e3f11cdb846d9e0cf63e71b2c3c9fb0d9ba95d1d8b7b9ccada48aeb6d164ab53",
+    "796b839ed848b3d834a62c8f8ce8fc09f8b615ddac44d6337d47734b8fac09db",
+    "d3b8549abf84f04466f4a871e56a7dbafd24504d590cd3341d666e2d2b4f751d",
+    "40999bf74aff59b2c3b3b7123a7573869f299c3fec67c8f9c3324aa2aced17c7",
+    "2a81c301ba0387aacf6b76d6c0fd61ecfa2b0fc3292d6ed4eb2c110441580dae",
+    "3fb5dc56e352a5e28e0d430a927e4dcf17393089bf22b93a4a501e555b013c09",
+    "7fcc9030681be7bbd31d01c2099d4b15ebbbbe506c1da78bcfc85f8a34d42edf",
+    "a98e85addadbbe550d2be52c12063e862386bb00a0fe342c6d2bfb04cf95d32a",
+    "dba8be7e62701a9d47c6b4183bea6cbfb205e8e2cba844c79387232121374d26",
+    "e01a33389538fac3d59f54aaeca2889d014ae45885079a64e9f9cd13b568a2b7",
+    "a5e7b4fd76d02c590e447b149752723c56235e53d1f837e06e59caf4beb66d25",
+    "add79f46ba89efaf0887d48adea92458b7a22a2bb152edff72b9ecf6177e2205",
+    "3b857e4994d9ea1dd1880edfc10eb275160c7b0232d35d4328b3013d7c1db429",
+    "f507b38b9d6450d697de7e5c87eb3fdfd3e7916ed34fdb71fc637c83702351de",
+    "7a58b46e131fe5c7fc908be9b5db1e9f872c51c257ca44aa04e6d98192b006e7",
+    "9c2284b212162a2c490cd7ffb0cab4507bcbe7ee195ccbe97ff4285843e52a9f",
+    "687cd99b9d7fca9555d3a8dbd8a30cca41261fbe46e1c61a2e4e3cb07947fef0",
+    "e3ccebf0d6cd6192031895542fd4ef5be86b70dcd86c6421435eca530f93ffee",
+    "777175766fc7faf05d0d229a6aa969c204230f9933b6bbac1e62ab9c2373d801",
+    "cc58e1039e882a76fb807778daccd21b1de3685b9ca325efd1467672fbd68e6b",
+    "b64aa271b0fa7f1b21c4c36e2ba12875a3ddc322f6a95b198bca2e4c7baec2ac",
+    "03eaca1d8d9381dc35da609278781c324f0f9de708df8dc8540a39e35af5b586",
+    "385f4398fadc7a4dbb54112f9972b189de4025cf2d66dfccb0c7157b0eba4500",
+    "aa93aa563da6f8190720ab082b35d3f49f8ed6aaf51be2dee9c07d6250774f4b",
+    "a56c11e55b85db0f6d5a35b02ed4eb354852e1fccd7776ec8579046079ea4a85",
+    "dc7cb050d3812560370522c80d6db6a2e5e07af716cfce888a8e06ae90c85f48",
+    "006cd4c277e7700d1419bfe635fede4f03dc5c1f458f98947e1e3b411022638c",
+    "70c58bd92284e904d36a809bb7e1e116d0af81421379e49c8b2e5162725d8a91",
+    "da58895fee81a2dc638363394937a66974e1bb781490a707068de5ff1aacc4dd",
+    "6becf87ce7242d4a1486dd8d96fe2fc90cadb511d62383d064f7ee016f1d5eb8",
+    "5644b4875a87299854cb8d91ee751f7ed9fca0cac7d91fe01b671c230bc5c1c7",
+    "23e5d17ce3ea67db738d89226e5426ab979ff03fcab6b2628bf4d0a343901c08",
+    "75be660b06c2a78ce29e032c6000bb401b08d5694bf77bf1f6e18967bf6f982c",
+    "c4747436c860713b0397df012f2cce3b2069a775f761deae57576a496237e9d6",
+    "4d98647c02c2383eca7ae0c395752e93cfd10144dbd32b4433d929635c2f2c96"
+  ],
+  "failures": [],
+  "formal_training_performed": false,
+  "job_count": 48,
+  "matrix_complete": true,
+  "maturity": "M2",
+  "provenance": {
+    "contract_hashes": {
+      "configs/problem2/g5/ablations.yaml": "2d7222ee9e24a561ec1d6b267c6e6906cfa7f6ab64ca3ebeb7b2bb1686b02787",
+      "configs/problem2/g5/budget_rule.yaml": "46346c400ea8d44307ce229f093bffc219490791ba8a935d7b2b1a39fa6ce16f",
+      "configs/problem2/g5/families.yaml": "2530a5703659afa90ad4310ef4ae3a0b131983f48627565bfba9a9edbb4cb91a",
+      "configs/problem2/g5/methods.yaml": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+      "configs/problem2/g5/metrics.yaml": "c1761358f1bd4638ff879cc29acf9dac3c754e149f0d0fe2a4d51323ab6ec8bb",
+      "configs/problem2/g5/pilot.yaml": "fef62b31a8b7db28f4333e8abb9d7aa296c7a7bea494a1d7b1c54d19389f93f0",
+      "configs/problem2/g5/protocol.yaml": "3b07a5917dc4c4961eb5fb6f978102e5cf2681afb561a9c8364e1ec6138667f9",
+      "configs/problem2/g5/sensitivity.yaml": "b376151abbc7943d3a78669a5bf7fcb40e45eb8fea20667f8c1bfb2730f7b370",
+      "configs/problem2/g5/statistics.yaml": "a75cef225795bd13c05f6110d4387323ab818e9e46f100419eb05b26d30d0386",
+      "configs/problem2/g5/tuning_candidates.yaml": "6388acfd268e38618e99ea9030b1260647e90ce7ace2f81aea04ecea42330be7",
+      "docs/evidence/g1/scenario_seed_manifest.yaml": "a2bbf31f4bbdad32a0a6704c6974f0890cb00b65935e906a367a8a6a834d6915",
+      "docs/evidence/g1/sealed_test_lock.yaml": "78c9caa7d432f56f91b67195eb413eddab4e9f84c9fd214eb7a9373f48a73226",
+      "docs/evidence/g5/checkpoint_selection.yaml": "3b6ec50f725592586c753d1b522ebc85beb312b8985a1026e38748a48dd42cff",
+      "docs/evidence/g5/exclusion_contract.yaml": "ea7c7bfb545a47a938bc4b5884da0d2ebfb14967d7200bb436b17fa1ca72a4ca",
+      "docs/evidence/g5/fairness_matrix.yaml": "2c21ca660026c446918b5a2057c82f786b0ec2cf7c7b93643f17272f756b619f",
+      "docs/evidence/g5/heterogeneous_interface.yaml": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+      "docs/evidence/g5/physical_scenario_contract.yaml": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "docs/evidence/g5/problem1_lineage.yaml": "25a81264c1b58aa500a2ab66003b1a8d2fb6ad020730c22576f33be1376e4c20",
+      "requirements-g3.lock": "d4bb20fafcfbc849b09419a764ac2e8aa37669ac9d6c8df0da4df42d4e90acbd",
+      "requirements-g5.lock": "3b15d9c6808867209be2f3928ea6a6f45feb168544f26620032513ad44ee48c6"
+    },
+    "source_commit": "7390e891d54ff8eb141a2a4ff02fd2666ba4e316"
+  },
+  "replacement_scope": {
+    "conditions": [
+      "sr_mappo_mobile",
+      "sr_mappo_fixed",
+      "sr_mappo_astar",
+      "mappo_mobile",
+      "sr_mappo_two_stage",
+      "ippo_mobile",
+      "maddpg_mobile",
+      "iql_mobile"
+    ],
+    "job_count": 48,
+    "methods": [
+      "sr_mappo_mobile",
+      "mappo_mobile",
+      "ippo_mobile",
+      "maddpg_mobile",
+      "iql_mobile"
+    ],
+    "scales": [
+      "g20x20_d2",
+      "g30x50_d4"
+    ],
+    "scenario_ids": [
+      10000,
+      10001,
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009,
+      10010,
+      10011,
+      10012,
+      10013,
+      10014,
+      10015,
+      10016,
+      10017,
+      10018,
+      10019
+    ],
+    "training_seeds": [
+      51001,
+      51002,
+      51003
+    ]
+  },
+  "runtime_aggregates": {
+    "g20x20_d2": {
+      "ippo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0032388539063958888
+      },
+      "iql_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0040545179688251665
+      },
+      "maddpg_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.003565471093679662
+      },
+      "mappo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0030129671874874475
+      },
+      "sr_mappo_mobile": {
+        "observations": 12,
+        "seconds_per_interaction": 0.017883633593783088
+      }
+    },
+    "g30x50_d4": {
+      "ippo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.003378185156179825
+      },
+      "iql_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.013648339843712165
+      },
+      "maddpg_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.0034734500000013213
+      },
+      "mappo_mobile": {
+        "observations": 3,
+        "seconds_per_interaction": 0.003579415624926696
+      },
+      "sr_mappo_mobile": {
+        "observations": 12,
+        "seconds_per_interaction": 0.015852037500053484
+      }
+    }
+  },
+  "schema_version": "g5-pilot-audit-v1",
+  "sealed_accessed": false,
+  "status": "pass",
+  "training_job_count": 48,
+  "validation_accessed": false
+}

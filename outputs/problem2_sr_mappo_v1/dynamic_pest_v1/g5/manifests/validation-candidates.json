@@ -1,0 +1,448 @@
+{
+  "battery_replenishment_enabled": false,
+  "candidate_edits_after_validation_access": false,
+  "candidates": {
+    "ippo_mobile": [
+      {
+        "candidate_id": "c01",
+        "checkpoint_interval": 10000,
+        "config_hash": "ab9e8807b886a059b54e34053a891d8dd046fcfbfec52fa1d180eed247df3461",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 64,
+          "ppo_epochs": 2,
+          "rollout_horizon": 32
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c02",
+        "checkpoint_interval": 10000,
+        "config_hash": "f57178692e750c26c13f2325ec39e7eeacfb1e8f122d3a22d97b117ee2e8b584",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 64,
+          "ppo_epochs": 2,
+          "rollout_horizon": 64
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c03",
+        "checkpoint_interval": 10000,
+        "config_hash": "27c4f8bd923b31b70fbe8a6b0c577a80b1f412aa1273554006edf4ba79b90daa",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 128,
+          "ppo_epochs": 4,
+          "rollout_horizon": 64
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c04",
+        "checkpoint_interval": 10000,
+        "config_hash": "90947860007172892aa8d912cf4d8d42b40b1d8688792a66f7ddbfbf9fbf048e",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 128,
+          "ppo_epochs": 4,
+          "rollout_horizon": 128
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      }
+    ],
+    "iql_mobile": [
+      {
+        "candidate_id": "c01",
+        "checkpoint_interval": 10000,
+        "config_hash": "a159b84542dfc00058bc257c0b86e33e9e130c0061abc5c63ec13c3ab22fa02d",
+        "environment_interactions": 200000,
+        "parameters": {
+          "batch_size": 64,
+          "discount": 0.99,
+          "epsilon_decay": 0.999,
+          "epsilon_final": 0.05,
+          "epsilon_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0001,
+          "replay_capacity": 100000,
+          "target_update_interval": 100
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c02",
+        "checkpoint_interval": 10000,
+        "config_hash": "466ff874ed6fedfac52088939401cda35e1959de577192609b3732acab203e6c",
+        "environment_interactions": 200000,
+        "parameters": {
+          "batch_size": 64,
+          "discount": 0.99,
+          "epsilon_decay": 0.999,
+          "epsilon_final": 0.05,
+          "epsilon_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "replay_capacity": 100000,
+          "target_update_interval": 100
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c03",
+        "checkpoint_interval": 10000,
+        "config_hash": "41871a4071d3b04e2585d06d3476976bbda0ac305c563d40b2a421d6b5cdde48",
+        "environment_interactions": 200000,
+        "parameters": {
+          "batch_size": 128,
+          "discount": 0.99,
+          "epsilon_decay": 0.995,
+          "epsilon_final": 0.05,
+          "epsilon_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "replay_capacity": 100000,
+          "target_update_interval": 250
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c04",
+        "checkpoint_interval": 10000,
+        "config_hash": "f48f542cfd476430472c1ff2502340322ad1f80bc58b8bab57440ded7abbde79",
+        "environment_interactions": 200000,
+        "parameters": {
+          "batch_size": 128,
+          "discount": 0.99,
+          "epsilon_decay": 0.995,
+          "epsilon_final": 0.05,
+          "epsilon_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0005,
+          "replay_capacity": 100000,
+          "target_update_interval": 250
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      }
+    ],
+    "maddpg_mobile": [
+      {
+        "candidate_id": "c01",
+        "checkpoint_interval": 10000,
+        "config_hash": "93cd0bc2fb6df85ef852e01f52b1ff10ab8b05f9d67bc4ad6cac8cedff32f145",
+        "environment_interactions": 200000,
+        "parameters": {
+          "actor_lr": 0.0001,
+          "batch_size": 64,
+          "critic_lr": 0.0003,
+          "discount": 0.99,
+          "exploration_final": 0.05,
+          "exploration_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "replay_capacity": 100000,
+          "tau": 0.005
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c02",
+        "checkpoint_interval": 10000,
+        "config_hash": "4f64b134d475e9a9c355d6839a89e4aabc11d2518c5e07cb3f93d0d4164b41df",
+        "environment_interactions": 200000,
+        "parameters": {
+          "actor_lr": 0.0003,
+          "batch_size": 64,
+          "critic_lr": 0.0003,
+          "discount": 0.99,
+          "exploration_final": 0.05,
+          "exploration_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "replay_capacity": 100000,
+          "tau": 0.005
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c03",
+        "checkpoint_interval": 10000,
+        "config_hash": "d072e4e72fd978fd82365910e32fc9bbcc3647ecc989df302edc69a501b0dc65",
+        "environment_interactions": 200000,
+        "parameters": {
+          "actor_lr": 0.0001,
+          "batch_size": 128,
+          "critic_lr": 0.001,
+          "discount": 0.99,
+          "exploration_final": 0.05,
+          "exploration_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "replay_capacity": 100000,
+          "tau": 0.01
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c04",
+        "checkpoint_interval": 10000,
+        "config_hash": "22dc69688615b405acd2e6cc64e6700400b60d7904826883874dcb3496d0434f",
+        "environment_interactions": 200000,
+        "parameters": {
+          "actor_lr": 0.0003,
+          "batch_size": 128,
+          "critic_lr": 0.001,
+          "discount": 0.99,
+          "exploration_final": 0.05,
+          "exploration_initial": 1.0,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "replay_capacity": 100000,
+          "tau": 0.01
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      }
+    ],
+    "mappo_mobile": [
+      {
+        "candidate_id": "c01",
+        "checkpoint_interval": 10000,
+        "config_hash": "9b47674560692e920dc28361bc8bf0dc1210923fbec424ad442cefede0695de9",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 64,
+          "ppo_epochs": 2,
+          "rollout_horizon": 32
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c02",
+        "checkpoint_interval": 10000,
+        "config_hash": "54522bf75df0b60868b125874d58fde71f83dd28797eb9c4c05726094c47d8ff",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 64,
+          "ppo_epochs": 2,
+          "rollout_horizon": 64
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c03",
+        "checkpoint_interval": 10000,
+        "config_hash": "7d0acd772583e9b87e772cf7012945362a7d8507abb22b9a6cb6586f8e0c76b7",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 128,
+          "ppo_epochs": 4,
+          "rollout_horizon": 64
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c04",
+        "checkpoint_interval": 10000,
+        "config_hash": "fa06b7815f31cc8f95206c81688c4054b358a97fc1afbadab0cba2aac095929e",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 128,
+          "ppo_epochs": 4,
+          "rollout_horizon": 128
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      }
+    ],
+    "sr_mappo_mobile": [
+      {
+        "candidate_id": "c01",
+        "checkpoint_interval": 10000,
+        "config_hash": "15209e2c8425a697957421fd843759dbae1edc070973cc41cddb98722e58befe",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 64,
+          "ppo_epochs": 2,
+          "rollout_horizon": 32
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c02",
+        "checkpoint_interval": 10000,
+        "config_hash": "06deec69c111adb01062b951e98bf6642bdb9bd064a63ebade903fe87786e6d0",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 64,
+          "ppo_epochs": 2,
+          "rollout_horizon": 64
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c03",
+        "checkpoint_interval": 10000,
+        "config_hash": "e62f5907141900fedc4334a2a8f628075416cdcaa40d01912b766174a97a0357",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 128,
+          "ppo_epochs": 4,
+          "rollout_horizon": 64
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      },
+      {
+        "candidate_id": "c04",
+        "checkpoint_interval": 10000,
+        "config_hash": "6b5a69c48982fdd6ef4205d68cb0e0ed237be9517451ca8f787235ff566c4883",
+        "environment_interactions": 200000,
+        "parameters": {
+          "clip_radius": 0.2,
+          "discount": 0.99,
+          "entropy_coefficient": 0.01,
+          "gae_lambda": 0.95,
+          "hidden_depth": 2,
+          "hidden_width": 128,
+          "learning_rate": 0.0003,
+          "minibatch_size": 128,
+          "ppo_epochs": 4,
+          "rollout_horizon": 128
+        },
+        "scenario_panel_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4"
+      }
+    ]
+  },
+  "checkpoint_count": 20,
+  "checkpoint_interval": 10000,
+  "equal_environment_interactions": 200000,
+  "manifest_id": "G5-VALIDATION-CANDIDATES",
+  "maturity": "M2",
+  "partition": "validation",
+  "projected_slowest_hours": 0.8806687500029713,
+  "provenance": {
+    "contract_hashes": {
+      "configs/problem2/g5/ablations.yaml": "2d7222ee9e24a561ec1d6b267c6e6906cfa7f6ab64ca3ebeb7b2bb1686b02787",
+      "configs/problem2/g5/budget_rule.yaml": "46346c400ea8d44307ce229f093bffc219490791ba8a935d7b2b1a39fa6ce16f",
+      "configs/problem2/g5/families.yaml": "2530a5703659afa90ad4310ef4ae3a0b131983f48627565bfba9a9edbb4cb91a",
+      "configs/problem2/g5/methods.yaml": "c7d3d8d8fdd3bdae934e3c05c5737fcb4080c6c2f83216de512ab985a266ccb6",
+      "configs/problem2/g5/metrics.yaml": "c1761358f1bd4638ff879cc29acf9dac3c754e149f0d0fe2a4d51323ab6ec8bb",
+      "configs/problem2/g5/pilot.yaml": "fef62b31a8b7db28f4333e8abb9d7aa296c7a7bea494a1d7b1c54d19389f93f0",
+      "configs/problem2/g5/protocol.yaml": "3b07a5917dc4c4961eb5fb6f978102e5cf2681afb561a9c8364e1ec6138667f9",
+      "configs/problem2/g5/sensitivity.yaml": "b376151abbc7943d3a78669a5bf7fcb40e45eb8fea20667f8c1bfb2730f7b370",
+      "configs/problem2/g5/statistics.yaml": "a75cef225795bd13c05f6110d4387323ab818e9e46f100419eb05b26d30d0386",
+      "configs/problem2/g5/tuning_candidates.yaml": "6388acfd268e38618e99ea9030b1260647e90ce7ace2f81aea04ecea42330be7",
+      "docs/evidence/g1/scenario_seed_manifest.yaml": "a2bbf31f4bbdad32a0a6704c6974f0890cb00b65935e906a367a8a6a834d6915",
+      "docs/evidence/g1/sealed_test_lock.yaml": "78c9caa7d432f56f91b67195eb413eddab4e9f84c9fd214eb7a9373f48a73226",
+      "docs/evidence/g5/checkpoint_selection.yaml": "3b6ec50f725592586c753d1b522ebc85beb312b8985a1026e38748a48dd42cff",
+      "docs/evidence/g5/exclusion_contract.yaml": "ea7c7bfb545a47a938bc4b5884da0d2ebfb14967d7200bb436b17fa1ca72a4ca",
+      "docs/evidence/g5/fairness_matrix.yaml": "2c21ca660026c446918b5a2057c82f786b0ec2cf7c7b93643f17272f756b619f",
+      "docs/evidence/g5/heterogeneous_interface.yaml": "220f9f4016e1ce53d9018973f2a82346c15e854c69525ed15062d637660b2bcc",
+      "docs/evidence/g5/physical_scenario_contract.yaml": "692a5a52f1efa9eb1309531bd6b98921a839e8c35b1a4d24102e54fe885ca167",
+      "docs/evidence/g5/problem1_lineage.yaml": "25a81264c1b58aa500a2ab66003b1a8d2fb6ad020730c22576f33be1376e4c20",
+      "requirements-g3.lock": "d4bb20fafcfbc849b09419a764ac2e8aa37669ac9d6c8df0da4df42d4e90acbd",
+      "requirements-g5.lock": "3b15d9c6808867209be2f3928ea6a6f45feb168544f26620032513ad44ee48c6"
+    },
+    "generator": "problem2.training.pilot.freeze_validation_candidates",
+    "source_commit": "7390e891d54ff8eb141a2a4ff02fd2666ba4e316"
+  },
+  "scenario_panel": {
+    "count": 50,
+    "end": 20049,
+    "scenario_content_included": false,
+    "scenario_ids_hash": "7bba8dd6f37272c0d8e333ec3308d13fc2d89a1595093a8ac74c47757ff2a3b4",
+    "start": 20000
+  },
+  "schema_version": "g5.v1",
+  "sealed_accessed": false,
+  "selection_rule": {
+    "primary": "mean_validation_reduction_rate",
+    "tie_breakers": [
+      "higher_success_probability",
+      "lower_interaction_count",
+      "lexicographically_smaller_config_hash"
+    ]
+  },
+  "status": "frozen_before_validation",
+  "validation_accessed": false
+}

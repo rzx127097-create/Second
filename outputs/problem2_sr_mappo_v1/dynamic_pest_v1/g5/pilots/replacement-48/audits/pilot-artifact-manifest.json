@@ -1,0 +1,21 @@
+{
+  "artifact_root": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second\\outputs\\problem2_sr_mappo_v1\\dynamic_pest_v1\\g5\\pilots\\replacement-48",
+  "artifacts": [
+    {
+      "bytes": 6448460,
+      "path": "validated/pilot-episodes.jsonl",
+      "sha256": "bafc575453c3ceb9a9ff56e1ccacb26d805a166cc181a004565a52b9624683ac"
+    },
+    {
+      "bytes": 13505,
+      "path": "audits/pilot-audit.json",
+      "sha256": "02dff0dc1f2f74ac639dabd0396a8afac36e1dd214ecc72cb22219dd29a3acaf"
+    }
+  ],
+  "data_status": "development_pilot_descriptive",
+  "maturity": "M2",
+  "schema_version": "g5-pilot-artifact-manifest-v1",
+  "source_commit": "7390e891d54ff8eb141a2a4ff02fd2666ba4e316",
+  "source_root": "C:\\Users\\RZX\\Documents\\ChatGPT\\Second",
+  "status": "pass"
+}
