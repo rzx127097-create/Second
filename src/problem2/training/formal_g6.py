@@ -45,6 +45,8 @@ from problem2.training.tuning import build_development_environment, build_valida
 
 
 ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(ROOT))
 DYNAMIC_G6_RELATIVE = Path("outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g6")
 DYNAMIC_G5_MANIFEST_RELATIVE = Path("outputs/problem2_sr_mappo_v1/dynamic_pest_v1/g5/manifests")
 TRAINING_MANIFEST_NAME = "g6-training-jobs.json"

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from types import SimpleNamespace
+import sys
 
 import pytest
 
@@ -128,6 +129,19 @@ def test_formal_cli_modules_expose_real_entry_points_without_blocked_guard() -> 
     assert callable(resume_g6_jobs.main)
     assert "formal G6 execution is not authorized" not in run_g6_jobs.main.__code__.co_consts
     assert "formal G6 recovery is not authorized" not in resume_g6_jobs.main.__code__.co_consts
+
+
+def test_preflight_cli_resolves_dynamic_freeze_from_script_context() -> None:
+    result = __import__("subprocess").run(
+        [sys.executable, "scripts/preflight_g6.py", "--root", str(ROOT)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads(result.stdout)
+    assert report["all_pass"] is True
 
 
 def test_short_interruption_and_resume_reproduce_uninterrupted_state(
