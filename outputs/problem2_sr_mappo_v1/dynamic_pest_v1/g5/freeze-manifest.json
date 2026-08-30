@@ -12,8 +12,8 @@
   "artifact_hashes": {
     "budget_manifest": "6c97e5e882dfbbba3cba133185f1a589268d9191beb51f2874a0202cbcc0920d",
     "candidate_manifest": "c5aee01a2ad180301aa8f2d2d39b067500f6297ac3ac1b503f68814334ba8918",
-    "g6_training_manifest": "1128b19019c4b9bf666c43ce13f2e2f14c09857bab3cc1aaf552b734c266f039",
-    "g6_validation_manifest": "cbeaeb9a5e195081ca504991367ee2ffe935ee0dc6636f0e0d14ddcffb8bcf88",
+    "g6_training_manifest": "9aa647ecce77f2129c46e523eb3c1e8cd83d2c4d22714a79448f5ad96f430351",
+    "g6_validation_manifest": "7115fe24f9ba7c0a36d4c51bf20e3e3e816fbf917eeb8c1169304a1c2395bb5d",
     "pilot_artifact_manifest": "f1e1c25615560aaaae585a7cc712053703250530d7bd466d6da682814e40055b",
     "pilot_audit": "02dff0dc1f2f74ac639dabd0396a8afac36e1dd214ecc72cb22219dd29a3acaf",
     "pilot_episodes": "bafc575453c3ceb9a9ff56e1ccacb26d805a166cc181a004565a52b9624683ac"
@@ -218,8 +218,8 @@
   "replenished_resource": "pesticide",
   "schema_version": "g5-dynamic-replacement-freeze-v1",
   "sealed_accessed": false,
-  "source_commit": "600ec2e7ef7c33c714dd0684823cf8ff5c6213f6",
-  "source_scope_sha256": "64915cb89323ab5ea90c76db6ab34ec8a409c394d5188b44c2785745cbd05399",
+  "source_commit": "408c5673cd2a59ecdd03280ee0d9306483c3d881",
+  "source_scope_sha256": "97602b9e1d1af3aac2b97a14cd071e553f1915c34dc50e62601bbaf0abf6131f",
   "status": "pass",
   "validation_accessed": false
 }
