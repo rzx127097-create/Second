@@ -3040,11 +3040,11 @@ actual_unlock_count=0
 
 Freeze provenance and hashes:
 
-- source commit: `1cc9748b9143a604bd89a5bf754e118b6cab6c6c`;
-- source-scope SHA-256: `eb654f00d9ee1e61c8c1d43574759748098155ffb2b6c7252ae28b644ed6557a`;
+- source commit: `e0a43d219b58c2e0ce2c6ac33c1ec891d5846c0f`;
+- source-scope SHA-256: `f3f307e8f20bce13f5d0340691c0de5cc8cb7bfeb03ac051aecbc344ff348d92`;
 - evidence source commit: `7390e891d54ff8eb141a2a4ff02fd2666ba4e316`;
 - freeze bytes/SHA-256: `12910` /
-  `3b881d9a096580c0a3e95c3ebecb22e7c5c71e2fb75af8302667fbf639786e26`;
+  `066a786e536045aa75c3e4ccc3f707a93428d3b38bf81efd21f32a91c19cdc0b`;
 - pilot audit SHA-256: `02dff0dc1f2f74ac639dabd0396a8afac36e1dd214ecc72cb22219dd29a3acaf`;
 - pilot artifact manifest SHA-256: `f1e1c25615560aaaae585a7cc712053703250530d7bd466d6da682814e40055b`;
 - validated pilot episodes SHA-256: `bafc575453c3ceb9a9ff56e1ccacb26d805a166cc181a004565a52b9624683ac`;
@@ -3054,7 +3054,13 @@ Freeze provenance and hashes:
 The content and source-scope rebind were pushed in commits
 `2c6663d06ab58c56bf7c0577398303c67d1bb8ea` and
 `890255c7710e97ce88b098cd4c1e9ff8be7931d1` on
-`origin/codex/problem2-dynamic-pest-model`. The new entry point
+`origin/codex/problem2-dynamic-pest-model`. The follow-up integrity repair
+was persisted in commits `6b0aa05cf801e1a1b0d87e9a73ed508b7d44363e`,
+`c96636e0db12c215f236e039614737c8fdbfd282`, `e0a43d219b58c2e0ce2c6ac33c1ec891d5846c0f`,
+and `592ad5a9ff676e35a4f6fcbb1c64d6368c866bc9`. These commits bind physical
+training and dynamic G6 dependencies to the dynamic candidate/budget hashes
+while preserving explicit historical-manifest compatibility for diagnostics.
+The new entry point
 `python scripts/freeze_g5.py --dynamic-replacement --check-only --root .`
 performs a read-only dynamic-only verification; the historical static freeze
 entry point remains separate and cannot satisfy this gate.
@@ -3064,6 +3070,10 @@ Fresh Phase 4 verification:
 - `python -m pytest tests/g5/test_dynamic_replacement_freeze.py -q --tb=short`:
   `3 passed`;
 - dynamic freeze check-only: exit `0`;
+- `python -m pytest tests/g5/test_dynamic_replacement_freeze.py
+  tests/g5/test_pilot_freeze.py tests/g5/test_task12_remediation2.py tests/g6
+  -q --tb=short`: `115 passed`;
+- `git diff --check`: exit `0`; `python -m compileall -q src scripts`: exit `0`;
 - `read_only_preflight(ROOT, gate="G6")`: `all_pass=true`, with
   `dynamic_g5_freeze=true`, `dynamic_replacement_matrix=true`,
   `no_sealed_identities=true`, and `queue_created=false`;
