@@ -318,6 +318,15 @@ def test_resume_backfills_validation_for_existing_checkpoint_without_rows(
     monkeypatch.setattr(formal_g6, "_observe_physical_algorithm", lambda *args, **kwargs: None)
     monkeypatch.setattr(formal_g6, "_update_interval", lambda algorithm: ("fake", 1))
     monkeypatch.setattr(formal_g6, "_update_physical_algorithm", lambda algorithm, **kwargs: {"loss": 1.0})
+    monkeypatch.setattr(
+        formal_g6,
+        "_validate_validation_manifest",
+        lambda *args, **kwargs: {
+            "evaluator_hash": "a" * 64,
+            "scenario_panel_hash": "b" * 64,
+        },
+    )
+    monkeypatch.setattr(formal_g6, "validate_long_table", lambda *args, **kwargs: None)
 
     output_root = tmp_path / "resumed"
     interrupted = formal_g6.run_formal_job(
@@ -328,8 +337,16 @@ def test_resume_backfills_validation_for_existing_checkpoint_without_rows(
 
     evaluated_checkpoints: list[int] = []
 
-    def fake_evaluate(root, frozen_job, checkpoint, *, device="cpu", output_path=None):
-        del root, frozen_job, device
+    def fake_evaluate(
+        root,
+        frozen_job,
+        checkpoint,
+        *,
+        device="cpu",
+        output_path=None,
+        output_root=None,
+    ):
+        del root, frozen_job, device, output_root
         interaction_count = int(Path(checkpoint).stem.split("-")[-1])
         evaluated_checkpoints.append(interaction_count)
         checkpoint_hash = formal_g6.artifact_sha256(Path(checkpoint))
@@ -360,3 +377,85 @@ def test_resume_backfills_validation_for_existing_checkpoint_without_rows(
         if line.strip()
     ]
     assert len(validation_rows) == 100
+
+
+def test_checkpoint_schedule_rejects_missing_frozen_checkpoint(tmp_path: Path) -> None:
+    from problem2.training.formal_g6 import _validate_checkpoint_schedule
+
+    del tmp_path
+    records = [
+        {"interaction_count": interaction_count}
+        for interaction_count in range(10000, 200001, 10000)
+        if interaction_count != 10000
+    ]
+    job = {"environment_interactions": 200000, "checkpoint_interval": 10000, "checkpoint_count": 20}
+
+    with pytest.raises(ValueError, match="checkpoint schedule"):
+        _validate_checkpoint_schedule(records, job, require_complete=True)
+
+
+def test_resume_revalidates_complete_existing_validation_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from problem2.training import formal_g6
+
+    manifest = json.loads(TRAINING_MANIFEST.read_text(encoding="utf-8"))
+    job = dict(manifest["jobs"][0])
+    paths = formal_g6.formal_job_paths(ROOT, job, output_root=tmp_path)
+    paths.root.mkdir(parents=True)
+    checkpoint_hash = "a" * 64
+    records = [{
+        "path": "checkpoints/checkpoint-000010000.pt",
+        "sha256": checkpoint_hash,
+        "bytes": 1,
+        "interaction_count": 10000,
+        "validation_rows": 0,
+    }]
+    rows = [
+        {"checkpoint_hash": checkpoint_hash, "scenario_id": scenario_id}
+        for scenario_id in range(20000, 20050)
+    ]
+    paths.validation_events.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    calls: list[dict[str, object]] = []
+
+    def reject_tampered_rows(rows, **kwargs):
+        calls.append({"rows": rows, "kwargs": kwargs})
+        raise ValueError("tampered validation provenance")
+
+    monkeypatch.setattr(
+        formal_g6,
+        "_validate_validation_manifest",
+        lambda *args, **kwargs: {"evaluator_hash": "b" * 64, "scenario_panel_hash": "c" * 64},
+    )
+    monkeypatch.setattr(formal_g6, "validate_long_table", reject_tampered_rows)
+    with pytest.raises(ValueError, match="tampered validation provenance"):
+        formal_g6._backfill_missing_validation(ROOT, job, paths, records, device="cpu")
+    assert len(calls) == 1
+    assert calls[0]["kwargs"]["allow_validation_access"] is True
+
+
+def test_validation_panel_append_is_atomic_and_preserves_existing_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from problem2.training import formal_g6
+
+    path = tmp_path / "validation-episodes.jsonl"
+    path.write_text('{"existing":true}\n', encoding="utf-8")
+    writes: list[bytes] = []
+
+    def fake_atomic_write(target: Path, payload: bytes) -> str:
+        writes.append(payload)
+        target.write_bytes(payload)
+        return "0" * 64
+
+    monkeypatch.setattr(formal_g6, "atomic_write_bytes", fake_atomic_write)
+    formal_g6._append_validation_rows(path, [{"checkpoint_hash": "a" * 64, "scenario_id": 20000}])
+
+    assert len(writes) == 1
+    assert path.read_text(encoding="utf-8").splitlines() == [
+        '{"existing":true}',
+        '{"checkpoint_hash":"' + "a" * 64 + '","scenario_id":20000}',
+    ]

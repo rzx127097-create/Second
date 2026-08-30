@@ -388,6 +388,7 @@ def _existing_checkpoint_records(paths: FormalJobPaths) -> list[dict[str, Any]]:
     if not isinstance(raw_records, list):
         raise ValueError("formal job checkpoint manifest is incomplete")
     records: list[dict[str, Any]] = []
+    registered_paths: set[str] = set()
     seen: set[int] = set()
     for raw in raw_records:
         if not isinstance(raw, Mapping):
@@ -409,6 +410,7 @@ def _existing_checkpoint_records(paths: FormalJobPaths) -> list[dict[str, Any]]:
             raise ValueError("formal checkpoint artifact hash drifted")
         record = dict(raw)
         record["path"] = relative.replace("\\", "/")
+        registered_paths.add(record["path"])
         record["sha256"] = digest
         record["bytes"] = path.stat().st_size
         record["interaction_count"] = interaction_count
@@ -418,15 +420,81 @@ def _existing_checkpoint_records(paths: FormalJobPaths) -> list[dict[str, Any]]:
         record["validation_rows"] = validation_rows
         records.append(record)
         seen.add(interaction_count)
+    actual_paths = {
+        f"checkpoints/{path.name}"
+        for path in paths.checkpoints.glob("checkpoint-*.pt")
+        if path.is_file()
+    }
+    if actual_paths != registered_paths:
+        raise ValueError("formal checkpoint directory differs from manifest")
     records.sort(key=lambda item: item["interaction_count"])
     return records
 
 
-def _validation_checkpoint_coverage(paths: FormalJobPaths) -> dict[str, int]:
-    """Return validated scenario counts per checkpoint already on disk."""
+def _validate_checkpoint_schedule(
+    checkpoint_records: list[Mapping[str, Any]],
+    job: Mapping[str, Any],
+    *,
+    require_complete: bool,
+) -> None:
+    """Require checkpoint indexes to be a prefix of the frozen schedule."""
+
+    interval = int(job["checkpoint_interval"])
+    count = int(job["checkpoint_count"])
+    expected = tuple(interval * index for index in range(1, count + 1))
+    observed = tuple(sorted(int(record["interaction_count"]) for record in checkpoint_records))
+    if len(set(observed)) != len(observed) or len(observed) > len(expected):
+        raise ValueError("formal checkpoint schedule is invalid")
+    if observed != expected[: len(observed)]:
+        raise ValueError("formal checkpoint schedule is not a frozen prefix")
+    if require_complete and observed != expected:
+        raise ValueError("formal checkpoint schedule is incomplete")
+
+
+def _validate_checkpoint_records(
+    paths: FormalJobPaths,
+    job: Mapping[str, Any],
+    checkpoint_records: list[Mapping[str, Any]],
+    *,
+    require_complete: bool,
+) -> None:
+    """Validate checkpoint payload identity and formal state against its index."""
+
+    _validate_checkpoint_schedule(checkpoint_records, job, require_complete=require_complete)
+    registered_paths = {str(record["path"]).replace("\\", "/") for record in checkpoint_records}
+    actual_paths = {
+        f"checkpoints/{path.name}"
+        for path in paths.checkpoints.glob("checkpoint-*.pt")
+        if path.is_file()
+    }
+    if actual_paths != registered_paths:
+        raise ValueError("formal checkpoint directory differs from schedule")
+    expected_provenance = _provenance(job, str(job["canonical_training_identity"]))
+    for record in checkpoint_records:
+        relative = str(record["path"])
+        checkpoint_path = (paths.root / relative).resolve()
+        if not checkpoint_path.is_file():
+            raise ValueError("formal checkpoint artifact is missing")
+        try:
+            payload = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+        except Exception as exc:
+            raise ValueError("formal checkpoint payload is unreadable") from exc
+        if not isinstance(payload, Mapping) or payload.get("format_version") != "g5-training-checkpoint-v1":
+            raise ValueError("formal checkpoint format is invalid")
+        if payload.get("provenance") != expected_provenance:
+            raise ValueError("formal checkpoint provenance drifted")
+        state = payload.get("state")
+        formal_state = state.get("formal_state") if isinstance(state, Mapping) else None
+        if not isinstance(formal_state, Mapping) or formal_state.get("interaction_count") != record["interaction_count"]:
+            raise ValueError("formal checkpoint interaction index drifted")
+
+
+def _validation_rows_by_checkpoint(paths: FormalJobPaths) -> dict[str, list[dict[str, Any]]]:
+    """Load existing validation rows while enforcing panel uniqueness."""
 
     if not paths.validation_events.is_file():
         return {}
+    rows_by_checkpoint: dict[str, list[dict[str, Any]]] = {}
     scenarios: dict[str, set[int]] = {}
     for line_number, line in enumerate(paths.validation_events.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
@@ -447,7 +515,48 @@ def _validation_checkpoint_coverage(paths: FormalJobPaths) -> dict[str, int]:
         if scenario_id in seen:
             raise ValueError("duplicate formal validation row prevents recovery")
         seen.add(scenario_id)
-    return {checkpoint_hash: len(values) for checkpoint_hash, values in scenarios.items()}
+        rows_by_checkpoint.setdefault(checkpoint_hash, []).append(dict(row))
+    return rows_by_checkpoint
+
+
+def _validation_checkpoint_coverage(paths: FormalJobPaths) -> dict[str, int]:
+    """Return validated scenario counts per checkpoint already on disk."""
+
+    return {
+        checkpoint_hash: len(rows)
+        for checkpoint_hash, rows in _validation_rows_by_checkpoint(paths).items()
+    }
+
+
+def _validation_provenance(
+    job: Mapping[str, Any], checkpoint_hash: str, evaluator_hash: str, panel_hash: str
+) -> dict[str, str]:
+    return {
+        "source_commit": str(job["git_commit"]),
+        "config_hash": str(job["config_hash"]),
+        "protocol_hash": str(job["protocol_hash"]),
+        "checkpoint_hash": checkpoint_hash,
+        "evaluator_hash": evaluator_hash,
+        "scenario_panel_hash": panel_hash,
+        "candidate_manifest_sha256": str(job["dependency_graph"]["candidate_manifest_sha256"]),
+        "budget_manifest_sha256": str(job["dependency_graph"]["budget_manifest_sha256"]),
+        "physical_scenario_contract_sha256": str(job["dependency_graph"]["physical_scenario_contract_sha256"]),
+    }
+
+
+def _append_validation_rows(path: Path, rows: list[Mapping[str, Any]]) -> None:
+    """Atomically append one complete validation panel to a JSONL artifact."""
+
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("formal validation panel is empty")
+    existing = path.read_bytes() if path.is_file() else b""
+    if existing and not existing.endswith(b"\n"):
+        raise ValueError("formal validation log does not end with a newline")
+    panel = b"".join(
+        (json.dumps(dict(row), sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+        for row in rows
+    )
+    atomic_write_bytes(path, existing + panel)
 
 
 def _backfill_missing_validation(
@@ -457,11 +566,16 @@ def _backfill_missing_validation(
     checkpoint_records: list[dict[str, Any]],
     *,
     device: str,
+    output_root: Path | str | None = None,
 ) -> list[dict[str, Any]]:
     """Evaluate existing checkpoints whose manifest entry lacks validation rows."""
 
     expected_rows = len(VALIDATION_SCENARIOS)
-    coverage = _validation_checkpoint_coverage(paths)
+    validation_manifest = _validate_validation_manifest(repository_root, job)
+    evaluator_hash = str(validation_manifest["evaluator_hash"])
+    panel_hash = str(validation_manifest["scenario_panel_hash"])
+    validation_rows = _validation_rows_by_checkpoint(paths)
+    coverage = {checkpoint_hash: len(rows) for checkpoint_hash, rows in validation_rows.items()}
     record_hashes = {str(record["sha256"]) for record in checkpoint_records}
     unknown_hashes = set(coverage) - record_hashes
     if unknown_hashes:
@@ -477,21 +591,33 @@ def _backfill_missing_validation(
         if declared and observed != declared:
             raise ValueError("formal checkpoint validation row count disagrees with log")
         if observed == expected_rows:
+            expected_provenance = _validation_provenance(job, checkpoint_hash, evaluator_hash, panel_hash)
+            validate_long_table(
+                validation_rows[checkpoint_hash],
+                expected_provenance=expected_provenance,
+                allow_validation_access=True,
+            )
             record["validation_rows"] = expected_rows
             continue
         checkpoint_path = (paths.root / str(record["path"])).resolve()
-        rows = evaluate_formal_checkpoint(
-            repository_root,
-            job,
-            checkpoint_path,
-            device=device,
-            output_path=paths.validation_events,
-        )
+        evaluate_kwargs: dict[str, Any] = {
+            "device": device,
+            "output_path": paths.validation_events,
+        }
+        if output_root is not None:
+            evaluate_kwargs["output_root"] = output_root
+        rows = evaluate_formal_checkpoint(repository_root, job, checkpoint_path, **evaluate_kwargs)
         if len(rows) != expected_rows:
             raise ValueError("formal checkpoint validation did not produce the frozen panel")
-        coverage = _validation_checkpoint_coverage(paths)
+        validation_rows = _validation_rows_by_checkpoint(paths)
+        coverage = {checkpoint_hash: len(rows) for checkpoint_hash, rows in validation_rows.items()}
         if coverage.get(checkpoint_hash) != expected_rows:
             raise ValueError("formal checkpoint validation log is incomplete after recovery")
+        validate_long_table(
+            validation_rows[checkpoint_hash],
+            expected_provenance=_validation_provenance(job, checkpoint_hash, evaluator_hash, panel_hash),
+            allow_validation_access=True,
+        )
         record["validation_rows"] = expected_rows
     return checkpoint_records
 
@@ -578,13 +704,21 @@ def _evaluator_hash(root: Path) -> str:
     return value
 
 
-def evaluate_formal_checkpoint(root: Path | str, job: Mapping[str, Any], checkpoint: Path | str, *, device: str = "cpu", output_path: Path | str | None = None) -> list[dict[str, Any]]:
+def evaluate_formal_checkpoint(
+    root: Path | str,
+    job: Mapping[str, Any],
+    checkpoint: Path | str,
+    *,
+    device: str = "cpu",
+    output_path: Path | str | None = None,
+    output_root: Path | str | None = None,
+) -> list[dict[str, Any]]:
     """Evaluate one verified checkpoint on exactly the frozen validation panel."""
 
     repository_root = Path(root).resolve()
     contract, execution, _, identity = _validate_job(repository_root, job)
     checkpoint_path = Path(checkpoint).resolve()
-    paths = formal_job_paths(repository_root, job)
+    paths = formal_job_paths(repository_root, job, output_root=output_root)
     if not checkpoint_path.is_relative_to(paths.checkpoints.resolve()) or checkpoint_path.parent != paths.checkpoints.resolve():
         raise ValueError("formal evaluation checkpoint is outside the job checkpoint directory")
     if not checkpoint_path.is_file() or _CHECKPOINT_NAME.fullmatch(checkpoint_path.name) is None:
@@ -609,23 +743,15 @@ def evaluate_formal_checkpoint(root: Path | str, job: Mapping[str, Any], checkpo
         environment = build_validation_environment(repository_root, scenario_id=scenario_id, scale=str(job["scale"]), condition_id=str(job["condition_id"]))
         evaluate_episode(environment, algorithm, "validation", scenario_id, deterministic=True)
         row = _episode_row(
-            environment, job, checkpoint_hash=checkpoint_hash, checkpoint_interactions=int(job["environment_interactions"]),
+            environment, job, checkpoint_hash=checkpoint_hash, checkpoint_interactions=int(checkpoint_path.stem.split("-")[-1]),
             scenario_id=scenario_id, evaluator_hash=evaluator_hash, panel_hash=panel_hash,
             locator=str((output_path or checkpoint_path.parent) / f"validation-{scenario_id}.json"),
         )
         rows.append(row)
-    expected_provenance = {
-        "source_commit": str(job["git_commit"]), "config_hash": str(job["config_hash"]), "protocol_hash": str(job["protocol_hash"]),
-        "checkpoint_hash": checkpoint_hash, "evaluator_hash": evaluator_hash, "scenario_panel_hash": panel_hash,
-        "candidate_manifest_sha256": str(job["dependency_graph"]["candidate_manifest_sha256"]),
-        "budget_manifest_sha256": str(job["dependency_graph"]["budget_manifest_sha256"]),
-        "physical_scenario_contract_sha256": str(job["dependency_graph"]["physical_scenario_contract_sha256"]),
-    }
+    expected_provenance = _validation_provenance(job, checkpoint_hash, evaluator_hash, panel_hash)
     validate_long_table(rows, expected_provenance=expected_provenance, allow_validation_access=True)
     if output_path is not None:
-        path = Path(output_path)
-        for row in rows:
-            append_jsonl(path, row)
+        _append_validation_rows(Path(output_path), rows)
     return rows
 
 
@@ -674,6 +800,7 @@ def run_formal_job(root: Path | str, job: Mapping[str, Any], *, device: str = "c
     if output_root is None and target == int(job["environment_interactions"]) and evaluate_validation is not True:
         raise ValueError("canonical formal execution requires validation evaluation")
     checkpoint_records = _existing_checkpoint_records(paths)
+    _validate_checkpoint_records(paths, job, checkpoint_records, require_complete=False)
     lease = ledger.acquire(identity, worker_id=worker_id)
     attempt_root = paths.attempts / f"attempt-{lease.attempt:06d}"
     attempt_root.mkdir(parents=True, exist_ok=True)
@@ -731,6 +858,7 @@ def run_formal_job(root: Path | str, job: Mapping[str, Any], *, device: str = "c
                 paths,
                 checkpoint_records,
                 device=device,
+                output_root=output_root,
             )
         _, update_interval = _update_interval(algorithm)
         for offset in range(target - start_interactions):
@@ -765,10 +893,23 @@ def run_formal_job(root: Path | str, job: Mapping[str, Any], *, device: str = "c
                 checkpoint, checkpoint_hash = _write_checkpoint(paths, job, contract, algorithm, environment, interaction_count=interaction_index + 1, update_count=update_count, scenario_cursor=scenario_cursor, episode_interactions=episode_interactions, episode_reward=episode_reward, fresh_since_update=fresh_since_update, executed_scenarios=executed_scenarios)
                 entry = {"path": str(checkpoint.relative_to(paths.root)), "sha256": checkpoint_hash, "bytes": checkpoint.stat().st_size, "interaction_count": interaction_index + 1, "validation_rows": 0}
                 if evaluate_validation and (interaction_index + 1) % int(job["checkpoint_interval"]) == 0:
-                    rows = evaluate_formal_checkpoint(repository_root, job, checkpoint, device=device, output_path=paths.validation_events)
+                    evaluate_kwargs: dict[str, Any] = {
+                        "device": device,
+                        "output_path": paths.validation_events,
+                    }
+                    if output_root is not None:
+                        evaluate_kwargs["output_root"] = output_root
+                    rows = evaluate_formal_checkpoint(repository_root, job, checkpoint, **evaluate_kwargs)
                     entry["validation_rows"] = len(rows)
                 checkpoint_records.append(entry)
                 checkpoint_records.sort(key=lambda item: item["interaction_count"])
+                _validate_checkpoint_records(paths, job, checkpoint_records, require_complete=False)
+        _validate_checkpoint_records(
+            paths,
+            job,
+            checkpoint_records,
+            require_complete=(target == int(job["environment_interactions"])),
+        )
         summary = {"schema_version": "g6-formal-summary-v1", "status": "completed" if target == int(job["environment_interactions"]) else "interrupted", "identity": identity, "method": job["method"], "condition_id": job["condition_id"], "scale": job["scale"], "training_seed": job["training_seed"], "interactions": target, "target_interactions": int(job["environment_interactions"]), "checkpoint_count": len(checkpoint_records), "checkpoints": checkpoint_records, "validation_accessed": bool(evaluate_validation and checkpoint_records), "sealed_accessed": False, "battery_replenishment_enabled": False, "replenished_resource": "pesticide", "ecology_id": "dynamic_pest_v1", "source_commit": job["git_commit"], "source_scope_sha256": job["source_scope_sha256"], "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
         if summary["status"] == "completed" and paths.validation_events.is_file():
             validation_rows = [json.loads(line) for line in paths.validation_events.read_text(encoding="utf-8").splitlines() if line.strip()]
